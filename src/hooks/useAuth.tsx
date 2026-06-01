@@ -5,14 +5,14 @@ import { Session, User } from "@supabase/supabase-js";
 
 const supabase = createClient();
 
-
-
+// 1. هنا ضفنا الدالة جوة الـ Type عشان الـ Compiler يفهمها
 type AuthContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string, adminKey?: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshShift: () => Promise<void>; // 👈 السطر ده اللي كان ناقص ومزعل الـ Compiler
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,8 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-
-  
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
@@ -42,7 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const refreshShift = async () => {};
+  const refreshShift = async () => {
+    // هنا تقدر تكتب الكود اللي بيعمل ريفريش للوردية بعدين براحتك
+  };
 
   const signIn = async (email: string, password: string, adminKey?: string) => {
     setLoading(true);
@@ -121,7 +121,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       setSession(null);
-
       setLoading(false);
     }
   };
