@@ -1,49 +1,41 @@
-import { saveAs } from 'file-saver';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-
-export type ExportFormat = 'pdf' | 'xlsx' | 'csv';
+export type ExportFormat = 'csv'; // تم قصرها على csv فقط بناءً على طلبك
 
 export async function exportData(
   data: any[],
   columns: { header: string, key: string }[],
   fileName: string,
-  format: ExportFormat
+  format: ExportFormat = 'csv'
 ) {
-  const tableData = data.map(item => {
-    const row: any = {};
-    columns.forEach(col => {
-      row[col.header] = item[col.key];
-    });
-    return row;
+  // 1. تحضير السطر الأول (العناوين / Headers)
+  const headers = columns.map(col => `"${col.header.replace(/"/g, '""')}"`).join(',');
+
+  // 2. تحضير صفوف البيانات
+  const rows = data.map(item => {
+    return columns.map(col => {
+      const value = item[col.key] !== undefined && item[col.key] !== null ? item[col.key] : '';
+      // تحويل القيمة لنص والتعامل مع العلامات الاقتباسية لو موجودة جوة النص
+      return `"${String(value).replace(/"/g, '""')}"`;
+    }).join(',');
   });
 
-  if (format === 'csv' || format === 'xlsx') {
-    const worksheet = XLSX.utils.json_to_sheet(tableData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-    
-    if (format === 'csv') {
-      const csvOutput = XLSX.utils.sheet_to_csv(worksheet);
-      const blob = new Blob([csvOutput], { type: 'text/csv;charset=utf-8' });
-      saveAs(blob, `${fileName}.csv`);
-    } else {
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      saveAs(blob, `${fileName}.xlsx`);
-    }
-  } else if (format === 'pdf') {
-    const doc = new jsPDF();
-    
-    // Arabic support in jsPDF requires font embedding, for now we use standard autoTable
-    // In a real app we'd load an Arabic font (like Cairo) as a base64 string
-    autoTable(doc, {
-      head: [columns.map(c => c.header)],
-      body: data.map(item => columns.map(c => item[c.key])),
-      styles: { font: 'helvetica', halign: 'right' }
-    });
+  // 3. تجميع ملف الـ CSV كامل
+  const csvContent = [headers, ...rows].join('\n');
 
-    doc.save(`${fileName}.pdf`);
+  // 4. إضافة ميزة الـ BOM (\uFEFF) عشان برنامج Excel يفتح العربي بشكل صحيح ومظبوط
+  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { 
+    type: 'text/csv;charset=utf-8;' 
+  });
+
+  // 5. طريقة تحميل الملف الأصلية المتوافقة مع المتصفحات بدون أي مكتبات خارحية
+  const link = document.createElement("a");
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${fileName}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url); // تنظيف الذاكرة
   }
 }
