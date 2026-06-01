@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Settings as SettingsIcon, Save, CreditCard, Bell, Shield, Smartphone, Loader2, Printer, Percent, Palette, Mail, MessageSquare } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Settings as SettingsIcon, Save, CreditCard, Bell, Shield, Smartphone, Loader2, Printer, Percent, Palette, Mail, MessageSquare, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Tab = 'general' | 'pos' | 'notifications' | 'appearance';
@@ -10,6 +11,7 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -18,6 +20,11 @@ export default function Settings() {
     setIsSaving(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  const handleThemeChange = (newTheme: string) => {
+    setTheme(newTheme);
+    handleSave();
   };
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
@@ -108,23 +115,23 @@ export default function Settings() {
                     <div className="space-y-5">
                        <div>
                           <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">اسم الصيدلية</label>
-                          <input type="text" defaultValue="صيدلية النيل - الفرع الرئيسي" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all font-cairo hover:border-white/20" />
+                          <input type="text" defaultValue="صيدلية النيل - الفرع الرئيسي" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors" />
                        </div>
                        
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                            <div>
                               <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">البريد الإلكتروني للتواصل</label>
-                              <input type="email" dir="ltr" defaultValue="admin@pharmanile.com" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all text-left hover:border-white/20" />
+                              <input type="email" dir="ltr" defaultValue="admin@pharmanile.com" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors" />
                            </div>
                            <div>
                               <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">رقم الهاتف الشائع</label>
-                              <input type="text" dir="ltr" defaultValue="+20 100 123 4567" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all text-left hover:border-white/20" />
+                              <input type="text" dir="ltr" defaultValue="+20 100 123 4567" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors" />
                            </div>
                        </div>
 
                        <div>
                           <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">العنوان / الموقع الجغرافي</label>
-                          <textarea rows={3} defaultValue="القاهرة، مصر - شارع النيل، مبنى رقم ٤٥" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all resize-none font-cairo hover:border-white/20"></textarea>
+                          <textarea rows={3} defaultValue="القاهرة، مصر - شارع النيل، مبنى رقم ٤٥" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors resize-none" />
                        </div>
                     </div>
                  </div>
@@ -153,7 +160,7 @@ export default function Settings() {
                              <h3 className="text-white font-medium font-cairo">حد التنبيه لنواقص المخزون الشامل</h3>
                              <p className="text-sm text-gray-400 font-cairo mt-1">تنبيه النظام عندما يقل إجمالي رصيد الصنف عن هذا الرقم.</p>
                           </div>
-                          <input type="number" defaultValue="20" className="w-full md:w-32 bg-black/80 border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#00CED1] text-center" />
+                          <input type="number" defaultValue="20" className="w-full md:w-32 bg-black/80 border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#00CED1] transition-colors" />
                        </div>
                     </div>
                  </div>
@@ -178,18 +185,18 @@ export default function Settings() {
                     <div className="space-y-4">
                        <div className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors gap-4">
                           <div>
-                             <h3 className="text-white font-medium font-cairo flex items-center gap-2"><Percent className="w-4 h-4 text-gray-400" /> نسبة ضريبة القيمة المضافة (VAT)</h3>
+                             <h3 className="text-white font-medium font-cairo flex items-center gap-2"><Percent className="w-4 h-4 text-gray-400" /> نسبة ضريبة القيمة المضافة</h3>
                              <p className="text-sm text-gray-400 font-cairo mt-1">القيمة المئوية للضريبة ليتم احتسابها تلقائياً بالطباعة.</p>
                           </div>
                           <div className="relative w-full md:w-32">
-                             <input type="number" defaultValue="14" className="w-full bg-black/80 border border-white/10 rounded-lg pl-8 pr-4 py-2.5 text-white outline-none focus:border-[#00CED1] text-left dir-ltr" />
+                             <input type="number" defaultValue="14" className="w-full bg-black/80 border border-white/10 rounded-lg pl-8 pr-4 py-2.5 text-white outline-none focus:border-[#00CED1] transition-colors" />
                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
                           </div>
                        </div>
 
                        <div className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors gap-4">
                           <div>
-                             <h3 className="text-white font-medium font-cairo flex items-center gap-2"><Printer className="w-4 h-4 text-gray-400" /> مقاس طابعة الفواتير الافتراضي</h3>
+                             <h3 className="text-white font-medium font-cairo flex items-center gap-2"><Printer className="w-4 h-4 text-gray-400" /> مقاس طابعة الفواتير الحرارية</h3>
                              <p className="text-sm text-gray-400 font-cairo mt-1">ضبط المقاس الحراري لعرض الفاتورة عند الطباعة المباشرة.</p>
                           </div>
                           <select className="bg-black/80 border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#00CED1] font-cairo min-w-[200px] cursor-pointer">
@@ -204,7 +211,7 @@ export default function Settings() {
                              <h3 className="text-white font-medium font-cairo">فترة السماح بالمرتجعات (بالأيام)</h3>
                              <p className="text-sm text-gray-400 font-cairo mt-1">الحد الأقصى للأيام المسموح خلالها بإرجاع فاتورة للعميل.</p>
                           </div>
-                          <input type="number" defaultValue="14" className="w-full md:w-32 bg-black/80 border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#00CED1] text-center" />
+                          <input type="number" defaultValue="14" className="w-full md:w-32 bg-black/80 border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#00CED1] transition-colors" />
                        </div>
                     </div>
                  </div>
@@ -230,10 +237,10 @@ export default function Settings() {
                        <label className="flex items-start gap-4 p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group">
                           <div className="relative flex items-center mt-1">
                              <input type="checkbox" defaultChecked className="sr-only peer" />
-                             <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00CED1]"></div>
+                             <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00CED1]"></div>
                           </div>
                           <div>
-                             <h3 className="text-white font-medium font-cairo flex items-center gap-2 group-hover:text-[#00CED1] transition-colors"><Mail className="w-4 h-4" /> التقارير اليومية عبر البريد الإلكتروني</h3>
+                             <h3 className="text-white font-medium font-cairo flex items-center gap-2 group-hover:text-[#00CED1] transition-colors"><Mail className="w-4 h-4" /> التقارير اليومية بالبريد</h3>
                              <p className="text-sm text-gray-400 font-cairo mt-1">استلام ملخص مبيعات ونواقص اليوم بنهاية الوردية عبر الإيميل.</p>
                           </div>
                        </label>
@@ -241,10 +248,10 @@ export default function Settings() {
                        <label className="flex items-start gap-4 p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group">
                           <div className="relative flex items-center mt-1">
                              <input type="checkbox" className="sr-only peer" />
-                             <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#25D366]"></div>
+                             <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00CED1]"></div>
                           </div>
                           <div>
-                             <h3 className="text-white font-medium font-cairo flex items-center gap-2 group-hover:text-[#25D366] transition-colors"><MessageSquare className="w-4 h-4" /> تنبيهات بضاعة منتهية الصلاحية (واتساب)</h3>
+                             <h3 className="text-white font-medium font-cairo flex items-center gap-2 group-hover:text-[#25D366] transition-colors"><MessageSquare className="w-4 h-4" /> تنبيهات صلاحيات المنتجات</h3>
                              <p className="text-sm text-gray-400 font-cairo mt-1">إرسال إشعار فوري لمدير الصيدلية عند اقتراب صلاحية منتج من الانتهاء.</p>
                           </div>
                        </label>
@@ -272,19 +279,42 @@ export default function Settings() {
                        <div>
                           <h3 className="text-white font-medium font-cairo mb-4">النمط (Theme)</h3>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                             <button className="flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-[#00CED1] bg-[#00CED1]/10 text-white font-cairo transition-all">
-                                <div className="w-full h-16 rounded bg-[#050505] border border-white/10 flex flex-col gap-1 p-2">
-                                   <div className="w-full h-2 bg-white/20 rounded"></div>
-                                   <div className="w-1/2 h-2 bg-[#00CED1]/50 rounded"></div>
-                                </div>
-                                <span>Dark السمة الداكنة</span>
+                             {/* Dark Theme Button */}
+                             <button 
+                               onClick={() => handleThemeChange('dark')}
+                               className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                                 theme === 'dark' 
+                                   ? 'border-[#00CED1] bg-[#00CED1]/10 text-white' 
+                                   : 'border-transparent bg-white/5 text-gray-400 hover:bg-white/10'
+                               }`}
+                             >
+                               <div className="w-full h-16 rounded bg-[#050505] border border-white/10 flex flex-col gap-1 p-2">
+                                 <div className="w-full h-2 bg-white/20 rounded"></div>
+                                 <div className="w-1/2 h-2 bg-[#00CED1]/50 rounded"></div>
+                               </div>
+                               <div className="flex items-center gap-2">
+                                 <Moon className="w-4 h-4" />
+                                 <span className="font-cairo">Dark السمة الداكنة</span>
+                               </div>
                              </button>
-                             <button className="flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-transparent bg-white/5 text-gray-400 hover:bg-white/10 font-cairo transition-all" disabled>
-                                <div className="w-full h-16 rounded bg-white border border-gray-200 flex flex-col gap-1 p-2">
-                                   <div className="w-full h-2 bg-gray-200 rounded"></div>
-                                   <div className="w-1/2 h-2 bg-[#00CED1]/50 rounded"></div>
-                                </div>
-                                <span>Light السمة المضيئة <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full ml-1 text-gray-500">قريباً</span></span>
+
+                             {/* Light Theme Button */}
+                             <button 
+                               onClick={() => handleThemeChange('light')}
+                               className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                                 theme === 'light' 
+                                   ? 'border-[#00CED1] bg-[#00CED1]/10 text-white' 
+                                   : 'border-transparent bg-white/5 text-gray-400 hover:bg-white/10'
+                               }`}
+                             >
+                               <div className="w-full h-16 rounded bg-white border border-gray-200 flex flex-col gap-1 p-2">
+                                 <div className="w-full h-2 bg-gray-200 rounded"></div>
+                                 <div className="w-1/2 h-2 bg-[#00CED1]/50 rounded"></div>
+                               </div>
+                               <div className="flex items-center gap-2">
+                                 <Sun className="w-4 h-4" />
+                                 <span className="font-cairo">Light السمة المضيئة</span>
+                               </div>
                              </button>
                           </div>
                        </div>
