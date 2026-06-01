@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Home, 
   ShoppingCart, 
@@ -16,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 const menuItems = [
   { icon: Home, label: 'لوحة التحكم', href: '/dashboard' },
@@ -30,6 +32,12 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth/login');
+  };
 
   return (
     <div className="fixed right-0 top-0 h-screen w-72 glass-panel m-4 border-r-0 rounded-2xl p-6 flex flex-col z-50">
@@ -70,7 +78,10 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto">
-        <button className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-foreground/50 hover:text-red-400 hover:bg-red-400/5 transition-all duration-300 group">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-foreground/50 hover:text-red-400 hover:bg-red-400/5 transition-all duration-300 group"
+        >
           <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium text-lg">تسجيل الخروج</span>
         </button>
