@@ -141,14 +141,23 @@ export default function SalesDashboardPage() {
   };
   const paymentData = generatePaymentData();
 
-  // Formatter helper functions
-  const formatCurrency = (val: any): [string, string] => {
-    const numVal = typeof val === 'number' ? val : (Array.isArray(val) ? Number(val[0] ?? 0) : 0);
+  const formatCurrency = (val: unknown): [string, string] => {
+    let numVal = 0;
+    if (typeof val === 'number') {
+      numVal = val;
+    } else if (Array.isArray(val)) {
+      numVal = Number(val[0] ?? 0);
+    }
     return [`${numVal.toLocaleString('ar-EG')} ج.م`, ""];
   };
 
-  const formatQuantity = (val: any): [string, string] => {
-    const numVal = typeof val === 'number' ? val : (Array.isArray(val) ? Number(val[0] ?? 0) : 0);
+  const formatQuantity = (val: unknown): [string, string] => {
+    let numVal = 0;
+    if (typeof val === 'number') {
+      numVal = val;
+    } else if (Array.isArray(val)) {
+      numVal = Number(val[0] ?? 0);
+    }
     return [`${numVal} علبة/قطعة`, "الكمية المباعة"];
   };
 
