@@ -257,7 +257,7 @@ export default function SalesDashboardPage() {
                     <RechartsTooltip 
                       contentStyle={{backgroundColor: '#0a0a0a', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}} 
                       itemStyle={{fontFamily: 'Cairo'}}
-                      formatter={(val) => `${Number(val ?? 0).toLocaleString('ar-EG')} ج.م`}
+                      formatter={(val: any) => [`${Number(val ?? 0).toLocaleString('ar-EG')} ج.م`, ""]}
                     />
                     <Area type="monotone" name="المبيعات" dataKey="sales" stroke="#00CED1" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                     <Area type="monotone" name="الأرباح" dataKey="profit" stroke="#D4AF37" strokeWidth={2} fillOpacity={1} fill="url(#colorProfit)" />
@@ -290,7 +290,7 @@ export default function SalesDashboardPage() {
                       </Pie>
                       <RechartsTooltip 
                         contentStyle={{backgroundColor: '#0a0a0a', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}}
-                        formatter={(val: number) => val.toLocaleString('ar-EG') + " ج.م"}
+                        formatter={(val: any) => [`${Number(val ?? 0).toLocaleString('ar-EG')} ج.م`, ""]}
                       />
                       <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontFamily: 'Cairo', fontSize: '12px', paddingTop: '20px' }} />
                     </PieChart>
