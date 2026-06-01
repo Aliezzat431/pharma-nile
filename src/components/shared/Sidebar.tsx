@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import { 
   Home, 
   ShoppingCart, 
@@ -12,7 +13,9 @@ import {
   LogOut,
   PlusSquare,
   History,
-  AlertTriangle
+  AlertTriangle,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -33,11 +36,23 @@ const menuItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/auth/login');
   };
+
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  if (!mounted) return null;
 
   return (
     <div className="fixed right-0 top-0 h-screen w-72 glass-panel m-4 border-r-0 rounded-2xl p-6 flex flex-col z-50">
@@ -77,7 +92,26 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto">
+      <div className="mt-auto space-y-3">
+        {/* Theme Toggle Button */}
+        <button 
+          onClick={toggleTheme}
+          className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-foreground/50 hover:text-amber-500 hover:bg-amber-500/5 transition-all duration-300 group"
+        >
+          {theme === 'light' ? (
+            <>
+              <Moon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium text-lg">الوضع الليلي</span>
+            </>
+          ) : (
+            <>
+              <Sun className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium text-lg">الوضع النهاري</span>
+            </>
+          )}
+        </button>
+
+        {/* Logout Button */}
         <button 
           onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-foreground/50 hover:text-red-400 hover:bg-red-400/5 transition-all duration-300 group"
