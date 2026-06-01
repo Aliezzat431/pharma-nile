@@ -9,7 +9,7 @@ import {
 import { motion } from 'framer-motion';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
-  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend
+  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend, TooltipProps
 } from 'recharts';
 
 interface OrderItem {
@@ -257,7 +257,10 @@ export default function SalesDashboardPage() {
                     <RechartsTooltip 
                       contentStyle={{backgroundColor: '#0a0a0a', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}} 
                       itemStyle={{fontFamily: 'Cairo'}}
-                      formatter={(val: any) => [`${Number(val ?? 0).toLocaleString('ar-EG')} ج.م`, ""]}
+                      formatter={(val: number | string | (number | string)[]): [string, string] => {
+                        const numVal = Array.isArray(val) ? val[0] : val;
+                        return [`${Number(numVal ?? 0).toLocaleString('ar-EG')} ج.م`, ""];
+                      }}
                     />
                     <Area type="monotone" name="المبيعات" dataKey="sales" stroke="#00CED1" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                     <Area type="monotone" name="الأرباح" dataKey="profit" stroke="#D4AF37" strokeWidth={2} fillOpacity={1} fill="url(#colorProfit)" />
@@ -290,7 +293,10 @@ export default function SalesDashboardPage() {
                       </Pie>
                       <RechartsTooltip 
                         contentStyle={{backgroundColor: '#0a0a0a', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}}
-                        formatter={(val: any) => [`${Number(val ?? 0).toLocaleString('ar-EG')} ج.م`, ""]}
+                        formatter={(val: number | string | (number | string)[]): [string, string] => {
+                          const numVal = Array.isArray(val) ? val[0] : val;
+                          return [`${Number(numVal ?? 0).toLocaleString('ar-EG')} ج.م`, ""];
+                        }}
                       />
                       <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontFamily: 'Cairo', fontSize: '12px', paddingTop: '20px' }} />
                     </PieChart>
@@ -315,7 +321,10 @@ export default function SalesDashboardPage() {
                       <RechartsTooltip 
                         contentStyle={{backgroundColor: '#0a0a0a', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}}
                         cursor={{fill: '#ffffff05'}}
-                        formatter={(val: any) => [`${val} علبة/قطعة`, "الكمية المباعة"]}
+                        formatter={(val: number | string | (number | string)[]): [string, string] => {
+                          const numVal = Array.isArray(val) ? val[0] : val;
+                          return [`${numVal} علبة/قطعة`, "الكمية المباعة"];
+                        }}
                       />
                       <Bar dataKey="qty" fill="#00CED1" radius={[0, 4, 4, 0]} barSize={24}>
                         {topProductsData.map((entry, index) => (
