@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ShiftControl() {
-  const { user, refreshShift } = useAuth();
+  const { user, refreshShift } = useAuth() as any;
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
