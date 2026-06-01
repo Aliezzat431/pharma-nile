@@ -315,7 +315,7 @@ export default function SalesDashboardPage() {
                       <RechartsTooltip 
                         contentStyle={{backgroundColor: '#0a0a0a', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}}
                         cursor={{fill: '#ffffff05'}}
-                        formatter={(val: number) => [val + " علبة/قطعة", "الكمية المباعة"]}
+                        formatter={(val: any) => [`${val} علبة/قطعة`, "الكمية المباعة"]}
                       />
                       <Bar dataKey="qty" fill="#00CED1" radius={[0, 4, 4, 0]} barSize={24}>
                         {topProductsData.map((entry, index) => (
