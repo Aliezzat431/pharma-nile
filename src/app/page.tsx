@@ -1,11 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Activity, TrendingUp, AlertCircle, RefreshCw, ShoppingBag } from 'lucide-react';
+import { Activity, TrendingUp, AlertCircle, RefreshCw, ShoppingBag, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getDashboardStats, getRecentTransactions, DashboardStats, RecentTransaction } from '@/lib/api/dashboard';
 import { useAuth } from '@/hooks/useAuth';
-import ShiftControl from '@/components/shared/ShiftControl';
+
+import { supabase } from '@/lib/supabase';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, PieChart, Pie, Cell 
+} from 'recharts';
+
+
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -31,11 +38,30 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Enable Realtime Subscription
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => fetchDashboardData()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'batches' },
+        () => fetchDashboardData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const statCards = [
     { label: "مبيعات اليوم", value: stats?.todaySales || '0 ج.م', icon: TrendingUp, color: 'text-[#00CED1]' },
-    { label: "الجلسات النشطة", value: stats?.activeSessions || '0 موظفين', icon: Activity, color: 'text-[#D4AF37]' },
+    { label: "صافي أرباح اليوم", value: stats?.todayProfit ? `${stats.todayProfit} ج.م` : '0 ج.م', icon: DollarSign, color: 'text-[#D4AF37]' },
     { label: "نواقص المخزون", value: stats?.lowStockItems || '0', icon: AlertCircle, color: 'text-red-400' },
     { label: "أدوية قريبة الانتهاء", value: stats?.expiringSoon || '0', icon: RefreshCw, color: 'text-orange-400' },
   ];
@@ -59,8 +85,6 @@ export default function Dashboard() {
         </button>
       </header>
       
-      <ShiftControl />
-
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, i) => (
@@ -86,61 +110,74 @@ export default function Dashboard() {
       </div>
 
       {/* Main Dashboard Info Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 glass-panel p-6 h-96 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold font-cairo">العمليات الأخيرة</h2>
-            <button className="text-sm text-[#00CED1] hover:underline font-cairo">عرض الكل</button>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3 glass-panel p-8 h-[450px]">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-bold font-cairo">أداء المبيعات (أيام الأسبوع)</h2>
+            <div className="flex gap-2">
+               <span className="flex items-center gap-2 text-xs text-[#00CED1]"><div className="w-2 h-2 rounded-full bg-[#00CED1]" /> المبيعات</span>
+               <span className="flex items-center gap-2 text-xs text-[#D4AF37]"><div className="w-2 h-2 rounded-full bg-[#D4AF37]" /> الديون</span>
+            </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto space-y-3">
-            {loading ? (
-              <div className="h-full flex items-center justify-center opacity-30">
-                <RefreshCw className="animate-spin w-8 h-8" />
-              </div>
-            ) : recentTrans.length > 0 ? (
-              recentTrans.map((tx, idx) => (
-                <motion.div 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  key={tx.id} 
-                  className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-[#00CED1]/30 transition-all"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#00CED1]/10 flex items-center justify-center">
-                      <ShoppingBag className="w-5 h-5 text-[#00CED1]" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-white font-cairo">فاتورة #{tx.id.slice(0, 8)}</p>
-                      <p className="text-xs text-gray-400">{new Date(tx.created_at).toLocaleString('ar-EG')}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-[#D4AF37] font-cairo">{tx.total} ج.م</p>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center border border-white/5 rounded-xl bg-white/[0.02] opacity-50">
-                <p className="text-gray-500 font-cairo">لا توجد عمليات بيع اليوم.</p>
-              </div>
-            )}
+          <div className="w-full h-full pb-10">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={stats?.weeklyData || []}>
+                <defs>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#00CED1" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#00CED1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" />
+                <XAxis dataKey="name" stroke="#666" tick={{fontFamily: 'Cairo'}} />
+                <YAxis stroke="#666" />
+                <Tooltip contentStyle={{backgroundColor: '#050505', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}} />
+                <Area type="monotone" dataKey="sales" stroke="#00CED1" fillOpacity={1} fill="url(#colorSales)" strokeWidth={3} />
+                <Area type="monotone" dataKey="debts" stroke="#D4AF37" fillOpacity={0} fill="transparent" strokeWidth={2} strokeDasharray="5 5" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="glass-panel p-6 h-96 flex flex-col">
-          <h2 className="text-xl font-bold mb-6 font-cairo">توصيات الذكاء الاصطناعي</h2>
-          <div className="flex-1 space-y-4">
-             <div className="p-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex gap-3">
-                <AlertCircle className="text-[#D4AF37] w-5 h-5 shrink-0" />
-                <p className="text-sm text-gray-200 font-cairo">توصية: اطلب كمية جديدة من <strong>بنادول إكسترا</strong> قبل عطلة نهاية الأسبوع.</p>
-             </div>
-             <div className="p-4 rounded-xl bg-[#00CED1]/10 border border-[#00CED1]/20 flex gap-3">
-                <TrendingUp className="text-[#00CED1] w-5 h-5 shrink-0" />
-                <p className="text-sm text-gray-200 font-cairo">مبيعات مستحضرات التجميل زادت بنسبة 15% هذا الأسبوع. ممكن تعمل عرض عليها.</p>
-             </div>
-          </div>
+        <div className="glass-panel p-8 flex flex-col items-center">
+           <h2 className="text-xl font-bold font-cairo mb-8 self-start">توزيع الديون</h2>
+           <div className="w-full h-64">
+             <ResponsiveContainer width="100%" height="100%">
+               <PieChart>
+                 <Pie
+                   data={[
+                     { name: 'كاش', value: stats?.weeklyData?.[stats.weeklyData.length - 1]?.sales || 1 },
+                     { name: 'ديون', value: stats?.weeklyData?.[stats.weeklyData.length - 1]?.debts || 0 }
+                   ]}
+                   innerRadius={60}
+                   outerRadius={80}
+                   paddingAngle={5}
+                   dataKey="value"
+                 >
+                   <Cell fill="#00CED1" />
+                   <Cell fill="#ffffff10" />
+                 </Pie>
+                 <Tooltip />
+               </PieChart>
+             </ResponsiveContainer>
+           </div>
+           <div className="mt-4 space-y-4 w-full">
+              <div className="flex justify-between items-center text-sm font-cairo">
+                <span className="text-gray-400">سيولة اليوم</span>
+                <span className="text-[#00CED1] font-bold">
+                  {stats?.weeklyData?.[stats.weeklyData.length - 1] 
+                    ? Math.round((stats.weeklyData[stats.weeklyData.length - 1].sales / (stats.weeklyData[stats.weeklyData.length - 1].sales + stats.weeklyData[stats.weeklyData.length - 1].debts || 1)) * 100) 
+                    : 100}%
+                </span>
+              </div>
+              <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-[#00CED1]" style={{ width: `${stats?.weeklyData?.[stats.weeklyData.length - 1] ? (stats.weeklyData[stats.weeklyData.length - 1].sales / (stats.weeklyData[stats.weeklyData.length - 1].sales + stats.weeklyData[stats.weeklyData.length - 1].debts || 1)) * 100 : 100}%` }} />
+              </div>
+              <p className="text-[10px] text-gray-500 font-cairo leading-relaxed">
+                * يرجى متابعة تحصيل الديون المتأخرة لتحسين التدفق النقدي.
+              </p>
+           </div>
         </div>
       </div>
     </div>

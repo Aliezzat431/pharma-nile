@@ -21,7 +21,6 @@ interface Order {
   created_at: string;
   total: number;
   status?: string;
-  session_id: string;
   order_items: OrderItem[];
 }
 

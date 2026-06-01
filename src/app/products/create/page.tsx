@@ -10,6 +10,8 @@ import { createProductWithBatch } from '@/lib/api/createProduct';
 export default function CreateProduct() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [aiChoices, setAiChoices] = useState<any[]>([]);
+  const [showChoices, setShowChoices] = useState(false);
 
   const [formData, setFormData] = useState({
     // Product
@@ -56,15 +58,26 @@ export default function CreateProduct() {
       });
       const data = await res.json();
       
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Failed");
 
-      setFormData(prev => ({
-        ...prev,
-        name: data.name || prev.name,
-        company: data.company || prev.company,
-        type: data.type || prev.type,
-        unit_conversion: data.unit_conversion || prev.unit_conversion,
-      }));
+      if (data.choices && data.choices.length > 0) {
+        if (data.choices.length === 1) {
+          // If only 1 choice, auto-fill directly
+          const choice = data.choices[0];
+          setFormData(prev => ({
+            ...prev,
+            name: choice.name || prev.name,
+            company: choice.company || prev.company,
+            type: choice.type || prev.type,
+            unit_conversion: choice.unit_conversion || prev.unit_conversion,
+          }));
+        } else {
+          setAiChoices(data.choices);
+          setShowChoices(true);
+        }
+      } else {
+        showError("لم يتم العثور على نتائج للإكمال الذكي");
+      }
     } catch (err: any) {
       showError("خطأ الإكمال الذكي: " + err.message);
     } finally {
@@ -111,6 +124,58 @@ export default function CreateProduct() {
             >
               <AlertCircle className="w-5 h-5" />
               {formError}
+            </motion.div>
+          </div>
+        )}
+
+        {showChoices && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[#050505] border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative"
+            >
+              <h3 className="text-xl font-bold font-cairo mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#00CED1]" />
+                اختر المنتج المناسب
+              </h3>
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
+                {aiChoices.map((choice, idx) => (
+                  <div 
+                    key={idx}
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        name: choice.name || prev.name,
+                        company: choice.company || prev.company,
+                        type: choice.type || prev.type,
+                        unit_conversion: choice.unit_conversion || prev.unit_conversion,
+                      }));
+                      setShowChoices(false);
+                    }}
+                    className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-[#00CED1]/10 hover:border-[#00CED1]/30 cursor-pointer transition-all text-right group"
+                  >
+                    <div className="font-bold text-lg font-cairo text-white group-hover:text-[#00CED1] transition-colors">{choice.name}</div>
+                    <div className="text-sm text-gray-400 font-cairo mt-1">الشركة: {choice.company || 'غير محدد'}</div>
+                    <div className="flex gap-2 mt-2">
+                      <span className="text-xs px-2 py-1 bg-white/10 rounded-md text-gray-300 font-cairo">{choice.type}</span>
+                      {choice.unit_conversion > 1 && (
+                        <span className="text-xs px-2 py-1 bg-white/10 rounded-md text-gray-300 font-cairo">تحويل: {choice.unit_conversion}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button 
+                  type="button"
+                  onClick={() => setShowChoices(false)}
+                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-cairo transition-colors"
+                >
+                  إلغاء
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
@@ -168,10 +233,9 @@ export default function CreateProduct() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2 font-cairo">
-                  <Factory className="w-4 h-4" /> الشركة المصنعة <span className="text-red-400">*</span>
+                  <Factory className="w-4 h-4" /> الشركة المصنعة <span className="text-gray-500 text-xs">(اختياري)</span>
                 </label>
                 <input 
-                  required
                   name="company"
                   value={formData.company}
                   onChange={handleChange}

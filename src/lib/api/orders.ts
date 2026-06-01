@@ -6,16 +6,31 @@ export interface CartItem {
   price: number;
   quantity: number;
   unit: string;
+  batchId?: string;
+  costPrice?: number;
+  batchDistributions?: { batchId: string; quantity: number; price: number; }[];
 }
 
-export async function processCheckout(cart: CartItem[], total: number, sessionId: string, debtorId?: string) {
+export async function processCheckout(
+  cart: CartItem[], 
+  total: number, 
+  paymentMethod: 'cash' | 'debt' | 'sadqah' = 'cash',
+  customerId?: string
+) {
+  // Calculate cost and profit
+  const costTotal = cart.reduce((acc, item) => acc + (item.costPrice || 0) * item.quantity, 0);
+  const profitTotal = total - costTotal;
+
   // 1. Create the Order
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert([{ 
       total, 
-      debtor_id: debtorId || null,
-      session_id: sessionId // Link to the shift
+      cost_total: costTotal,
+      profit_total: profitTotal,
+      customer_id: customerId || null,
+      payment_method: paymentMethod,
+      status: 'completed'
     }])
     .select()
     .single();
@@ -25,51 +40,101 @@ export async function processCheckout(cart: CartItem[], total: number, sessionId
     throw new Error('Failed to create order');
   }
 
-  // 2. Insert Order Items
-  const orderItemsInput = cart.map(item => ({
-    order_id: order.id,
-    name: item.name,
-    price: item.price,
-    quantity: item.quantity,
-    unit: item.unit
-  }));
-
-  const { error: itemsError } = await supabase
-    .from('order_items')
-    .insert(orderItemsInput);
-
-  if (itemsError) {
-    console.error('Failed to insert order items:', itemsError);
-    throw new Error('Failed to insert order items');
+  // 1b. Update customer balance if it's a debt
+  if (paymentMethod === 'debt' && customerId) {
+    const { data: customer } = await supabase.from('customers').select('total_debt').eq('id', customerId).single();
+    if (customer) {
+      await supabase
+        .from('customers')
+        .update({ total_debt: customer.total_debt + total })
+        .eq('id', customerId);
+    }
   }
 
-  // 3. Deduct stock from batches (Simple FEFO deduction logic done via multiple queries or RPC)
-  // Since we require robustness in production, an Edge Function / RPC is ideal. 
-  // Here we do a rudimentary loop for demonstration of fully genuine functional UI.
+  // 2. Insert Order Items & Deduct Stock
   for (const item of cart) {
     let remainingToDeduct = item.quantity;
-
-    // Fetch active batches for this product ordered by expiry
-    const { data: batches } = await supabase
-      .from('batches')
-      .select('*')
-      .eq('product_id', item.id)
-      .gt('quantity', 0)
-      .order('expiry_date', { ascending: true });
-
-    if (batches) {
-      for (const batch of batches) {
+    
+    // First, process any explicit batch distributions the user assigned
+    if (item.batchDistributions && item.batchDistributions.length > 0) {
+      for (const dist of item.batchDistributions) {
+        if (dist.quantity <= 0) continue;
         if (remainingToDeduct <= 0) break;
 
-        const deduction = Math.min(batch.quantity, remainingToDeduct);
-        const newQuantity = batch.quantity - deduction;
-
-        await supabase
+        const deduction = Math.min(dist.quantity, remainingToDeduct);
+        
+        // Fetch current batch explicitly
+        const { data: explicitBatch } = await supabase
           .from('batches')
-          .update({ quantity: newQuantity })
-          .eq('id', batch.id);
+          .select('id, quantity')
+          .eq('id', dist.batchId)
+          .single();
 
-        remainingToDeduct -= deduction;
+        if (explicitBatch) {
+          const newQuantity = explicitBatch.quantity - deduction;
+
+          // Record the item linked to this exact batch
+          await supabase
+            .from('order_items')
+            .insert([{
+              order_id: order.id,
+              product_id: item.id,
+              batch_id: explicitBatch.id,
+              name: item.name,
+              price: item.price,
+              quantity: deduction,
+              unit: item.unit
+            }]);
+
+          // Update batch stock
+          await supabase
+            .from('batches')
+            .update({ quantity: newQuantity })
+            .eq('id', explicitBatch.id);
+
+          remainingToDeduct -= deduction;
+        }
+      }
+    }
+
+    // If there is still quantity to deduct (either no explicit distributions or they didn't cover the full quantity),
+    // fallback to automatic FEFO deduction.
+    if (remainingToDeduct > 0) {
+      const { data: batches } = await supabase
+        .from('batches')
+        .select('*')
+        .eq('product_id', item.id)
+        .gt('quantity', 0)
+        .order('expiry_date', { ascending: true });
+
+      if (batches) {
+        for (const batch of batches) {
+          if (remainingToDeduct <= 0) break;
+
+          const deduction = Math.min(batch.quantity, remainingToDeduct);
+          const newQuantity = batch.quantity - deduction;
+
+          // Record the item linked to this batch
+          await supabase
+            .from('order_items')
+            .insert([{
+              order_id: order.id,
+              product_id: item.id,
+              batch_id: batch.id,
+              name: item.name,
+              price: item.price,
+              quantity: deduction,
+              unit: item.unit
+            }]);
+
+          // Update batch
+          await supabase
+            .from('batches')
+            .update({ quantity: newQuantity })
+            .eq('id', batch.id);
+
+          remainingToDeduct -= deduction;
+        }
       }
     }
   }
@@ -77,14 +142,17 @@ export async function processCheckout(cart: CartItem[], total: number, sessionId
   return order;
 }
 
-// Fetch orders from the last N days with their items
 export async function getRecentOrders(days: number = 15) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
 
   const { data, error } = await supabase
     .from('orders')
-    .select('*, order_items(*)')
+    .select(`
+      *,
+      customers (name),
+      order_items (*)
+    `)
     .gte('created_at', cutoff.toISOString())
     .order('created_at', { ascending: false });
 
@@ -95,43 +163,33 @@ export async function getRecentOrders(days: number = 15) {
   return data || [];
 }
 
-// Process a return: restore stock and mark order
-export async function processReturn(orderId: string, items: CartItem[]) {
-  // 1. Restore stock to batches (add quantity back to the first batch of each product)
+export async function processReturn(orderId: string, items: any[]) {
+  // 1. Restore stock to specific batches
   for (const item of items) {
-    let productId = item.id;
-
-    // If item.id doesn't look like a product_id, look up by name
-    const { data: batches } = await supabase
-      .from('batches')
-      .select('*, products!inner(name)')
-      .eq('products.name', item.name)
-      .order('expiry_date', { ascending: true })
-      .limit(1);
-
-    if (batches && batches.length > 0) {
-      const batch = batches[0];
-      await supabase
+    if (item.batch_id) {
+      const { data: batch } = await supabase
         .from('batches')
-        .update({ quantity: batch.quantity + item.quantity })
-        .eq('id', batch.id);
+        .select('quantity')
+        .eq('id', item.batch_id)
+        .single();
+      
+      if (batch) {
+        await supabase
+          .from('batches')
+          .update({ quantity: batch.quantity + item.quantity })
+          .eq('id', item.batch_id);
+      }
     }
   }
 
-  // 2. Mark order as returned by deleting it and its items
-  // (using delete since the orders table may not have a status column)
-  await supabase
-    .from('order_items')
-    .delete()
-    .eq('order_id', orderId);
-
+  // 2. Mark order as returned
   const { error } = await supabase
     .from('orders')
-    .delete()
+    .update({ status: 'returned' })
     .eq('id', orderId);
 
   if (error) {
-    console.error('Error deleting returned order:', error);
+    console.error('Error processing return:', error);
     throw error;
   }
 }

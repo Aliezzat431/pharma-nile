@@ -2,6 +2,13 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { getMultiplier } from '@/lib/unitOptions';
 
+export interface BatchDistribution {
+  batchId: string;
+  quantity: number;
+  expiry: string;
+  price: number;
+}
+
 export interface CartItem {
   id: string; // Product ID or Barcode
   name: string;
@@ -12,6 +19,8 @@ export interface CartItem {
   availableUnits: string[];
   unitConversion: number;
   customPills?: number;
+  activeBatches?: any[]; // Stored to allow batch distribution picking
+  batchDistributions?: BatchDistribution[]; // User-defined distribution across batches
 }
 
 interface PosState {
@@ -61,6 +70,14 @@ const posSlice = createSlice({
       }
       state.total = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     },
+    updateBatchDistribution: (state, action: PayloadAction<{ id: string; distributions: BatchDistribution[] }>) => {
+      const item = state.cart.find((item) => item.id === action.payload.id);
+      if (item) {
+        item.batchDistributions = action.payload.distributions;
+        // Optionally update the total item quantity to match the sum of distributed batches if they explicitly set it.
+        // Usually, the UI will balance this.
+      }
+    },
     clearCart: (state) => {
       state.cart = [];
       state.total = 0;
@@ -68,5 +85,5 @@ const posSlice = createSlice({
   },
 });
 
-export const { addToCart, removeFromCart, updateQuantity, updateUnit, clearCart } = posSlice.actions;
+export const { addToCart, removeFromCart, updateQuantity, updateUnit, updateBatchDistribution, clearCart } = posSlice.actions;
 export default posSlice.reducer;

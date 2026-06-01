@@ -1,12 +1,30 @@
 "use client";
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import Sidebar from './Sidebar';
 import ChatWidget from '@/components/chat/ChatWidget';
+import { useDispatch } from 'react-redux';
+import { openIframe } from '@/store/slices/agentSlice';
+import { Maximize2 } from 'lucide-react';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const dispatch = useDispatch();
   const isAuthPage = pathname?.startsWith('/auth');
+  const isMinimal = searchParams.get('minimal') === 'true';
+  const isCopilot = searchParams.get('copilot') === 'true';
+
+  const handleCloneToWindow = () => {
+    const title = pathname === '/' ? 'لوحة التحكم' : 
+                 pathname?.split('/').pop()?.toUpperCase() || 'Page';
+    dispatch(openIframe({
+      url: pathname + (searchParams.toString() ? `?${searchParams.toString()}` : ''),
+      title: `نسخة: ${title}`,
+      width: 1000,
+      height: 750
+    }));
+  };
 
   if (isAuthPage) {
     return <div className="min-h-screen w-full bg-[#050505]">{children}</div>;
@@ -14,10 +32,22 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex h-screen w-full relative">
-      <Sidebar />
+      {(!isMinimal && !isCopilot) && <Sidebar />}
       
-      {/* Main Content Area - offset by sidebar width (ml-72 for LTR, mr-72 for RTL) */}
-      <main className="flex-1 mr-72 h-screen overflow-y-auto relative z-10 p-8">
+      {/* Main Content Area - remove margin if minimal */}
+      <main className={`flex-1 h-screen overflow-y-auto relative z-10 ${(isMinimal || isCopilot) ? 'mr-0 p-0' : 'mr-72 p-8'}`}>
+        {/* Quick Actions Header for Main Content */}
+        {(!isMinimal && !isCopilot) && (
+          <div className="flex justify-start mb-8 gap-4 pointer-events-auto">
+            <button 
+              onClick={handleCloneToWindow}
+              className="px-4 py-2 bg-[#111111] hover:bg-[#1A1A1A] border border-white/10 rounded-xl flex items-center gap-2 text-xs font-bold text-[#00CED1] transition-all hover:scale-105 shadow-lg"
+            >
+              <Maximize2 className="w-4 h-4" />
+              <span>فتح هذه الصفحة في نافذة مستقلة</span>
+            </button>
+          </div>
+        )}
         {children}
       </main>
       

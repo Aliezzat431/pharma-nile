@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { PackageOpen, Plus, Search, Filter, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Calendar, Hash, Tag, Edit2, Check, X, Loader2 } from 'lucide-react';
+import { PackageOpen, Plus, Search, Filter, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Calendar, Hash, Tag, Edit2, Check, X, Loader2, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { updateBatch } from '@/lib/api/products';
+import { updateBatch, createBatch, getProductByBarcode } from '@/lib/api/products';
+import dynamic from 'next/dynamic';
+
+const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
 
 interface Batch {
   id: string;
@@ -38,8 +41,23 @@ export default function InventoryDashboard() {
   const [editForm, setEditForm] = useState<Partial<Batch>>({});
   const [isSaving, setIsSaving] = useState(false);
 
+  // Adding Batch state
+  const [addingBatchForProduct, setAddingBatchForProduct] = useState<string | null>(null);
+  const [newBatchForm, setNewBatchForm] = useState<Partial<Batch>>({ quantity: 0, purchase_price: 0, selling_price: 0, barcode: '', expiry_date: '' });
+  const [isAddingBatch, setIsAddingBatch] = useState(false);
+
   useEffect(() => {
     fetchInventory();
+
+    const channel = supabase
+      .channel('inventory-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'batches' }, () => fetchInventory())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchInventory())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchInventory = async () => {
@@ -94,6 +112,7 @@ export default function InventoryDashboard() {
     try {
       await updateBatch(batchId, {
         quantity: Number(editForm.quantity),
+        purchase_price: Number(editForm.purchase_price),
         selling_price: Number(editForm.selling_price),
         barcode: editForm.barcode,
       });
@@ -107,10 +126,41 @@ export default function InventoryDashboard() {
     }
   };
 
+  const startAddingBatch = (productId: string) => {
+    setAddingBatchForProduct(productId);
+    setNewBatchForm({ quantity: 0, purchase_price: 0, selling_price: 0, barcode: '', expiry_date: '' });
+  };
+
+  const handleCreateBatch = async (productId: string) => {
+    setIsAddingBatch(true);
+    setInventoryError(null);
+    try {
+      await createBatch({
+        product_id: productId,
+        barcode: newBatchForm.barcode,
+        quantity: Number(newBatchForm.quantity),
+        purchase_price: Number(newBatchForm.purchase_price),
+        selling_price: Number(newBatchForm.selling_price),
+        expiry_date: newBatchForm.expiry_date,
+      });
+      setAddingBatchForProduct(null);
+      await fetchInventory();
+    } catch (error) {
+      setInventoryError("فشل إضافة التشغيلة");
+      setTimeout(() => setInventoryError(null), 3000);
+    } finally {
+      setIsAddingBatch(false);
+    }
+  };
+
   const filteredItems = items.filter(item => 
     item.name.toLowerCase().includes(search.toLowerCase()) || 
-    item.company.toLowerCase().includes(search.toLowerCase())
+    (item.company || '').toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleCameraScan = async (barcode: string) => {
+    setSearch(barcode);
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
@@ -123,7 +173,7 @@ export default function InventoryDashboard() {
           <p className="text-gray-400 mt-2 font-cairo">تتبع المنتجات، تواريخ الانتهاء، وتعديل الكميات يدوياً.</p>
         </div>
         <Link href="/products/create" className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00CED1]/10 hover:bg-[#00CED1]/20 text-[#00CED1] font-medium transition-colors border border-[#00CED1]/20 font-cairo">
-          <Plus className="w-5 h-5" /> توريد جديد
+          <Plus className="w-5 h-5" /> إضافة صنف جديد
         </Link>
       </header>
 
@@ -146,6 +196,9 @@ export default function InventoryDashboard() {
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> تحديث
         </button>
       </div>
+
+      {/* Background Live Scanner */}
+      <LiveScanner onScan={handleCameraScan} />
 
       {/* Table Area */}
       <div className="glass-panel overflow-hidden border-white/5">
@@ -219,6 +272,87 @@ export default function InventoryDashboard() {
                             >
                               <div className="p-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {addingBatchForProduct === item.id ? (
+                                    <div className="glass-card p-5 border-[#00CED1]/50 bg-[#00CED1]/5 relative shadow-[0_0_15px_rgba(0,206,209,0.1)]">
+                                      <h4 className="text-sm font-bold text-[#00CED1] mb-3 flex items-center gap-2 font-cairo">
+                                        <Plus className="w-4 h-4" /> إضافة تشغيلة جديدة
+                                      </h4>
+                                      <div className="space-y-3">
+                                        <div className="flex gap-4">
+                                          <div className="flex-1">
+                                            <label className="text-[10px] text-gray-400 block mb-1 font-cairo">الباركود</label>
+                                            <input 
+                                              className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                                              value={newBatchForm.barcode}
+                                              onChange={(e) => setNewBatchForm({...newBatchForm, barcode: e.target.value})}
+                                            />
+                                          </div>
+                                          <div className="w-24">
+                                            <label className="text-[10px] text-gray-400 block mb-1 font-cairo">الكمية</label>
+                                            <input 
+                                              type="number"
+                                              className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                                              value={newBatchForm.quantity}
+                                              onChange={(e) => setNewBatchForm({...newBatchForm, quantity: Number(e.target.value)})}
+                                            />
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-4">
+                                          <div className="flex-1">
+                                            <label className="text-[10px] text-gray-400 block mb-1 font-cairo">سعر الشراء</label>
+                                            <input 
+                                              type="number"
+                                              className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                                              value={newBatchForm.purchase_price}
+                                              onChange={(e) => setNewBatchForm({...newBatchForm, purchase_price: Number(e.target.value)})}
+                                            />
+                                          </div>
+                                          <div className="flex-1">
+                                            <label className="text-[10px] text-gray-400 block mb-1 font-cairo">سعر البيع</label>
+                                            <input 
+                                              type="number"
+                                              className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                                              value={newBatchForm.selling_price}
+                                              onChange={(e) => setNewBatchForm({...newBatchForm, selling_price: Number(e.target.value)})}
+                                            />
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <label className="text-[10px] text-gray-400 block mb-1 font-cairo">تاريخ الانتهاء</label>
+                                          <input 
+                                            type="date"
+                                            className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1] [color-scheme:dark]"
+                                            value={newBatchForm.expiry_date}
+                                            onChange={(e) => setNewBatchForm({...newBatchForm, expiry_date: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="flex gap-2 justify-end pt-2">
+                                          <button 
+                                            onClick={() => setAddingBatchForProduct(null)}
+                                            className="px-3 py-1.5 rounded bg-white/5 border border-white/10 text-white hover:bg-white/10 font-cairo text-sm"
+                                          >
+                                            إلغاء
+                                          </button>
+                                          <button 
+                                            disabled={isAddingBatch || !newBatchForm.barcode || !newBatchForm.expiry_date}
+                                            onClick={() => handleCreateBatch(item.id)}
+                                            className="px-3 py-1.5 rounded bg-gradient-to-r from-[#00CED1] to-[#00CED1]/80 text-black hover:opacity-90 font-bold font-cairo text-sm flex items-center gap-2 disabled:opacity-50"
+                                          >
+                                            {isAddingBatch ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                                            حفظ
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button 
+                                      onClick={() => startAddingBatch(item.id)}
+                                      className="glass-card p-5 border-dashed border-white/20 hover:border-[#00CED1]/50 hover:bg-[#00CED1]/5 transition-all text-[#00CED1] font-cairo flex flex-col items-center justify-center gap-3 min-h-[160px]"
+                                    >
+                                      <Plus className="w-8 h-8" />
+                                      <span className="font-bold">إضافة تشغيلة جديدة</span>
+                                    </button>
+                                  )}
                                   {item.batches.map((batch) => (
                                     <div key={batch.id} className="glass-card p-5 border-white/10 relative group hover:border-[#D4AF37]/30 transition-all">
                                       {editingBatchId === batch.id ? (
@@ -242,14 +376,25 @@ export default function InventoryDashboard() {
                                               />
                                             </div>
                                           </div>
-                                          <div>
-                                            <label className="text-[10px] text-gray-500 block mb-1 font-cairo">سعر البيع</label>
-                                            <input 
-                                              type="number"
-                                              className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
-                                              value={editForm.selling_price}
-                                              onChange={(e) => setEditForm({...editForm, selling_price: Number(e.target.value)})}
-                                            />
+                                          <div className="flex justify-between gap-4">
+                                            <div className="flex-1">
+                                              <label className="text-[10px] text-gray-500 block mb-1 font-cairo">سعر الشراء</label>
+                                              <input 
+                                                type="number"
+                                                className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                                                value={editForm.purchase_price}
+                                                onChange={(e) => setEditForm({...editForm, purchase_price: Number(e.target.value)})}
+                                              />
+                                            </div>
+                                            <div className="flex-1">
+                                              <label className="text-[10px] text-gray-500 block mb-1 font-cairo">سعر البيع</label>
+                                              <input 
+                                                type="number"
+                                                className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                                                value={editForm.selling_price}
+                                                onChange={(e) => setEditForm({...editForm, selling_price: Number(e.target.value)})}
+                                              />
+                                            </div>
                                           </div>
                                           <div className="flex gap-2 justify-end pt-2">
                                             <button 
@@ -295,9 +440,15 @@ export default function InventoryDashboard() {
                                                 انتهاء: {new Date(batch.expiry_date).toLocaleDateString('ar-EG')}
                                               </div>
                                             </div>
-                                            <div className="text-left">
-                                              <p className="text-[10px] text-gray-500 font-cairo">سعر البيع</p>
-                                              <p className="font-bold text-[#D4AF37] font-cairo">{batch.selling_price} ج.م</p>
+                                            <div className="text-left flex gap-6">
+                                              <div>
+                                                <p className="text-[10px] text-gray-500 font-cairo">سعر الشراء</p>
+                                                <p className="font-bold text-gray-400 font-cairo text-sm">{batch.purchase_price} ج.م</p>
+                                              </div>
+                                              <div>
+                                                <p className="text-[10px] text-gray-500 font-cairo">سعر البيع</p>
+                                                <p className="font-bold text-[#D4AF37] font-cairo text-sm">{batch.selling_price} ج.م</p>
+                                              </div>
                                             </div>
                                           </div>
                                         </>

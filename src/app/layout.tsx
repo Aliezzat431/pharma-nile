@@ -4,6 +4,9 @@ import './globals.css';
 import StoreProvider from '@/store/StoreProvider';
 import { AuthProvider } from '@/hooks/useAuth';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
+import UndoToast from '@/components/ui/UndoToast';
+import AgentCopilot from '@/components/agent/AgentCopilot';
+import WorkspaceManager from '@/components/agent/WorkspaceManager';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' });
@@ -12,6 +15,8 @@ export const metadata: Metadata = {
   title: 'PharmaNile - Pharmacy Stock Management System',
   description: 'Premium glassmorphism pharmacy OS for the Egyptian market',
 };
+
+import { Suspense } from 'react';
 
 export default function RootLayout({
   children,
@@ -23,9 +28,14 @@ export default function RootLayout({
       <body className="antialiased bg-[#050505] text-white font-cairo">
         <StoreProvider>
           <AuthProvider>
-            <LayoutWrapper>
-               {children}
-            </LayoutWrapper>
+            <Suspense fallback={<div className="min-h-screen bg-[#050505] animate-pulse"></div>}>
+              <LayoutWrapper>
+                 {children}
+              </LayoutWrapper>
+            </Suspense>
+            <UndoToast />
+            <AgentCopilot />
+            <WorkspaceManager />
           </AuthProvider>
         </StoreProvider>
       </body>

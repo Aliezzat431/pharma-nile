@@ -19,9 +19,20 @@ export default function StaffManagement() {
   const [activeCount, setActiveCount] = useState(0);
   const [totalStaff, setTotalStaff] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
+
+    const channel = supabase
+      .channel('staff-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_profiles' }, () => fetchData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -51,7 +62,12 @@ export default function StaffManagement() {
           </h1>
           <p className="text-gray-400 mt-2 font-cairo">إدارة شؤون الموظفين، تتبع الورديات، والرواتب.</p>
         </div>
-      
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="nile-button flex items-center gap-2"
+        >
+          <Plus className="w-5 h-5" /> إضافة موظف
+        </button>
       </header>
 
       {/* Top Stats */}

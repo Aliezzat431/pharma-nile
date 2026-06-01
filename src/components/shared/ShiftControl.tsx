@@ -35,12 +35,13 @@ export default function ShiftControl() {
     if (!user) return;
     setActionLoading(true);
     try {
-      const shiftType = new Date().getHours() < 16 ? 'Morning' : 'Evening';
+      const shiftType = new Date().getHours() < 16 ? 'morning' : 'night';
       const newSession = await startShift(user.id, user.user_metadata?.full_name || 'Staff', shiftType);
       await refreshShift();
       setSession(newSession);
-    } catch (err) {
-      alert("Failed to start shift");
+    } catch (err: any) {
+      console.error("Start Shift Error Details:", err);
+      alert(`عذراً، فشل بدء الوردية: ${err.message || 'خطأ غير معروف'}`);
     } finally {
       setActionLoading(false);
     }
@@ -53,8 +54,9 @@ export default function ShiftControl() {
       await endShift(session.id);
       await refreshShift();
       setSession(null);
-    } catch (err) {
-      alert("Failed to end shift");
+    } catch (err: any) {
+      console.error("End Shift Error Details:", err);
+      alert(`عذراً، فشل إنهاء الوردية: ${err.message || 'خطأ غير معروف'}`);
     } finally {
       setActionLoading(false);
     }
@@ -75,7 +77,7 @@ export default function ShiftControl() {
           </div>
           <div>
             <h3 className="font-bold text-lg font-cairo">
-              {session ? `أنت الآن في وردية: ${session.shift_type === 'Morning' ? 'صباحية' : 'مسائية'}` : 'لم تبدأ الوردية بعد'}
+              {session ? `أنت الآن في وردية: ${session.shift_type === 'morning' ? 'صباحية' : 'مسائية'}` : 'لم تبدأ الوردية بعد'}
             </h3>
             <p className="text-sm text-gray-400 font-cairo">
               {session ? `بدأت في: ${new Date(session.start_time).toLocaleTimeString()}` : 'يرجى فتح وردية لبدء عمليات البيع'}

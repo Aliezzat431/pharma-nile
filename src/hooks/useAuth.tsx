@@ -5,21 +5,14 @@ import { Session, User } from "@supabase/supabase-js";
 
 const supabase = createClient();
 
-export interface ActiveShift {
-  id: string;
-  username: string;
-  shift_type: string;
-  status: 'active' | 'closed';
-}
+
 
 type AuthContextType = {
   user: User | null;
   session: Session | null;
-  activeShift: ActiveShift | null;
   loading: boolean;
   signIn: (email: string, password: string, adminKey?: string) => Promise<void>;
   signOut: () => Promise<void>;
-  refreshShift: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,38 +20,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [activeShift, setActiveShift] = useState<ActiveShift | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchActiveShift = async (userId: string) => {
-    const { data } = await supabase
-      .from('sessions')
-      .select('id, username, shift_type, status')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .maybeSingle();
-    
-    setActiveShift(data as ActiveShift);
-  };
+  
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) {
-        fetchActiveShift(sess.user.id);
-      } else {
-        setActiveShift(null);
-      }
       setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) {
-        fetchActiveShift(sess.user.id);
-      }
       setLoading(false);
     });
 
@@ -67,9 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const refreshShift = async () => {
-    if (user) await fetchActiveShift(user.id);
-  };
+  const refreshShift = async () => {};
 
   const signIn = async (email: string, password: string, adminKey?: string) => {
     setLoading(true);
@@ -95,7 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('user_profiles')
         .select('role')
         .eq('id', authUser.id)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (profileError) {
         console.error('❌ Step 2 FAILED - Profile fetch error:', profileError.message, profileError);
@@ -147,13 +121,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       setSession(null);
-      setActiveShift(null);
+
       setLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, activeShift, loading, signIn, signOut, refreshShift }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signOut, refreshShift }}>
       {children}
     </AuthContext.Provider>
   );

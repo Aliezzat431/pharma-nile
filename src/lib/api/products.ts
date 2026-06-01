@@ -6,11 +6,14 @@ export interface Product {
   type: string;
   unit: string;
   unit_conversion: number;
-  company: string;
+  company_id: string;
   inventory_method: string;
   // Computed fields from the view if we rely on it, otherwise null initially
   total_quantity?: number;
   current_price?: number;
+  company?: string;
+  barcode?: string;
+  activeBatches?: any[]; // added to hold batch distributions options
 }
 
 export interface Batch {
@@ -62,20 +65,43 @@ export async function searchProducts(query: string) {
 }
 
 export async function getProductByBarcode(barcode: string) {
+  // First get the product via batch barcode
   const { data: batch, error: batchError } = await supabase
     .from('batches')
-    .select('*, products(*)')
+    .select('id, product_id')
     .eq('barcode', barcode)
     .gt('quantity', 0)
-    .order('expiry_date', { ascending: true })
     .limit(1)
     .single();
 
   if (batchError || !batch) return null;
 
+  // Then fetch the full product with all its active batches
+  const { data: products, error } = await supabase
+    .from('products')
+    .select(`
+      *,
+      batches (
+        *
+      )
+    `)
+    .eq('id', batch.product_id);
+
+  if (error || !products || products.length === 0) return null;
+
+  const p = products[0];
+  const activeBatches = p.batches
+    .filter((b: Batch) => b.quantity > 0)
+    .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
+
+  const current_price = activeBatches.length > 0 ? activeBatches[0].selling_price : 0;
+  const total_quantity = activeBatches.reduce((acc: number, b: Batch) => acc + b.quantity, 0);
+
   return {
-    ...batch.products,
-    current_price: batch.selling_price,
+    ...p,
+    current_price,
+    total_quantity,
+    activeBatches,
     scanned_batch_id: batch.id,
   };
 }
@@ -91,6 +117,20 @@ export async function updateBatch(batchId: string, updates: Partial<Batch>) {
 
   if (error) {
     console.error('Error updating batch:', error);
+    throw error;
+  }
+  return data;
+}
+
+export async function createBatch(batch: Partial<Batch>) {
+  const { data, error } = await supabase
+    .from('batches')
+    .insert([batch])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating batch:', error);
     throw error;
   }
   return data;
