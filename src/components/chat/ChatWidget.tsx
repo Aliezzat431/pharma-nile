@@ -2,10 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Minimize2 } from 'lucide-react';
-import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-
-let socket: Socket;
 
 interface ChatMessage {
   id: string;
@@ -21,21 +18,8 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Initialize socket connection
-    const socketInitializer = async () => {
-      // In production/Electron, we will connect to the localhost server we spun up
-      socket = io({ path: '/socket.io' });
-
-      socket.on('receive-message', (data: ChatMessage) => {
-        setMessages((prev) => [...prev, data]);
-      });
-    };
-
-    socketInitializer();
-
-    return () => {
-      if (socket) socket.disconnect();
-    };
+    // Socket server has been removed per purely Next.js architecture request
+    // This is now a stub. In the future, this could use Supabase Realtime Channels.
   }, []);
 
   useEffect(() => {
@@ -47,14 +31,15 @@ export default function ChatWidget() {
     e.preventDefault();
     if (!input.trim()) return;
 
-      const msgData: ChatMessage = {
+    const msgData: ChatMessage = {
       id: Math.random().toString(36).substring(7),
       sender: 'د. أحمد', // Hardcoded for demo
       text: input.trim(),
       timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
     };
 
-    socket.emit('send-message', msgData);
+    // Simulate instantly seeing your own message since there is no server bounce-back anymore
+    setMessages((prev) => [...prev, msgData]);
     setInput('');
   };
 

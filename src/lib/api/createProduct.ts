@@ -17,6 +17,8 @@ export interface CreateProductInput {
 
 export async function createProductWithBatch(input: CreateProductInput) {
   // 1. Insert into products
+  const pharmacyId = typeof window !== 'undefined' ? localStorage.getItem('selected_pharmacy_id') : null;
+  
   const { data: product, error: productError } = await supabase
     .from('products')
     .insert([
@@ -27,6 +29,7 @@ export async function createProductWithBatch(input: CreateProductInput) {
         unit: input.unit,
         unit_conversion: input.unit_conversion,
         inventory_method: input.inventory_method,
+        ...(pharmacyId ? { pharmacy_id: pharmacyId } : {})
       },
     ])
     .select()
@@ -48,6 +51,7 @@ export async function createProductWithBatch(input: CreateProductInput) {
         purchase_price: input.purchase_price,
         selling_price: input.selling_price,
         expiry_date: input.expiry_date,
+        ...(pharmacyId ? { pharmacy_id: pharmacyId } : {})
       },
     ]);
 

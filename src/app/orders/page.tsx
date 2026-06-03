@@ -33,6 +33,7 @@ interface Order {
 export default function SalesDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
+  
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'all'>('month');
 
   useEffect(() => {
@@ -141,26 +142,6 @@ export default function SalesDashboardPage() {
   };
   const paymentData = generatePaymentData();
 
-  const formatCurrency = (val: unknown): [string, string] => {
-    let numVal = 0;
-    if (typeof val === 'number') {
-      numVal = val;
-    } else if (Array.isArray(val)) {
-      numVal = Number(val[0] ?? 0);
-    }
-    return [`${numVal.toLocaleString('ar-EG')} ج.م`, ""];
-  };
-
-  const formatQuantity = (val: unknown): [string, string] => {
-    let numVal = 0;
-    if (typeof val === 'number') {
-      numVal = val;
-    } else if (Array.isArray(val)) {
-      numVal = Number(val[0] ?? 0);
-    }
-    return [`${numVal} علبة/قطعة`, "الكمية المباعة"];
-  };
-
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
       <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -171,7 +152,7 @@ export default function SalesDashboardPage() {
           </h1>
           <p className="text-gray-400 mt-2 font-cairo">نظرة شاملة على أداء المبيعات والأرباح لمتجرك</p>
         </div>
-        <div className="flex bg-black/40 border border-white/5 rounded-xl p-1 overflow-hidden font-cairo">
+        <div className="flex flex-wrap md:flex-nowrap bg-black/40 border border-white/5 rounded-xl p-1 overflow-hidden font-cairo w-full md:w-auto overflow-x-auto">
           {[
             { id: 'today', label: 'اليوم' },
             { id: 'week', label: 'هذا الأسبوع' },
@@ -181,7 +162,7 @@ export default function SalesDashboardPage() {
             <button
               key={tab.id}
               onClick={() => setDateRange(tab.id as any)}
-              className={"px-4 py-2 text-sm rounded-lg transition-all " + (dateRange === tab.id ? "bg-[#00CED1]/20 text-[#00CED1] font-bold" : "text-gray-400 hover:text-white")}
+              className={"flex-1 md:flex-none px-4 py-2 text-sm rounded-lg transition-all whitespace-nowrap " + (dateRange === tab.id ? "bg-[#00CED1]/20 text-[#00CED1] font-bold" : "text-gray-400 hover:text-white")}
             >
               {tab.label}
             </button>
@@ -201,7 +182,7 @@ export default function SalesDashboardPage() {
               <div className="flex items-center justify-between z-10 relative">
                 <div className="font-cairo">
                   <p className="text-gray-400 text-xs">إجمالي المبيعات</p>
-                  <p className="text-2xl font-bold text-white mt-1">{totalRevenue.toLocaleString('ar-EG')} <span className="text-sm font-normal text-gray-500">ج.م</span></p>
+                  <p className="text-2xl font-bold text-white mt-1" dir="ltr">{totalRevenue.toLocaleString('ar-EG')} <span className="text-sm font-normal text-gray-500">ج.م</span></p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[#00CED1]/10 flex items-center justify-center">
                   <DollarSign className="w-5 h-5 text-[#00CED1]" />
@@ -214,7 +195,7 @@ export default function SalesDashboardPage() {
               <div className="flex items-center justify-between z-10 relative">
                 <div className="font-cairo">
                   <p className="text-gray-400 text-xs">إجمالي الأرباح</p>
-                  <p className="text-2xl font-bold text-[#D4AF37] mt-1">{totalProfit.toLocaleString('ar-EG')} <span className="text-sm font-normal text-[#D4AF37]/50">ج.م</span></p>
+                  <p className="text-2xl font-bold text-[#D4AF37] mt-1" dir="ltr">{totalProfit.toLocaleString('ar-EG')} <span className="text-sm font-normal text-[#D4AF37]/50">ج.م</span></p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center">
                   <Activity className="w-5 h-5 text-[#D4AF37]" />
@@ -227,7 +208,7 @@ export default function SalesDashboardPage() {
               <div className="flex items-center justify-between z-10 relative">
                 <div className="font-cairo">
                   <p className="text-gray-400 text-xs">متوسط قيمة الطلب</p>
-                  <p className="text-2xl font-bold text-white mt-1">{Math.round(averageOrderValue).toLocaleString('ar-EG')} <span className="text-sm font-normal text-gray-500">ج.م</span></p>
+                  <p className="text-2xl font-bold text-white mt-1" dir="ltr">{Math.round(averageOrderValue).toLocaleString('ar-EG')} <span className="text-sm font-normal text-gray-500">ج.م</span></p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
                   <ShoppingBag className="w-5 h-5 text-purple-400" />
@@ -267,17 +248,11 @@ export default function SalesDashboardPage() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" vertical={false} />
-                    <XAxis dataKey="date" stroke="#666" tick={{fontFamily: 'Cairo', fontSize: 12}} tickMargin={10} axisLine={false} />
-                    <YAxis 
-                      stroke="#666" 
-                      tick={{fontFamily: 'Cairo', fontSize: 12}} 
-                      axisLine={false} 
-                      tickFormatter={(val) => `${Number(val ?? 0).toLocaleString('ar-EG')} ج.م`} 
-                    />
+                    <XAxis dataKey="date" stroke="#666" tick={{fontFamily: 'Cairo', fontSize: 10}} tickMargin={10} axisLine={false} interval="preserveStartEnd" angle={-15} textAnchor="end" />
+                    <YAxis stroke="#666" tick={{fontFamily: 'Cairo', fontSize: 12}} axisLine={false} tickFormatter={(val) => val + ""} />
                     <RechartsTooltip 
                       contentStyle={{backgroundColor: '#0a0a0a', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}} 
                       itemStyle={{fontFamily: 'Cairo'}}
-                      formatter={formatCurrency}
                     />
                     <Area type="monotone" name="المبيعات" dataKey="sales" stroke="#00CED1" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                     <Area type="monotone" name="الأرباح" dataKey="profit" stroke="#D4AF37" strokeWidth={2} fillOpacity={1} fill="url(#colorProfit)" />
@@ -310,7 +285,7 @@ export default function SalesDashboardPage() {
                       </Pie>
                       <RechartsTooltip 
                         contentStyle={{backgroundColor: '#0a0a0a', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}}
-                        formatter={formatCurrency}
+                        formatter={(val: any) => val?.toLocaleString('ar-EG') + " ج.م"}
                       />
                       <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontFamily: 'Cairo', fontSize: '12px', paddingTop: '20px' }} />
                     </PieChart>
@@ -335,7 +310,7 @@ export default function SalesDashboardPage() {
                       <RechartsTooltip 
                         contentStyle={{backgroundColor: '#0a0a0a', border: '1px solid #ffffff10', borderRadius: '12px', fontFamily: 'Cairo'}}
                         cursor={{fill: '#ffffff05'}}
-                        formatter={formatQuantity}
+                        formatter={(val: any) => [val + " علبة/قطعة", "الكمية المباعة"]}
                       />
                       <Bar dataKey="qty" fill="#00CED1" radius={[0, 4, 4, 0]} barSize={24}>
                         {topProductsData.map((entry, index) => (

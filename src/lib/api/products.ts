@@ -123,9 +123,12 @@ export async function updateBatch(batchId: string, updates: Partial<Batch>) {
 }
 
 export async function createBatch(batch: Partial<Batch>) {
+  const pharmacyId = typeof window !== 'undefined' ? localStorage.getItem('selected_pharmacy_id') : null;
+  const payload = pharmacyId ? { ...batch, pharmacy_id: pharmacyId } : batch;
+
   const { data, error } = await supabase
     .from('batches')
-    .insert([batch])
+    .insert([payload])
     .select()
     .single();
 

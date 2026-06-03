@@ -4,9 +4,8 @@
   "type": "module",
   "main": "main.js",
   "scripts": {
-    "dev": "node server.js",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "start-server": "node server.js",
+    "dev": "next dev",
+    "electron:dev": "concurrently \"next dev\" \"wait-on http://localhost:3000 && electron .\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -31,8 +30,6 @@
     "react-dom": "19.2.4",
     "react-redux": "^9.3.0",
     "recharts": "^3.8.1",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.6.0",
     "xlsx": "^0.18.5"
   },

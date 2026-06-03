@@ -39,7 +39,7 @@ function createWindow() {
 app.on('ready', () => {
   // Start the Next.js Custom Server
   if (process.env.NODE_ENV !== 'development') {
-     nextProcess = spawn(/^win/.test(process.platform) ? 'npm.cmd' : 'npm', ['run', 'start-server'], {
+     nextProcess = spawn(/^win/.test(process.platform) ? 'npm.cmd' : 'npm', ['run', 'start'], {
         cwd: __dirname,
         detached: false,
      });

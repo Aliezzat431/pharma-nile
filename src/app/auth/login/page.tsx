@@ -5,24 +5,59 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Lock, Mail, ShieldAlert, UserPlus } from "lucide-react";
+import { useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
   const router = useRouter();
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [adminKey, setAdminKey] = useState("");
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState("");
+  const [pharmacies, setPharmacies] = useState<{ id: string, name: string }[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch active pharmacies on mount
+  useEffect(() => {
+    const loadPharmacies = async () => {
+      const { data } = await createClient().from('pharmacies').select('id, name').eq('is_active', true);
+      if (data && data.length > 0) {
+        setPharmacies(data);
+        setSelectedPharmacyId(data[0].id); // Auto-select first pharmacy
+      }
+    };
+    loadPharmacies();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // 1. Secret in Password Validation
+    if (!password.endsWith("")) {
+      setError("كلمة المرور غير صالحة. يجب أن تنتهي بالرمز السري الخاص بالنظام.");
+      return;
+    }
+
+    // 2. Pharmacy Selection Validation
+    if (!selectedPharmacyId) {
+      setError("الرجاء اختيار الفرع/الصيدلية أولاً.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       await signIn(email, password, adminKey);
+
+      // Save selected pharmacy to localStorage
+      if (selectedPharmacyId) {
+        localStorage.setItem('selected_pharmacy_id', selectedPharmacyId);
+      }
+
       router.push("/");
     } catch (err: any) {
       setError(err?.message || "فشل تسجيل الدخول. يرجى التحقق من بياناتك.");
@@ -77,6 +112,8 @@ export default function LoginPage() {
             </div>
           </div>
 
+
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground/70 mr-1 block font-cairo text-right">
@@ -98,7 +135,27 @@ export default function LoginPage() {
               />
             </div>
           </div>
-
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground/70 mr-1 block font-cairo text-right">
+              اختر الفرع / الصيدلية
+            </label>
+            <div className="relative">
+              <select
+                value={selectedPharmacyId}
+                onChange={(e) => setSelectedPharmacyId(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 pl-10 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all font-cairo appearance-none"
+                required
+              >
+                <option value="" disabled className="bg-[#050505]">-- الرجاء اختيار الصيدلية --</option>
+                {pharmacies.map(p => (
+                  <option key={p.id} value={p.id} className="bg-[#050505]">{p.name}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+          </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-[#D4AF37]/80 mr-1 block font-cairo text-right">
@@ -138,8 +195,8 @@ export default function LoginPage() {
 
         <div className="mt-8 pt-6 border-t border-white/5 text-center">
           <p className="text-sm text-foreground/50 mb-4 font-cairo">ليس لديك حساب؟</p>
-          <Link 
-            href="/auth/register" 
+          <Link
+            href="/auth/register"
             className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[#00CED1] font-medium hover:bg-white/10 transition-all font-cairo"
           >
             <UserPlus className="w-4 h-4" />

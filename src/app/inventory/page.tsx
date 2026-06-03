@@ -164,7 +164,7 @@ export default function InventoryDashboard() {
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
              <PackageOpen className="text-[#00CED1]" />
@@ -172,26 +172,26 @@ export default function InventoryDashboard() {
           </h1>
           <p className="text-gray-400 mt-2 font-cairo">تتبع المنتجات، تواريخ الانتهاء، وتعديل الكميات يدوياً.</p>
         </div>
-        <Link href="/products/create" className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00CED1]/10 hover:bg-[#00CED1]/20 text-[#00CED1] font-medium transition-colors border border-[#00CED1]/20 font-cairo">
+        <Link href="/products/create" className="flex items-center justify-center w-full md:w-auto gap-2 px-5 py-2.5 rounded-xl bg-[#00CED1]/10 hover:bg-[#00CED1]/20 text-[#00CED1] font-medium transition-colors border border-[#00CED1]/20 font-cairo">
           <Plus className="w-5 h-5" /> إضافة صنف جديد
         </Link>
       </header>
 
       {/* Controls */}
-      <div className="flex gap-4 mb-6">
-        <div className="flex-1 glass-panel p-2 flex items-center gap-3">
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1 glass-panel p-2 flex items-center gap-3 w-full">
           <Search className="w-5 h-5 text-gray-400 mr-3" />
           <input 
             type="text" 
             placeholder="بحث بالاسم أو الشركة..." 
-            className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-gray-500 py-2 font-cairo"
+            className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-gray-500 py-2 font-cairo min-w-0"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <button 
           onClick={fetchInventory}
-          className="glass-card px-4 py-2 flex items-center gap-2 text-[#00CED1] hover:bg-[#00CED1]/10 transition-colors font-cairo"
+          className="glass-card px-4 py-3 md:py-2 flex justify-center items-center gap-2 text-[#00CED1] hover:bg-[#00CED1]/10 transition-colors font-cairo w-full md:w-auto"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> تحديث
         </button>
@@ -437,17 +437,18 @@ export default function InventoryDashboard() {
                                               </div>
                                               <div className="flex items-center gap-2 text-xs text-gray-500 font-cairo">
                                                 <Calendar className="w-3 h-3" />
-                                                انتهاء: {new Date(batch.expiry_date).toLocaleDateString('ar-EG')}
+                                                <span>انتهاء:</span>
+                                                <span dir="ltr">{new Date(batch.expiry_date).toLocaleDateString('ar-EG')}</span>
                                               </div>
                                             </div>
                                             <div className="text-left flex gap-6">
-                                              <div>
+                                              <div className="flex flex-col gap-1">
                                                 <p className="text-[10px] text-gray-500 font-cairo">سعر الشراء</p>
-                                                <p className="font-bold text-gray-400 font-cairo text-sm">{batch.purchase_price} ج.م</p>
+                                                <p className="font-bold text-gray-400 font-cairo text-sm" dir="ltr">{batch.purchase_price} ج.م</p>
                                               </div>
-                                              <div>
+                                              <div className="flex flex-col gap-1">
                                                 <p className="text-[10px] text-gray-500 font-cairo">سعر البيع</p>
-                                                <p className="font-bold text-[#D4AF37] font-cairo text-sm">{batch.selling_price} ج.م</p>
+                                                <p className="font-bold text-[#D4AF37] font-cairo text-sm" dir="ltr">{batch.selling_price} ج.م</p>
                                               </div>
                                             </div>
                                           </div>

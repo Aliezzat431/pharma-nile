@@ -263,9 +263,9 @@ export default function CustomersPage() {
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#D4AF37] border border-white/10 group-hover:border-[#D4AF37]/50 transition-colors">
                      <Users className="w-6 h-6" />
                   </div>
-                  <div className="text-right">
+                  <div className="text-right h-auto py-1">
                      <p className="text-xs text-gray-500 font-cairo mb-1 uppercase">نقاط الولاء</p>
-                     <p className="text-lg font-bold text-[#D4AF37]">{customer.loyalty_points} <span className="text-[10px] font-normal">نقطة</span></p>
+                     <p className="text-lg font-bold text-[#D4AF37] leading-tight">{customer.loyalty_points} <span className="text-[10px] font-normal">نقطة</span></p>
                   </div>
                 </div>
 
@@ -288,7 +288,7 @@ export default function CustomersPage() {
 
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between mb-6">
                    <div>
-                      <p className="text-[10px] text-gray-500 font-cairo mb-0.5 uppercase">إجمالي الدين</p>
+                      <p className="text-[10px] text-gray-500 font-cairo mb-1.5 uppercase">إجمالي الدين</p>
                       <p className={`text-xl font-bold ${customer.total_debt > 0 ? 'text-red-400' : 'text-green-400'}`}>
                         {customer.total_debt > 0 ? customer.total_debt.toLocaleString() : '0'} <span className="text-xs font-normal">ج.م</span>
                       </p>

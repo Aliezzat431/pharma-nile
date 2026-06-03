@@ -21,17 +21,20 @@ export async function processCheckout(
   const costTotal = cart.reduce((acc, item) => acc + (item.costPrice || 0) * item.quantity, 0);
   const profitTotal = total - costTotal;
 
+  const pharmacyId = typeof window !== 'undefined' ? localStorage.getItem('selected_pharmacy_id') : null;
+  const orderBase = { 
+    total, 
+    cost_total: costTotal,
+    profit_total: profitTotal,
+    customer_id: customerId || null,
+    payment_method: paymentMethod,
+    status: 'completed'
+  };
+  
   // 1. Create the Order
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .insert([{ 
-      total, 
-      cost_total: costTotal,
-      profit_total: profitTotal,
-      customer_id: customerId || null,
-      payment_method: paymentMethod,
-      status: 'completed'
-    }])
+    .insert([{ ...orderBase, ...(pharmacyId ? { pharmacy_id: pharmacyId } : {}) }])
     .select()
     .single();
 
@@ -83,7 +86,8 @@ export async function processCheckout(
               name: item.name,
               price: item.price,
               quantity: deduction,
-              unit: item.unit
+              unit: item.unit,
+              ...(pharmacyId ? { pharmacy_id: pharmacyId } : {})
             }]);
 
           // Update batch stock
@@ -124,7 +128,8 @@ export async function processCheckout(
               name: item.name,
               price: item.price,
               quantity: deduction,
-              unit: item.unit
+              unit: item.unit,
+              ...(pharmacyId ? { pharmacy_id: pharmacyId } : {})
             }]);
 
           // Update batch

@@ -129,9 +129,9 @@ export default function ReturnsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="glass-card p-5 flex items-center justify-between"
         >
-          <div className="font-cairo">
+          <div className="font-cairo h-auto py-1">
             <p className="text-gray-400 text-sm">إجمالي المبيعات</p>
-            <p className="text-2xl font-bold text-[#D4AF37]">{totalValue.toLocaleString('ar-EG')} ج.م</p>
+            <p className="text-2xl font-bold text-[#D4AF37]" dir="ltr">{totalValue.toLocaleString('ar-EG')} ج.م</p>
           </div>
           <ShoppingBag className="w-8 h-8 text-[#D4AF37]/30" />
         </motion.div>
@@ -142,7 +142,7 @@ export default function ReturnsPage() {
           transition={{ delay: 0.1 }}
           className="glass-card p-5 flex items-center justify-between"
         >
-          <div className="font-cairo">
+          <div className="font-cairo h-auto py-1">
             <p className="text-gray-400 text-sm">عدد الفواتير</p>
             <p className="text-2xl font-bold text-green-400">{totalActive}</p>
           </div>
@@ -155,7 +155,7 @@ export default function ReturnsPage() {
           transition={{ delay: 0.2 }}
           className="glass-card p-5 flex items-center justify-between"
         >
-          <div className="font-cairo">
+          <div className="font-cairo h-auto py-1">
             <p className="text-gray-400 text-sm">عدد الأصناف المباعة</p>
             <p className="text-2xl font-bold text-[#00CED1]">{orders.reduce((a, o) => a + o.order_items.length, 0)}</p>
           </div>
@@ -222,19 +222,19 @@ export default function ReturnsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-left">
-                      <p className="text-xs text-gray-500 font-cairo">الإجمالي</p>
-                      <p className="text-xl font-bold font-cairo text-[#D4AF37]">
-                        {Number(order.total).toLocaleString('ar-EG')} ج.م
-                      </p>
-                    </div>
-                    <div className="text-gray-400">
-                      <span className="text-xs font-cairo">{order.order_items.length} أصناف</span>
+                    <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
+                      <div className="text-left">
+                        <p className="text-[10px] text-gray-500 font-cairo mb-0.5">الإجمالي</p>
+                        <p className="text-lg font-bold font-cairo text-[#D4AF37]" dir="ltr">
+                          {Number(order.total).toLocaleString('ar-EG')} ج.م
+                        </p>
+                      </div>
+                      <div className="text-gray-400">
+                        <span className="text-[10px] font-cairo">{order.order_items.length} أصناف</span>
+                      </div>
                     </div>
                     {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
                   </div>
-                </div>
 
                 {/* Expanded: Order Items + Return Button */}
                 <AnimatePresence>

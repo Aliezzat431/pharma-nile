@@ -356,10 +356,10 @@ export default function POSTerminal() {
       
       {/* Left side - Product Search & Input */}
       <div className="flex-1 flex flex-col gap-6">
-        <header className="flex items-center justify-between">
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold font-cairo">نقطة <span className="text-[#00CED1]">البيع</span> (POS)</h1>
-          <div className="flex gap-4">
-            <div className="glass-card px-4 py-2 text-sm text-gray-300 flex items-center gap-2 font-cairo">
+          <div className="flex gap-4 w-full md:w-auto">
+            <div className="glass-card px-4 py-2 text-sm text-gray-300 flex items-center justify-center gap-2 font-cairo w-full md:w-auto">
               <Barcode className="w-4 h-4 text-[#00CED1]" /> الماسح جاهز
             </div>
           </div>
@@ -512,8 +512,12 @@ export default function POSTerminal() {
                 >
                   <div className="z-10 flex-1">
                     <h3 className="font-semibold text-white truncate max-w-[200px] font-cairo">{item.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm text-[#00CED1] font-cairo">{item.quantity} x {item.price} ج.م</span>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <span className="text-sm text-[#00CED1] font-cairo flex gap-2" dir="ltr">
+                        <span>{item.quantity}</span>
+                        <span>x</span>
+                        <span>{item.price} ج.م</span>
+                      </span>
                       <select 
                         value={item.unit}
                         onChange={(e) => {
@@ -531,7 +535,7 @@ export default function POSTerminal() {
                              dispatch(updateUnit({ id: item.id, unit: newUnit }));
                           }
                         }}
-                        className="bg-[#050505]/50 border border-white/10 rounded px-1 py-0.5 text-xs text-white outline-none font-cairo"
+                        className="bg-[#050505]/50 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-white outline-none font-cairo focus:border-[#00CED1]/50"
                       >
                         {item.availableUnits?.map((u: string) => (
                           <option key={u} value={u}>{u}</option>
