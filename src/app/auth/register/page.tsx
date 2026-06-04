@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-const supabase = createClient();
 import { Loader2, Lock, Mail, ShieldAlert, UserPlus, User, Building2, MapPin, Phone } from "lucide-react";
+
+const supabase = createClient();
 
 interface PharmacyOption {
   id: string;
@@ -24,7 +25,7 @@ export default function RegisterPage() {
   const [pharmacies, setPharmacies] = useState<PharmacyOption[]>([]);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState("");
   
-  // بيانات الصيدلية الجديدة (في حال اختيار إنشاء صيدلية)
+  // بيانات الصيدلية الجديدة
   const [newPharmacyName, setNewPharmacyName] = useState("");
   const [newPharmacyAddress, setNewPharmacyAddress] = useState("");
   const [newPharmacyPhone, setNewPharmacyPhone] = useState("");
@@ -33,22 +34,26 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // جلب الصيدليات المتاحة عند تحميل الشاشة
+  // جلب الصيدليات النشطة المتاحة
   useEffect(() => {
     async function loadPharmacies() {
-      const { data, error } = await supabase
-        .from("pharmacies")
-        .select("id, name")
-        .eq("is_active", true);
+      try {
+        const { data, error: fetchError } = await supabase
+          .from("pharmacies")
+          .select("id, name")
+          .eq("is_active", true);
 
-      if (!error && data) {
-        setPharmacies(data);
-        if (data.length > 0) {
-          setSelectedPharmacyId(data[0].id);
-        } else {
-          // إذا لم تكن هناك صيدليات نهائياً في السيستم، نجبره على خيار الإنشاء
-          setRegType("create");
+        if (!fetchError && data) {
+          setPharmacies(data);
+          if (data.length > 0) {
+            setSelectedPharmacyId(data[0].id);
+            setRegType("join");
+          } else {
+            setRegType("create");
+          }
         }
+      } catch (err) {
+        console.error("Error loading pharmacies:", err);
       }
     }
     loadPharmacies();
@@ -58,7 +63,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    // 🛑🛡️ مضاد العبط: تحقق أولي من البيانات
+    // التحقق الأولي من صحة المدخلات
     if (!name.trim() || name.trim().length < 3) {
       setError("❌ يرجى إدخال اسم كامل صحيح (لا يقل عن 3 أحرف).");
       return;
@@ -77,7 +82,7 @@ export default function RegisterPage() {
     try {
       let targetPharmacyId = selectedPharmacyId;
 
-      // 🏢 المرحلة الأولى: إذا كان الخيار إنشاء صيدلية جديدة
+      // 🏢 المرحلة الأولى: إذا اختار المستخدم إنشاء صيدلية جديدة
       if (regType === "create") {
         const { data: newPharmacy, error: pharmError } = await supabase
           .from("pharmacies")
@@ -95,10 +100,11 @@ export default function RegisterPage() {
         if (pharmError) throw pharmError;
         if (!newPharmacy) throw new Error("فشل إنشاء سجل الصيدلية الجديدة.");
         
-        targetPharmacyId = newPharmacy.id; // تعيين المعرف الجديد لإدراجه مع المستخدم
+        targetPharmacyId = newPharmacy.id;
       }
 
-      // 🔑 المرحلة الثانية: إنشاء حساب المستخدم في نظام Auth
+      // 🔑 المرحلة الثانية والأخيرة: التسجيل عبر Supabase Auth
+      // نرسل كافة البيانات الوصفية داخل الـ metadata لتقوم جداول الخادم بالربط التلقائي بأمان
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -106,15 +112,16 @@ export default function RegisterPage() {
           data: {
             full_name: name.trim(),
             role: "admin", 
-            pharmacy_id: targetPharmacyId, // ربط التوكن بالصيدلية المستهدفة
+            pharmacy_id: targetPharmacyId,
           }
         }
       });
 
       if (signUpError) throw signUpError;
-      
-      // 🔒 المرحلة الثالثة: ربط الحساب بجداول الـ Profiles والـ Access بصلاحيات الـ Admin
+
+      // 🔒 المرحلة الثالثة: إدخال البيانات المساعدة مباشرة للتأكيد في حال عدم وجود Trigger بقاعدة البيانات
       if (data?.user) {
+        // نتحايل على قيود RLS الأولية للإدخال المباشر لبيانات الملف الشخصي للمستخدم الحالي
         await supabase.from("user_profiles").insert([
           {
             id: data.user.id,
@@ -137,7 +144,7 @@ export default function RegisterPage() {
       setSuccess(true);
       setTimeout(() => {
         router.push("/auth/login");
-      }, 3000);
+      }, 2500);
       
     } catch (err: any) {
       setError(err?.message || "فشل تسجيل البيانات. يرجى المحاولة مرة أخرى.");
@@ -148,7 +155,7 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505] overflow-hidden relative">
+      <div className="min-h-screen flex items-center justify-center bg-[#050505] overflow-hidden relative font-cairo">
         <div className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 text-center">
           <div className="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-6">
             <UserPlus className="w-10 h-10 text-green-400" />
@@ -162,7 +169,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#050505] relative selection:bg-[#00CED1] selection:text-white py-20 px-4 overflow-y-auto">
+    <div className="min-h-screen flex items-center justify-center bg-[#050505] relative selection:bg-[#00CED1] selection:text-white py-20 px-4 overflow-y-auto font-cairo text-right" dir="rtl">
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#00CED1]/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#D4AF37]/10 rounded-full blur-[100px] pointer-events-none" />
 
@@ -174,17 +181,17 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 mb-2">
             حساب جديد
           </h1>
-          <p className="text-foreground/50">إنشاء حساب وإدارة فرع صيدليتك</p>
+          <p className="text-foreground/50 text-sm">إنشاء حساب وإدارة فرع صيدليتك</p>
         </div>
 
         {error && (
           <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-400">
             <ShieldAlert className="w-5 h-5 shrink-0" />
-            <p className="text-sm">{error}</p>
+            <p className="text-sm w-full">{error}</p>
           </div>
         )}
 
-        {/* 🎛️ أزرار اختيار وضع الصيدلية (الانضمام أم الإنشاء الجديد) */}
+        {/* أزرار اختيار وضع الصيدلية */}
         <div className="grid grid-cols-2 gap-2 mb-6 bg-black/60 p-1 rounded-xl border border-white/5">
           <button
             type="button"
@@ -192,7 +199,7 @@ export default function RegisterPage() {
             disabled={pharmacies.length === 0}
             className={`py-2.5 text-sm font-medium rounded-lg transition-all ${
               regType === "join"
-                ? "bg-[#00CED1] text-white shadow-md"
+                ? "bg-[#00CED1] text-black font-bold shadow-md"
                 : "text-foreground/50 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
             }`}
           >
@@ -203,7 +210,7 @@ export default function RegisterPage() {
             onClick={() => setRegType("create")}
             className={`py-2.5 text-sm font-medium rounded-lg transition-all ${
               regType === "create"
-                ? "bg-[#00CED1] text-white shadow-md"
+                ? "bg-[#00CED1] text-black font-bold shadow-md"
                 : "text-foreground/50 hover:text-white"
             }`}
           >
@@ -224,13 +231,13 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-4 pr-10 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
                 placeholder="أحمد محمد"
               />
             </div>
           </div>
 
-          {/* ديناميكيات الصيدلية بناءً على نوع التسجيل */}
+          {/* مدخلات الصيدلية */}
           {regType === "join" ? (
             <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
               <label className="text-xs font-medium text-foreground/70 mr-1 block">اختر الصيدلية المتاحة</label>
@@ -242,7 +249,7 @@ export default function RegisterPage() {
                   value={selectedPharmacyId}
                   onChange={(e) => setSelectedPharmacyId(e.target.value)}
                   required
-                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-4 pr-10 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm appearance-none cursor-pointer"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm appearance-none cursor-pointer"
                 >
                   {pharmacies.map((p) => (
                     <option key={p.id} value={p.id} className="bg-[#050505] text-white">
@@ -265,7 +272,7 @@ export default function RegisterPage() {
                     value={newPharmacyName}
                     onChange={(e) => setNewPharmacyName(e.target.value)}
                     required={regType === "create"}
-                    className="w-full bg-black/40 border border-[#00CED1]/20 rounded-xl py-2.5 pl-4 pr-10 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                    className="w-full bg-black/40 border border-[#00CED1]/20 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
                     placeholder="صيدلية النيل - فرع جديد"
                   />
                 </div>
@@ -280,7 +287,7 @@ export default function RegisterPage() {
                     type="text"
                     value={newPharmacyAddress}
                     onChange={(e) => setNewPharmacyAddress(e.target.value)}
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 pl-4 pr-10 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                    className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
                     placeholder="القاهرة، شارع التحرير"
                   />
                 </div>
@@ -295,7 +302,7 @@ export default function RegisterPage() {
                     type="text"
                     value={newPharmacyPhone}
                     onChange={(e) => setNewPharmacyPhone(e.target.value)}
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 pl-4 pr-10 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                    className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
                     placeholder="01xxxxxxxxx"
                   />
                 </div>
@@ -316,7 +323,7 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 dir="ltr"
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-4 pr-10 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
                 placeholder="user@pharmacy.com"
               />
             </div>
@@ -336,7 +343,7 @@ export default function RegisterPage() {
                 required
                 minLength={6}
                 dir="ltr"
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-4 pr-10 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
                 placeholder="••••••••"
               />
             </div>
@@ -345,7 +352,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-white font-bold hover:shadow-[0_0_20px_rgba(0,206,209,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-black font-bold hover:shadow-[0_0_20px_rgba(0,206,209,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
           >
             {isLoading ? (
               <>
