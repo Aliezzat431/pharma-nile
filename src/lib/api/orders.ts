@@ -233,13 +233,29 @@ export async function getRecentOrders(days: number = 15, pharmacyId: string) {
   return data || [];
 }
 
-export async function processReturn(orderId: string, items: any[]) {
+export async function processReturn(orderId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error('Unauthorized');
 
-  // 1. Restore stock to specific batches
-  for (const item of items) {
+  // 1. Fetch the full order with items
+  const { data: order, error: fetchError } = await supabase
+    .from('orders')
+    .select('*, order_items(*)')
+    .eq('id', orderId)
+    .eq('pharmacy_id', pharmacyId)
+    .single();
+
+  if (fetchError || !order) {
+    throw new Error('Order not found or access denied');
+  }
+
+  if (order.status === 'returned') {
+    throw new Error('This order has already been returned');
+  }
+
+  // 2. Restore stock to specific batches
+  for (const item of order.order_items) {
     if (item.batch_id) {
       const { data: batch } = await supabase
         .from('batches')
@@ -251,22 +267,41 @@ export async function processReturn(orderId: string, items: any[]) {
       if (batch) {
         await supabase
           .from('batches')
-          .update({ quantity: batch.quantity + item.quantity })
+          .update({ quantity: (batch.quantity || 0) + (item.quantity || 0) })
           .eq('id', item.batch_id)
           .eq('pharmacy_id', pharmacyId);
       }
     }
   }
 
-  // 2. Mark order as returned
-  const { error } = await supabase
+  // 3. Deduct from customer debt if it was a debt order
+  if (order.payment_method === 'debt' && order.customer_id) {
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('total_debt')
+      .eq('id', order.customer_id)
+      .eq('pharmacy_id', pharmacyId)
+      .single();
+
+    if (customer) {
+      const newDebt = Math.max(0, (customer.total_debt || 0) - (order.total || 0));
+      await supabase
+        .from('customers')
+        .update({ total_debt: newDebt })
+        .eq('id', order.customer_id)
+        .eq('pharmacy_id', pharmacyId);
+    }
+  }
+
+  // 4. Mark order as returned
+  const { error: updateError } = await supabase
     .from('orders')
     .update({ status: 'returned' })
     .eq('id', orderId)
     .eq('pharmacy_id', pharmacyId);
 
-  if (error) {
-    console.error('Error processing return:', error);
-    throw error;
+  if (updateError) {
+    console.error('Error updating order status:', updateError);
+    throw updateError;
   }
 }

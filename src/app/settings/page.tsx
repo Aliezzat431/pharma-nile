@@ -2,29 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { Settings as SettingsIcon, Save, CreditCard, Bell, Shield, Smartphone, Loader2, Printer, Percent, Palette, Mail, MessageSquare, Sun, Moon, X, CloudMoon, Leaf, Sparkles, Sunset, Droplets, Zap, Crown, Gem, Hexagon, Coffee, Trees, Ghost, SunMoon, Snowflake, Database, Download, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, Save, CreditCard, Bell, Shield, Smartphone, Loader2, Printer, Percent, Palette, Mail, MessageSquare, Sun, Moon, X, CloudMoon, Leaf, Sparkles, Sunset, Droplets, Zap, Crown, Gem, Hexagon, Coffee, Trees, Ghost, SunMoon, Snowflake, Database, Download, Upload, Waves, CloudSnow } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Tab = 'general' | 'pos' | 'notifications' | 'appearance' | 'shortcuts' | 'database';
 
 const ALL_THEMES = [
-  { id: 'dark', label: 'السمة الداكنة (Dark)', icon: Moon, desc: 'مريح للعين للاستخدام الليلي', color: 'bg-[#00CED1]/50' },
-  { id: 'light', label: 'السمة المضيئة (Light)', icon: Sun, desc: 'واضح ومشرق للاستخدام النهاري', color: 'bg-[#00CED1]/50' },
-  { id: 'dark-neon', label: 'نيون داكن (Dark Neon)', icon: Sparkles, desc: 'ألوان نيون ساطعة مع خلفية داكنة', color: 'bg-gradient-to-r from-pink-500 to-purple-500' },
-  { id: 'light-neon', label: 'نيون فاتح (Light Neon)', icon: Sparkles, desc: 'ألوان نيون مع خلفية فاتحة', color: 'bg-gradient-to-r from-blue-400 to-pink-400' },
-  { id: 'midnight', label: 'منتصف الليل (Midnight)', icon: CloudMoon, desc: 'أزرق داكن عميق وأنيق', color: 'bg-blue-600' },
-  { id: 'nature', label: 'الطبيعة (Nature)', icon: Leaf, desc: 'درجات خضراء تبعث على الهدوء', color: 'bg-emerald-500' },
-  { id: 'sunset', label: 'الغروب (Sunset)', icon: Sunset, desc: 'تدرجات برتقالية وحمراء دافئة', color: 'bg-gradient-to-r from-orange-500 to-red-500' },
-  { id: 'ocean', label: 'المحيط (Ocean)', icon: Droplets, desc: 'أعماق زرقاء مريحة ولطيفة', color: 'bg-cyan-500' },
-  { id: 'cyberpunk', label: 'سايبربانك (Cyberpunk)', icon: Zap, desc: 'ألوان قوية بأسلوب السايبربانك', color: 'bg-yellow-400' },
-  { id: 'gold', label: 'الفخامة (Gold)', icon: Crown, desc: 'تصميم فاخر باللونين الأسود والذهبي', color: 'bg-[#D4AF37]' },
-  { id: 'ruby', label: 'الياقوت (Ruby)', icon: Gem, desc: 'درجات حمراء قوية وعميقة', color: 'bg-rose-600' },
-  { id: 'amethyst', label: 'الجمشت (Amethyst)', icon: Hexagon, desc: 'بنفسجي داكن ولمسات ملكية', color: 'bg-purple-600' },
-  { id: 'coffee', label: 'القهوة (Coffee)', icon: Coffee, desc: 'درجات البني والبيج الدافئة', color: 'bg-amber-700' },
-  { id: 'forest', label: 'الغابة المظلمة (Forest Dark)', icon: Trees, desc: 'أخضر داكن يريح البصر', color: 'bg-teal-700' },
-  { id: 'dracula', label: 'دراكولا (Dracula)', icon: Ghost, desc: 'ثيم المبرمجين الأشهر بألوان ناعمة', color: 'bg-[#ff79c6]' },
-  { id: 'monochrome', label: 'أحادي (Monochrome)', icon: SunMoon, desc: 'تدرجات الرمادي الخالصة فقط', color: 'bg-gray-400' },
-  { id: 'snowy', label: 'الثلج (Snowy)', icon: Snowflake, desc: 'أبيض ناصع ودرجات أزرق جليدية', color: 'bg-blue-200' },
+  { id: 'dark', label: 'الوضع الليلي (Default)', icon: Moon, desc: 'الوضع الكلاسيكي الفخم للنظام', color: 'bg-[#050505]' },
+  { id: 'light', label: 'الوضع النهاري', icon: Sun, desc: 'وضوح عالي للعمل تحت الإضاءة القوية', color: 'bg-[#f8fafc]' },
+  { id: 'midnight', label: 'منتصف الليل', icon: Waves, desc: 'أزرق عميق يجمع بين الهدوء والأناقة', color: 'bg-[#020612]' },
+  { id: 'ocean', label: 'أعماق المحيط', icon: Waves, desc: 'سيان مشرق وطاقة لا تنتهي', color: 'bg-[#010b14]' },
+  { id: 'forest', label: 'الغابة العميقة', icon: Trees, desc: 'أخضر طبيعي مريح جداً للعين', color: 'bg-[#040d0a]' },
+  { id: 'coffee', label: 'وضع القهوة (Coffee)', icon: Coffee, desc: 'ألوان ترابية دافئة تركز على التفاصيل', color: 'bg-[#140d0b]' },
+  { id: 'amethyst', label: 'الجمشت الملكي', icon: Sparkles, desc: 'بنفسجي فاخر يعكس هوية بريميوم', color: 'bg-[#0d0b1a]' },
+  { id: 'sunset', label: 'وقت الغروب', icon: Zap, desc: 'مزيج دافئ من البرتقالي والأحمر', color: 'bg-[#140806]' },
+  { id: 'cyberpunk', label: 'سايبر بانك', icon: Zap, desc: 'تباين عالي وألوان نيون مستقبلية', color: 'bg-[#000000]' },
+  { id: 'dracula', label: 'دراكولا', icon: Ghost, desc: 'ألوان ناعمة ومريحة للمكاتب الطويلة', color: 'bg-[#1e1f29]' },
+  { id: 'snowy', label: 'وضوح الثلج', icon: CloudSnow, desc: 'أبيض ناصع مع لمسات جليدية نقية', color: 'bg-[#f8fafc]' },
 ];
 
 export default function Settings() {
@@ -82,9 +76,37 @@ export default function Settings() {
   ];
 
   const handleCleanData = async (type: string) => {
-    // In a real app, this would call an API
-    console.log(`Cleaning data: ${type}`);
-    alert(`تم طلب تنظيف بيانات من نوع: ${type}`);
+    if (!confirm('هل أنت متأكد من رغبتك في حذف البيانات القديمة؟ لا يمكن التراجع عن هذه العملية.')) {
+      return;
+    }
+
+    try {
+      setIsDbLoading(true);
+      const res = await fetch('/api/db-cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        alert(data.message || 'تم تنظيف البيانات بنجاح');
+        
+        // Refresh usage stats
+        const refreshRes = await fetch('/api/db-usage');
+        const refreshData = await refreshRes.json();
+        if (refreshData.success) {
+          setDbUsage(refreshData.data);
+        }
+      } else {
+        alert('حدث خطأ أثناء التنظيف: ' + data.error);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('فشل في الاتصال بالخادم لإتمام عملية التنظيف');
+    } finally {
+      setIsDbLoading(false);
+    }
   };
 
   const handleExportBackup = async () => {

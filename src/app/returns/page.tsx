@@ -46,6 +46,8 @@ export default function ReturnsPage() {
         .from('orders')
         .select('*, order_items(*)')
         .gte('created_at', cutoff.toISOString())
+        .not('status', 'eq', 'returned')
+        .not('status', 'eq', 'cancelled')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -63,15 +65,7 @@ export default function ReturnsPage() {
     setConfirmReturnModal(null);
     setReturningId(order.id);
     try {
-      const items = order.order_items.map(item => ({
-        id: item.product_id || item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        unit: item.unit,
-      }));
-
-      await processReturn(order.id, items);
+      await processReturn(order.id);
       setReturnSuccess(order.id);
       // Remove the returned order from local state immediately
       setOrders(prev => prev.filter(o => o.id !== order.id));
