@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client"; // تأكد من صحة هذا المسار في مشروعك
 import { Loader2, Lock, Mail, ShieldAlert, UserPlus, User, Building2, MapPin, Phone } from "lucide-react";
-
-const supabase = createClient();
 
 interface PharmacyOption {
   id: string;
@@ -34,28 +32,40 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // جلب الصيدليات النشطة المتاحة
+  // جلب الصيدليات النشطة المتاحة عند تحميل الشاشة
   useEffect(() => {
     async function loadPharmacies() {
       try {
-        const { data, error: fetchError } = await supabase
+        // تهيئة العميل داخل الدالة لضمان استقرار الاتصال
+        const supabaseClient = createClient();
+        
+        const { data, error: fetchError } = await supabaseClient
           .from("pharmacies")
           .select("id, name")
           .eq("is_active", true);
 
-        if (!fetchError && data) {
-          setPharmacies(data);
-          if (data.length > 0) {
-            setSelectedPharmacyId(data[0].id);
-            setRegType("join");
-          } else {
-            setRegType("create");
-          }
+        if (fetchError) {
+          console.error("Supabase Fetch Error:", fetchError);
+          setError(`تعذر تحميل الفروع: ${fetchError.message}`);
+          setRegType("create"); // تحويله تلقائياً لإنشاء صيدلية في حال الفشل
+          return;
         }
-      } catch (err) {
-        console.error("Error loading pharmacies:", err);
+
+        if (data && data.length > 0) {
+          setPharmacies(data);
+          setSelectedPharmacyId(data[0].id);
+          setRegType("join");
+        } else {
+          // إذا كان الجدول فارغاً تماماً
+          setRegType("create");
+        }
+      } catch (err: any) {
+        console.error("Unexpected Error:", err);
+        setError("حدث خطأ غير متوقع أثناء الاتصال بقاعدة البيانات.");
+        setRegType("create");
       }
     }
+    
     loadPharmacies();
   }, []);
 
@@ -63,7 +73,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    // التحقق الأولي من صحة المدخلات
     if (!name.trim() || name.trim().length < 3) {
       setError("❌ يرجى إدخال اسم كامل صحيح (لا يقل عن 3 أحرف).");
       return;
@@ -78,13 +87,14 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
+    const supabaseClient = createClient();
 
     try {
       let targetPharmacyId = selectedPharmacyId;
 
-      // 🏢 المرحلة الأولى: إذا اختار المستخدم إنشاء صيدلية جديدة
+      // 🏢 المرحلة الأولى: إنشاء صيدلية جديدة
       if (regType === "create") {
-        const { data: newPharmacy, error: pharmError } = await supabase
+        const { data: newPharmacy, error: pharmError } = await supabaseClient
           .from("pharmacies")
           .insert([
             {
@@ -103,9 +113,8 @@ export default function RegisterPage() {
         targetPharmacyId = newPharmacy.id;
       }
 
-      // 🔑 المرحلة الثانية والأخيرة: التسجيل عبر Supabase Auth
-      // نرسل كافة البيانات الوصفية داخل الـ metadata لتقوم جداول الخادم بالربط التلقائي بأمان
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // 🔑 المرحلة الثانية: التسجيل في Supabase Auth
+      const { data, error: signUpError } = await supabaseClient.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -119,10 +128,9 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError;
 
-      // 🔒 المرحلة الثالثة: إدخال البيانات المساعدة مباشرة للتأكيد في حال عدم وجود Trigger بقاعدة البيانات
+      // 🔒 المرحلة الثالثة: إدخال البيانات المساعدة
       if (data?.user) {
-        // نتحايل على قيود RLS الأولية للإدخال المباشر لبيانات الملف الشخصي للمستخدم الحالي
-        await supabase.from("user_profiles").insert([
+        await supabaseClient.from("user_profiles").insert([
           {
             id: data.user.id,
             full_name: name.trim(),
@@ -131,7 +139,7 @@ export default function RegisterPage() {
           }
         ]);
 
-        await supabase.from("user_pharmacy_access").insert([
+        await supabaseClient.from("user_pharmacy_access").insert([
           {
             user_id: data.user.id,
             pharmacy_id: targetPharmacyId,
@@ -155,8 +163,8 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505] overflow-hidden relative font-cairo">
-        <div className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#050505] font-cairo">
+        <div className="w-full max-w-md p-8 glass-panel rounded-3xl text-center">
           <div className="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-6">
             <UserPlus className="w-10 h-10 text-green-400" />
           </div>
@@ -288,7 +296,7 @@ export default function RegisterPage() {
                     value={newPharmacyAddress}
                     onChange={(e) => setNewPharmacyAddress(e.target.value)}
                     className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
-                    placeholder="القاهرة، شارع التحرير"
+                    placeholder="العنوان الكامل"
                   />
                 </div>
               </div>
