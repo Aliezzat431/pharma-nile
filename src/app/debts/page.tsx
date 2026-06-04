@@ -1,11 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, Phone, Search, Plus, X, History, CreditCard, Loader2, ArrowUpRight, DollarSign } from 'lucide-react';
+import { Users, Phone, Search, Plus, X, History, CreditCard, Loader2, ArrowUpRight, DollarSign, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Debtor, getDebtors, addDebtor, recordPayment, getPaymentHistory, DebtPayment } from '@/lib/api/debts';
+// 1️⃣ استيراد الـ Hook الخاص بجلب بيانات الصيدلية الحالية (عدلها حسب نظام الـ State عندك)
+import { useAuth } from '@/hooks/useAuth'; 
 
 export default function DebtsPage() {
+  // جلب الـ pharmacyId من الـ Auth context أو الـ Store
+  const { pharmacyId } = useAuth(); 
+
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -18,22 +23,41 @@ export default function DebtsPage() {
 
   const [formData, setFormData] = useState({ name: '', phone: '' });
   const [paymentData, setPaymentData] = useState({ amount: '', payment_type: 'partial' as 'partial' | 'full', note: '' });
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // 2️⃣ ربط الـ useEffect بوجود الـ pharmacyId لضمان عدم جلب بيانات فارغة أو عامة
   useEffect(() => {
-    fetchDebtors();
-  }, []);
+    if (pharmacyId) {
+      fetchDebtors();
+    }
+  }, [pharmacyId]);
 
   const fetchDebtors = async () => {
+    if (!pharmacyId) return;
     setLoading(true);
-    const data = await getDebtors();
-    setDebtors(data);
-    setLoading(false);
+    try {
+      // تمرير المعرف للـ API لعزل العملاء
+      const data = await getDebtors(pharmacyId); 
+      setDebtors(data || []);
+    } catch (err) {
+      console.error("Fetch debtors error", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddDebtor = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!pharmacyId) {
+      setErrorMessage("فشل تحديد الصيدلية الحالية.");
+      return;
+    }
     try {
-      await addDebtor(formData);
+      // 3️⃣ حقن الـ pharmacy_id داخل بيانات العميل الجديد
+      await addDebtor({
+        ...formData,
+        pharmacy_id: pharmacyId
+      });
       setIsAddModalOpen(false);
       setFormData({ name: '', phone: '' });
       fetchDebtors();
@@ -44,10 +68,12 @@ export default function DebtsPage() {
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDebtor) return;
+    if (!selectedDebtor || !pharmacyId) return;
     try {
+      // 4️⃣ تمرير الـ pharmacy_id أثناء دفع المديونية لربط حركة الخزينة بالصيدلية الصحيحة
       await recordPayment({
         debtor_id: selectedDebtor.id,
+        pharmacy_id: pharmacyId,
         amount: parseFloat(paymentData.amount),
         payment_type: paymentData.payment_type,
         note: paymentData.note
@@ -61,11 +87,13 @@ export default function DebtsPage() {
   };
 
   const handleViewHistory = async (debtor: Debtor) => {
+    if (!pharmacyId) return;
     setSelectedDebtor(debtor);
     setIsHistoryModalOpen(true);
     setHistoryLoading(true);
-    const history = await getPaymentHistory(debtor.id);
-    setPaymentHistory(history);
+    // تمرير الـ pharmacyId كطبقة حماية إضافية في جلب السجل
+    const history = await getPaymentHistory(debtor.id, pharmacyId);
+    setPaymentHistory(history || []);
     setHistoryLoading(false);
   };
 
@@ -76,8 +104,25 @@ export default function DebtsPage() {
 
   const totalOutstanding = debtors.reduce((acc, d) => acc + d.total_debt, 0);
 
+  // حماية الواجهة في حال عدم وجود معرف صيدلية صالح
+  if (!pharmacyId && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 font-cairo text-gray-400 gap-3">
+        <AlertCircle className="w-10 h-10 text-amber-500" />
+        <p>يرجى التأكد من تسجيل الدخول واختيار الصيدلية أولاً.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      {errorMessage && (
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-cairo flex items-center gap-2">
+          <AlertCircle className="w-5 h-5" />
+          {errorMessage}
+        </div>
+      )}
+
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
@@ -181,7 +226,6 @@ export default function DebtsPage() {
                 </button>
               </div>
 
-              {/* Decorative accent */}
               <div className="absolute top-0 right-0 w-32 h-1 bg-gradient-to-l from-[#00CED1] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </motion.div>
           ))}
@@ -315,4 +359,5 @@ export default function DebtsPage() {
       </AnimatePresence>
     </div>
   );
-}
+}                                                                 }
+              

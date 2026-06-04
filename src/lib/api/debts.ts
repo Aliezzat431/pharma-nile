@@ -2,22 +2,27 @@ import { supabase } from '../supabase';
 
 export interface Debtor {
   id: string;
+  pharmacy_id: string;
   name: string;
   phone?: string;
   total_debt: number;
-  created_at?: string;
+  created_at: string;
 }
 
 export interface DebtPayment {
   id: string;
   debtor_id: string;
+  pharmacy_id: string;
   amount: number;
   payment_date: string;
   payment_type: 'partial' | 'full';
   note?: string;
 }
 
-export async function getDebtors() {
+/**
+ * جلب جميع العملاء المدينين التابعين لصيدلية معينة
+ */
+export async function getDebtors(): Promise<Debtor[]> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) return [];
@@ -30,26 +35,37 @@ export async function getDebtors() {
 
   if (error) {
     console.error('Error fetching debtors:', error);
-    return [];
+    throw error;
   }
-  return data as Debtor[];
+
+  return data || [];
 }
 
-export async function addDebtor(debtor: Omit<Debtor, 'id' | 'total_debt' | 'created_at'>) {
+/**
+ * إضافة عميل ديون جديد وربطه بمعرف الصيدلية
+ */
+export async function addDebtor(debtorData: Omit<Debtor, 'id' | 'total_debt' | 'created_at' | 'pharmacy_id'>): Promise<Debtor> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error("Unauthorized Tenant");
 
-  const trimmedName = debtor.name?.trim() || '';
+  const trimmedName = debtorData.name?.trim() || '';
   if (!trimmedName) throw new Error("Validation Error: Debtor name cannot be empty.");
   if (trimmedName.length > 100) throw new Error("Validation Error: Debtor name is too long.");
-  if (/<[^>]*>?/gm.test(trimmedName) || (debtor.phone && /<[^>]*>?/gm.test(debtor.phone))) {
+  if (/<[^>]*>?/gm.test(trimmedName) || (debtorData.phone && /<[^>]*>?/gm.test(debtorData.phone))) {
     throw new Error('Validation Error: Malicious characters detected.');
   }
 
   const { data, error } = await supabase
     .from('debtors')
-    .insert([{ ...debtor, name: trimmedName, phone: debtor.phone?.trim(), total_debt: 0, pharmacy_id: pharmacyId }])
+    .insert([
+      {
+        name: trimmedName,
+        phone: debtorData.phone?.trim(),
+        pharmacy_id: pharmacyId,
+        total_debt: 0, // يبدأ الحساب بصفر حتى تتم عملية بيع آجل
+      },
+    ])
     .select()
     .single();
 
@@ -57,10 +73,14 @@ export async function addDebtor(debtor: Omit<Debtor, 'id' | 'total_debt' | 'crea
     console.error('Error adding debtor:', error);
     throw error;
   }
-  return data as Debtor;
+
+  return data;
 }
 
-export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_date'>) {
+/**
+ * تسجيل عملية سداد (جزئي أو كلي) وتحديث مديونية العميل
+ */
+export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_date' | 'pharmacy_id'>): Promise<DebtPayment> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error("Unauthorized Tenant");
@@ -72,40 +92,71 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
     throw new Error("Validation Error: Malicious characters detected in payment note.");
   }
 
-  // 1. Insert the payment record
+  // 1. بدء معاملة لتسجيل حركة السداد
   const { data: paymentData, error: paymentError } = await supabase
     .from('debt_payments')
-    .insert([{ ...payment, note: payment.note?.trim(), pharmacy_id: pharmacyId }])
+    .insert([
+      {
+        debtor_id: payment.debtor_id,
+        pharmacy_id: pharmacyId,
+        amount: payment.amount,
+        payment_type: payment.payment_type,
+        note: payment.note?.trim(),
+      },
+    ])
     .select()
     .single();
 
   if (paymentError) {
-    console.error('Error recording payment:', paymentError);
+    console.error('Error recording debt payment:', paymentError);
     throw paymentError;
   }
 
-  // 2. Update the debtor's total_debt balance
-  const { data: debtorData, error: debtorError } = await supabase.rpc('update_debtor_balance', {
+  // 2. تحديث الرصيد المتبقي في حساب العميل (خصم القيمة المسددة)
+  const { error: debtorError } = await supabase.rpc('update_debtor_balance', {
     target_debtor_id: payment.debtor_id,
     payment_amount: payment.amount,
   });
 
-  // If RPC is not defined yet, we do it manually (atomicity warning)
   if (debtorError) {
-    const { data: currentDebtor } = await supabase.from('debtors').select('total_debt').eq('id', payment.debtor_id).eq('pharmacy_id', pharmacyId).single();
-    if (currentDebtor) {
+    const { data: debtor } = await supabase
+      .from('debtors')
+      .select('total_debt')
+      .eq('id', payment.debtor_id)
+      .eq('pharmacy_id', pharmacyId)
+      .single();
+
+    if (debtor) {
+      const newDebt = Math.max(0, debtor.total_debt - payment.amount);
+      
       await supabase
         .from('debtors')
-        .update({ total_debt: Math.max(0, currentDebtor.total_debt - payment.amount) })
+        .update({ total_debt: newDebt })
         .eq('id', payment.debtor_id)
         .eq('pharmacy_id', pharmacyId);
     }
   }
 
+  // 3. تسجيل معاملة مالية واردة في الخزينة لضبط تقارير الأرباح
+  await supabase
+    .from('financial_transactions')
+    .insert([
+      {
+        pharmacy_id: pharmacyId,
+        type: 'revenue',
+        amount: payment.amount,
+        source: 'debt_collection',
+        description: `تحصيل مديونية - عميل رقم #${payment.debtor_id.substring(0, 5)}`,
+      }
+    ]);
+
   return paymentData as DebtPayment;
 }
 
-export async function getPaymentHistory(debtorId: string) {
+/**
+ * جلب سجل السداد الخاص بعميل محدد داخل الصيدلية لضمان الأمان
+ */
+export async function getPaymentHistory(debtorId: string): Promise<DebtPayment[]> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) return [];
@@ -114,14 +165,15 @@ export async function getPaymentHistory(debtorId: string) {
     .from('debt_payments')
     .select('*')
     .eq('debtor_id', debtorId)
-    .eq('pharmacy_id', pharmacyId)
+    .eq('pharmacy_id', pharmacyId) // طبقة حماية إضافية لمنع القراءة المتقاطعة
     .order('payment_date', { ascending: false });
 
   if (error) {
     console.error('Error fetching payment history:', error);
-    return [];
+    throw error;
   }
-  return data as DebtPayment[];
+
+  return data || [];
 }
 
 export async function getDebtorDetails(id: string) {
