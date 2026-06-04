@@ -4,12 +4,10 @@ import { useState, useEffect } from 'react';
 import { Users, Phone, Search, Plus, X, History, CreditCard, Loader2, ArrowUpRight, DollarSign, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Debtor, getDebtors, addDebtor, recordPayment, getPaymentHistory, DebtPayment } from '@/lib/api/debts';
-// استيراد الـ Hook الخاص بجلب بيانات الصيدلية الحالية
-import { useAuth } from '@/hooks/useAuth'; 
 
 export default function DebtsPage() {
-  // جلب الـ pharmacyId من الـ Auth context أو الـ Store
-  const { pharmacyId } = useAuth(); 
+  // تعريف الـ pharmacyId كـ state بدلاً من جلبها من الـ useAuth
+  const [pharmacyId, setPharmacyId] = useState<string | null>(null);
 
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +23,19 @@ export default function DebtsPage() {
   const [paymentData, setPaymentData] = useState({ amount: '', payment_type: 'partial' as 'partial' | 'full', note: '' });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // ربط الـ useEffect بوجود الـ pharmacyId لضمان عدم جلب بيانات فارغة
+  // 1️⃣ قراءة الـ pharmacyId من الـ localStorage داخل الـ useEffect لتجنب مشاكل الـ SSR
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const id = localStorage.getItem('pharmacyId'); // تأكد من مطابقة الاسم المخزن لديك
+      if (id) {
+        setPharmacyId(id);
+      } else {
+        setLoading(false); // إيقاف التحميل لعرض واجهة التحذير
+      }
+    }
+  }, []);
+
+  // 2️⃣ جلب بيانات المدينين فور التحقق من وجود المعرف وثباته
   useEffect(() => {
     if (pharmacyId) {
       fetchDebtors();
@@ -100,7 +110,7 @@ export default function DebtsPage() {
 
   const totalOutstanding = debtors.reduce((acc, d) => acc + d.total_debt, 0);
 
-  // حماية الواجهة في حال عدم وجود معرف صيدلية صالح
+  // حماية الواجهة في حال عدم وجود معرف صيدلية صالح بعد التحميل
   if (!pharmacyId && !loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 font-cairo text-gray-400 gap-3">
