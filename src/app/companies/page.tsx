@@ -1,21 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Building2, Phone, Mail, Plus, Search, Trash2, Edit, X, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { Building2, Phone, Mail, Plus, Search, Trash2, Edit, X, MapPin, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Company, getCompanies, addCompany, updateCompany, deleteCompany } from '@/lib/api/companies';
 
 export default function CompaniesPage() {
-  // تعريف الـ pharmacyId كـ state بدلاً من الـ Context
-  const [pharmacyId, setPharmacyId] = useState<string | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   
-  const [formData, setFormData] = useState<Omit<Company, 'id' | 'created_at'>>({
-    pharmacy_id: '',
+  // الـ formData هنا تستثني الـ id والـ created_at والـ pharmacy_id تماماً كما يتوقع الـ API الخاص بك
+  const [formData, setFormData] = useState<Omit<Company, 'id' | 'created_at' | 'pharmacy_id'>>({
     name: '',
     contact_person: '',
     phone: '',
@@ -23,31 +21,15 @@ export default function CompaniesPage() {
     address: ''
   });
 
-  // 1️⃣ قراءة الـ pharmacyId من الـ localStorage عند تحميل المكون لأول مرة
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const id = localStorage.getItem('pharmacyId'); // أو حسب الاسم المخزن عندك مثلاً 'pharmacy_id'
-      if (id) {
-        setPharmacyId(id);
-        setFormData(prev => ({ ...prev, pharmacy_id: id }));
-      } else {
-        setLoading(false); // وقف التحميل إذا لم يجد المعرف ليظهر رسالة التحذير
-      }
-    }
+    fetchCompanies();
   }, []);
 
-  // 2️⃣ جلب الشركات فور التأكد من وجود الـ pharmacyId
-  useEffect(() => {
-    if (pharmacyId) {
-      fetchCompanies();
-    }
-  }, [pharmacyId]);
-
   const fetchCompanies = async () => {
-    if (!pharmacyId) return;
     setLoading(true);
     try {
-      const data = await getCompanies(pharmacyId);
+      // استدعاء الدالة بدون معاملات (0 arguments) لأنها تجلب البيانات من جلسة Supabase تلقائياً
+      const data = await getCompanies();
       setCompanies(data || []);
     } catch (err) {
       console.error("Fetch companies error", err);
@@ -58,30 +40,16 @@ export default function CompaniesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pharmacyId) return;
-
     try {
       if (editingCompany) {
-        await updateCompany(editingCompany.id, {
-          ...formData,
-          pharmacy_id: pharmacyId
-        });
+        // الـ API يتكفل بالتحقق من الـ pharmacy_id تلقائياً
+        await updateCompany(editingCompany.id, formData);
       } else {
-        await addCompany({
-          ...formData,
-          pharmacy_id: pharmacyId
-        });
+        await addCompany(formData);
       }
       setIsModalOpen(false);
       setEditingCompany(null);
-      setFormData({ 
-        pharmacy_id: pharmacyId, 
-        name: '', 
-        contact_person: '', 
-        phone: '', 
-        email: '', 
-        address: '' 
-      });
+      setFormData({ name: '', contact_person: '', phone: '', email: '', address: '' });
       fetchCompanies();
     } catch (err) {
       console.error("Submit error", err);
@@ -91,7 +59,6 @@ export default function CompaniesPage() {
   const handleEdit = (company: Company) => {
     setEditingCompany(company);
     setFormData({
-      pharmacy_id: company.pharmacy_id,
       name: company.name,
       contact_person: company.contact_person || '',
       phone: company.phone || '',
@@ -103,8 +70,12 @@ export default function CompaniesPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذه الشركة؟')) {
-      await deleteCompany(id);
-      fetchCompanies();
+      try {
+        await deleteCompany(id);
+        fetchCompanies();
+      } catch (err) {
+        console.error("Delete error", err);
+      }
     }
   };
 
@@ -112,16 +83,6 @@ export default function CompaniesPage() {
     c.name.toLowerCase().includes(search.toLowerCase()) || 
     (c.contact_person && c.contact_person.toLowerCase().includes(search.toLowerCase()))
   );
-
-  // حماية الواجهة في حال عدم وجود معرف صيدلية صالح بعد انتهاء التحميل
-  if (!pharmacyId && !loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 font-cairo text-gray-400 gap-3">
-        <AlertCircle className="w-10 h-10 text-amber-500" />
-        <p>يرجى التأكد من تسجيل الدخول واختيار الصيدلية أولاً.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -135,14 +96,7 @@ export default function CompaniesPage() {
         <button 
           onClick={() => {
             setEditingCompany(null);
-            setFormData({ 
-              pharmacy_id: pharmacyId || '', 
-              name: '', 
-              contact_person: '', 
-              phone: '', 
-              email: '', 
-              address: '' 
-            });
+            setFormData({ name: '', contact_person: '', phone: '', email: '', address: '' });
             setIsModalOpen(true);
           }}
           className="nile-button flex items-center gap-2"
