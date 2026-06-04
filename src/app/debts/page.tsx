@@ -6,9 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Debtor, getDebtors, addDebtor, recordPayment, getPaymentHistory, DebtPayment } from '@/lib/api/debts';
 
 export default function DebtsPage() {
-  // تعريف الـ pharmacyId كـ state بدلاً من جلبها من الـ useAuth
-  const [pharmacyId, setPharmacyId] = useState<string | null>(null);
-
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -23,30 +20,15 @@ export default function DebtsPage() {
   const [paymentData, setPaymentData] = useState({ amount: '', payment_type: 'partial' as 'partial' | 'full', note: '' });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // 1️⃣ قراءة الـ pharmacyId من الـ localStorage داخل الـ useEffect لتجنب مشاكل الـ SSR
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const id = localStorage.getItem('pharmacyId'); // تأكد من مطابقة الاسم المخزن لديك
-      if (id) {
-        setPharmacyId(id);
-      } else {
-        setLoading(false); // إيقاف التحميل لعرض واجهة التحذير
-      }
-    }
+    fetchDebtors();
   }, []);
 
-  // 2️⃣ جلب بيانات المدينين فور التحقق من وجود المعرف وثباته
-  useEffect(() => {
-    if (pharmacyId) {
-      fetchDebtors();
-    }
-  }, [pharmacyId]);
-
   const fetchDebtors = async () => {
-    if (!pharmacyId) return;
     setLoading(true);
     try {
-      const data = await getDebtors(pharmacyId); 
+      // جلب البيانات بدون تمرير أي معاملات (0 arguments)
+      const data = await getDebtors(); 
       setDebtors(data || []);
     } catch (err) {
       console.error("Fetch debtors error", err);
@@ -57,30 +39,25 @@ export default function DebtsPage() {
 
   const handleAddDebtor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pharmacyId) {
-      setErrorMessage("فشل تحديد الصيدلية الحالية.");
-      return;
-    }
     try {
-      await addDebtor({
-        ...formData,
-        pharmacy_id: pharmacyId
-      });
+      // الـ API يتوقع formData فقط ولا يحتاج لـ pharmacy_id هنا
+      await addDebtor(formData);
       setIsAddModalOpen(false);
       setFormData({ name: '', phone: '' });
       fetchDebtors();
     } catch (err) {
       console.error("Add debtor error", err);
+      setErrorMessage("حدث خطأ أثناء إضافة العميل.");
     }
   };
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDebtor || !pharmacyId) return;
+    if (!selectedDebtor) return;
     try {
+      // إرسال بيانات السداد بدون حقل pharmacy_id يدوياً
       await recordPayment({
         debtor_id: selectedDebtor.id,
-        pharmacy_id: pharmacyId,
         amount: parseFloat(paymentData.amount),
         payment_type: paymentData.payment_type,
         note: paymentData.note
@@ -94,13 +71,18 @@ export default function DebtsPage() {
   };
 
   const handleViewHistory = async (debtor: Debtor) => {
-    if (!pharmacyId) return;
     setSelectedDebtor(debtor);
     setIsHistoryModalOpen(true);
     setHistoryLoading(true);
-    const history = await getPaymentHistory(debtor.id, pharmacyId);
-    setPaymentHistory(history || []);
-    setHistoryLoading(false);
+    try {
+      // استدعاء سجل السداد بالاعتماد على معرف العميل فقط
+      const history = await getPaymentHistory(debtor.id);
+      setPaymentHistory(history || []);
+    } catch (err) {
+      console.error("Fetch history error", err);
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   const filteredDebtors = debtors.filter(d => 
@@ -109,16 +91,6 @@ export default function DebtsPage() {
   );
 
   const totalOutstanding = debtors.reduce((acc, d) => acc + d.total_debt, 0);
-
-  // حماية الواجهة في حال عدم وجود معرف صيدلية صالح بعد التحميل
-  if (!pharmacyId && !loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 font-cairo text-gray-400 gap-3">
-        <AlertCircle className="w-10 h-10 text-amber-500" />
-        <p>يرجى التأكد من تسجيل الدخول واختيار الصيدلية أولاً.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
