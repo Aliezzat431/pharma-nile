@@ -4,20 +4,16 @@ import { useState, useEffect } from 'react';
 import { Building2, Phone, Mail, Plus, Search, Trash2, Edit, X, MapPin, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Company, getCompanies, addCompany, updateCompany, deleteCompany } from '@/lib/api/companies';
-// استيراد الـ Hook الخاص بجلب معرف الصيدلية الحالية
-import { useAuth } from '@/hooks/useAuth';
 
 export default function CompaniesPage() {
-  // جلب الـ pharmacyId من الـ Auth context أو الـ Store
-  const { pharmacyId } = useAuth();
-
+  // تعريف الـ pharmacyId كـ state بدلاً من الـ Context
+  const [pharmacyId, setPharmacyId] = useState<string | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   
-  // تعديل الـ Initial State ليتضمن الـ pharmacy_id فارغاً في البداية وتحديثه عند الفتح
   const [formData, setFormData] = useState<Omit<Company, 'id' | 'created_at'>>({
     pharmacy_id: '',
     name: '',
@@ -27,12 +23,23 @@ export default function CompaniesPage() {
     address: ''
   });
 
-  // ربط جلب البيانات بوجود الـ pharmacyId لضمان أمان البيانات
+  // 1️⃣ قراءة الـ pharmacyId من الـ localStorage عند تحميل المكون لأول مرة
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const id = localStorage.getItem('pharmacyId'); // أو حسب الاسم المخزن عندك مثلاً 'pharmacy_id'
+      if (id) {
+        setPharmacyId(id);
+        setFormData(prev => ({ ...prev, pharmacy_id: id }));
+      } else {
+        setLoading(false); // وقف التحميل إذا لم يجد المعرف ليظهر رسالة التحذير
+      }
+    }
+  }, []);
+
+  // 2️⃣ جلب الشركات فور التأكد من وجود الـ pharmacyId
   useEffect(() => {
     if (pharmacyId) {
       fetchCompanies();
-      // تحديث الـ pharmacy_id الافتراضي داخل الـ Form
-      setFormData(prev => ({ ...prev, pharmacy_id: pharmacyId }));
     }
   }, [pharmacyId]);
 
@@ -40,7 +47,6 @@ export default function CompaniesPage() {
     if (!pharmacyId) return;
     setLoading(true);
     try {
-      // تمرير الـ pharmacyId لعزل الشركات بناءً على الصيدلية المسجلة
       const data = await getCompanies(pharmacyId);
       setCompanies(data || []);
     } catch (err) {
@@ -58,12 +64,12 @@ export default function CompaniesPage() {
       if (editingCompany) {
         await updateCompany(editingCompany.id, {
           ...formData,
-          pharmacy_id: pharmacyId // التأكيد على إرسال المعرف الحالي
+          pharmacy_id: pharmacyId
         });
       } else {
         await addCompany({
           ...formData,
-          pharmacy_id: pharmacyId // ربط الشركة الجديدة بالصيدلية الحالية
+          pharmacy_id: pharmacyId
         });
       }
       setIsModalOpen(false);
