@@ -87,6 +87,25 @@ export default function CreateProduct() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 1. String Trimming Guard
+    const trimmedName = formData.name.trim();
+    if (!trimmedName) {
+      showError('خطأ: يجب إدخال اسم المنتج بشكل صحيح ولا يمكن أن يكون مسافات فارغة.');
+      return;
+    }
+
+    // 2. Zero or Negative Numbers Protection
+    const qty = Number(formData.quantity);
+    const pPrice = Number(formData.purchase_price);
+    const sPrice = Number(formData.selling_price);
+    const uConv = showUnitConversion ? Number(formData.unit_conversion) : 1;
+
+    if (qty <= 0 || pPrice <= 0 || sPrice <= 0 || uConv <= 0) {
+      showError('خطأ: الكمية، الأسعار، ومعامل التحويل يجب أن تكون أكبر من صفر.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -97,6 +116,7 @@ export default function CreateProduct() {
         purchase_price: Number(formData.purchase_price),
         selling_price: Number(formData.selling_price),
         unit_conversion: showUnitConversion ? Number(formData.unit_conversion) : 1,
+        pharmacy_id: localStorage.getItem('selected_pharmacy_id') || undefined,
       });
 
       if (success) {

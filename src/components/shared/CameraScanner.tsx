@@ -75,8 +75,10 @@ export default function LiveScanner({ onScan, enabled = true }: LiveScannerProps
         },
         () => {}
       );
-    } catch (err) {
-      console.error('Hidden scanner error:', err);
+    } catch (err: any) {
+      // Silently ignore "no camera" errors (desktop dev, etc.)
+      if (err?.name === 'NotFoundError' || err?.message?.includes('Requested device not found')) return;
+      console.warn('Scanner init skipped:', err?.message || err);
     }
   }, [enabled, onScan, playBeep]);
 

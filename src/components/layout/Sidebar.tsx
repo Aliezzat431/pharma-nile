@@ -43,6 +43,7 @@ const menuGroups = [
     title: 'المخزن والعملاء',
     items: [
       { icon: Package, label: 'المخزون', href: '/inventory' },
+      { icon: Box, label: 'التحويلات', href: '/transfers' },
       { icon: AlertCircle, label: 'النواقص', href: '/shortages' },
       { icon: Users, label: 'العملاء', href: '/customers' },
       { icon: History, label: 'المرتجعات', href: '/returns' },

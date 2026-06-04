@@ -107,14 +107,24 @@ export default function InventoryDashboard() {
   };
 
   const handleSaveBatch = async (batchId: string) => {
+    const q = Number(editForm.quantity);
+    const p = Number(editForm.purchase_price);
+    const s = Number(editForm.selling_price);
+
+    if (q <= 0 || p <= 0 || s <= 0) {
+      setInventoryError("خطأ: الكمية والأسعار يجب أن تكون أكبر من صفر.");
+      setTimeout(() => setInventoryError(null), 3500);
+      return;
+    }
+
     setIsSaving(true);
     setInventoryError(null);
     try {
       await updateBatch(batchId, {
-        quantity: Number(editForm.quantity),
-        purchase_price: Number(editForm.purchase_price),
-        selling_price: Number(editForm.selling_price),
-        barcode: editForm.barcode,
+        quantity: q,
+        purchase_price: p,
+        selling_price: s,
+        barcode: editForm.barcode?.trim() || '',
       });
       setEditingBatchId(null);
       await fetchInventory(); // Refresh data
@@ -132,15 +142,32 @@ export default function InventoryDashboard() {
   };
 
   const handleCreateBatch = async (productId: string) => {
+    const q = Number(newBatchForm.quantity);
+    const p = Number(newBatchForm.purchase_price);
+    const s = Number(newBatchForm.selling_price);
+    const barcodeTrimmed = newBatchForm.barcode?.trim();
+
+    if (q <= 0 || p <= 0 || s <= 0) {
+      setInventoryError("خطأ: الكمية والأسعار يجب أن تكون أكبر من صفر.");
+      setTimeout(() => setInventoryError(null), 3500);
+      return;
+    }
+
+    if (!barcodeTrimmed) {
+      setInventoryError("خطأ: الباركود لا يمكن أن يكون فارغاً.");
+      setTimeout(() => setInventoryError(null), 3500);
+      return;
+    }
+
     setIsAddingBatch(true);
     setInventoryError(null);
     try {
       await createBatch({
         product_id: productId,
-        barcode: newBatchForm.barcode,
-        quantity: Number(newBatchForm.quantity),
-        purchase_price: Number(newBatchForm.purchase_price),
-        selling_price: Number(newBatchForm.selling_price),
+        barcode: barcodeTrimmed,
+        quantity: q,
+        purchase_price: p,
+        selling_price: s,
         expiry_date: newBatchForm.expiry_date,
       });
       setAddingBatchForProduct(null);

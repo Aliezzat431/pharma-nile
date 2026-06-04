@@ -4,17 +4,19 @@ import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import ChatWidget from '@/components/chat/ChatWidget';
+import { useAuth } from '@/hooks/useAuth';
 import { useDispatch } from 'react-redux';
 import { openIframe } from '@/store/slices/agentSlice';
-import { Maximize2, Search } from 'lucide-react';
+import { Maximize2, Search, AlertCircle, Loader2 } from 'lucide-react';
 import CommandPalette from '@/components/layout/CommandPalette';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
-  const isAuthPage = pathname?.startsWith('/auth');
+  const isAuthPage = pathname?.startsWith('/auth') || pathname?.startsWith('/login');
   const isMinimal = searchParams.get('minimal') === 'true';
   const isCopilot = searchParams.get('copilot') === 'true';
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -76,6 +78,32 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   if (isAuthPage) {
     return <div className="min-h-screen w-full bg-[#050505]">{children}</div>;
+  }
+
+  if (loading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-[#050505]">
+        <Loader2 className="w-10 h-10 text-[#00CED1] animate-spin" />
+      </div>
+    );
+  }
+
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  console.log(user);
+  if (!pharmacyId) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#050505] gap-4 text-center px-4">
+        <AlertCircle className="w-16 h-16 text-[#FF6b6b]" />
+        <h2 className="text-2xl font-bold font-cairo text-white">غير مصرح بالدخول للنظام (إصدار Multi-Tenant)</h2>
+        <p className="text-gray-400 font-cairo max-w-md">يرجى تسجيل الدخول بشكل صحيح كمسؤول لاستعادة هوية الصيدلية واستئناف عمليات النظام.</p>
+        <button 
+          onClick={() => router.push('/auth/login')}
+          className="mt-4 px-6 py-2.5 bg-[#00CED1]/20 hover:bg-[#00CED1] hover:text-black font-cairo font-bold text-[#00CED1] transition-all rounded-xl"
+        >
+          الذهاب لصفحة تسجيل الدخول
+        </button>
+      </div>
+    );
   }
 
   return (

@@ -10,12 +10,31 @@ export interface FinancialStats {
 }
 
 export async function getFinancialStats(days: number = 30) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+
+  if (!pharmacyId) {
+    return {
+      totalSales: 0,
+      totalCost: 0,
+      totalProfit: 0,
+      totalTransactions: 0,
+      paymentMethodDistribution: [
+        { name: 'Cash', value: 0 },
+        { name: 'Debt', value: 0 },
+        { name: 'Sadqah', value: 0 },
+      ],
+      dailyRevenue: []
+    };
+  }
+
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
 
   const { data: orders, error } = await supabase
     .from('orders')
     .select('*')
+    .eq('pharmacy_id', pharmacyId)
     .gte('created_at', cutoff.toISOString())
     .eq('status', 'completed');
 

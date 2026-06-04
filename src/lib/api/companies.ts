@@ -11,9 +11,14 @@ export interface Company {
 }
 
 export async function getCompanies() {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) return [];
+
   const { data, error } = await supabase
     .from('companies')
     .select('*')
+    .eq('pharmacy_id', pharmacyId)
     .order('name', { ascending: true });
 
   if (error) {
@@ -24,9 +29,13 @@ export async function getCompanies() {
 }
 
 export async function addCompany(company: Omit<Company, 'id' | 'created_at'>) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) throw new Error("Unauthorized Tenant");
+
   const { data, error } = await supabase
     .from('companies')
-    .insert([company])
+    .insert([{ ...company, pharmacy_id: pharmacyId }])
     .select()
     .single();
 
@@ -38,10 +47,15 @@ export async function addCompany(company: Omit<Company, 'id' | 'created_at'>) {
 }
 
 export async function updateCompany(id: string, updates: Partial<Company>) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) throw new Error("Unauthorized Tenant");
+
   const { data, error } = await supabase
     .from('companies')
     .update(updates)
     .eq('id', id)
+    .eq('pharmacy_id', pharmacyId)
     .select()
     .single();
 
@@ -53,10 +67,15 @@ export async function updateCompany(id: string, updates: Partial<Company>) {
 }
 
 export async function deleteCompany(id: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) throw new Error("Unauthorized Tenant");
+
   const { error } = await supabase
     .from('companies')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('pharmacy_id', pharmacyId);
 
   if (error) {
     console.error('Error deleting company:', error);

@@ -56,6 +56,10 @@ export default function LoginPage() {
       // Save selected pharmacy to localStorage
       if (selectedPharmacyId) {
         localStorage.setItem('selected_pharmacy_id', selectedPharmacyId);
+        // Update user_metadata to reflect the newly chosen branch for RLS policies!
+        await createClient().auth.updateUser({
+          data: { pharmacy_id: selectedPharmacyId }
+        });
       }
 
       router.push("/");

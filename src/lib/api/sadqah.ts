@@ -8,6 +8,10 @@ export interface SadqahEntry {
 }
 
 export async function getSadqahStats() {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) return { entries: [], totalAmount: 0 };
+
   const { data, error } = await supabase
     .from('orders')
     .select(`
@@ -18,6 +22,7 @@ export async function getSadqahStats() {
         name
       )
     `)
+    .eq('pharmacy_id', pharmacyId)
     .eq('payment_method', 'sadqah')
     .order('created_at', { ascending: false });
 

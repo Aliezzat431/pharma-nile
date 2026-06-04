@@ -17,6 +17,20 @@ export interface RecentTransaction {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+
+  if (!pharmacyId) {
+    return {
+      todaySales: `ج.م 0`,
+      todayProfit: `ج.م 0`,
+      activeSessions: `0 موظف`,
+      lowStockItems: "0",
+      expiringSoon: "0",
+      weeklyData: []
+    };
+  }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -38,24 +52,28 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     supabase
       .from('orders')
       .select('total, profit_total')
+      .eq('pharmacy_id', pharmacyId)
       .gte('created_at', today.toISOString()),
     
     // 2. Active Sessions
     supabase
       .from('sessions')
       .select('*', { count: 'exact', head: true })
+      .eq('pharmacy_id', pharmacyId)
       .eq('status', 'active'),
 
     // 3. Low Stock Items (Threshold < 10)
     supabase
       .from('product_inventory')
       .select('*')
+      .eq('pharmacy_id', pharmacyId)
       .lt('total_quantity', 10),
 
     // 4. Expiring Soon (90 days)
     supabase
       .from('batches')
       .select('*', { count: 'exact', head: true })
+      .eq('pharmacy_id', pharmacyId)
       .gt('quantity', 0)
       .lte('expiry_date', ninetyDaysFromNow.toISOString().split('T')[0]),
 
@@ -63,6 +81,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     supabase
       .from('orders')
       .select('total, payment_method, created_at')
+      .eq('pharmacy_id', pharmacyId)
       .gte('created_at', weekAgo.toISOString())
   ]);
 
@@ -104,9 +123,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function getRecentTransactions(): Promise<RecentTransaction[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) return [];
+
   const { data, error } = await supabase
     .from('orders')
     .select('id, created_at, total, payment_method')
+    .eq('pharmacy_id', pharmacyId)
     .order('created_at', { ascending: false })
     .limit(5);
 

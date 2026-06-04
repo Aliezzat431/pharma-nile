@@ -14,6 +14,7 @@ export interface Product {
   company?: string;
   barcode?: string;
   activeBatches?: any[]; // added to hold batch distributions options
+  pharmacy_id?: string;
 }
 
 export interface Batch {
@@ -24,10 +25,11 @@ export interface Batch {
   purchase_price: number;
   selling_price: number;
   expiry_date: string;
+  pharmacy_id?: string;
 }
 
 // Fetch all products with their active batches and computed prices
-export async function searchProducts(query: string) {
+export async function searchProducts(query: string, pharmacyId: string) {
   // Using a simple ilike search on the product name or barcode lookup
   const { data: products, error } = await supabase
     .from('products')
@@ -38,6 +40,7 @@ export async function searchProducts(query: string) {
       )
     `)
     .ilike('name', `%${query}%`)
+    .eq('pharmacy_id', pharmacyId)
     .limit(20);
 
   if (error) {
@@ -64,12 +67,26 @@ export async function searchProducts(query: string) {
   });
 }
 
-export async function getProductByBarcode(barcode: string) {
+export async function getProducts(pharmacyId: string) {
+  const { data: products, error } = await supabase
+    .from('products')
+    .select(`*`)
+    .eq('pharmacy_id', pharmacyId);
+
+  if (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+  return products || [];
+}
+
+export async function getProductByBarcode(barcode: string, pharmacyId: string) {
   // First get the product via batch barcode
   const { data: batch, error: batchError } = await supabase
     .from('batches')
     .select('id, product_id')
     .eq('barcode', barcode)
+    .eq('pharmacy_id', pharmacyId)
     .gt('quantity', 0)
     .limit(1)
     .single();
@@ -85,7 +102,8 @@ export async function getProductByBarcode(barcode: string) {
         *
       )
     `)
-    .eq('id', batch.product_id);
+    .eq('id', batch.product_id)
+    .eq('pharmacy_id', pharmacyId);
 
   if (error || !products || products.length === 0) return null;
 
@@ -108,10 +126,25 @@ export async function getProductByBarcode(barcode: string) {
 
 // Update an existing batch
 export async function updateBatch(batchId: string, updates: Partial<Batch>) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) throw new Error('Unauthorized');
+
+  if (updates.quantity !== undefined && updates.quantity <= 0) {
+    throw new Error('Validation Error: Quantity must be > 0');
+  }
+  if (updates.purchase_price !== undefined && updates.purchase_price <= 0) {
+    throw new Error('Validation Error: Purchase price must be > 0');
+  }
+  if (updates.selling_price !== undefined && updates.selling_price <= 0) {
+    throw new Error('Validation Error: Selling price must be > 0');
+  }
+
   const { data, error } = await supabase
     .from('batches')
     .update(updates)
     .eq('id', batchId)
+    .eq('pharmacy_id', pharmacyId)
     .select()
     .single();
 
@@ -123,8 +156,21 @@ export async function updateBatch(batchId: string, updates: Partial<Batch>) {
 }
 
 export async function createBatch(batch: Partial<Batch>) {
-  const pharmacyId = typeof window !== 'undefined' ? localStorage.getItem('selected_pharmacy_id') : null;
-  const payload = pharmacyId ? { ...batch, pharmacy_id: pharmacyId } : batch;
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) throw new Error('Unauthorized');
+
+  if (batch.quantity !== undefined && batch.quantity <= 0) {
+    throw new Error('Validation Error: Quantity must be > 0');
+  }
+  if (batch.purchase_price !== undefined && batch.purchase_price <= 0) {
+    throw new Error('Validation Error: Purchase price must be > 0');
+  }
+  if (batch.selling_price !== undefined && batch.selling_price <= 0) {
+    throw new Error('Validation Error: Selling price must be > 0');
+  }
+
+  const payload = { ...batch, pharmacy_id: pharmacyId };
 
   const { data, error } = await supabase
     .from('batches')

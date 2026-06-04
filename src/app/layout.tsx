@@ -7,6 +7,7 @@ import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import UndoToast from '@/components/ui/UndoToast';
 import AgentCopilot from '@/components/agent/AgentCopilot';
 import WorkspaceManager from '@/components/agent/WorkspaceManager';
+import DevToolsBlocker from '@/components/shared/DevToolsBlocker';
 import { ThemeProvider } from 'next-themes';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={`${inter.variable} ${cairo.variable}`} suppressHydrationWarning>
       <body className="antialiased bg-[#050505] text-white font-cairo dark:bg-[#050505] dark:text-white light:bg-[#e0f2fe] light:text-black">
+        <DevToolsBlocker />
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
           <StoreProvider>
             <AuthProvider>
