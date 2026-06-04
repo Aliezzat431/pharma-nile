@@ -77,13 +77,13 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   };
 
   if (isAuthPage) {
-    return <div className="min-h-screen w-full bg-[#050505]">{children}</div>;
+    return <div className="min-h-screen w-full bg-[var(--background)]">{children}</div>;
   }
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-[#050505]">
-        <Loader2 className="w-10 h-10 text-[#00CED1] animate-spin" />
+      <div className="h-screen w-full flex items-center justify-center bg-[var(--background)]">
+        <Loader2 className="w-10 h-10 text-[var(--nile-teal)] animate-spin" />
       </div>
     );
   }
@@ -92,13 +92,13 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   console.log(user);
   if (!pharmacyId) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#050505] gap-4 text-center px-4">
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4">
         <AlertCircle className="w-16 h-16 text-[#FF6b6b]" />
         <h2 className="text-2xl font-bold font-cairo text-white">غير مصرح بالدخول للنظام (إصدار Multi-Tenant)</h2>
         <p className="text-gray-400 font-cairo max-w-md">يرجى تسجيل الدخول بشكل صحيح كمسؤول لاستعادة هوية الصيدلية واستئناف عمليات النظام.</p>
         <button 
           onClick={() => router.push('/auth/login')}
-          className="mt-4 px-6 py-2.5 bg-[#00CED1]/20 hover:bg-[#00CED1] hover:text-black font-cairo font-bold text-[#00CED1] transition-all rounded-xl"
+          className="mt-4 px-6 py-2.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)] hover:text-black font-cairo font-bold text-[var(--nile-teal)] transition-all rounded-xl"
         >
           الذهاب لصفحة تسجيل الدخول
         </button>
@@ -134,7 +134,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               
               <button 
                 onClick={handleCloneToWindow}
-                className="px-4 py-2 bg-[#111111]/80 hover:bg-[#1A1A1A] border border-white/10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[#00CED1] transition-all hover:scale-105 shadow-lg backdrop-blur-sm flex-1 md:flex-none"
+                className="px-4 py-2 bg-[#111111]/80 hover:bg-[#1A1A1A] border border-white/10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[var(--nile-teal)] transition-all hover:scale-105 shadow-lg backdrop-blur-sm flex-1 md:flex-none"
               >
                 <Maximize2 className="w-4 h-4" />
                 <span>فتح النافذة</span>
@@ -146,7 +146,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               className="glass-card px-4 py-2 flex items-center gap-4 text-gray-500 hover:text-white transition-all group"
             >
               <div className="flex items-center gap-2">
-                <Search className="w-4 h-4 group-hover:text-[#00CED1] transition-colors" />
+                <Search className="w-4 h-4 group-hover:text-[var(--nile-teal)] transition-colors" />
                 <span className="text-xs font-cairo font-bold">ابحث عن أي شيء (Ctrl+K)</span>
               </div>
               <div className="flex items-center gap-1">
@@ -163,8 +163,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       </main>
       
       {/* Background ambient lighting effects */}
-      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-[#00CED1]/5 blur-[120px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
-      <div className="fixed bottom-[-10%] right-[20%] w-[50vw] h-[50vw] rounded-full bg-[#D4AF37]/3 blur-[150px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
+      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-[var(--nile-teal)]/5 blur-[120px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
+      <div className="fixed bottom-[-10%] right-[20%] w-[50vw] h-[50vw] rounded-full bg-[var(--royal-gold)]/3 blur-[150px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
       
       <CommandPalette isOpen={isCmdOpen} onClose={() => setIsCmdOpen(false)} />
       <ChatWidget />

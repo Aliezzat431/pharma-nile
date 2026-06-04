@@ -96,15 +96,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#050505] relative selection:bg-[#00CED1] selection:text-white py-12 px-4 overflow-y-auto">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)] relative selection:bg-[var(--nile-teal)] selection:text-white py-12 px-4 overflow-y-auto">
       {/* Dynamic Background Elements */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#00CED1]/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#D4AF37]/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--nile-teal)]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[var(--royal-gold)]/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Login Container */}
       <div className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 animate-in fade-in zoom-in duration-700">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-[#00CED1] to-[#00CED1]/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,206,209,0.3)]">
+          <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--nile-teal)]/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,206,209,0.3)]">
             <Lock className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 mb-2 font-cairo">
@@ -135,7 +135,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 dir="ltr"
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-4 pr-11 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all placeholder:text-foreground/30"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-4 pr-11 text-white focus:outline-none focus:border-[var(--nile-teal)] focus:ring-1 focus:ring-[var(--nile-teal)] transition-all placeholder:text-foreground/30"
                 placeholder="admin@pharmacy.com"
               />
             </div>
@@ -155,7 +155,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 dir="ltr"
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-4 pr-11 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all placeholder:text-foreground/30"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-4 pr-11 text-white focus:outline-none focus:border-[var(--nile-teal)] focus:ring-1 focus:ring-[var(--nile-teal)] transition-all placeholder:text-foreground/30"
                 placeholder="••••••••"
               />
             </div>
@@ -169,14 +169,14 @@ export default function LoginPage() {
               <select
                 value={selectedPharmacyId}
                 onChange={(e) => setSelectedPharmacyId(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 pl-10 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all font-cairo appearance-none text-right"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 pl-10 text-white focus:outline-none focus:border-[var(--nile-teal)] focus:ring-1 focus:ring-[var(--nile-teal)] transition-all font-cairo appearance-none text-right"
                 required
               >
                 {pharmacies.length === 0 ? (
-                  <option value="" disabled className="bg-[#050505]">جاري تحميل الفروع...</option>
+                  <option value="" disabled className="bg-[var(--background)]">جاري تحميل الفروع...</option>
                 ) : (
                   pharmacies.map(p => (
-                    <option key={p.id} value={p.id} className="bg-[#050505]">{p.name}</option>
+                    <option key={p.id} value={p.id} className="bg-[var(--background)]">{p.name}</option>
                   ))
                 )}
               </select>
@@ -189,19 +189,19 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[#D4AF37]/80 mr-1 block font-cairo text-right">
+            <label className="text-sm font-medium text-[var(--royal-gold)]/80 mr-1 block font-cairo text-right">
               كود المدير (اختياري للموظف)
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-[#D4AF37]/40" />
+                <Lock className="h-5 w-5 text-[var(--royal-gold)]/40" />
               </div>
               <input
                 type="password"
                 value={adminKey}
                 onChange={(e) => setAdminKey(e.target.value)}
                 dir="ltr"
-                className="w-full bg-[#D4AF37]/5 border border-[#D4AF37]/10 rounded-xl py-3 pl-4 pr-11 text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all placeholder:text-foreground/30"
+                className="w-full bg-[var(--royal-gold)]/5 border border-[var(--royal-gold)]/10 rounded-xl py-3 pl-4 pr-11 text-white focus:outline-none focus:border-[var(--royal-gold)] focus:ring-1 focus:ring-[var(--royal-gold)] transition-all placeholder:text-foreground/30"
                 placeholder="••••"
               />
             </div>
@@ -210,7 +210,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading || pharmacies.length === 0}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-white font-bold text-lg hover:shadow-[0_0_20px_rgba(0,206,209,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4 font-cairo"
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--nile-teal)] to-[#009b9e] text-white font-bold text-lg hover:shadow-[0_0_20px_rgba(0,206,209,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4 font-cairo"
           >
             {isLoading ? (
               <>
@@ -227,7 +227,7 @@ export default function LoginPage() {
           <p className="text-sm text-foreground/50 mb-4 font-cairo">ليس لديك حساب؟</p>
           <Link
             href="/auth/register"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[#00CED1] font-medium hover:bg-white/10 transition-all font-cairo"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[var(--nile-teal)] font-medium hover:bg-white/10 transition-all font-cairo"
           >
             <UserPlus className="w-4 h-4" />
             إنشاء حساب جديد

@@ -29,6 +29,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { useAppDispatch } from '@/store/hooks';
 import { openIframe } from '@/store/slices/agentSlice';
+import ThemeToggle from './ThemeToggle';
 
 const menuGroups = [
   {
@@ -138,14 +139,14 @@ export default function Sidebar() {
       >
       {/* Brand Header */}
       <div className={`p-6 pb-2 mb-4 transition-all duration-500 ${isCollapsed ? 'px-4' : 'p-8'}`}>
-        <div className={`flex items-center gap-3 bg-gradient-to-l from-[#00CED1]/10 to-transparent p-3 rounded-2xl border-r-4 border-[#00CED1] relative group overflow-hidden`}>
-          <div className="w-10 h-10 min-w-[40px] rounded-xl bg-[#00CED1] flex items-center justify-center neon-glow-teal z-10 transition-transform group-hover:rotate-12">
+        <div className={`flex items-center gap-3 bg-gradient-to-l bg-[var(--nile-teal)]/10 to-transparent p-3 rounded-2xl border-r-4 border-[var(--nile-teal)] relative group overflow-hidden`}>
+          <div className="w-10 h-10 min-w-[40px] rounded-xl bg-[var(--nile-teal)] flex items-center justify-center neon-glow-teal z-10 transition-transform group-hover:rotate-12">
             <Sparkles className="w-6 h-6 text-black" />
           </div>
           {!isCollapsed && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <h1 className="text-xl font-bold text-white tracking-tight font-cairo">PharmaNile</h1>
-              <p className="text-[10px] text-[#00CED1] font-bold uppercase tracking-widest opacity-80">Premium OS</p>
+              <p className="text-[10px] text-[var(--nile-teal)] font-bold uppercase tracking-widest opacity-80">Premium OS</p>
             </div>
           )}
           
@@ -211,7 +212,7 @@ export default function Sidebar() {
                             height: 750
                           }));
                         }}
-                        className="absolute left-4 opacity-0 group-hover:opacity-100 p-2 hover:bg-[#00CED1]/20 text-[#00CED1] rounded-xl transition-all z-10"
+                        className="absolute left-4 opacity-0 group-hover:opacity-100 p-2 hover:bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] rounded-xl transition-all z-10"
                         title="فتح في نافذة مستقلة"
                       >
                         <Maximize2 className="w-3.5 h-3.5" />
@@ -243,6 +244,10 @@ export default function Sidebar() {
           )}
         </div>
 
+        <div className="flex px-1 gap-2">
+           <ThemeToggle align="sidebar" />
+        </div>
+
         <button
           onClick={handleLogout}
           className={`w-full flex items-center gap-4 px-4 py-3 text-red-400 hover:bg-red-500/10 transition-all group overflow-hidden ${
@@ -260,7 +265,7 @@ export default function Sidebar() {
 
       {/* Egypt Style Ornament (Optional/Subtle) */}
       {!isCollapsed && (
-        <div className="absolute top-[20%] -left-20 w-40 h-40 bg-[#00CED1]/5 rounded-full blur-[80px] -z-10" />
+        <div className="absolute top-[20%] -left-20 w-40 h-40 bg-[var(--nile-teal)]/5 rounded-full blur-[80px] -z-10" />
       )}
       </motion.aside>
     </>

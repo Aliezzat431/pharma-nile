@@ -27,12 +27,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl" className={`${inter.variable} ${cairo.variable}`} suppressHydrationWarning>
-      <body className="antialiased bg-[#050505] text-white font-cairo dark:bg-[#050505] dark:text-white light:bg-[#e0f2fe] light:text-black">
+      <body className="antialiased bg-[var(--background)] text-[var(--text-primary)] font-cairo">
         <DevToolsBlocker />
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
           <StoreProvider>
             <AuthProvider>
-              <Suspense fallback={<div className="min-h-screen bg-[#050505] animate-pulse"></div>}>
+              <Suspense fallback={<div className="min-h-screen bg-[var(--background)] animate-pulse"></div>}>
                 <LayoutWrapper>
                    {children}
                 </LayoutWrapper>
