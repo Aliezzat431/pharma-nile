@@ -469,7 +469,7 @@ export default function POSTerminal() {
 
                       <button
                         onClick={(e) => toggleProductBatches(e, product.id)}
-                        className={`text-gray-400 transition-transform bg-[#050505]/40 border border-white/10 p-2 rounded-lg hover:text-white ${isExpanded ? 'rotate-180' : ''}`}
+                        className={`text-gray-400 transition-transform bg-white/10 border border-white/10 p-2 rounded-lg hover:text-white ${isExpanded ? 'rotate-180' : ''}`}
                         title="عرض التشغيلات المتاحة"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
@@ -484,7 +484,7 @@ export default function POSTerminal() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-[#050505]/70 border-t border-white/5 p-3 overflow-hidden"
+                        className="bg-white/5 border-t border-white/5 p-3 overflow-hidden"
                       >
                         <h4 className="text-xs text-gray-400 mb-2 font-cairo">التشغيلات المتاحة للاختيار من السلة (Batches)</h4>
                         <div className="overflow-x-auto">
@@ -570,7 +570,7 @@ export default function POSTerminal() {
                         <h3 className="font-semibold text-white truncate max-w-[200px] font-cairo">{item.name}</h3>
                         <div className="flex items-center gap-3 mt-1.5">
                           {/* Quantity Controls */}
-                          <div className="flex items-center gap-1 bg-[#050505]/50 border border-white/10 rounded-lg">
+                          <div className="flex items-center gap-1 bg-white/10 border border-white/10 rounded-lg">
                             <button
                               onClick={() => {
                                 if (item.quantity > 1) {
@@ -606,7 +606,7 @@ export default function POSTerminal() {
                                 dispatch(updateUnit({ id: item.id, unit: newUnit }));
                               }
                             }}
-                            className="bg-[#050505]/50 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-white outline-none font-cairo focus:border-[#00CED1]/50"
+                            className="bg-white/10 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-white outline-none font-cairo focus:border-[#00CED1]/50"
                           >
                             {item.availableUnits?.map((u: string) => (
                               <option key={u} value={u}>{u}</option>
@@ -677,7 +677,7 @@ export default function POSTerminal() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="absolute inset-0 flex flex-col items-center justify-center bg-[#050505]/95 backdrop-blur-md z-20"
+                className="absolute inset-0 flex flex-col items-center justify-center bg-background/95 backdrop-blur-md z-20"
               >
                 <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
                   <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
@@ -693,7 +693,7 @@ export default function POSTerminal() {
           </div>
 
           {/* Checkout Section */}
-          <div className="p-6 bg-[#050505]/80 border-t border-white/10 backdrop-blur-md">
+          <div className="p-6 bg-background/80 border-t border-white/10 backdrop-blur-md">
 
             {/* Payment Method Selector */}
             <div className="mb-6 space-y-3">
@@ -747,14 +747,14 @@ export default function POSTerminal() {
                           placeholder="اسم العميل"
                           value={newCustomerName}
                           onChange={e => setNewCustomerName(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50"
                         />
                         <input
                           type="text"
                           placeholder="رقم الهاتف (اختياري)"
                           value={newCustomerPhone}
                           onChange={e => setNewCustomerPhone(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50"
                         />
                         <button
                           onClick={handleCreateCustomer}
@@ -771,9 +771,9 @@ export default function POSTerminal() {
                         onChange={(e) => setSelectedCustomerId(e.target.value)}
                         className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50"
                       >
-                        <option value="" className="bg-[#050505]">-- اختر العميل --</option>
+                        <option value="" className="bg-background">-- اختر العميل --</option>
                         {customers.map(c => (
-                          <option key={c.id} value={c.id} className="bg-[#050505]">{c.name} (دين: {c.total_debt} ج.م)</option>
+                          <option key={c.id} value={c.id} className="bg-background">{c.name} (دين: {c.total_debt} ج.م)</option>
                         ))}
                       </select>
                     )}

@@ -110,10 +110,10 @@ export default function CopilotPage() {
         <div className="flex-1 glass-panel flex flex-col overflow-hidden relative">
           <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
              <div className="flex items-center gap-3">
-               <div className="w-8 h-8 rounded-lg bg-[#00CED1] flex items-center justify-center">
-                 <Sparkles className="w-5 h-5 text-black" />
-               </div>
-               <h2 className="font-bold font-cairo text-white">المساعد محسن</h2>
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <h2 className="font-bold font-cairo text-white">المساعد محسن الذكي</h2>
              </div>
              <div className="flex items-center gap-2">
                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -132,7 +132,7 @@ export default function CopilotPage() {
                 <div className={`max-w-[85%] p-4 rounded-2xl font-cairo text-sm leading-relaxed shadow-lg ${
                   msg.role === 'user' 
                     ? 'bg-white/10 text-white border border-white/10 rounded-br-none' 
-                    : 'bg-[#00CED1]/20 text-[#00CED1] border border-[#00CED1]/30 rounded-bl-none'
+                    : 'bg-primary/20 text-primary border border-primary/30 rounded-bl-none'
                 }`}>
                   {msg.content}
                 </div>
@@ -141,7 +141,7 @@ export default function CopilotPage() {
             {loading && (
               <div className="flex justify-end">
                 <div className="bg-white/5 p-4 rounded-2xl flex items-center gap-3 border border-white/5">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#00CED1]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
                   <span className="text-xs text-gray-500 font-cairo italic">محسن يفكر...</span>
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function CopilotPage() {
           </div>
 
           {/* Chat Input */}
-          <div className="p-4 bg-[#050505]/50 border-t border-white/5">
+          <div className="p-4 bg-background/50 border-t border-white/5">
             <div className="relative flex items-center gap-2">
               <input 
                 type="text" 
@@ -158,12 +158,12 @@ export default function CopilotPage() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="تحدث مع محسن..." 
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[#00CED1]/50 outline-none transition-all pr-12 font-cairo"
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-primary/50 outline-none transition-all pr-12 font-cairo"
               />
               <button 
                 onClick={handleSend}
                 disabled={loading || !input.trim()}
-                className="absolute left-2 w-8 h-8 rounded-lg bg-[#00CED1] text-black flex items-center justify-center hover:bg-[#47eaed] transition-all disabled:opacity-50"
+                className="absolute left-2 w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/80 transition-all disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -173,7 +173,7 @@ export default function CopilotPage() {
       </div>
 
       {/* Right Column: Multi-Tab Multi-Action Sandbox */}
-      <div className="flex-1 flex flex-col glass-panel overflow-hidden border-white/5 bg-[#050505]/50">
+      <div className="flex-1 flex flex-col glass-panel overflow-hidden border-white/5 bg-background/50">
         
         {/* Modern Tab Bar */}
         <div className="flex items-center gap-1 p-2 bg-white/5 border-b border-white/5 overflow-x-auto scrollbar-hide">
@@ -183,7 +183,7 @@ export default function CopilotPage() {
                onClick={() => setActiveTabId(tab.id)}
                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all font-cairo whitespace-nowrap group relative ${
                  activeTabId === tab.id 
-                   ? 'text-[#00CED1] bg-[#00CED1]/10 border border-[#00CED1]/30' 
+                   ? 'text-primary bg-primary/10 border border-primary/30' 
                    : 'text-gray-500 hover:bg-white/5'
                }`}
              >
@@ -195,7 +195,7 @@ export default function CopilotPage() {
                  />
                )}
                {activeTabId === tab.id && (
-                 <motion.div layoutId="activeTab" className="absolute bottom-[-2px] left-0 right-0 h-[2px] bg-[#00CED1]" />
+                 <motion.div layoutId="activeTab" className="absolute bottom-[-2px] left-0 right-0 h-[2px] bg-[var(--nile-teal)]" />
                )}
              </button>
            ))}
@@ -217,7 +217,7 @@ export default function CopilotPage() {
                 >
                   {tab.type === 'welcome' && (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-6 text-center">
-                       <div className="w-32 h-32 rounded-[2.5rem] bg-gradient-to-br from-[#00CED1] to-[#47eaed] flex items-center justify-center neon-glow-teal shadow-2xl relative">
+                       <div className="w-32 h-32 rounded-[2.5rem] bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center neon-glow-teal shadow-2xl relative">
                           <Sparkles className="w-16 h-16 text-black" />
                        </div>
                        <div className="space-y-3">
@@ -242,8 +242,8 @@ export default function CopilotPage() {
                        <h3 className="text-2xl font-bold font-cairo mb-8">التحليلات والمخططات</h3>
                        <div className="glass-card p-10 h-[500px] flex items-end justify-between gap-4">
                          {[30, 80, 45, 90, 60, 75, 40].map((h, i) => (
-                           <div key={i} className="flex-1 bg-[#00CED1]/20 rounded-xl hover:bg-[#00CED1]/40 transition-all cursor-pointer group relative" style={{height: `${h}%`}}>
-                             <div className="absolute top-[-40px] left-1/2 -translate-x-1/2 bg-black text-[#00CED1] px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                           <div key={i} className="flex-1 bg-primary/20 rounded-xl hover:bg-primary/40 transition-all cursor-pointer group relative" style={{height: `${h}%`}}>
+                             <div className="absolute top-[-40px] left-1/2 -translate-x-1/2 bg-background text-primary px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
                                1,{h}50
                              </div>
                            </div>
