@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Users, Phone, Search, Plus, X, History, CreditCard, Loader2, ArrowUpRight, DollarSign, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Debtor, getDebtors, addDebtor, recordPayment, getPaymentHistory, DebtPayment } from '@/lib/api/debts';
-// 1️⃣ استيراد الـ Hook الخاص بجلب بيانات الصيدلية الحالية (عدلها حسب نظام الـ State عندك)
+// استيراد الـ Hook الخاص بجلب بيانات الصيدلية الحالية
 import { useAuth } from '@/hooks/useAuth'; 
 
 export default function DebtsPage() {
@@ -25,7 +25,7 @@ export default function DebtsPage() {
   const [paymentData, setPaymentData] = useState({ amount: '', payment_type: 'partial' as 'partial' | 'full', note: '' });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // 2️⃣ ربط الـ useEffect بوجود الـ pharmacyId لضمان عدم جلب بيانات فارغة أو عامة
+  // ربط الـ useEffect بوجود الـ pharmacyId لضمان عدم جلب بيانات فارغة
   useEffect(() => {
     if (pharmacyId) {
       fetchDebtors();
@@ -36,7 +36,6 @@ export default function DebtsPage() {
     if (!pharmacyId) return;
     setLoading(true);
     try {
-      // تمرير المعرف للـ API لعزل العملاء
       const data = await getDebtors(pharmacyId); 
       setDebtors(data || []);
     } catch (err) {
@@ -53,7 +52,6 @@ export default function DebtsPage() {
       return;
     }
     try {
-      // 3️⃣ حقن الـ pharmacy_id داخل بيانات العميل الجديد
       await addDebtor({
         ...formData,
         pharmacy_id: pharmacyId
@@ -70,7 +68,6 @@ export default function DebtsPage() {
     e.preventDefault();
     if (!selectedDebtor || !pharmacyId) return;
     try {
-      // 4️⃣ تمرير الـ pharmacy_id أثناء دفع المديونية لربط حركة الخزينة بالصيدلية الصحيحة
       await recordPayment({
         debtor_id: selectedDebtor.id,
         pharmacy_id: pharmacyId,
@@ -91,7 +88,6 @@ export default function DebtsPage() {
     setSelectedDebtor(debtor);
     setIsHistoryModalOpen(true);
     setHistoryLoading(true);
-    // تمرير الـ pharmacyId كطبقة حماية إضافية في جلب السجل
     const history = await getPaymentHistory(debtor.id, pharmacyId);
     setPaymentHistory(history || []);
     setHistoryLoading(false);
@@ -359,5 +355,4 @@ export default function DebtsPage() {
       </AnimatePresence>
     </div>
   );
-}                                                                 }
-              
+}
