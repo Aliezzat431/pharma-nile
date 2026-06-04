@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Lock, Mail, ShieldAlert, UserPlus } from "lucide-react";
-import { useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -20,15 +19,35 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch active pharmacies on mount
+  // جلب الصيدليات النشطة عند تحميل الصفحة
   useEffect(() => {
     const loadPharmacies = async () => {
-      const { data } = await createClient().from('pharmacies').select('id, name').eq('is_active', true);
-      if (data && data.length > 0) {
-        setPharmacies(data);
-        setSelectedPharmacyId(data[0].id); // Auto-select first pharmacy
+      try {
+        const supabase = createClient();
+        
+        const { data, error: fetchError } = await supabase
+          .from('pharmacies')
+          .select('id, name')
+          .eq('is_active', true);
+
+        if (fetchError) {
+          console.error("Error fetching pharmacies:", fetchError.message);
+          setError("تعذر جلب قائمة الفروع، يرجى تحديث الصفحة.");
+          return;
+        }
+
+        if (data && data.length > 0) {
+          setPharmacies(data);
+          setSelectedPharmacyId(data[0].id); // اختيار أول صيدلية تلقائياً
+        } else {
+          setError("لا توجد صيدليات نشطة مسجلة في النظام حالياً.");
+        }
+      } catch (err) {
+        console.error("Unexpected error loading pharmacies:", err);
+        setError("حدث خطأ غير متوقع أثناء تحميل الفروع.");
       }
     };
+    
     loadPharmacies();
   }, []);
 
@@ -36,13 +55,13 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    // 1. Secret in Password Validation
+    // 1. التحقق من الرمز السري في كلمة المرور (إذا كان مطلوباً)
     if (!password.endsWith("")) {
       setError("كلمة المرور غير صالحة. يجب أن تنتهي بالرمز السري الخاص بالنظام.");
       return;
     }
 
-    // 2. Pharmacy Selection Validation
+    // 2. التحقق من اختيار الصيدلية
     if (!selectedPharmacyId) {
       setError("الرجاء اختيار الفرع/الصيدلية أولاً.");
       return;
@@ -51,18 +70,24 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // تسجيل الدخول الأساسي عبر الـ Auth Hook الخاص بك
       await signIn(email, password, adminKey);
 
-      // Save selected pharmacy to localStorage
-      if (selectedPharmacyId) {
-        localStorage.setItem('selected_pharmacy_id', selectedPharmacyId);
-        // Update user_metadata to reflect the newly chosen branch for RLS policies!
-        await createClient().auth.updateUser({
-          data: { pharmacy_id: selectedPharmacyId }
-        });
+      // حفظ الصيدلية المختارة في المتصفح للرجوع إليها محلياً
+      localStorage.setItem('selected_pharmacy_id', selectedPharmacyId);
+      
+      // تحديث بيانات الـ user_metadata لتتوافق مع سياسات الـ RLS الصارمة المستندة للـ Tenant
+      const supabase = createClient();
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { pharmacy_id: selectedPharmacyId }
+      });
+
+      if (updateError) {
+        throw new Error(`فشل ربط الجلسة بالفرع: ${updateError.message}`);
       }
 
       router.push("/");
+      router.refresh(); // لضمان تحديث الـ Layouts وحالة الـ RLS في المكونات الأخرى
     } catch (err: any) {
       setError(err?.message || "فشل تسجيل الدخول. يرجى التحقق من بياناتك.");
     } finally {
@@ -91,7 +116,7 @@ export default function LoginPage() {
         {error && (
           <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-400">
             <ShieldAlert className="w-5 h-5 shrink-0" />
-            <p className="text-sm font-cairo">{error}</p>
+            <p className="text-sm font-cairo text-right w-full">{error}</p>
           </div>
         )}
 
@@ -116,14 +141,10 @@ export default function LoginPage() {
             </div>
           </div>
 
-
-
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground/70 mr-1 block font-cairo text-right">
-                كلمة المرور
-              </label>
-            </div>
+            <label className="text-sm font-medium text-foreground/70 mr-1 block font-cairo text-right">
+              كلمة المرور
+            </label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-foreground/40" />
@@ -139,6 +160,7 @@ export default function LoginPage() {
               />
             </div>
           </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground/70 mr-1 block font-cairo text-right">
               اختر الفرع / الصيدلية
@@ -147,25 +169,29 @@ export default function LoginPage() {
               <select
                 value={selectedPharmacyId}
                 onChange={(e) => setSelectedPharmacyId(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 pl-10 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all font-cairo appearance-none"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 pl-10 text-white focus:outline-none focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all font-cairo appearance-none text-right"
                 required
               >
-                <option value="" disabled className="bg-[#050505]">-- الرجاء اختيار الصيدلية --</option>
-                {pharmacies.map(p => (
-                  <option key={p.id} value={p.id} className="bg-[#050505]">{p.name}</option>
-                ))}
+                {pharmacies.length === 0 ? (
+                  <option value="" disabled className="bg-[#050505]">جاري تحميل الفروع...</option>
+                ) : (
+                  pharmacies.map(p => (
+                    <option key={p.id} value={p.id} className="bg-[#050505]">{p.name}</option>
+                  ))
+                )}
               </select>
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
               </div>
             </div>
           </div>
+
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-[#D4AF37]/80 mr-1 block font-cairo text-right">
-                كود المدير (اختياري للموظف)
-              </label>
-            </div>
+            <label className="text-sm font-medium text-[#D4AF37]/80 mr-1 block font-cairo text-right">
+              كود المدير (اختياري للموظف)
+            </label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-[#D4AF37]/40" />
@@ -183,7 +209,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || pharmacies.length === 0}
             className="w-full py-4 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-white font-bold text-lg hover:shadow-[0_0_20px_rgba(0,206,209,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4 font-cairo"
           >
             {isLoading ? (
@@ -204,7 +230,7 @@ export default function LoginPage() {
             className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[#00CED1] font-medium hover:bg-white/10 transition-all font-cairo"
           >
             <UserPlus className="w-4 h-4" />
-            إنشاء حساب جديد للبحث
+            إنشاء حساب جديد
           </Link>
         </div>
       </div>
