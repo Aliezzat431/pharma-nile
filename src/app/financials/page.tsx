@@ -227,7 +227,7 @@ export default function FinancialsPage() {
               { label: 'إجمالي التكاليف', value: stats?.totalCost,        icon: ArrowDownRight, color: '#FF4E4E' },
               { label: 'متوسط الفاتورة',   value: stats && stats.totalTransactions
                   ? (stats.totalSales / stats.totalTransactions)
-                  : 0,                                                      icon: BarChart,     color: '#94a3b8' }
+                  : 0,                                                                     icon: BarChart,     color: '#94a3b8' }
             ].map((item, i) => (
               <motion.div
                 key={item.label}
@@ -293,7 +293,7 @@ export default function FinancialsPage() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(v: number) => [`${v.toLocaleString('ar-EG')} ج.م`]} />
+                        <Tooltip formatter={(v: any) => [`${Number(v || 0).toLocaleString('ar-EG')} ج.م`]} />
                      </PieChart>
                   </ResponsiveContainer>
                </div>
