@@ -9,10 +9,20 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getFinancialStats, getMonthlyReport, FinancialStats, MonthlyReport } from '@/lib/api/financials';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, BarChart as ReBarChart, Bar, Cell, 
-  PieChart, Pie, TooltipProps, Legend
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart as ReBarChart,
+  Bar,
+  Cell,
+  PieChart,
+  Pie,
+  Legend
 } from 'recharts';
 
 const COLORS = ['#00CED1', '#D4AF37', '#FF4E4E'];
@@ -35,15 +45,32 @@ const ARABIC_MONTHS: Record<string, string> = {
 
 const tl = (v?: number) => Number(v || 0).toLocaleString('ar-EG');
 
-const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}) => {
   if (!active || !payload?.length) return null;
+
   return (
     <div className="glass-card p-3 text-right min-w-[160px]" dir="rtl">
-      <p className="text-xs font-bold text-gray-400 font-cairo mb-2">{label}</p>
+      <p className="text-xs font-bold text-gray-400 font-cairo mb-2">
+        {label}
+      </p>
+
       {payload.map((p, i) => (
-        <div key={i} className="flex items-center justify-between gap-3 text-xs font-cairo">
+        <div
+          key={i}
+          className="flex items-center justify-between gap-3 text-xs font-cairo"
+        >
           <span style={{ color: p.color }}>{p.name}</span>
-          <span className="font-bold text-white">{Number(p.value).toLocaleString('ar-EG')} ج.م</span>
+          <span className="font-bold text-white">
+            {Number(p.value).toLocaleString('ar-EG')} ج.م
+          </span>
         </div>
       ))}
     </div>
