@@ -21,7 +21,8 @@ import {
   Box,
   BadgeDollarSign,
   HeartHandshake,
-  AlertCircle
+  AlertCircle,
+  FileUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -55,6 +56,7 @@ const menuGroups = [
     items: [
       { icon: TrendingUp, label: 'المبيعات', href: '/orders' },
       { icon: FileText, label: 'الفواتير', href: '/invoices' },
+      { icon: FileUp, label: 'استيراد فاتورة', href: '/invoices/import' },
       { icon: BadgeDollarSign, label: 'الماليات', href: '/financials' },
       { icon: HeartHandshake, label: 'صدقة جارية', href: '/sadqah' },
     ]

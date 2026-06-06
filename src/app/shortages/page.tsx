@@ -16,6 +16,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { getCompanies, Company } from '@/lib/api/companies';
+import { useAuth } from '@/hooks/useAuth';
 import GlassTable from '@/components/ui/GlassTable';
 import Skeleton from '@/components/ui/Skeleton';
 
@@ -35,11 +36,18 @@ export default function ShortagesPage() {
   const [filterCompany, setFilterCompany] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const { user } = useAuth();
+
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const fetchData = async () => {
+    const pharmacyId = user?.user_metadata?.pharmacy_id;
+    if (!pharmacyId) return;
+
     setLoading(true);
     try {
       const [compRes, shortageRes] = await Promise.all([
@@ -47,15 +55,16 @@ export default function ShortagesPage() {
         supabase
           .from('product_inventory')
           .select('*')
+          .eq('pharmacy_id', pharmacyId) // Filter by pharmacy
           .lt('total_quantity', 15) // Threshold for shortages
       ]);
 
       setCompanies(compRes);
 
       if (shortageRes.data) {
-        // Map data to include a default priority
+        // Map data to include exact product info
         const mapped: ShortageItem[] = shortageRes.data.map((item: any) => ({
-          id: item.id || item.product_id || Math.random().toString(),
+          id: item.product_id || item.id,
           name: item.name,
           company_name: item.company || 'غير محدد',
           total_quantity: item.total_quantity,

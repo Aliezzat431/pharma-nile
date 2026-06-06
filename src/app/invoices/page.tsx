@@ -64,11 +64,19 @@ export default function InvoicesPage() {
       const { data, error } = await supabase
         .from('orders')
         .select(`
-          *,
+          id,
+          created_at,
+          total,
+          cost_total,
+          profit_total,
+          status,
+          payment_method,
+          customer_id,
           customers (name),
-          order_items (*)
+          order_items (id, order_id, name, price, quantity, unit, product_id, batch_id)
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       if (error) throw error;
       setOrders(data || []);

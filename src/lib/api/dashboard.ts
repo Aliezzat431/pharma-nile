@@ -16,6 +16,10 @@ export interface RecentTransaction {
   payment_method: string;
 }
 
+/**
+ * Uses the server-side get_dashboard_stats RPC to fetch all stats
+ * in a single DB round-trip instead of 5 separate queries.
+ */
 export async function getDashboardStats(): Promise<DashboardStats> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -31,94 +35,47 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     };
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const ninetyDaysFromNow = new Date();
-  ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
-
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
-
-  // Run all queries in parallel to significantly reduce latency
-  const [
-    { data: salesData },
-    { count: activeCount },
-    { data: lowStockData },
-    { count: expiryCount },
-    { data: weekData }
-  ] = await Promise.all([
-    // 1. Today's Sales & Profit
-    supabase
-      .from('orders')
-      .select('total, profit_total')
-      .eq('pharmacy_id', pharmacyId)
-      .gte('created_at', today.toISOString()),
-    
-    // 2. Active Sessions
-    supabase
-      .from('sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('pharmacy_id', pharmacyId)
-      .eq('status', 'active'),
-
-    // 3. Low Stock Items (Threshold < 10)
-    supabase
-      .from('product_inventory')
-      .select('*')
-      .eq('pharmacy_id', pharmacyId)
-      .lt('total_quantity', 10),
-
-    // 4. Expiring Soon (90 days)
-    supabase
-      .from('batches')
-      .select('*', { count: 'exact', head: true })
-      .eq('pharmacy_id', pharmacyId)
-      .gt('quantity', 0)
-      .lte('expiry_date', ninetyDaysFromNow.toISOString().split('T')[0]),
-
-    // 5. Weekly Data for Chart (last 7 days)
-    supabase
-      .from('orders')
-      .select('total, payment_method, created_at')
-      .eq('pharmacy_id', pharmacyId)
-      .gte('created_at', weekAgo.toISOString())
-  ]);
-
-  const totalSales = salesData?.reduce((sum, o) => sum + Number(o.total), 0) || 0;
-  const totalProfit = salesData?.reduce((sum, o) => sum + Number(o.profit_total), 0) || 0;
-  const lowStockCount = lowStockData?.length || 0;
-
-  const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-  const chartMap = new Map();
-  
-  // Pre-fill last 7 days
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dayName = days[d.getDay()];
-    chartMap.set(dayName, { name: dayName, sales: 0, debts: 0 });
-  }
-
-  weekData?.forEach(o => {
-    const dayName = days[new Date(o.created_at).getDay()];
-    if (chartMap.has(dayName)) {
-      const current = chartMap.get(dayName);
-      if (o.payment_method === 'debt') {
-        current.debts += Number(o.total);
-      } else {
-        current.sales += Number(o.total);
-      }
-    }
+  const { data, error } = await supabase.rpc('get_dashboard_stats', {
+    p_pharmacy_id: pharmacyId
   });
 
+  if (error || !data) {
+    console.error('Error fetching dashboard stats via RPC:', error);
+    // Graceful fallback: return zeros
+    return {
+      todaySales: `ج.م 0`,
+      todayProfit: `ج.م 0`,
+      activeSessions: `0 موظف`,
+      lowStockItems: "0",
+      expiringSoon: "0",
+      weeklyData: []
+    };
+  }
+
+  // Map Arabic day names for weekly chart
+  const arabicDays: Record<string, string> = {
+    'Sunday':    'الأحد',
+    'Monday':    'الاثنين',
+    'Tuesday':   'الثلاثاء',
+    'Wednesday': 'الأربعاء',
+    'Thursday':  'الخميس',
+    'Friday':    'الجمعة',
+    'Saturday':  'السبت',
+  };
+
+  const weeklyData = (data.weekly_data || []).map((d: { name: string; sales: number; debts: number }) => ({
+    name: arabicDays[d.name?.trim()] || d.name,
+    sales: Number(d.sales || 0),
+    debts: Number(d.debts || 0),
+  }));
+
   return {
-    todaySales: `ج.م ${totalSales.toLocaleString()}`,
-    todayProfit: `ج.م ${totalProfit.toLocaleString()}`,
-    activeSessions: `${activeCount || 0} موظف`,
-    lowStockItems: String(lowStockCount),
-    expiringSoon: String(expiryCount || 0),
-    weeklyData: Array.from(chartMap.values()),
+    todaySales:     `ج.م ${Number(data.today_sales || 0).toLocaleString()}`,
+    todayProfit:    `ج.م ${Number(data.today_profit || 0).toLocaleString()}`,
+    activeSessions: `${data.active_sessions || 0} موظف`,
+    lowStockItems:  String(data.low_stock || 0),
+    expiringSoon:   String(data.expiring_soon || 0),
+    weeklyData,
   };
 }
 
@@ -131,6 +88,7 @@ export async function getRecentTransactions(): Promise<RecentTransaction[]> {
     .from('orders')
     .select('id, created_at, total, payment_method')
     .eq('pharmacy_id', pharmacyId)
+    .eq('status', 'completed')
     .order('created_at', { ascending: false })
     .limit(5);
 

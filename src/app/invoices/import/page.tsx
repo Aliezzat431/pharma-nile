@@ -1,0 +1,964 @@
+'use client';
+
+import React, { useState, useRef, useCallback } from 'react';
+import {
+  Upload, Sparkles, Package, Check, X, AlertCircle, Loader2,
+  FileImage, Zap, ShieldCheck, Save, RefreshCw,
+  BadgePlus, Star, ScanLine, Edit3, PenLine, Plus, Trash2, FileUp
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+
+interface ExtractedItem {
+  product_name: string;
+  quantity: number;
+  public_price: number;
+  purchase_price: number;
+  expiry_date: string;
+  barcode: string;
+  is_new: boolean;
+  existing_product_id?: string;
+  // UI state
+  _status: 'pending' | 'saving' | 'saved' | 'error';
+  _checked: boolean;
+  _editMode: boolean;
+}
+
+const TEAL = 'var(--nile-teal)';
+const GOLD = 'var(--royal-gold)';
+
+const emptyItem = (): ExtractedItem => ({
+  product_name: '',
+  quantity: 1,
+  public_price: 0,
+  purchase_price: 0,
+  expiry_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 2).toISOString().split('T')[0],
+  barcode: '',
+  is_new: true,
+  _status: 'pending',
+  _checked: true,
+  _editMode: true,
+});
+
+export default function InvoiceImportPage() {
+  const { user } = useAuth();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+
+  // ── Mode switch ──────────────────────────────────────────
+  const [mode, setMode] = useState<'ai' | 'manual'>('ai');
+
+  // ── Shared item state ────────────────────────────────────
+  const [items, setItems] = useState<ExtractedItem[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+  const [phase, setPhase] = useState<'upload' | 'review' | 'done'>('upload');
+
+  // ── AI mode state ────────────────────────────────────────
+  const [dragOver, setDragOver] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── File handling ────────────────────────────────────────
+  const handleFile = useCallback((file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setScanError('يرجى رفع صورة (JPG, PNG, WEBP)');
+      return;
+    }
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setScanError(null);
+    setItems([]);
+    setPhase('upload');
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  }, [handleFile]);
+
+  // ── Scan via AI ──────────────────────────────────────────
+  const handleScan = async () => {
+    if (!selectedFile || !pharmacyId) return;
+    setScanning(true);
+    setScanError(null);
+    setItems([]);
+
+    try {
+      const fd = new FormData();
+      fd.append('invoice', selectedFile);
+
+      const res = await fetch('/api/invoice-scan', { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'فشل تحليل الفاتورة');
+
+      const rawItems: any[] = data.items || [];
+
+      const enriched: ExtractedItem[] = await Promise.all(
+        rawItems.map(async (item) => {
+          const { data: existing } = await supabase
+            .from('products')
+            .select('id, name')
+            .eq('pharmacy_id', pharmacyId)
+            .ilike('name', `%${item.product_name}%`)
+            .limit(1)
+            .maybeSingle();
+
+          return {
+            ...item,
+            is_new: !existing,
+            existing_product_id: existing?.id,
+            // Keep prices from the invoice regardless — they go into the batch
+            public_price: item.public_price ?? 0,
+            purchase_price: item.purchase_price ?? 0,
+            _status: 'pending' as const,
+            _checked: true,
+            _editMode: false,
+          };
+        })
+      );
+
+      setItems(enriched);
+      setPhase('review');
+    } catch (err: any) {
+      setScanError(err.message || 'حدث خطأ أثناء تحليل الفاتورة');
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  // ── Manual mode helpers ──────────────────────────────────
+  const addManualRow = () => {
+    setItems(prev => [...prev, emptyItem()]);
+    setPhase('review');
+  };
+
+  const removeItem = (idx: number) => {
+    setItems(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // ── Shared field editing ─────────────────────────────────
+  const updateItem = (idx: number, field: keyof ExtractedItem, value: any) => {
+    setItems(prev => prev.map((it, i) => i === idx ? { ...it, [field]: value } : it));
+  };
+
+  const toggleCheck = (idx: number) => {
+    setItems(prev => prev.map((it, i) => i === idx ? { ...it, _checked: !it._checked } : it));
+  };
+
+  const toggleAll = (val: boolean) => {
+    setItems(prev => prev.map(it => ({ ...it, _checked: val })));
+  };
+
+  // ── DB lookup for manual product name ────────────────────
+  const lookupProduct = async (idx: number, name: string) => {
+    if (!pharmacyId || name.trim().length < 2) return;
+    const { data: existing } = await supabase
+      .from('products')
+      .select('id, name')
+      .eq('pharmacy_id', pharmacyId)
+      .ilike('name', `%${name}%`)
+      .limit(1)
+      .maybeSingle();
+
+    setItems(prev => prev.map((it, i) => i === idx ? {
+      ...it,
+      is_new: !existing,
+      existing_product_id: existing?.id,
+      // Prices stay as-is; they are stored in the batch, not the product
+    } : it));
+  };
+
+  // ── Save to Supabase ─────────────────────────────────────
+  const handleSaveAll = async () => {
+    if (!pharmacyId) return;
+    const toSave = items.filter(it => it._checked && it._status === 'pending');
+    if (toSave.length === 0) return;
+
+    setSaving(true);
+    let saved = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item._checked || item._status !== 'pending') continue;
+      if (!item.product_name.trim()) continue;
+
+      setItems(prev => prev.map((it, idx) => idx === i ? { ...it, _status: 'saving' } : it));
+
+      try {
+        let productId = item.existing_product_id;
+
+        const finalQuantity = Number(item.quantity) || 1;
+        const finalPublicPrice = Number(item.public_price) || 0;
+        const finalPurchasePrice = Number(item.purchase_price) || 0;
+
+        let finalExpiry = item.expiry_date;
+        if (!finalExpiry || finalExpiry === 'Unknown' || isNaN(Date.parse(finalExpiry))) {
+          finalExpiry = new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString().split('T')[0];
+        }
+
+        if (item.is_new || !productId) {
+          const { data: newProduct, error: prodErr } = await supabase
+            .from('products')
+            .insert([{
+              pharmacy_id: pharmacyId,
+              name: item.product_name,
+              type: 'أقراص',
+              unit: 'علبة',
+              unit_conversion: 1,
+              inventory_method: 'FEFO',
+              // NOTE: products table has NO price columns — prices live in batches
+            }])
+            .select('id')
+            .single();
+
+          if (prodErr) throw prodErr;
+          productId = newProduct.id;
+        }
+
+        const { error: batchErr } = await supabase
+          .from('batches')
+          .insert([{
+            pharmacy_id: pharmacyId,
+            product_id: productId,
+            barcode: item.barcode || `INV-${Date.now()}-${i}`,
+            quantity: finalQuantity,
+            purchase_price: finalPurchasePrice,
+            selling_price: finalPublicPrice,
+            expiry_date: finalExpiry,
+          }]);
+
+        if (batchErr) throw batchErr;
+
+        setItems(prev => prev.map((it, idx) => idx === i ? { ...it, _status: 'saved' } : it));
+        saved++;
+      } catch (err: any) {
+        console.error(`Error saving ${item.product_name}:`, err);
+        setItems(prev => prev.map((it, idx) => idx === i ? { ...it, _status: 'error' } : it));
+      }
+    }
+
+    setSavedCount(prev => prev + saved);
+    setSaving(false);
+    if (saved === toSave.length) setPhase('done');
+  };
+
+  const resetAll = () => {
+    setPhase('upload');
+    setItems([]);
+    setPreviewUrl(null);
+    setSelectedFile(null);
+    setSavedCount(0);
+    setScanError(null);
+  };
+
+  const checkedCount = items.filter(it => it._checked && it._status === 'pending').length;
+  const newCount = items.filter(it => it.is_new).length;
+
+  return (
+    <div className="w-full max-w-7xl mx-auto pb-12 animate-in fade-in duration-500">
+
+      {/* ── Header ──────────────────────────────────────── */}
+      <header className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+               style={{ background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))' }}>
+            <FileUp className="w-5 h-5 text-black" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold font-cairo nile-gradient-text">
+              استيراد فاتورة
+            </h1>
+            <p className="text-gray-400 font-cairo text-sm mt-0.5">
+              استيراد المنتجات يدوياً أو عبر الذكاء الاصطناعي
+            </p>
+          </div>
+        </div>
+
+        {/* Mode Toggle */}
+        <div className="flex gap-2 mt-5">
+          <button
+            onClick={() => { setMode('ai'); resetAll(); }}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-cairo font-bold text-sm transition-all ${
+              mode === 'ai'
+                ? 'text-black shadow-lg'
+                : 'text-gray-400 hover:text-white bg-white/5 hover:bg-white/10'
+            }`}
+            style={mode === 'ai' ? {
+              background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))',
+              boxShadow: '0 0 20px rgba(0,206,209,0.3)',
+            } : {}}
+          >
+            <Sparkles className="w-4 h-4" />
+            استيراد بالذكاء الاصطناعي
+          </button>
+          <button
+            onClick={() => { setMode('manual'); resetAll(); }}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-cairo font-bold text-sm transition-all ${
+              mode === 'manual'
+                ? 'text-black shadow-lg'
+                : 'text-gray-400 hover:text-white bg-white/5 hover:bg-white/10'
+            }`}
+            style={mode === 'manual' ? {
+              background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))',
+              boxShadow: '0 0 20px rgba(0,206,209,0.3)',
+            } : {}}
+          >
+            <PenLine className="w-4 h-4" />
+            إدخال يدوي
+          </button>
+        </div>
+      </header>
+
+      {/* ── Content ───────────────────────────────────── */}
+      <AnimatePresence mode="wait">
+        {mode === 'ai' ? (
+          <motion.div
+            key="ai"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[70vh]"
+          >
+            {/* LEFT — Items Table */}
+            <ItemsPanel
+              items={items}
+              scanning={scanning}
+              phase={phase}
+              saving={saving}
+              savedCount={savedCount}
+              checkedCount={checkedCount}
+              newCount={newCount}
+              mode="ai"
+              onToggleCheck={toggleCheck}
+              onToggleAll={toggleAll}
+              onUpdateItem={updateItem}
+              onSaveAll={handleSaveAll}
+              onReset={resetAll}
+            />
+
+            {/* RIGHT — Upload / AI */}
+            <div className="flex flex-col gap-5 order-1 lg:order-2">
+              {/* Drop zone */}
+              <div
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                onClick={() => !selectedFile && fileInputRef.current?.click()}
+                className={`glass-panel p-6 flex flex-col items-center justify-center relative overflow-hidden transition-all cursor-pointer min-h-[320px]
+                  ${dragOver ? 'border-[var(--nile-teal)] bg-[var(--nile-teal)]/5' : 'hover:border-white/20'}
+                `}
+              >
+                <div className={`absolute inset-0 rounded-[2rem] transition-opacity pointer-events-none ${dragOver ? 'opacity-100' : 'opacity-0'}`}
+                     style={{ background: 'radial-gradient(ellipse at center, rgba(0,206,209,0.08) 0%, transparent 70%)' }} />
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+                />
+
+                {!selectedFile ? (
+                  <div className="text-center space-y-4">
+                    <div className="relative mx-auto w-20 h-20">
+                      <div className="absolute inset-0 rounded-full animate-ping opacity-20"
+                           style={{ background: `radial-gradient(circle, var(--nile-teal), transparent)` }} />
+                      <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                           style={{ background: 'rgba(0,206,209,0.1)', border: '1px solid rgba(0,206,209,0.3)' }}>
+                        <Upload className="w-9 h-9" style={{ color: TEAL }} />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold font-cairo text-white">
+                        {dragOver ? 'أفلت الصورة هنا' : 'اسحب وأفلت صورة الفاتورة'}
+                      </p>
+                      <p className="text-gray-500 text-sm font-cairo mt-1">أو اضغط للاختيار من جهازك</p>
+                      <p className="text-gray-600 text-xs font-cairo mt-2">يدعم JPG, PNG, WEBP حتى 20 ميجا</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full h-full relative">
+                    <img src={previewUrl!} alt="Invoice preview" className="w-full max-h-[450px] object-contain rounded-xl" />
+                    <div className="absolute top-2 right-2 flex gap-2">
+                      <button
+                        onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                        className="glass-card px-3 py-1.5 text-xs font-cairo flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors"
+                      >
+                        <RefreshCw className="w-3 h-3" /> تغيير الصورة
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); setSelectedFile(null); setPreviewUrl(null); setItems([]); setPhase('upload'); }}
+                        className="glass-card p-1.5 text-gray-400 hover:text-red-400 transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 font-cairo">
+                      <FileImage className="w-4 h-4" />
+                      {selectedFile.name}
+                      <span className="text-gray-600">•</span>
+                      {(selectedFile.size / 1024).toFixed(1)} KB
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Error */}
+              <AnimatePresence>
+                {scanError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="glass-card p-4 flex items-start gap-3 border-red-500/30"
+                  >
+                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-red-400 font-cairo text-sm">خطأ في التحليل</p>
+                      <p className="text-gray-400 text-xs font-cairo mt-0.5">{scanError}</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Scan button */}
+              <button
+                onClick={handleScan}
+                disabled={!selectedFile || scanning || phase === 'done'}
+                className="w-full py-4 rounded-2xl font-bold font-cairo text-lg flex items-center justify-center gap-3 transition-all active:scale-95 disabled:cursor-not-allowed"
+                style={{
+                  background: (!selectedFile || scanning || phase === 'done')
+                    ? 'rgba(255,255,255,0.05)'
+                    : 'linear-gradient(135deg, var(--nile-teal) 0%, var(--royal-gold) 100%)',
+                  color: (!selectedFile || scanning || phase === 'done') ? '#666' : '#000',
+                  boxShadow: (selectedFile && !scanning && phase !== 'done')
+                    ? '0 0 32px rgba(0,206,209,0.4)'
+                    : 'none',
+                }}
+              >
+                {scanning ? (
+                  <><Loader2 className="w-6 h-6 animate-spin" />جاري التحليل...</>
+                ) : (
+                  <><Zap className="w-6 h-6" />استخراج الأصناف بالذكاء الاصطناعي</>
+                )}
+              </button>
+
+              {/* How it works */}
+              <div className="glass-panel p-5">
+                <h3 className="font-bold font-cairo text-sm mb-4 text-gray-300 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" style={{ color: GOLD }} />
+                  كيف يعمل النظام؟
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    { step: '01', text: 'ارفع صورة واضحة لفاتورة المورد' },
+                    { step: '02', text: 'الذكاء الاصطناعي يقرأ ويستخرج الأسماء، الكميات، والأسعار' },
+                    { step: '03', text: 'النظام يكشف تلقائياً إن كان المنتج جديداً أم موجوداً' },
+                    { step: '04', text: 'راجع البيانات، عدّل إن لزم، ثم احفظ في المخزون' },
+                  ].map(s => (
+                    <div key={s.step} className="flex items-start gap-3">
+                      <span className="text-xs font-mono font-bold flex-shrink-0 w-6 mt-0.5" style={{ color: TEAL }}>{s.step}</span>
+                      <p className="text-xs font-cairo text-gray-400">{s.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          /* ── MANUAL MODE ─────────────────────────────── */
+          <motion.div
+            key="manual"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-5"
+          >
+            {/* Instruction banner */}
+            <div className="glass-panel p-4 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                   style={{ background: 'rgba(0,206,209,0.1)', border: '1px solid rgba(0,206,209,0.3)' }}>
+                <PenLine className="w-5 h-5" style={{ color: TEAL }} />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold font-cairo text-sm text-white">إدخال يدوي للفاتورة</p>
+                <p className="text-xs font-cairo text-gray-400 mt-0.5">
+                  أضف الأصناف سطراً بسطر — النظام يتحقق تلقائياً إن كان الصنف موجوداً في المخزون
+                </p>
+              </div>
+              <button
+                onClick={addManualRow}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold font-cairo text-sm text-black transition-all active:scale-95"
+                style={{ background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))', boxShadow: '0 0 16px rgba(0,206,209,0.3)' }}
+              >
+                <Plus className="w-4 h-4" /> إضافة صنف
+              </button>
+            </div>
+
+            {/* Items list with full edit fields */}
+            {items.length === 0 ? (
+              <div className="glass-panel p-16 flex flex-col items-center justify-center gap-4 text-center opacity-60">
+                <Package className="w-14 h-14 text-gray-600" />
+                <p className="font-cairo text-gray-400">اضغط "إضافة صنف" لبدء إدخال بيانات الفاتورة</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Badges */}
+                <div className="flex gap-3 flex-wrap mb-1">
+                  <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
+                    <BadgePlus className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-emerald-400 font-bold">{newCount}</span>
+                    <span className="text-gray-500">منتج جديد</span>
+                  </div>
+                  <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
+                    <Star className="w-3.5 h-3.5" style={{ color: GOLD }} />
+                    <span className="font-bold" style={{ color: GOLD }}>{items.length - newCount}</span>
+                    <span className="text-gray-500">موجود مسبقاً</span>
+                  </div>
+                  <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
+                    <Check className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="text-blue-400 font-bold">{checkedCount}</span>
+                    <span className="text-gray-500">محدد للحفظ</span>
+                  </div>
+                  <div className="mr-auto flex items-center gap-3">
+                    <button onClick={() => toggleAll(true)} className="text-xs text-gray-400 hover:text-white font-cairo transition-colors">تحديد الكل</button>
+                    <button onClick={() => toggleAll(false)} className="text-xs text-gray-400 hover:text-red-400 font-cairo transition-colors">إلغاء الكل</button>
+                  </div>
+                </div>
+
+                {/* Manual item rows */}
+                <AnimatePresence initial={false}>
+                  {items.map((item, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: idx * 0.03 }}
+                      className={`glass-card p-4 relative overflow-hidden transition-all
+                        ${item._checked ? 'border-white/10' : 'opacity-50 border-white/5'}
+                        ${item._status === 'saved' ? 'border-emerald-500/30' : ''}
+                        ${item._status === 'error' ? 'border-red-500/30' : ''}
+                        ${item._status === 'saving' ? 'animate-pulse' : ''}
+                      `}
+                    >
+                      {/* Color bar */}
+                      <div className={`absolute top-0 right-0 w-1.5 h-full ${item.is_new ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+
+                      <div className="flex items-start gap-3">
+                        {/* Checkbox */}
+                        <button
+                          onClick={() => toggleCheck(idx)}
+                          disabled={item._status !== 'pending'}
+                          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-1 transition-all
+                            ${item._checked
+                              ? (item.is_new ? 'border-emerald-500 bg-emerald-500/20' : 'border-blue-500 bg-blue-500/20')
+                              : 'border-white/10 bg-white/5'}`}
+                        >
+                          {item._checked && <Check className="w-4 h-4" style={{ color: item.is_new ? '#10b981' : '#3b82f6' }} />}
+                        </button>
+
+                        {/* Fields */}
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                          {/* Product name — full width on small, spans 2 on large */}
+                          <div className="col-span-2 md:col-span-3 lg:col-span-2">
+                            <label className="text-[10px] text-gray-500 font-cairo block mb-1">
+                              اسم المنتج
+                              {item.is_new
+                                ? <span className="mr-2 text-emerald-400">● جديد</span>
+                                : <span className="mr-2 text-blue-400">● موجود</span>
+                              }
+                            </label>
+                            <input
+                              value={item.product_name}
+                              disabled={item._status !== 'pending'}
+                              onChange={e => updateItem(idx, 'product_name', e.target.value)}
+                              onBlur={e => lookupProduct(idx, e.target.value)}
+                              placeholder="اسم الدواء أو المستلزم..."
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50 font-cairo"
+                            />
+                          </div>
+
+                          {/* Quantity */}
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-cairo block mb-1">الكمية</label>
+                            <input
+                              type="number" min="1"
+                              value={item.quantity}
+                              disabled={item._status !== 'pending'}
+                              onChange={e => updateItem(idx, 'quantity', Number(e.target.value))}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
+                            />
+                          </div>
+
+                          {/* Purchase price */}
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-cairo block mb-1">سعر الشراء</label>
+                            <input
+                              type="number" step="0.01" min="0"
+                              value={item.purchase_price}
+                              disabled={item._status !== 'pending'}
+                              onChange={e => updateItem(idx, 'purchase_price', Number(e.target.value))}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
+                            />
+                          </div>
+
+                          {/* Public price */}
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-cairo block mb-1">سعر البيع</label>
+                            <input
+                              type="number" step="0.01" min="0"
+                              value={item.public_price}
+                              disabled={item._status !== 'pending'}
+                              onChange={e => updateItem(idx, 'public_price', Number(e.target.value))}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
+                            />
+                          </div>
+
+                          {/* Expiry */}
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-cairo block mb-1">تاريخ الانتهاء</label>
+                            <input
+                              type="date"
+                              value={item.expiry_date}
+                              disabled={item._status !== 'pending'}
+                              onChange={e => updateItem(idx, 'expiry_date', e.target.value)}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Status / remove */}
+                        <div className="flex flex-col items-center gap-2 ml-1 pt-5 flex-shrink-0">
+                          {item._status === 'saved'  && <Check className="w-5 h-5 text-emerald-400" />}
+                          {item._status === 'error'  && <X className="w-5 h-5 text-red-400" />}
+                          {item._status === 'saving' && <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />}
+                          {item._status === 'pending' && (
+                            <button
+                              onClick={() => removeItem(idx)}
+                              className="p-1.5 text-gray-600 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {/* Add row button */}
+                <button
+                  onClick={addManualRow}
+                  className="w-full py-3 rounded-xl border border-dashed border-white/10 text-gray-500 hover:text-white hover:border-[var(--nile-teal)]/50 font-cairo text-sm flex items-center justify-center gap-2 transition-all"
+                >
+                  <Plus className="w-4 h-4" /> إضافة صنف آخر
+                </button>
+              </div>
+            )}
+
+            {/* Save / Done */}
+            {phase === 'review' && checkedCount > 0 && (
+              <div className="pt-2">
+                <button
+                  onClick={handleSaveAll}
+                  disabled={saving}
+                  className="w-full py-3.5 rounded-2xl font-bold font-cairo text-base flex items-center justify-center gap-3 transition-all active:scale-95"
+                  style={{
+                    background: saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, var(--nile-teal), var(--nile-teal)/70)',
+                    color: saving ? '#666' : '#000',
+                    boxShadow: saving ? 'none' : '0 0 24px var(--nile-teal-glow)',
+                  }}
+                >
+                  {saving
+                    ? <><Loader2 className="w-5 h-5 animate-spin" />جاري الحفظ...</>
+                    : <><Save className="w-5 h-5" />حفظ {checkedCount} صنف في المخزون</>
+                  }
+                </button>
+              </div>
+            )}
+
+            {phase === 'done' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="glass-panel p-8 text-center"
+              >
+                <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
+                  <Check className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h3 className="font-bold text-lg font-cairo text-emerald-400">تم الحفظ بنجاح!</h3>
+                <p className="text-gray-400 text-sm font-cairo mt-1">
+                  تم إضافة <span className="font-bold text-white">{savedCount}</span> صنف إلى المخزون
+                </p>
+                <button
+                  onClick={() => { resetAll(); addManualRow(); }}
+                  className="mt-4 px-6 py-2 rounded-xl text-sm font-cairo border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-2 mx-auto"
+                >
+                  <RefreshCw className="w-4 h-4" /> إدخال فاتورة جديدة
+                </button>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Shared Items Panel (used in AI mode) ─────────────────
+function ItemsPanel({
+  items, scanning, phase, saving, savedCount, checkedCount, newCount, mode,
+  onToggleCheck, onToggleAll, onUpdateItem, onSaveAll, onReset
+}: {
+  items: ExtractedItem[];
+  scanning: boolean;
+  phase: string;
+  saving: boolean;
+  savedCount: number;
+  checkedCount: number;
+  newCount: number;
+  mode: 'ai' | 'manual';
+  onToggleCheck: (idx: number) => void;
+  onToggleAll: (val: boolean) => void;
+  onUpdateItem: (idx: number, field: keyof ExtractedItem, value: any) => void;
+  onSaveAll: () => void;
+  onReset: () => void;
+}) {
+  const TEAL = 'var(--nile-teal)';
+  const GOLD = 'var(--royal-gold)';
+
+  return (
+    <div className="glass-panel p-6 flex flex-col order-2 lg:order-1">
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-lg font-bold font-cairo flex items-center gap-2">
+          <Package className="w-5 h-5" style={{ color: TEAL }} />
+          الأصناف المستخرجة
+          {items.length > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full font-mono"
+                  style={{ background: 'rgba(0,206,209,0.15)', color: TEAL }}>
+              {items.length} صنف
+            </span>
+          )}
+        </h2>
+        {items.length > 0 && (
+          <div className="flex items-center gap-3">
+            <button onClick={() => onToggleAll(true)} className="text-xs text-gray-400 hover:text-white font-cairo transition-colors">تحديد الكل</button>
+            <button onClick={() => onToggleAll(false)} className="text-xs text-gray-400 hover:text-red-400 font-cairo transition-colors">إلغاء الكل</button>
+          </div>
+        )}
+      </div>
+
+      {items.length > 0 && (
+        <div className="flex gap-3 mb-4 flex-wrap">
+          <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
+            <BadgePlus className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-emerald-400 font-bold">{newCount}</span>
+            <span className="text-gray-500">منتج جديد</span>
+          </div>
+          <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
+            <Star className="w-3.5 h-3.5" style={{ color: GOLD }} />
+            <span className="font-bold" style={{ color: GOLD }}>{items.length - newCount}</span>
+            <span className="text-gray-500">موجود مسبقاً</span>
+          </div>
+          <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
+            <Check className="w-3.5 h-3.5 text-blue-400" />
+            <span className="text-blue-400 font-bold">{checkedCount}</span>
+            <span className="text-gray-500">محدد للحفظ</span>
+          </div>
+        </div>
+      )}
+
+      {items.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-12 opacity-50">
+          {scanning ? (
+            <>
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full border-2 border-dashed animate-spin" style={{ borderColor: TEAL }} />
+                <Sparkles className="w-7 h-7 absolute inset-0 m-auto" style={{ color: TEAL }} />
+              </div>
+              <p className="font-cairo text-sm">الذكاء الاصطناعي يحلل الفاتورة...</p>
+            </>
+          ) : (
+            <>
+              <ScanLine className="w-12 h-12 text-gray-600" />
+              <p className="font-cairo text-sm text-gray-500">ارفع صورة الفاتورة واضغط "استخراج" لعرض الأصناف هنا</p>
+            </>
+          )}
+        </div>
+      )}
+
+      {items.length > 0 && (
+        <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+          <AnimatePresence initial={false}>
+            {items.map((item, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.04 }}
+                className={`glass-card p-4 relative overflow-hidden transition-all
+                  ${item._checked ? 'border-white/10' : 'opacity-50 border-white/5'}
+                  ${item._status === 'saved'  ? 'border-emerald-500/30' : ''}
+                  ${item._status === 'error'  ? 'border-red-500/30' : ''}
+                  ${item._status === 'saving' ? 'animate-pulse' : ''}
+                `}
+              >
+                <div className={`absolute top-0 right-0 w-1.5 h-full ${item.is_new ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+
+                <div className="absolute top-2 left-2 flex items-center gap-2">
+                  {item.is_new ? (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold font-cairo flex items-center gap-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <BadgePlus className="w-3 h-3" /> صنف جديد
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold font-cairo flex items-center gap-1 bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      <RefreshCw className="w-3 h-3" /> تجديد رصيد
+                    </span>
+                  )}
+                </div>
+
+                <div className="absolute top-2 right-4 flex items-center gap-2">
+                  {item._status === 'saved'  && <Check className="w-4 h-4 text-emerald-400" />}
+                  {item._status === 'error'  && <X className="w-4 h-4 text-red-400" />}
+                  {item._status === 'saving' && <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />}
+                </div>
+
+                <div className="flex items-start gap-4 mt-6">
+                  <button
+                    onClick={() => onToggleCheck(idx)}
+                    disabled={item._status !== 'pending'}
+                    className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all
+                      ${item._checked
+                        ? (item.is_new ? 'border-emerald-500 bg-emerald-500/20' : 'border-blue-500 bg-blue-500/20')
+                        : 'border-white/10 bg-white/5'}`}
+                  >
+                    {item._checked && <Check className="w-4 h-4" style={{ color: item.is_new ? '#10b981' : '#3b82f6' }} />}
+                  </button>
+
+                  <div className="flex-1 space-y-3">
+                    {item._editMode ? (
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-gray-500 font-cairo">اسم المنتج</label>
+                        <input
+                          value={item.product_name}
+                          onChange={e => onUpdateItem(idx, 'product_name', e.target.value)}
+                          className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]"
+                        />
+                      </div>
+                    ) : (
+                      <p className={`font-bold font-cairo text-base leading-tight pr-6 ${item.is_new ? 'text-emerald-50' : 'text-blue-50'}`}>
+                        {item.product_name}
+                      </p>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-gray-500 font-cairo block mb-0.5">الكمية</label>
+                        {item._editMode ? (
+                          <input type="number" value={item.quantity} onChange={e => onUpdateItem(idx, 'quantity', Number(e.target.value))}
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50" />
+                        ) : (
+                          <p className="text-sm font-bold font-cairo" style={{ color: TEAL }}>{item.quantity}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-gray-500 font-cairo block mb-0.5">سعر البيع</label>
+                        {item._editMode ? (
+                          <input type="number" step="0.01" value={item.public_price} onChange={e => onUpdateItem(idx, 'public_price', Number(e.target.value))}
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50" />
+                        ) : (
+                          <p className="text-sm font-bold font-cairo" style={{ color: GOLD }}>{item.public_price} ج.م</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-gray-500 font-cairo block mb-0.5">سعر الشراء</label>
+                        {item._editMode ? (
+                          <input type="number" step="0.01" value={item.purchase_price} onChange={e => onUpdateItem(idx, 'purchase_price', Number(e.target.value))}
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50" />
+                        ) : (
+                          <p className="text-sm font-bold text-gray-300 font-cairo">{item.purchase_price} ج.م</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-gray-500 font-cairo block mb-0.5">تاريخ الانتهاء</label>
+                        {item._editMode ? (
+                          <input type="date" value={item.expiry_date} onChange={e => onUpdateItem(idx, 'expiry_date', e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50" />
+                        ) : (
+                          <p className="text-sm font-cairo text-orange-300">
+                            {new Date(item.expiry_date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {item._status === 'pending' && (
+                      <button
+                        onClick={() => onUpdateItem(idx, '_editMode', !item._editMode)}
+                        className="text-[10px] text-gray-500 hover:text-white flex items-center gap-1 font-cairo transition-colors"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                        {item._editMode ? 'حفظ التعديلات' : 'تعديل يدوي'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {phase === 'review' && checkedCount > 0 && (
+        <div className="mt-5 pt-4 border-t border-white/5">
+          <button
+            onClick={onSaveAll}
+            disabled={saving}
+            className="w-full py-3.5 rounded-2xl font-bold font-cairo text-base flex items-center justify-center gap-3 transition-all active:scale-95"
+            style={{
+              background: saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, var(--nile-teal), var(--nile-teal)/70)',
+              color: saving ? '#666' : '#000',
+              boxShadow: saving ? 'none' : '0 0 24px var(--nile-teal-glow)',
+            }}
+          >
+            {saving
+              ? <><Loader2 className="w-5 h-5 animate-spin" />جاري الحفظ...</>
+              : <><Save className="w-5 h-5" />حفظ {checkedCount} صنف في المخزون</>
+            }
+          </button>
+        </div>
+      )}
+
+      {phase === 'done' && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mt-5 pt-4 border-t border-white/5 text-center"
+        >
+          <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
+            <Check className="w-8 h-8 text-emerald-400" />
+          </div>
+          <h3 className="font-bold text-lg font-cairo text-emerald-400">تم الحفظ بنجاح!</h3>
+          <p className="text-gray-400 text-sm font-cairo mt-1">
+            تم إضافة <span className="font-bold text-white">{savedCount}</span> صنف إلى المخزون
+          </p>
+          <button
+            onClick={onReset}
+            className="mt-4 px-6 py-2 rounded-xl text-sm font-cairo border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-2 mx-auto"
+          >
+            <RefreshCw className="w-4 h-4" /> استيراد فاتورة جديدة
+          </button>
+        </motion.div>
+      )}
+    </div>
+  );
+}

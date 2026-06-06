@@ -9,7 +9,25 @@ export interface FinancialStats {
   dailyRevenue: { date: string, revenue: number, profit: number }[];
 }
 
-export async function getFinancialStats(days: number = 30) {
+export interface MonthlyReport {
+  year: number;
+  month: number;
+  month_name: string;
+  total_revenue: number;
+  total_cost: number;
+  total_profit: number;
+  total_orders: number;
+  cash_revenue: number;
+  debt_revenue: number;
+  sadqah_revenue: number;
+  returns_total: number;
+}
+
+/**
+ * Fetches financial stats via a single server-side RPC.
+ * Replaces JS-side aggregation of a raw orders dump.
+ */
+export async function getFinancialStats(days: number = 30): Promise<FinancialStats | null> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
 
@@ -28,60 +46,96 @@ export async function getFinancialStats(days: number = 30) {
     };
   }
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
+  const { data, error } = await supabase.rpc('get_financial_stats', {
+    p_pharmacy_id: pharmacyId,
+    p_days: days
+  });
 
-  const { data: orders, error } = await supabase
-    .from('orders')
-    .select('*')
-    .eq('pharmacy_id', pharmacyId)
-    .gte('created_at', cutoff.toISOString())
-    .eq('status', 'completed');
-
-  if (error) {
-    console.error('Error fetching financial stats:', error);
+  if (error || !data) {
+    console.error('Error fetching financial stats via RPC:', error);
     return null;
   }
 
-  const stats: FinancialStats = {
-    totalSales: 0,
-    totalCost: 0,
-    totalProfit: 0,
-    totalTransactions: orders?.length || 0,
+  return {
+    totalSales:        Number(data.total_sales || 0),
+    totalCost:         Number(data.total_cost || 0),
+    totalProfit:       Number(data.total_profit || 0),
+    totalTransactions: Number(data.total_transactions || 0),
     paymentMethodDistribution: [
-      { name: 'Cash', value: 0 },
-      { name: 'Debt', value: 0 },
-      { name: 'Sadqah', value: 0 },
+      { name: 'Cash',   value: Number(data.cash_revenue   || 0) },
+      { name: 'Debt',   value: Number(data.debt_revenue   || 0) },
+      { name: 'Sadqah', value: Number(data.sadqah_revenue || 0) },
     ],
-    dailyRevenue: []
+    dailyRevenue: (data.daily_revenue || []).map((d: { date: string; revenue: number; profit: number }) => ({
+      date:    d.date,
+      revenue: Number(d.revenue || 0),
+      profit:  Number(d.profit  || 0),
+    }))
   };
+}
 
-  const dailyMap = new Map<string, { revenue: number, profit: number }>();
+/**
+ * Fetches pre-aggregated monthly summaries — reads from monthly_summaries
+ * table so it's instant regardless of how many orders exist.
+ * @param year   Optional: filter to a specific year
+ * @param monthsBack  How many months back to return (default 12)
+ */
+export async function getMonthlyReport(
+  year?: number,
+  monthsBack: number = 12
+): Promise<MonthlyReport[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) return [];
 
-  orders?.forEach(order => {
-    stats.totalSales += Number(order.total);
-    stats.totalCost += Number(order.cost_total || 0);
-    stats.totalProfit += Number(order.profit_total || 0);
-
-    // Payment distribution
-    const method = order.payment_method;
-    const distItem = stats.paymentMethodDistribution.find(d => d.name.toLowerCase() === method.toLowerCase());
-    if (distItem) distItem.value += Number(order.total);
-
-    // Daily grouping
-    const date = new Date(order.created_at).toLocaleDateString();
-    const current = dailyMap.get(date) || { revenue: 0, profit: 0 };
-    dailyMap.set(date, {
-      revenue: current.revenue + Number(order.total),
-      profit: current.profit + Number(order.profit_total || 0)
-    });
+  const { data, error } = await supabase.rpc('get_monthly_report', {
+    p_pharmacy_id: pharmacyId,
+    p_year:        year ?? null,
+    p_months_back: monthsBack
   });
 
-  stats.dailyRevenue = Array.from(dailyMap.entries()).map(([date, val]) => ({
-    date,
-    revenue: val.revenue,
-    profit: val.profit
-  })).reverse();
+  if (error) {
+    console.error('Error fetching monthly report:', error);
+    return [];
+  }
 
-  return stats;
+  return (data || []).map((row: MonthlyReport) => ({
+    year:          row.year,
+    month:         row.month,
+    month_name:    row.month_name,
+    total_revenue: Number(row.total_revenue  || 0),
+    total_cost:    Number(row.total_cost     || 0),
+    total_profit:  Number(row.total_profit   || 0),
+    total_orders:  Number(row.total_orders   || 0),
+    cash_revenue:  Number(row.cash_revenue   || 0),
+    debt_revenue:  Number(row.debt_revenue   || 0),
+    sadqah_revenue:Number(row.sadqah_revenue || 0),
+    returns_total: Number(row.returns_total  || 0),
+  }));
+}
+
+/**
+ * Direct read from monthly_summaries for quick widgets
+ * (e.g. compare this month vs last month)
+ */
+export async function getCurrentMonthSummary() {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) return null;
+
+  const now = new Date();
+
+  const { data, error } = await supabase
+    .from('monthly_summaries')
+    .select('*')
+    .eq('pharmacy_id', pharmacyId)
+    .eq('year',  now.getFullYear())
+    .eq('month', now.getMonth() + 1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching current month summary:', error);
+    return null;
+  }
+  return data;
 }

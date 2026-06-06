@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PackageX, AlertTriangle, Search, Plus, ShoppingCart, RefreshCw, Loader2, ArrowLeftRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 
 export default function ShortagesPage() {
@@ -11,8 +12,12 @@ export default function ShortagesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
+  const { user } = useAuth();
+
   useEffect(() => {
-    fetchShortages();
+    if (user) {
+      fetchShortages();
+    }
 
     const channel = supabase
       .channel('shortages-sync')
@@ -22,15 +27,18 @@ export default function ShortagesPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user]);
 
   const fetchShortages = async () => {
+    const pharmacyId = user?.user_metadata?.pharmacy_id;
+    if (!pharmacyId) return;
+
     setLoading(true);
-    // Fetch products where total quantity in batches is < 5 (our shortage threshold)
-    // Using the view 'product_inventory' if it exists or calculated
+    // Fetch products where total quantity in batches is < 10 (our shortage threshold)
     const { data: products, error } = await supabase
       .from('product_inventory')
       .select('*')
+      .eq('pharmacy_id', pharmacyId)
       .lt('total_quantity', 10)
       .order('total_quantity', { ascending: true });
 
