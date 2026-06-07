@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Phone, Search, Plus, X, History, CreditCard, Loader2, ArrowUpRight, DollarSign, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Debtor, getDebtors, addDebtor, recordPayment, getPaymentHistory, DebtPayment } from '@/lib/api/debts';
@@ -27,11 +27,11 @@ export default function DebtsPage() {
   const fetchDebtors = async () => {
     setLoading(true);
     try {
-      // جلب البيانات بدون تمرير أي معاملات (0 arguments)
       const data = await getDebtors(); 
       setDebtors(data || []);
     } catch (err) {
       console.error("Fetch debtors error", err);
+      setErrorMessage("حدث خطأ أثناء جلب قائمة العملاء المدينين.");
     } finally {
       setLoading(false);
     }
@@ -39,34 +39,42 @@ export default function DebtsPage() {
 
   const handleAddDebtor = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     try {
-      // الـ API يتوقع formData فقط ولا يحتاج لـ pharmacy_id هنا
       await addDebtor(formData);
       setIsAddModalOpen(false);
       setFormData({ name: '', phone: '' });
-      fetchDebtors();
+      await fetchDebtors();
     } catch (err) {
       console.error("Add debtor error", err);
-      setErrorMessage("حدث خطأ أثناء إضافة العميل.");
+      setErrorMessage("حدث خطأ أثناء إضافة العميل. يرجى التحقق من البيانات.");
     }
   };
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDebtor) return;
+    setErrorMessage(null);
+    
+    const parsedAmount = parseFloat(paymentData.amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setErrorMessage("يرجى إدخال مبلغ سداد صحيح أكبر من الصفر.");
+      return;
+    }
+
     try {
-      // إرسال بيانات السداد بدون حقل pharmacy_id يدوياً
       await recordPayment({
         debtor_id: selectedDebtor.id,
-        amount: parseFloat(paymentData.amount),
+        amount: parsedAmount,
         payment_type: paymentData.payment_type,
         note: paymentData.note
       });
       setIsPaymentModalOpen(false);
       setPaymentData({ amount: '', payment_type: 'partial', note: '' });
-      fetchDebtors();
+      await fetchDebtors();
     } catch (err) {
       console.error("Payment error", err);
+      setErrorMessage("حدث خطأ أثناء تسجيل عملية السداد.");
     }
   };
 
@@ -74,80 +82,103 @@ export default function DebtsPage() {
     setSelectedDebtor(debtor);
     setIsHistoryModalOpen(true);
     setHistoryLoading(true);
+    setErrorMessage(null);
     try {
-      // استدعاء سجل السداد بالاعتماد على معرف العميل فقط
       const history = await getPaymentHistory(debtor.id);
       setPaymentHistory(history || []);
     } catch (err) {
       console.error("Fetch history error", err);
+      setErrorMessage("تعذر جلب سجل السداد الخاص بهذا العميل.");
     } finally {
       setHistoryLoading(false);
     }
   };
 
-  const filteredDebtors = debtors.filter(d => 
-    d.name.toLowerCase().includes(search.toLowerCase()) || 
-    (d.phone && d.phone.includes(search))
-  );
+  // تحسين البحث وحمايته باستخدام useMemo لتفادي التكرار عند إعادة الريندر
+  const filteredDebtors = useMemo(() => {
+    const searchLower = search.trim().toLowerCase();
+    if (!searchLower) return debtors;
+    
+    return debtors.filter(d => 
+      (d.name && d.name.toLowerCase().includes(searchLower)) || 
+      (d.phone && d.phone.includes(searchLower))
+    );
+  }, [debtors, search]);
 
-  const totalOutstanding = debtors.reduce((acc, d) => acc + d.total_debt, 0);
+  // حساب إجمالي الديون بشكل آمن ومعزز بالأداء
+  const totalOutstanding = useMemo(() => {
+    return debtors.reduce((acc, d) => acc + (Number(d.total_debt) || 0), 0);
+  }, [debtors]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12" dir="rtl">
       {errorMessage && (
         <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-cairo flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
-          {errorMessage}
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span className="flex-1">{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="hover:bg-white/5 p-1 rounded-lg">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            نظام <span className="nile-gradient-text">الديون</span>
+            نظام <span className="text-[#00CED1]">الديون</span>
           </h1>
-          <p className="text-gray-400 mt-2 text-lg font-cairo">إدارة ديون العملاء والتحصيل المالي.</p>
+          <p className="text-gray-400 mt-2 text-lg font-cairo">إدارة ديون العملاء والتحصيل المالي بسلاسة.</p>
         </div>
         <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="nile-button flex items-center gap-2"
+          onClick={() => {
+            setErrorMessage(null);
+            setIsAddModalOpen(true);
+          }}
+          className="bg-[#00CED1] hover:bg-[#00CED1]/90 text-black px-5 py-3 rounded-xl flex items-center gap-2 font-bold font-cairo transition-all shadow-[0_0_15px_rgba(0,206,209,0.15)]"
         >
           <Plus className="w-5 h-5" />
-          <span className="font-cairo">إضافة عميل ديون</span>
+          <span>إضافة عميل ديون</span>
         </button>
       </header>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass-panel p-6 border border-white/5">
+        <div className="glass-panel p-6 border border-white/5 rounded-2xl bg-white/5">
            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400 font-cairo">إجمالي الديون المستحقة</span>
+              <span className="text-gray-400 font-cairo text-sm">إجمالي الديون المستحقة</span>
               <DollarSign className="text-[#00CED1] w-5 h-5" />
            </div>
-           <p className="text-3xl font-bold text-[#00CED1]">{totalOutstanding.toLocaleString()} ج.م</p>
+           <p className="text-3xl font-bold text-[#00CED1] font-sans">{totalOutstanding.toLocaleString()} ج.م</p>
         </div>
-        <div className="glass-panel p-6 border border-white/5">
+        <div className="glass-panel p-6 border border-white/5 rounded-2xl bg-white/5">
            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400 font-cairo">عدد المدينين</span>
+              <span className="text-gray-400 font-cairo text-sm">عدد المدينين الحاليين</span>
               <Users className="text-[#D4AF37] w-5 h-5" />
            </div>
-           <p className="text-3xl font-bold text-white">{debtors.length}</p>
+           <p className="text-3xl font-bold text-white font-sans">{debtors.length}</p>
         </div>
-        <div className="glass-panel p-6 border border-[#00CED1]/20 bg-[#00CED1]/5">
-           <p className="text-sm font-cairo text-gray-300">يساعدك نظام الديون على تتبع المبالغ غير المحصلة من العملاء الدائمين وتسهيل عمليات السداد الجزئي أو الكلي.</p>
+        <div className="glass-panel p-6 border border-[#00CED1]/10 bg-[#00CED1]/5 rounded-2xl md:col-span-1 col-span-1">
+           <p className="text-xs font-cairo text-gray-400 leading-relaxed">
+             يساعدك نظام الديون على تتبع المبالغ غير المحصلة من العملاء الدائمين وتسهيل إجراءات وجدولة المبيعات الآجلة وعمليات السداد الجزئي أو الكلي.
+           </p>
         </div>
       </div>
 
       {/* Search Bar */}
-      <div className="glass-panel p-4 flex items-center gap-4">
+      <div className="glass-panel p-4 flex items-center gap-4 border border-white/5 rounded-xl bg-white/5">
         <Search className="w-5 h-5 text-gray-500" />
         <input 
           type="text" 
           placeholder="ابحث عن عميل بالاسم أو رقم الهاتف..." 
-          className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600"
+          className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600 text-sm"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {search && (
+          <button onClick={() => setSearch('')} className="text-gray-500 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -159,38 +190,40 @@ export default function DebtsPage() {
           {filteredDebtors.map((debtor, i) => (
             <motion.div
               key={debtor.id}
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
-              className="glass-panel p-6 border border-white/5 hover:border-[#00CED1]/30 transition-all group overflow-hidden relative"
+              transition={{ delay: Math.min(i * 0.03, 0.3) }}
+              className="glass-panel p-6 border border-white/5 hover:border-[#00CED1]/30 transition-all group overflow-hidden relative rounded-2xl bg-white/5"
             >
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-xl font-bold font-cairo">{debtor.name}</h3>
+                  <h3 className="text-xl font-bold font-cairo text-white">{debtor.name}</h3>
                   <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                     <Phone className="w-3.5 h-3.5 text-[#00CED1]/70" />
                     <span className="font-sans">{debtor.phone || 'بدون هاتف'}</span>
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
                   <CreditCard className="w-5 h-5 text-[#D4AF37]" />
                 </div>
               </div>
 
               <div className="mb-6">
-                <p className="text-xs text-gray-500 font-cairo mb-1 uppercase tracking-wider">الدين الحالي</p>
-                <p className={`text-4xl font-bold ${debtor.total_debt > 0 ? 'text-red-400' : 'text-gray-500'}`}>
-                  {debtor.total_debt.toLocaleString()} <span className="text-sm font-normal">ج.م</span>
+                <p className="text-xs text-gray-500 font-cairo mb-1 tracking-wider">الدين المستحق</p>
+                <p className={`text-4xl font-bold font-sans ${debtor.total_debt > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                  {(debtor.total_debt || 0).toLocaleString()} <span className="text-sm font-cairo font-normal text-gray-500">ج.م</span>
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <button 
                   onClick={() => {
+                    setErrorMessage(null);
                     setSelectedDebtor(debtor);
+                    setPaymentData({ amount: debtor.total_debt.toString(), payment_type: 'full', note: '' });
                     setIsPaymentModalOpen(true);
                   }}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#00CED1] text-black font-bold font-cairo hover:shadow-[0_0_15px_rgba(0,206,209,0.4)] transition-all text-sm"
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#00CED1] text-black font-bold font-cairo hover:shadow-[0_0_15px_rgba(0,206,209,0.3)] transition-all text-sm"
                 >
                   <ArrowUpRight className="w-4 h-4" />
                   تسديد
@@ -204,7 +237,7 @@ export default function DebtsPage() {
                 </button>
               </div>
 
-              <div className="absolute top-0 right-0 w-32 h-1 bg-gradient-to-l from-[#00CED1] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-[#00CED1] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </motion.div>
           ))}
         </div>
@@ -217,23 +250,26 @@ export default function DebtsPage() {
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setIsAddModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md glass-panel p-8"
+              className="relative w-full max-w-md glass-panel p-8 bg-[#0a0a0a] border border-white/10 rounded-2xl z-10 text-right"
             >
-              <h2 className="text-2xl font-bold font-cairo mb-6">إضافة عميل ديون جديد</h2>
+              <h2 className="text-2xl font-bold font-cairo mb-6 text-white">إضافة عميل ديون جديد</h2>
               <form onSubmit={handleAddDebtor} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">اسم العميل</label>
-                  <input required type="text" className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 font-cairo" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  <label className="text-sm font-medium text-gray-400 font-cairo block">اسم العميل بالكامل</label>
+                  <input required type="text" className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 font-cairo text-white focus:border-[#00CED1] transition-colors" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">رقم الهاتف</label>
-                  <input type="text" className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  <label className="text-sm font-medium text-gray-400 font-cairo block">رقم الهاتف</label>
+                  <input type="text" className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 text-white focus:border-[#00CED1] transition-colors font-sans" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="01xxxxxxxxx" />
                 </div>
-                <button type="submit" className="w-full nile-button py-4 font-bold font-cairo">إضافة العميل</button>
+                <div className="flex gap-3 pt-2">
+                  <button type="submit" className="flex-1 bg-[#00CED1] text-black py-3 rounded-xl font-bold font-cairo hover:bg-[#00CED1]/90 transition-colors">إضافة العميل</button>
+                  <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 bg-white/5 border border-white/10 text-white rounded-xl font-cairo hover:bg-white/10">إلغاء</button>
+                </div>
               </form>
             </motion.div>
           </div>
@@ -247,46 +283,49 @@ export default function DebtsPage() {
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setIsPaymentModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             />
             <motion.div 
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-              className="relative w-full max-w-md glass-panel p-8"
+              className="relative w-full max-w-md glass-panel p-8 bg-[#0a0a0a] border border-white/10 rounded-2xl z-10 text-right"
             >
-              <h2 className="text-2xl font-bold font-cairo mb-1">تسجيل عملية سداد</h2>
+              <h2 className="text-2xl font-bold font-cairo mb-1 text-white">تسجيل عملية سداد</h2>
               <p className="text-gray-400 font-cairo text-sm mb-6">العميل: <span className="text-[#00CED1] font-bold">{selectedDebtor.name}</span></p>
               
               <form onSubmit={handleRecordPayment} className="space-y-6">
                  <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">المبلغ المسدد</label>
+                  <label className="text-sm font-medium text-gray-400 font-cairo block">المبلغ المسدد</label>
                   <div className="relative">
-                    <input required type="number" step="0.01" className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 pl-12 text-2xl font-bold text-[#00CED1]" value={paymentData.amount} onChange={e => setPaymentData({...paymentData, amount: e.target.value})} placeholder="0.00" />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-cairo">ج.م</span>
+                    <input required type="number" step="0.01" className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 pr-4 pl-12 text-2xl font-bold text-[#00CED1] font-sans text-left" value={paymentData.amount} onChange={e => setPaymentData({...paymentData, amount: e.target.value})} placeholder="0.00" />
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-cairo text-xs">ج.م</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">نوع السداد</label>
+                  <label className="text-sm font-medium text-gray-400 font-cairo block">نوع السداد</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       type="button"
                       onClick={() => setPaymentData({...paymentData, payment_type: 'partial'})}
-                      className={`py-3 rounded-xl font-cairo border ${paymentData.payment_type === 'partial' ? 'bg-[#00CED1]/10 border-[#00CED1] text-[#00CED1]' : 'bg-white/5 border-white/10 text-gray-400'}`}
-                    >جزئي</button>
+                      className={`py-3 rounded-xl font-cairo text-sm border transition-all ${paymentData.payment_type === 'partial' ? 'bg-[#00CED1]/10 border-[#00CED1] text-[#00CED1] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                    >سداد جزئي</button>
                     <button 
                       type="button"
                       onClick={() => setPaymentData({...paymentData, payment_type: 'full', amount: selectedDebtor.total_debt.toString()})}
-                      className={`py-3 rounded-xl font-cairo border ${paymentData.payment_type === 'full' ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37]' : 'bg-white/5 border-white/10 text-gray-400'}`}
-                    >كلي (تصفية)</button>
+                      className={`py-3 rounded-xl font-cairo text-sm border transition-all ${paymentData.payment_type === 'full' ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                    >كلي (تصفية الحساب)</button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">ملاحظات (اختياري)</label>
-                  <textarea className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 font-cairo resize-none h-24" value={paymentData.note} onChange={e => setPaymentData({...paymentData, note: e.target.value})} placeholder="مثال: تم السداد كاش من خلال المندوب" />
+                  <label className="text-sm font-medium text-gray-400 font-cairo block">ملاحظات (اختياري)</label>
+                  <textarea className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 font-cairo resize-none h-20 text-white focus:border-[#00CED1] text-sm" value={paymentData.note} onChange={e => setPaymentData({...paymentData, note: e.target.value})} placeholder="مثال: استلام نقدي بموجب إيصال" />
                 </div>
 
-                <button type="submit" className="w-full nile-button py-4 font-bold font-cairo">تأكيد عملية السداد</button>
+                <div className="flex gap-3 pt-2">
+                  <button type="submit" className="flex-1 bg-[#00CED1] text-black py-3 rounded-xl font-bold font-cairo hover:bg-[#00CED1]/90 transition-colors">تأكيد السداد</button>
+                  <button type="button" onClick={() => setIsPaymentModalOpen(false)} className="px-4 bg-white/5 border border-white/10 text-white rounded-xl font-cairo hover:bg-white/10">إلغاء</button>
+                </div>
               </form>
             </motion.div>
           </div>
@@ -300,27 +339,29 @@ export default function DebtsPage() {
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setIsHistoryModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-              className="relative w-full max-w-2xl glass-panel p-8 max-h-[80vh] flex flex-col"
+              initial={{ opacity: 0, scale: 0.93 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.93 }}
+              className="relative w-full max-w-2xl glass-panel p-8 bg-[#0a0a0a] border border-white/10 rounded-2xl z-10 max-h-[80vh] flex flex-col text-right"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold font-cairo">سجل سداد: {selectedDebtor.name}</h2>
-                <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full"><X className="w-6 h-6" /></button>
+              <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+                <h2 className="text-2xl font-bold font-cairo text-white">سجل الدفعات للعميل: {selectedDebtor.name}</h2>
+                <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+              <div className="flex-1 overflow-y-auto space-y-3 pl-1">
                 {historyLoading ? (
-                  <div className="flex justify-center p-20"><Loader2 className="animate-spin text-[#00CED1]" /></div>
+                  <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#00CED1] w-8 h-8" /></div>
                 ) : paymentHistory.length > 0 ? (
                   paymentHistory.map((p) => (
-                    <div key={p.id} className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
+                    <div key={p.id} className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between hover:bg-white/10 transition-colors">
                        <div>
-                          <p className="font-bold text-[#00CED1]">{p.amount.toLocaleString()} ج.م</p>
-                          <p className="text-xs text-gray-500 font-cairo">{new Date(p.payment_date).toLocaleString('ar-EG')}</p>
-                          {p.note && <p className="text-sm text-gray-400 font-cairo mt-1 opacity-80">{p.note}</p>}
+                          <p className="font-bold text-[#00CED1] text-lg font-sans">{(p.amount || 0).toLocaleString()} ج.م</p>
+                          <p className="text-xs text-gray-500 font-cairo mt-0.5">{new Date(p.payment_date).toLocaleString('ar-EG')}</p>
+                          {p.note && <p className="text-xs text-gray-400 font-cairo mt-1 bg-white/5 px-2 py-1 rounded-md inline-block opacity-90">{p.note}</p>}
                        </div>
                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold font-cairo ${p.payment_type === 'full' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-blue-500/20 text-blue-400'}`}>
                           {p.payment_type === 'full' ? 'تصفية كاملة' : 'سداد جزئي'}
@@ -328,7 +369,7 @@ export default function DebtsPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-20 text-gray-500 font-cairo">لا توجد عمليات سداد مسجلة بعد.</div>
+                  <div className="text-center py-20 text-gray-500 font-cairo text-sm">لا توجد عمليات سداد مسجلة لهذا العميل حتى الآن.</div>
                 )}
               </div>
             </motion.div>

@@ -20,29 +20,78 @@ export async function GET() {
     ];
 
     const backupData: any = {};
+    const BATCH_SIZE = 1000; // حجم الدفعة الواحدة لتفادي سقف الـ 1000 سجل واستهلاك الذاكرة
 
     for (const table of tablesToExport) {
-      const { data, error } = await supabase.from(table).select('*');
-      if (error) {
-        throw error;
+      let allRows: any[] = [];
+      let page = 0;
+      let hasMore = true;
+
+      // حلقة تكرارية لجلب البيانات على دفعات متتالية لضمان جلب كل السجلات دون نقصان
+      while (hasMore) {
+        const from = page * BATCH_SIZE;
+        const to = from + BATCH_SIZE - 1;
+
+        const { data, error } = await supabase
+          .from(table)
+          .select('*')
+          .range(from, to)
+          .order('created_at', { ascending: true }); // ترتيب ثابت لضمان سلامة الـ Range الفني
+
+        if (error) {
+          // إذا كان الجدول لا يحتوي على حقل created_at، نقوم بالجلب بدون ترتيب محدد كتأمين بديل
+          if (error.message.includes('"created_at" does not exist')) {
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from(table)
+              .select('*')
+              .range(from, to);
+
+            if (fallbackError) throw fallbackError;
+            
+            if (fallbackData && fallbackData.length > 0) {
+              allRows = [...allRows, ...fallbackData];
+              hasMore = fallbackData.length === BATCH_SIZE;
+              page++;
+              continue;
+            }
+          }
+          throw error;
+        }
+
+        if (data && data.length > 0) {
+          allRows = [...allRows, ...data];
+          // إذا كان عدد السجلات المسترجعة أقل من حجم الدفعة، فهذا يعني أننا وصلنا لنهاية الجدول
+          hasMore = data.length === BATCH_SIZE;
+          page++;
+        } else {
+          hasMore = false;
+        }
       }
-      backupData[table] = data;
+
+      backupData[table] = allRows;
     }
 
+    // توثيق وقت التصدير
     backupData.exported_at = new Date().toISOString();
+    const jsonString = JSON.stringify(backupData);
 
-    const json = JSON.stringify(backupData);
+    const todayStr = new Date().toLocaleDateString('en-CA'); // صيغة تضمن الحصول على YYYY-MM-DD بشكل ناصع
 
-    const blob = new Blob([json], { type: 'application/json' });
-
-    return new NextResponse(blob, {
+    // العودة بالرد مباشرة بنص الـ JSON مع إجبار المتصفح على تحميله كملف مرفق
+    return new NextResponse(jsonString, {
+      status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename="pharmacy_backup_${new Date().toISOString().split('T')[0]}.json"`
+        'Content-Disposition': `attachment; filename="pharmacy_backup_${todayStr}.json"`,
+        'Cache-Control': 'no-store, max-age=0' // منع الكاش لضمان جلب بيانات حية دائماً
       }
     });
+
   } catch (error: any) {
     console.error('Export Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to generate database backup' }, 
+      { status: 500 }
+    );
   }
 }

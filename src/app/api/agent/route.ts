@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import Groq from 'groq-sdk';
 
-// Using Official Mistral AI API (Direct, no gateways)
-const MISTRAL_ENDPOINT = "https://api.mistral.ai/v1/chat/completions";
-const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
-const MISTRAL_MODEL = "mistral-small-latest";
+// تهيئة مكتبة Groq SDK
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+// موديل Llama 3 المدعوم والقوي جداً في تنفيذ المهام البرمجية وفهم السياق العربي
+const GROQ_MODEL = "llama3-70b-8192";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,7 +19,11 @@ export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
 
-    // 1. GATHER CONTEXT (Optional but better for agent awareness)
+    if (!message) {
+      return NextResponse.json({ error: "Message is required" }, { status: 400 });
+    }
+
+    // 1. جلب سياق العمليات الأخيرة لتعزيز وعي العميل الذكي
     const { data: recentLogs } = await supabase
       .from('agent_action_logs')
       .select('*')
@@ -26,8 +34,8 @@ export async function POST(req: Request) {
 أنت صيدلي خبير تقني تدير الصيدلية بذكاء.
 
 قدراتك التقنية لفتح واجهات العمل (Workspaces):
-- لفتح أي صفحة للمستخدم، استخدم التنسيق: [OPEN_IFRAME:URL:TITLE]
-- الروابط المتاحة:
+- لفتح أي صفحة للمستخدم، استخدم التنسيق الصارم التالي: [OPEN_IFRAME:URL:TITLE]
+- الروابط المتاحة في النظام فقط:
   - /pos (نقطة البيع)
   - /invoices (الفواتير والمرتجعات)
   - /inventory (المخزن والأصناف)
@@ -35,83 +43,86 @@ export async function POST(req: Request) {
   - /orders (لوحة تحليلات المبيعات)
 
 قدراتك في تنفيذ العمليات (Undo System):
-- إذا طلب المستخدم تعديل حساس (تغيير سعر، حذف فاتورة، تعديل مخزون كبير)، يجب عليك طلب الإذن أولاً بالتنسيق: [ASK_PERMISSION:MESSAGE:TABLE:ACTION:PAYLOAD_JSON]
+- إذا طلب المستخدم تعديل حساس (تغيير سعر، حذف فاتورة، تعديل مخزون كبير)، يجب عليك طلب الإذن أولاً بالتنسيق الصارم التالي:
+  [ASK_PERMISSION:MESSAGE:TABLE:ACTION:PAYLOAD_JSON]
+- تأكد أن كائن PAYLOAD_JSON هو عبارة عن كائن JSON صالح سليم البنية وبدون أسطر جديدة بداخله.
 - إذا كان التعديل بسيطاً وغير حساس، نفذه مباشرة (في عقلك وأخبر المستخدم، أو اطلب منه تأكيد بسيط).
 
-قواعد هامة:
-1. رد دائماً بالعامية المصرية بأسلوب صيدلي شاطر.
-2. إذا طلب المستخدم حل مشكلة، ابحث عن الصفحة المناسبة وافتحها له فوراً باستخدام [OPEN_IFRAME]. يمكن فتح أكثر من صفحة لو تطلب الأمر.
-3. التزم تماماً بالتنسيقات البرمجية المذكورة أعلاه ليتمكن النظام من فهمها.
+قواعد هامة جداً:
+1. رد دائماً بالعامية المصرية بأسلوب صيدلي شاطر، خفيف الظل، وجدع.
+2. إذا طلب المستخدم حل مشكلة، ابحث عن الصفحة المناسبة وافتحها له فوراً باستخدام [OPEN_IFRAME].
+3. التزم تماماً بالتنسيقات البرمجية المذكورة أعلاه ليتمكن النظام من فهمها وتمريرها للمتصفح.
 
-سجل العمليات الأخيرة: ${JSON.stringify(recentLogs)}
+سجل العمليات الأخيرة في النظام للوعي: ${JSON.stringify(recentLogs || [])}
 `;
 
-    // 2. CONNECT TO MISTRAL AI API
-    const response = await fetch(MISTRAL_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${MISTRAL_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: MISTRAL_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...(history || []).map((msg: any) => ({
-            role: msg.role === 'assistant' ? 'assistant' : 'user',
-            content: msg.content
-          })),
-          { role: "user", content: message }
-        ],
-        temperature: 0.3,
-      })
+    // 2. إعداد الرسائل وتجهيز الـ History متوافق مع Groq Chat Completion
+    const formattedMessages = [
+      { role: "system" as const, content: systemPrompt },
+      ...(history || [])
+        .filter((msg: any) => msg && msg.content)
+        .map((msg: any) => ({
+          role: (msg.role === 'assistant' ? 'assistant' : 'user') as "assistant" | "user",
+          content: msg.content
+        })),
+      { role: "user" as const, content: message }
+    ];
+
+    // 3. الاتصال بـ Groq عبر الـ SDK الرسمي
+    const chatCompletion = await groq.chat.completions.create({
+      messages: formattedMessages,
+      model: GROQ_MODEL,
+      temperature: 0.2, // لضمان ثبات الأكواد البرمجية المستخرجة
     });
 
-    if (!response.ok) throw new Error("AI Endpoint Error");
+    const aiResponse = chatCompletion.choices[0]?.message?.content || "";
 
-    const data = await response.json();
-    const aiResponse = data.choices[0]?.message?.content || "";
-
-    // 3. PARSE ACTIONS
-    let action = null;
+    // 4. تحليل الأوامر المستخرجة من رد النموذج (Actions Parsing)
+    let action: any = null;
     
-    // Parse [OPEN_IFRAME:/url:Title]
-    const iframeMatch = aiResponse.match(/\[OPEN_IFRAME:([\/\w]+):([^\]]+)\]/);
+    // تحسين الـ Regex لـ [OPEN_IFRAME:/url:Title] ليدعم الحروف العربية والمسافات بشكل مستقر
+    const iframeMatch = aiResponse.match(/\[OPEN_IFRAME:([^:]+):([^\]]+)\]/);
     if (iframeMatch) {
       action = {
         type: 'OPEN_IFRAME',
-        url: iframeMatch[1],
-        title: iframeMatch[2]
+        url: iframeMatch[1].trim(),
+        title: iframeMatch[2].trim()
       };
     }
 
-    // Parse [ASK_PERMISSION:Message:Table:Action:Payload]
-    const permissionMatch = aiResponse.match(/\[ASK_PERMISSION:([^:]+):([^:]+):([^:]+):({.+})\]/);
+    // تحسين الـ Regex لـ [ASK_PERMISSION:Message:Table:Action:Payload] ليدعم الكائنات المعقدة والنصوص العربية والأسطر
+    const permissionMatch = aiResponse.match(/\[ASK_PERMISSION:(.*?):(.*?):(.*?):(\{[\s\S]*?\})\]/);
     if (permissionMatch) {
-      action = {
-        type: 'ASK_PERMISSION',
-        message: permissionMatch[1],
-        actionType: permissionMatch[3],
-        payload: {
-          table: permissionMatch[2],
-          data: JSON.parse(permissionMatch[4])
-        }
-      };
+      try {
+        action = {
+          type: 'ASK_PERMISSION',
+          message: permissionMatch[1].trim(),
+          actionType: permissionMatch[3].trim(),
+          payload: {
+            table: permissionMatch[2].trim(),
+            data: JSON.parse(permissionMatch[4].trim())
+          }
+        };
+      } catch (jsonErr) {
+        console.error("Failed to parse Agent generated JSON payload:", jsonErr);
+      }
     }
 
-    // Clean response text from blocks
+    // 5. تطهير وتنظيف نص الرد الموجه للمستخدم النهائي تماماً من هذه الأكواد الهيكلية
     const cleanContent = aiResponse
       .replace(/\[OPEN_IFRAME:.*?\]/g, "")
       .replace(/\[ASK_PERMISSION:.*?\]/g, "")
+      .replace(/\s+/g, " ") // تنظيف المسافات الزائدة الناتجة عن الحذف
       .trim();
 
+    // 6. العودة بالرد النهائي النظيف والـ action المطلوب إن وجد
     return NextResponse.json({ 
-      reply: cleanContent, 
+      reply: cleanContent || "تمام يا فندم، أنا معاك وجاهز لأي أمر.", 
       action 
     });
 
   } catch (error: any) {
-    console.error('Agent API Error:', error);
-    return NextResponse.json({ error: 'Failed: ' + error.message }, { status: 500 });
+    console.error('Groq Agent API Route Error:', error);
+    return NextResponse.json({ error: 'Internal Agent Error: ' + error.message }, { status: 500 });
   }
 }

@@ -54,19 +54,36 @@ export default function CustomersPage() {
     });
   };
 
+  // تصفية العملاء بناءً على البحث والفلتر الحالي أولاً
+  let filteredCustomers = customers.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase()) || 
+    (c.phone && c.phone.includes(search))
+  );
+
+  if (filterDebt === 'debtors') filteredCustomers = filteredCustomers.filter(c => c.total_debt > 0);
+  if (filterDebt === 'clear') filteredCustomers = filteredCustomers.filter(c => c.total_debt === 0);
+
+  // تحديد وإلغاء تحديد العناصر الظاهرة فقط أمام المستخدم لمنع الأخطاء
   const selectAll = () => {
-    if (selectedIds.size === filteredCustomers.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredCustomers.map(c => c.id)));
-    }
+    const allFilteredIds = filteredCustomers.map(c => c.id);
+    const isAllSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.has(id));
+
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (isAllSelected) {
+        allFilteredIds.forEach(id => next.delete(id));
+      } else {
+        allFilteredIds.forEach(id => next.add(id));
+      }
+      return next;
+    });
   };
 
-  const selectedCustomers = customers.filter(c => selectedIds.has(c.id));
+  // ربط العملاء المحددين بالقائمة المفلترة فقط لضمان دقة العمليات وحساب المجموع المعروض
+  const selectedCustomers = filteredCustomers.filter(c => selectedIds.has(c.id));
   const totalSelectedDebt = selectedCustomers.reduce((acc, c) => acc + c.total_debt, 0);
 
   const handleStartPayment = () => {
-    // Pre-fill payment amounts with full debt by default
     const amounts: Record<string, string> = {};
     const notes: Record<string, string> = {};
     selectedCustomers.forEach(c => {
@@ -78,20 +95,27 @@ export default function CustomersPage() {
     setIsPaymentMode(true);
   };
 
+  // تنفيذ المدفوعات بالتوازي باستخدام Promise.all لتحسين الأداء والأمان
   const handleExecutePayments = async () => {
     setProcessingPayment(true);
     try {
-      for (const customer of selectedCustomers) {
-        const amount = Number(paymentAmounts[customer.id] || 0);
-        if (amount <= 0) continue;
+      const paymentPromises = selectedCustomers
+        .map(customer => {
+          const amount = Number(paymentAmounts[customer.id] || 0);
+          if (amount <= 0) return null;
 
-        const paymentType = amount >= customer.total_debt ? 'full' : 'partial';
-        await recordCustomerPayment({
-          customer_id: customer.id,
-          amount,
-          payment_type: paymentType,
-          note: paymentNotes[customer.id] || undefined,
-        });
+          const paymentType = amount >= customer.total_debt ? 'full' : 'partial';
+          return recordCustomerPayment({
+            customer_id: customer.id,
+            amount,
+            payment_type: paymentType,
+            note: paymentNotes[customer.id] || undefined,
+          });
+        })
+        .filter(Boolean);
+
+      if (paymentPromises.length > 0) {
+        await Promise.all(paymentPromises);
       }
 
       setPaymentSuccess(true);
@@ -101,7 +125,7 @@ export default function CustomersPage() {
       setTimeout(() => setPaymentSuccess(false), 4000);
     } catch (err) {
       console.error("Payment error", err);
-      alert("حدث خطأ أثناء تسجيل الدفع. حاول مرة أخرى.");
+      alert("حدث خطأ أثناء تسجيل المدفوعات. يرجى المحاولة مرة أخرى.");
     } finally {
       setProcessingPayment(false);
     }
@@ -109,16 +133,8 @@ export default function CustomersPage() {
 
   const totalPaymentAmount = Object.values(paymentAmounts).reduce((acc, v) => acc + (Number(v) || 0), 0);
 
-  let filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase()) || 
-    (c.phone && c.phone.includes(search))
-  );
-
-  if (filterDebt === 'debtors') filteredCustomers = filteredCustomers.filter(c => c.total_debt > 0);
-  if (filterDebt === 'clear') filteredCustomers = filteredCustomers.filter(c => c.total_debt === 0);
-
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12" dir="rtl">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
@@ -142,7 +158,7 @@ export default function CustomersPage() {
 
       {/* Selection Action Bar */}
       <AnimatePresence>
-        {selectedIds.size > 0 && !isPaymentMode && (
+        {selectedCustomers.length > 0 && !isPaymentMode && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -154,7 +170,7 @@ export default function CustomersPage() {
                 <CheckCircle2 className="w-5 h-5 text-[#00CED1]" />
               </div>
               <div>
-                <p className="text-foreground font-bold">تم تحديد {selectedIds.size} عميل</p>
+                <p className="text-foreground font-bold">تم تحديد {selectedCustomers.length} عميل</p>
                 <p className="text-xs text-gray-500">إجمالي ديونهم: <span className="text-red-400 font-bold">{totalSelectedDebt.toLocaleString()} ج.م</span></p>
               </div>
             </div>
@@ -200,7 +216,7 @@ export default function CustomersPage() {
           <input 
             type="text" 
             placeholder="البحث بالاسم أو رقم الهاتف..." 
-            className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600 py-2"
+            className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600 py-2 text-right"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -230,13 +246,18 @@ export default function CustomersPage() {
           className="glass-panel px-5 flex items-center gap-2 text-gray-400 hover:text-white transition-colors font-cairo text-sm"
         >
           <CheckCircle2 className="w-4 h-4" />
-          {selectedIds.size === filteredCustomers.length && filteredCustomers.length > 0 ? 'إلغاء الكل' : 'تحديد الكل'}
+          {filteredCustomers.length > 0 && filteredCustomers.every(c => selectedIds.has(c.id)) ? 'إلغاء الكل' : 'تحديد الكل'}
         </button>
       </div>
 
       {loading ? (
         <div className="flex justify-center items-center py-20">
           <Loader2 className="w-10 h-10 text-[#00CED1] animate-spin" />
+        </div>
+      ) : filteredCustomers.length === 0 ? (
+        <div className="glass-panel p-12 text-center space-y-3 border border-white/5">
+          <AlertCircle className="w-12 h-12 text-gray-500 mx-auto" />
+          <p className="text-gray-400 font-cairo text-lg">لم يتم العثور على أي عملاء يطابقون خيارات البحث والفلترة الحالية.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -263,23 +284,23 @@ export default function CustomersPage() {
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#D4AF37] border border-white/10 group-hover:border-[#D4AF37]/50 transition-colors">
                      <Users className="w-6 h-6" />
                   </div>
-                  <div className="text-right h-auto py-1">
+                  <div className="text-left h-auto py-1">
                      <p className="text-xs text-gray-500 font-cairo mb-1 uppercase">نقاط الولاء</p>
                      <p className="text-lg font-bold text-[#D4AF37] leading-tight">{customer.loyalty_points} <span className="text-[10px] font-normal">نقطة</span></p>
                   </div>
                 </div>
 
-                <h2 className="text-xl font-bold font-cairo text-white mb-4 group-hover:text-[#00CED1] transition-colors">{customer.name}</h2>
+                <h2 className="text-xl font-bold font-cairo text-white mb-4 group-hover:text-[#00CED1] transition-colors text-right">{customer.name}</h2>
                 
-                <div className="space-y-3 mb-6">
+                <div className="space-y-3 mb-6 text-right">
                    {customer.phone && (
-                     <div className="flex items-center gap-3 text-sm text-gray-400">
+                     <div className="flex items-center justify-start gap-3 text-sm text-gray-400">
                        <Phone className="w-4 h-4 opacity-50" />
                        <span className="font-sans">{customer.phone}</span>
                      </div>
                    )}
                    {customer.address && (
-                     <div className="flex items-center gap-3 text-sm text-gray-400">
+                     <div className="flex items-center justify-start gap-3 text-sm text-gray-400">
                        <MapPin className="w-4 h-4 opacity-50" />
                        <span className="font-cairo truncate">{customer.address}</span>
                      </div>
@@ -287,7 +308,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between mb-6">
-                   <div>
+                   <div className="text-right">
                       <p className="text-[10px] text-gray-500 font-cairo mb-1.5 uppercase">إجمالي الدين</p>
                       <p className={`text-xl font-bold ${customer.total_debt > 0 ? 'text-red-400' : 'text-green-400'}`}>
                         {customer.total_debt > 0 ? customer.total_debt.toLocaleString() : '0'} <span className="text-xs font-normal">ج.م</span>
@@ -302,13 +323,12 @@ export default function CustomersPage() {
                     className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white font-cairo group/btn hover:bg-[#00CED1]/10 hover:border-[#00CED1]/30 transition-all font-medium text-sm"
                   >
                     الملف الشخصي
-                    <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                    <ChevronRight className="w-4 h-4 group-hover/btn:-translate-x-1 transition-transform rotate-180" />
                   </Link>
                   {customer.total_debt > 0 && (
                     <button 
                       onClick={() => {
                         setSelectedIds(new Set([customer.id]));
-                        // Immediately open payment mode for this single customer
                         const amounts: Record<string, string> = { [customer.id]: customer.total_debt.toString() };
                         const notes: Record<string, string> = { [customer.id]: '' };
                         setPaymentAmounts(amounts);
@@ -336,21 +356,21 @@ export default function CustomersPage() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-card w-full max-w-2xl overflow-hidden relative border border-green-500/30 shadow-[0_0_40px_rgba(34,197,94,0.1)]"
+              className="glass-card w-full max-w-2xl overflow-hidden relative border border-green-500/30 shadow-[0_0_40px_rgba(34,197,94,0.1)] text-right"
             >
               <div className="p-6 border-b border-white/10 flex justify-between items-center bg-green-500/5">
-                <div>
-                  <h2 className="text-xl font-bold font-cairo text-green-400 flex items-center gap-2">
-                    <Wallet className="w-5 h-5" /> تسجيل دفع ديون
-                  </h2>
-                  <p className="text-sm text-gray-400 font-cairo mt-1">{selectedCustomers.length} عميل محدد • إجمالي الديون: {totalSelectedDebt.toLocaleString()} ج.م</p>
-                </div>
                 <button 
                    onClick={() => setIsPaymentMode(false)}
                    className="text-gray-400 hover:text-white transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
+                <div className="text-right">
+                  <h2 className="text-xl font-bold font-cairo text-green-400 flex items-center justify-end gap-2">
+                    <Wallet className="w-5 h-5" /> تسجيل دفع ديون
+                  </h2>
+                  <p className="text-sm text-gray-400 font-cairo mt-1">{selectedCustomers.length} عميل محدد • إجمالي الديون: {totalSelectedDebt.toLocaleString()} ج.م</p>
+                </div>
               </div>
 
               <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4">
@@ -362,38 +382,53 @@ export default function CustomersPage() {
                   return (
                     <div key={customer.id} className="bg-white/5 border border-white/10 rounded-xl p-5">
                       <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-[#D4AF37]" />
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-foreground font-cairo">{customer.name}</h3>
-                            <p className="text-xs text-gray-500 font-cairo">{customer.phone || 'بدون رقم'}</p>
-                          </div>
-                        </div>
                         <div className="text-right">
                           <p className="text-xs text-gray-500 font-cairo">الدين الحالي</p>
                           <p className="text-lg font-bold text-red-400 font-cairo">{customer.total_debt.toLocaleString()} ج.م</p>
                         </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <h3 className="font-bold text-foreground font-cairo">{customer.name}</h3>
+                            <p className="text-xs text-gray-500 font-cairo">{customer.phone || 'بدون رقم'}</p>
+                          </div>
+                          <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-[#D4AF37]" />
+                          </div>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
+                        <div className="text-right">
+                          <label className="text-xs text-gray-400 mb-1 block font-cairo">ملاحظات (اختياري)</label>
+                          <input 
+                            type="text"
+                            value={paymentNotes[customer.id] || ''}
+                            placeholder="مثال: دفعة أولى..."
+                            onChange={e => setPaymentNotes(prev => ({ ...prev, [customer.id]: e.target.value }))}
+                            className="w-full bg-[#050505]/50 border border-white/20 rounded-xl px-4 py-3 text-white outline-none focus:border-[#00CED1]/50 font-cairo text-sm text-right"
+                          />
+                        </div>
+                        <div className="text-right">
                           <label className="text-xs text-gray-400 mb-1 block font-cairo">المبلغ المدفوع (ج.م)</label>
                           <div className="relative">
                             <input 
                               type="number"
                               min="0"
                               max={customer.total_debt}
-                              value={paymentAmounts[customer.id] || ''}
+                              value={paymentAmounts[customer.id] ?? ''}
                               placeholder="0"
                               onChange={e => {
-                                let val = Number(e.target.value);
-                                if (val < 0) val = 0;
-                                if (val > customer.total_debt) val = customer.total_debt;
-                                setPaymentAmounts(prev => ({ ...prev, [customer.id]: val.toString() }));
+                                const valStr = e.target.value;
+                                const valNum = Number(valStr);
+                                
+                                if (valNum < 0) return;
+                                if (valNum > customer.total_debt) {
+                                  setPaymentAmounts(prev => ({ ...prev, [customer.id]: customer.total_debt.toString() }));
+                                  return;
+                                }
+                                setPaymentAmounts(prev => ({ ...prev, [customer.id]: valStr }));
                               }}
-                              className="w-full bg-[#050505]/50 border border-white/20 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 font-cairo font-bold text-lg"
+                              className="w-full bg-[#050505]/50 border border-white/20 rounded-xl pl-16 pr-4 py-3 text-white outline-none focus:border-green-500/50 font-cairo font-bold text-lg text-right"
                             />
                             <button 
                               onClick={() => setPaymentAmounts(prev => ({ ...prev, [customer.id]: customer.total_debt.toString() }))}
@@ -402,16 +437,6 @@ export default function CustomersPage() {
                               كامل
                             </button>
                           </div>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block font-cairo">ملاحظات (اختياري)</label>
-                          <input 
-                            type="text"
-                            value={paymentNotes[customer.id] || ''}
-                            placeholder="مثال: دفعة أولى..."
-                            onChange={e => setPaymentNotes(prev => ({ ...prev, [customer.id]: e.target.value }))}
-                            className="w-full bg-[#050505]/50 border border-white/20 rounded-xl px-4 py-3 text-white outline-none focus:border-[#00CED1]/50 font-cairo text-sm"
-                          />
                         </div>
                       </div>
 
@@ -422,10 +447,10 @@ export default function CustomersPage() {
                         currentAmount > 0 ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
                         'bg-white/5 border-white/10 text-gray-500'
                       }`}>
+                        <span>المتبقي: {Math.max(0, customer.total_debt - currentAmount).toLocaleString()} ج.م</span>
                         <span>
                           {isFull ? '✓ سداد كامل' : currentAmount > 0 ? `دفعة جزئية (${((currentAmount / customer.total_debt) * 100).toFixed(0)}%)` : 'لم يتم تحديد مبلغ'}
                         </span>
-                        <span>المتبقي: {Math.max(0, customer.total_debt - currentAmount).toLocaleString()} ج.م</span>
                       </div>
                     </div>
                   );
@@ -435,16 +460,10 @@ export default function CustomersPage() {
               {/* Summary & Actions */}
               <div className="p-4 border-t border-white/10 bg-[#050505]/50">
                 <div className="flex items-center justify-between mb-4 font-cairo text-sm">
-                  <span className="text-gray-400">إجمالي المبالغ المسددة</span>
                   <span className="text-2xl font-bold text-green-400">{totalPaymentAmount.toLocaleString()} ج.م</span>
+                  <span className="text-gray-400">إجمالي المبالغ المسددة</span>
                 </div>
                 <div className="flex gap-3">
-                   <button 
-                     onClick={() => setIsPaymentMode(false)}
-                     className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10"
-                   >
-                     إلغاء
-                   </button>
                    <button 
                      onClick={handleExecutePayments}
                      disabled={processingPayment || totalPaymentAmount === 0}
@@ -456,6 +475,12 @@ export default function CustomersPage() {
                        <Check className="w-5 h-5" />
                      )}
                      {processingPayment ? 'جاري التسجيل...' : 'تأكيد الدفع'}
+                   </button>
+                   <button 
+                     onClick={() => setIsPaymentMode(false)}
+                     className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10"
+                   >
+                     إلغاء
                    </button>
                 </div>
               </div>
@@ -479,22 +504,22 @@ export default function CustomersPage() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg glass-panel p-8 border border-white/10"
+              className="relative w-full max-w-lg glass-panel p-8 border border-white/10 text-right"
             >
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold font-cairo">إضافة عميل جديد</h2>
                 <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-white">
                   <X className="w-6 h-6" />
                 </button>
+                <h2 className="text-2xl font-bold font-cairo">إضافة عميل جديد</h2>
               </div>
 
               <form onSubmit={handleAddCustomer} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">الاسم بالكامل</label>
+                  <label className="text-sm font-medium text-gray-400 font-cairo ml-1 block">الاسم بالكامل</label>
                   <input 
                     required
                     type="text" 
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo text-lg"
+                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo text-lg text-right"
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
                   />
@@ -502,30 +527,30 @@ export default function CustomersPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-400 font-cairo mr-1">رقم الهاتف</label>
+                    <label className="text-sm font-medium text-gray-400 font-cairo ml-1 block">البريد الإلكتروني</label>
                     <input 
-                      type="text" 
-                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4"
-                      value={formData.phone}
-                      onChange={e => setFormData({...formData, phone: e.target.value})}
+                      type="email" 
+                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 text-right"
+                      value={formData.email}
+                      onChange={e => setFormData({...formData, email: e.target.value})}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-400 font-cairo mr-1">البريد الإلكتروني</label>
+                    <label className="text-sm font-medium text-gray-400 font-cairo ml-1 block">رقم الهاتف</label>
                     <input 
-                      type="email" 
-                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4"
-                      value={formData.email}
-                      onChange={e => setFormData({...formData, email: e.target.value})}
+                      type="text" 
+                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 text-right"
+                      value={formData.phone}
+                      onChange={e => setFormData({...formData, phone: e.target.value})}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">العنوان بالتفصيل</label>
+                  <label className="text-sm font-medium text-gray-400 font-cairo ml-1 block">العنوان بالتفصيل</label>
                   <input 
                     type="text" 
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo"
+                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo text-right"
                     value={formData.address}
                     onChange={e => setFormData({...formData, address: e.target.value})}
                   />

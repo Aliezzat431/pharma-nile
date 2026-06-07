@@ -3,8 +3,8 @@
 import React, { useState, useRef, useCallback } from 'react';
 import {
   Upload, Sparkles, Package, Check, X, AlertCircle, Loader2,
-  FileImage, Zap, ShieldCheck, Save, RefreshCw,
-  BadgePlus, Star, ScanLine, Edit3, PenLine, Plus, Trash2, FileUp
+  FileImage, Zap, Save, RefreshCw, BadgePlus, Star, 
+  PenLine, Plus, Trash2, FileUp, Edit3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -19,7 +19,6 @@ interface ExtractedItem {
   barcode: string;
   is_new: boolean;
   existing_product_id?: string;
-  // UI state
   _status: 'pending' | 'saving' | 'saved' | 'error';
   _checked: boolean;
   _editMode: boolean;
@@ -45,16 +44,12 @@ export default function InvoiceImportPage() {
   const { user } = useAuth();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
 
-  // ── Mode switch ──────────────────────────────────────────
   const [mode, setMode] = useState<'ai' | 'manual'>('ai');
-
-  // ── Shared item state ────────────────────────────────────
   const [items, setItems] = useState<ExtractedItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [phase, setPhase] = useState<'upload' | 'review' | 'done'>('upload');
 
-  // ── AI mode state ────────────────────────────────────────
   const [dragOver, setDragOver] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -62,14 +57,14 @@ export default function InvoiceImportPage() {
   const [scanError, setScanError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── File handling ────────────────────────────────────────
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
       setScanError('يرجى رفع صورة (JPG, PNG, WEBP)');
       return;
     }
     setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    let url = URL.createObjectURL(file);
+    setPreviewUrl(url);
     setScanError(null);
     setItems([]);
     setPhase('upload');
@@ -82,7 +77,6 @@ export default function InvoiceImportPage() {
     if (file) handleFile(file);
   }, [handleFile]);
 
-  // ── Scan via AI ──────────────────────────────────────────
   const handleScan = async () => {
     if (!selectedFile || !pharmacyId) return;
     setScanning(true);
@@ -114,7 +108,6 @@ export default function InvoiceImportPage() {
             ...item,
             is_new: !existing,
             existing_product_id: existing?.id,
-            // Keep prices from the invoice regardless — they go into the batch
             public_price: item.public_price ?? 0,
             purchase_price: item.purchase_price ?? 0,
             _status: 'pending' as const,
@@ -133,7 +126,6 @@ export default function InvoiceImportPage() {
     }
   };
 
-  // ── Manual mode helpers ──────────────────────────────────
   const addManualRow = () => {
     setItems(prev => [...prev, emptyItem()]);
     setPhase('review');
@@ -143,7 +135,6 @@ export default function InvoiceImportPage() {
     setItems(prev => prev.filter((_, i) => i !== idx));
   };
 
-  // ── Shared field editing ─────────────────────────────────
   const updateItem = (idx: number, field: keyof ExtractedItem, value: any) => {
     setItems(prev => prev.map((it, i) => i === idx ? { ...it, [field]: value } : it));
   };
@@ -156,7 +147,6 @@ export default function InvoiceImportPage() {
     setItems(prev => prev.map(it => ({ ...it, _checked: val })));
   };
 
-  // ── DB lookup for manual product name ────────────────────
   const lookupProduct = async (idx: number, name: string) => {
     if (!pharmacyId || name.trim().length < 2) return;
     const { data: existing } = await supabase
@@ -171,11 +161,9 @@ export default function InvoiceImportPage() {
       ...it,
       is_new: !existing,
       existing_product_id: existing?.id,
-      // Prices stay as-is; they are stored in the batch, not the product
     } : it));
   };
 
-  // ── Save to Supabase ─────────────────────────────────────
   const handleSaveAll = async () => {
     if (!pharmacyId) return;
     const toSave = items.filter(it => it._checked && it._status === 'pending');
@@ -193,7 +181,6 @@ export default function InvoiceImportPage() {
 
       try {
         let productId = item.existing_product_id;
-
         const finalQuantity = Number(item.quantity) || 1;
         const finalPublicPrice = Number(item.public_price) || 0;
         const finalPurchasePrice = Number(item.purchase_price) || 0;
@@ -213,7 +200,6 @@ export default function InvoiceImportPage() {
               unit: 'علبة',
               unit_conversion: 1,
               inventory_method: 'FEFO',
-              // NOTE: products table has NO price columns — prices live in batches
             }])
             .select('id')
             .single();
@@ -263,7 +249,6 @@ export default function InvoiceImportPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto pb-12 animate-in fade-in duration-500">
-
       {/* ── Header ──────────────────────────────────────── */}
       <header className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -299,7 +284,7 @@ export default function InvoiceImportPage() {
             استيراد بالذكاء الاصطناعي
           </button>
           <button
-            onClick={() => { setMode('manual'); resetAll(); }}
+            onClick={() => { setMode('manual'); resetAll(); addManualRow(); }}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-cairo font-bold text-sm transition-all ${
               mode === 'manual'
                 ? 'text-black shadow-lg'
@@ -326,7 +311,7 @@ export default function InvoiceImportPage() {
             exit={{ opacity: 0, y: -10 }}
             className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[70vh]"
           >
-            {/* LEFT — Items Table */}
+            {/* LEFT — Items Table Panel */}
             <ItemsPanel
               items={items}
               scanning={scanning}
@@ -335,17 +320,16 @@ export default function InvoiceImportPage() {
               savedCount={savedCount}
               checkedCount={checkedCount}
               newCount={newCount}
-              mode="ai"
               onToggleCheck={toggleCheck}
               onToggleAll={toggleAll}
               onUpdateItem={updateItem}
               onSaveAll={handleSaveAll}
               onReset={resetAll}
+              onRemoveItem={removeItem}
             />
 
-            {/* RIGHT — Upload / AI */}
+            {/* RIGHT — Upload / AI UI */}
             <div className="flex flex-col gap-5 order-1 lg:order-2">
-              {/* Drop zone */}
               <div
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
@@ -482,7 +466,6 @@ export default function InvoiceImportPage() {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-5"
           >
-            {/* Instruction banner */}
             <div className="glass-panel p-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                    style={{ background: 'rgba(0,206,209,0.1)', border: '1px solid rgba(0,206,209,0.3)' }}>
@@ -503,7 +486,6 @@ export default function InvoiceImportPage() {
               </button>
             </div>
 
-            {/* Items list with full edit fields */}
             {items.length === 0 ? (
               <div className="glass-panel p-16 flex flex-col items-center justify-center gap-4 text-center opacity-60">
                 <Package className="w-14 h-14 text-gray-600" />
@@ -511,7 +493,6 @@ export default function InvoiceImportPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Badges */}
                 <div className="flex gap-3 flex-wrap mb-1">
                   <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
                     <BadgePlus className="w-3.5 h-3.5 text-emerald-400" />
@@ -534,7 +515,6 @@ export default function InvoiceImportPage() {
                   </div>
                 </div>
 
-                {/* Manual item rows */}
                 <AnimatePresence initial={false}>
                   {items.map((item, idx) => (
                     <motion.div
@@ -550,11 +530,9 @@ export default function InvoiceImportPage() {
                         ${item._status === 'saving' ? 'animate-pulse' : ''}
                       `}
                     >
-                      {/* Color bar */}
                       <div className={`absolute top-0 right-0 w-1.5 h-full ${item.is_new ? 'bg-emerald-500' : 'bg-blue-500'}`} />
 
                       <div className="flex items-start gap-3">
-                        {/* Checkbox */}
                         <button
                           onClick={() => toggleCheck(idx)}
                           disabled={item._status !== 'pending'}
@@ -566,9 +544,7 @@ export default function InvoiceImportPage() {
                           {item._checked && <Check className="w-4 h-4" style={{ color: item.is_new ? '#10b981' : '#3b82f6' }} />}
                         </button>
 
-                        {/* Fields */}
                         <div className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                          {/* Product name — full width on small, spans 2 on large */}
                           <div className="col-span-2 md:col-span-3 lg:col-span-2">
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">
                               اسم المنتج
@@ -587,7 +563,6 @@ export default function InvoiceImportPage() {
                             />
                           </div>
 
-                          {/* Quantity */}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">الكمية</label>
                             <input
@@ -599,7 +574,6 @@ export default function InvoiceImportPage() {
                             />
                           </div>
 
-                          {/* Purchase price */}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">سعر الشراء</label>
                             <input
@@ -611,7 +585,6 @@ export default function InvoiceImportPage() {
                             />
                           </div>
 
-                          {/* Public price */}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">سعر البيع</label>
                             <input
@@ -623,7 +596,6 @@ export default function InvoiceImportPage() {
                             />
                           </div>
 
-                          {/* Expiry */}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">تاريخ الانتهاء</label>
                             <input
@@ -636,7 +608,6 @@ export default function InvoiceImportPage() {
                           </div>
                         </div>
 
-                        {/* Status / remove */}
                         <div className="flex flex-col items-center gap-2 ml-1 pt-5 flex-shrink-0">
                           {item._status === 'saved'  && <Check className="w-5 h-5 text-emerald-400" />}
                           {item._status === 'error'  && <X className="w-5 h-5 text-red-400" />}
@@ -655,7 +626,6 @@ export default function InvoiceImportPage() {
                   ))}
                 </AnimatePresence>
 
-                {/* Add row button */}
                 <button
                   onClick={addManualRow}
                   className="w-full py-3 rounded-xl border border-dashed border-white/10 text-gray-500 hover:text-white hover:border-[var(--nile-teal)]/50 font-cairo text-sm flex items-center justify-center gap-2 transition-all"
@@ -665,7 +635,6 @@ export default function InvoiceImportPage() {
               </div>
             )}
 
-            {/* Save / Done */}
             {phase === 'review' && checkedCount > 0 && (
               <div className="pt-2">
                 <button
@@ -673,15 +642,16 @@ export default function InvoiceImportPage() {
                   disabled={saving}
                   className="w-full py-3.5 rounded-2xl font-bold font-cairo text-base flex items-center justify-center gap-3 transition-all active:scale-95"
                   style={{
-                    background: saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, var(--nile-teal), var(--nile-teal)/70)',
+                    background: saving ? 'rgba(255,255,255,0.05)' : `linear-gradient(135deg, ${TEAL}, rgba(0,206,209,0.7))`,
                     color: saving ? '#666' : '#000',
-                    boxShadow: saving ? 'none' : '0 0 24px var(--nile-teal-glow)',
+                    boxShadow: saving ? 'none' : '0 0 24px rgba(0,206,209,0.3)',
                   }}
                 >
-                  {saving
-                    ? <><Loader2 className="w-5 h-5 animate-spin" />جاري الحفظ...</>
-                    : <><Save className="w-5 h-5" />حفظ {checkedCount} صنف في المخزون</>
-                  }
+                  {saving ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" />جاري الحفظ...</>
+                  ) : (
+                    <><Save className="w-5 h-5" />حفظ {checkedCount} صنف في المخزون</>
+                  )}
                 </button>
               </div>
             )}
@@ -700,10 +670,10 @@ export default function InvoiceImportPage() {
                   تم إضافة <span className="font-bold text-white">{savedCount}</span> صنف إلى المخزون
                 </p>
                 <button
-                  onClick={() => { resetAll(); addManualRow(); }}
-                  className="mt-4 px-6 py-2 rounded-xl text-sm font-cairo border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-2 mx-auto"
+                  onClick={resetAll}
+                  className="mt-4 px-6 py-2 rounded-xl text-xs font-bold font-cairo bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
                 >
-                  <RefreshCw className="w-4 h-4" /> إدخال فاتورة جديدة
+                  بدء فاتورة جديدة
                 </button>
               </motion.div>
             )}
@@ -714,250 +684,247 @@ export default function InvoiceImportPage() {
   );
 }
 
-// ── Shared Items Panel (used in AI mode) ─────────────────
-function ItemsPanel({
-  items, scanning, phase, saving, savedCount, checkedCount, newCount, mode,
-  onToggleCheck, onToggleAll, onUpdateItem, onSaveAll, onReset
-}: {
+// ── Missing Sub-Component: ItemsPanel ────────────────────────────────────
+interface ItemsPanelProps {
   items: ExtractedItem[];
   scanning: boolean;
-  phase: string;
+  phase: 'upload' | 'review' | 'done';
   saving: boolean;
   savedCount: number;
   checkedCount: number;
   newCount: number;
-  mode: 'ai' | 'manual';
   onToggleCheck: (idx: number) => void;
   onToggleAll: (val: boolean) => void;
   onUpdateItem: (idx: number, field: keyof ExtractedItem, value: any) => void;
-  onSaveAll: () => void;
+  onSaveAll: () => Promise<void>;
   onReset: () => void;
-}) {
-  const TEAL = 'var(--nile-teal)';
-  const GOLD = 'var(--royal-gold)';
+  onRemoveItem: (idx: number) => void;
+}
+
+function ItemsPanel({
+  items, scanning, phase, saving, savedCount, checkedCount, newCount,
+  onToggleCheck, onToggleAll, onUpdateItem, onSaveAll, onReset, onRemoveItem
+}: ItemsPanelProps) {
+  
+  if (phase === 'upload' && !scanning) {
+    return (
+      <div className="glass-panel p-8 flex flex-col items-center justify-center text-center order-2 lg:order-1 opacity-50 min-h-[400px]">
+        <Package className="w-16 h-16 text-gray-600 mb-4" />
+        <p className="font-cairo text-lg text-gray-400 font-bold">بانتظار الفاتورة</p>
+        <p className="font-cairo text-xs text-gray-500 mt-1 max-w-xs">
+          قم برفع صورة الفاتورة على اليسار وضغط زر التحليل لبدء استخراج البيانات ومراجعتها هنا
+        </p>
+      </div>
+    );
+  }
+
+  if (scanning) {
+    return (
+      <div className="glass-panel p-8 flex flex-col items-center justify-center text-center order-2 lg:order-1 min-h-[400px]">
+        <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
+          <Loader2 className="w-12 h-12 text-[var(--nile-teal)] animate-spin" />
+          <Sparkles className="w-5 h-5 absolute text-[var(--royal-gold)] animate-pulse" />
+        </div>
+        <p className="font-cairo text-lg text-white font-bold animate-pulse">جاري قراءة الأصناف...</p>
+        <p className="font-cairo text-xs text-gray-400 mt-1 max-w-xs">
+          يستغرق محرك الذكاء الاصطناعي بضع ثوانٍ لقراءة بنية الجداول وتحليل أسماء الأدوية بدقة
+        </p>
+      </div>
+    );
+  }
+
+  if (phase === 'done') {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="glass-panel p-8 flex flex-col items-center justify-center text-center order-2 lg:order-1 min-h-[400px]"
+      >
+        <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
+          <Check className="w-8 h-8" />
+        </div>
+        <h3 className="font-bold font-cairo text-xl text-emerald-400">اكتمل استيراد البيانات!</h3>
+        <p className="font-cairo text-sm text-gray-400 mt-2 max-w-sm">
+          تم معالجة الفاتورة بنجاح وحفظ <span className="text-white font-bold">{savedCount}</span> صنف في دفعات المخازن المقابلة.
+        </p>
+        <button 
+          onClick={onReset}
+          className="mt-6 px-6 py-2.5 rounded-xl font-cairo text-xs font-bold text-black transition-all active:scale-95"
+          style={{ background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))' }}
+        >
+          استيراد فاتورة جديدة
+        </button>
+      </motion.div>
+    );
+  }
 
   return (
-    <div className="glass-panel p-6 flex flex-col order-2 lg:order-1">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-bold font-cairo flex items-center gap-2">
-          <Package className="w-5 h-5" style={{ color: TEAL }} />
-          الأصناف المستخرجة
-          {items.length > 0 && (
-            <span className="text-xs px-2 py-0.5 rounded-full font-mono"
-                  style={{ background: 'rgba(0,206,209,0.15)', color: TEAL }}>
-              {items.length} صنف
-            </span>
-          )}
-        </h2>
-        {items.length > 0 && (
-          <div className="flex items-center gap-3">
-            <button onClick={() => onToggleAll(true)} className="text-xs text-gray-400 hover:text-white font-cairo transition-colors">تحديد الكل</button>
-            <button onClick={() => onToggleAll(false)} className="text-xs text-gray-400 hover:text-red-400 font-cairo transition-colors">إلغاء الكل</button>
-          </div>
-        )}
+    <div className="glass-panel p-5 flex flex-col gap-4 order-2 lg:order-1 min-h-[500px]">
+      {/* Panel Action Header */}
+      <div className="flex justify-between items-center border-b border-white/5 pb-3 flex-wrap gap-2">
+        <div>
+          <h2 className="font-bold font-cairo text-white text-base">الأصناف المستخرجة ({items.length})</h2>
+          <p className="text-[11px] font-cairo text-gray-500 mt-0.5">يرجى التحقق من صحة الحقول والأسعار المقروءة</p>
+        </div>
+        <div className="flex gap-2 text-xs">
+          <button onClick={() => onToggleAll(true)} className="text-gray-400 hover:text-white font-cairo transition-colors">تحديد الكل</button>
+          <span className="text-gray-700">|</span>
+          <button onClick={() => onToggleAll(false)} className="text-gray-400 hover:text-red-400 font-cairo transition-colors">إلغاء الكل</button>
+        </div>
       </div>
 
-      {items.length > 0 && (
-        <div className="flex gap-3 mb-4 flex-wrap">
-          <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
-            <BadgePlus className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-emerald-400 font-bold">{newCount}</span>
-            <span className="text-gray-500">منتج جديد</span>
-          </div>
-          <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
-            <Star className="w-3.5 h-3.5" style={{ color: GOLD }} />
-            <span className="font-bold" style={{ color: GOLD }}>{items.length - newCount}</span>
-            <span className="text-gray-500">موجود مسبقاً</span>
-          </div>
-          <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
-            <Check className="w-3.5 h-3.5 text-blue-400" />
-            <span className="text-blue-400 font-bold">{checkedCount}</span>
-            <span className="text-gray-500">محدد للحفظ</span>
-          </div>
+      {/* Stats Counter Row */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
+          <span className="block text-emerald-400 text-sm font-bold font-mono">{newCount}</span>
+          <span className="text-[10px] text-gray-500 font-cairo">أصناف جديدة</span>
         </div>
-      )}
-
-      {items.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-12 opacity-50">
-          {scanning ? (
-            <>
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full border-2 border-dashed animate-spin" style={{ borderColor: TEAL }} />
-                <Sparkles className="w-7 h-7 absolute inset-0 m-auto" style={{ color: TEAL }} />
-              </div>
-              <p className="font-cairo text-sm">الذكاء الاصطناعي يحلل الفاتورة...</p>
-            </>
-          ) : (
-            <>
-              <ScanLine className="w-12 h-12 text-gray-600" />
-              <p className="font-cairo text-sm text-gray-500">ارفع صورة الفاتورة واضغط "استخراج" لعرض الأصناف هنا</p>
-            </>
-          )}
+        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
+          <span className="block text-blue-400 text-sm font-bold font-mono">{items.length - newCount}</span>
+          <span className="text-[10px] text-gray-500 font-cairo">منتجات مطابقة</span>
         </div>
-      )}
+        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
+          <span className="block text-[var(--nile-teal)] text-sm font-bold font-mono">{checkedCount}</span>
+          <span className="text-[10px] text-gray-500 font-cairo">محدد للحفظ</span>
+        </div>
+      </div>
 
-      {items.length > 0 && (
-        <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
-          <AnimatePresence initial={false}>
-            {items.map((item, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.04 }}
-                className={`glass-card p-4 relative overflow-hidden transition-all
-                  ${item._checked ? 'border-white/10' : 'opacity-50 border-white/5'}
-                  ${item._status === 'saved'  ? 'border-emerald-500/30' : ''}
-                  ${item._status === 'error'  ? 'border-red-500/30' : ''}
-                  ${item._status === 'saving' ? 'animate-pulse' : ''}
-                `}
-              >
-                <div className={`absolute top-0 right-0 w-1.5 h-full ${item.is_new ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+      {/* Items Scroll Container */}
+      <div className="flex-1 overflow-y-auto max-h-[55vh] space-y-3 pr-1 custom-scrollbar">
+        <AnimatePresence initial={false}>
+          {items.map((item, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className={`p-3.5 rounded-xl border relative transition-all bg-black/20
+                ${item._checked ? 'border-white/10' : 'opacity-40 border-transparent'}
+                ${item._status === 'saved' ? 'border-emerald-500/30 bg-emerald-500/[0.02]' : ''}
+                ${item._status === 'error' ? 'border-red-500/30 bg-red-500/[0.02]' : ''}
+              `}
+            >
+              {/* Checking Box & Basic Title */}
+              <div className="flex items-start gap-2.5">
+                <button
+                  onClick={() => onToggleCheck(idx)}
+                  disabled={item._status === 'saved' || item._status === 'saving'}
+                  className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 transition-all
+                    ${item._checked 
+                      ? 'border-[var(--nile-teal)] bg-[var(--nile-teal)]/10 text-[var(--nile-teal)]' 
+                      : 'border-white/10'
+                    }`}
+                >
+                  {item._checked && <Check className="w-3.5 h-3.5" />}
+                </button>
 
-                <div className="absolute top-2 left-2 flex items-center gap-2">
-                  {item.is_new ? (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold font-cairo flex items-center gap-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      <BadgePlus className="w-3 h-3" /> صنف جديد
-                    </span>
+                <div className="flex-1 min-w-0">
+                  {item._editMode ? (
+                    <input
+                      value={item.product_name}
+                      onChange={e => onUpdateItem(idx, 'product_name', e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white outline-none font-cairo mb-2"
+                    />
                   ) : (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold font-cairo flex items-center gap-1 bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                      <RefreshCw className="w-3 h-3" /> تجديد رصيد
-                    </span>
+                    <h4 className="text-sm font-bold text-white font-cairo truncate flex items-center gap-2">
+                      {item.product_name || <span className="text-gray-600 font-normal italic">بدون اسم</span>}
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-normal ${item.is_new ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                        {item.is_new ? 'جديد' : 'مطابق'}
+                      </span>
+                    </h4>
                   )}
-                </div>
 
-                <div className="absolute top-2 right-4 flex items-center gap-2">
-                  {item._status === 'saved'  && <Check className="w-4 h-4 text-emerald-400" />}
-                  {item._status === 'error'  && <X className="w-4 h-4 text-red-400" />}
-                  {item._status === 'saving' && <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />}
-                </div>
-
-                <div className="flex items-start gap-4 mt-6">
-                  <button
-                    onClick={() => onToggleCheck(idx)}
-                    disabled={item._status !== 'pending'}
-                    className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all
-                      ${item._checked
-                        ? (item.is_new ? 'border-emerald-500 bg-emerald-500/20' : 'border-blue-500 bg-blue-500/20')
-                        : 'border-white/10 bg-white/5'}`}
-                  >
-                    {item._checked && <Check className="w-4 h-4" style={{ color: item.is_new ? '#10b981' : '#3b82f6' }} />}
-                  </button>
-
-                  <div className="flex-1 space-y-3">
-                    {item._editMode ? (
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-gray-500 font-cairo">اسم المنتج</label>
-                        <input
-                          value={item.product_name}
-                          onChange={e => onUpdateItem(idx, 'product_name', e.target.value)}
-                          className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]"
-                        />
-                      </div>
-                    ) : (
-                      <p className={`font-bold font-cairo text-base leading-tight pr-6 ${item.is_new ? 'text-emerald-50' : 'text-blue-50'}`}>
-                        {item.product_name}
-                      </p>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] text-gray-500 font-cairo block mb-0.5">الكمية</label>
-                        {item._editMode ? (
-                          <input type="number" value={item.quantity} onChange={e => onUpdateItem(idx, 'quantity', Number(e.target.value))}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50" />
-                        ) : (
-                          <p className="text-sm font-bold font-cairo" style={{ color: TEAL }}>{item.quantity}</p>
-                        )}
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-gray-500 font-cairo block mb-0.5">سعر البيع</label>
-                        {item._editMode ? (
-                          <input type="number" step="0.01" value={item.public_price} onChange={e => onUpdateItem(idx, 'public_price', Number(e.target.value))}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50" />
-                        ) : (
-                          <p className="text-sm font-bold font-cairo" style={{ color: GOLD }}>{item.public_price} ج.م</p>
-                        )}
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-gray-500 font-cairo block mb-0.5">سعر الشراء</label>
-                        {item._editMode ? (
-                          <input type="number" step="0.01" value={item.purchase_price} onChange={e => onUpdateItem(idx, 'purchase_price', Number(e.target.value))}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50" />
-                        ) : (
-                          <p className="text-sm font-bold text-gray-300 font-cairo">{item.purchase_price} ج.م</p>
-                        )}
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-gray-500 font-cairo block mb-0.5">تاريخ الانتهاء</label>
-                        {item._editMode ? (
-                          <input type="date" value={item.expiry_date} onChange={e => onUpdateItem(idx, 'expiry_date', e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50" />
-                        ) : (
-                          <p className="text-sm font-cairo text-orange-300">
-                            {new Date(item.expiry_date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })}
-                          </p>
-                        )}
-                      </div>
+                  {/* Inline Editable Fields Layout */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                    <div>
+                      <span className="text-[9px] text-gray-500 font-cairo block">الكمية</span>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={e => onUpdateItem(idx, 'quantity', Number(e.target.value))}
+                        disabled={item._status === 'saved'}
+                        className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                      />
                     </div>
-
-                    {item._status === 'pending' && (
-                      <button
-                        onClick={() => onUpdateItem(idx, '_editMode', !item._editMode)}
-                        className="text-[10px] text-gray-500 hover:text-white flex items-center gap-1 font-cairo transition-colors"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                        {item._editMode ? 'حفظ التعديلات' : 'تعديل يدوي'}
-                      </button>
-                    )}
+                    <div>
+                      <span className="text-[9px] text-gray-500 font-cairo block">سعر الشراء</span>
+                      <input
+                        type="number" step="0.01"
+                        value={item.purchase_price}
+                        onChange={e => onUpdateItem(idx, 'purchase_price', Number(e.target.value))}
+                        disabled={item._status === 'saved'}
+                        className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-gray-500 font-cairo block">سعر البيع</span>
+                      <input
+                        type="number" step="0.01"
+                        value={item.public_price}
+                        onChange={e => onUpdateItem(idx, 'public_price', Number(e.target.value))}
+                        disabled={item._status === 'saved'}
+                        className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-gray-500 font-cairo block">الصلاحية</span>
+                      <input
+                        type="date"
+                        value={item.expiry_date}
+                        onChange={e => onUpdateItem(idx, 'expiry_date', e.target.value)}
+                        disabled={item._status === 'saved'}
+                        className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-[11px] text-white"
+                      />
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
 
-      {phase === 'review' && checkedCount > 0 && (
-        <div className="mt-5 pt-4 border-t border-white/5">
-          <button
-            onClick={onSaveAll}
-            disabled={saving}
-            className="w-full py-3.5 rounded-2xl font-bold font-cairo text-base flex items-center justify-center gap-3 transition-all active:scale-95"
-            style={{
-              background: saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, var(--nile-teal), var(--nile-teal)/70)',
-              color: saving ? '#666' : '#000',
-              boxShadow: saving ? 'none' : '0 0 24px var(--nile-teal-glow)',
-            }}
-          >
-            {saving
-              ? <><Loader2 className="w-5 h-5 animate-spin" />جاري الحفظ...</>
-              : <><Save className="w-5 h-5" />حفظ {checkedCount} صنف في المخزون</>
-            }
-          </button>
-        </div>
-      )}
+                {/* Rightmost Context Options (Edit/Remove/Status) */}
+                <div className="flex flex-col items-center justify-between gap-2 self-stretch flex-shrink-0 pl-1">
+                  {item._status === 'pending' && (
+                    <div className="flex flex-col gap-1">
+                      <button 
+                        onClick={() => onUpdateItem(idx, '_editMode', !item._editMode)} 
+                        className={`p-1 rounded transition-colors ${item._editMode ? 'text-[var(--nile-teal)] bg-white/5' : 'text-gray-500 hover:text-white'}`}
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button 
+                        onClick={() => onRemoveItem(idx)} 
+                        className="p-1 text-gray-600 hover:text-red-400 rounded transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
 
-      {phase === 'done' && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mt-5 pt-4 border-t border-white/5 text-center"
+                  {item._status === 'saving' && <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />}
+                  {item._status === 'saved' && <Check className="w-4 h-4 text-emerald-400" />}
+                  {item._status === 'error' && <X className="w-4 h-4 text-red-400" />}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* CTA Bottom Panel Button Trigger */}
+      {checkedCount > 0 && (
+        <button
+          onClick={onSaveAll}
+          disabled={saving}
+          className="w-full py-3 rounded-xl font-bold font-cairo text-sm text-black flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+          style={{
+            background: 'linear-gradient(135deg, var(--nile-teal), var(--nile-teal)/80)',
+            boxShadow: '0 4px 20px rgba(0,206,209,0.2)'
+          }}
         >
-          <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
-            <Check className="w-8 h-8 text-emerald-400" />
-          </div>
-          <h3 className="font-bold text-lg font-cairo text-emerald-400">تم الحفظ بنجاح!</h3>
-          <p className="text-gray-400 text-sm font-cairo mt-1">
-            تم إضافة <span className="font-bold text-white">{savedCount}</span> صنف إلى المخزون
-          </p>
-          <button
-            onClick={onReset}
-            className="mt-4 px-6 py-2 rounded-xl text-sm font-cairo border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-2 mx-auto"
-          >
-            <RefreshCw className="w-4 h-4" /> استيراد فاتورة جديدة
-          </button>
-        </motion.div>
+          {saving ? (
+            <><Loader2 className="w-4 h-4 animate-spin" />جاري الترحيل للمخزون...</>
+          ) : (
+            <><Save className="w-4 h-4" />اعتماد وحفظ الأصناف المحددة</>
+          )}
+        </button>
       )}
     </div>
   );

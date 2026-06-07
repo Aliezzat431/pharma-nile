@@ -8,11 +8,11 @@ import { Company, getCompanies, addCompany, updateCompany, deleteCompany } from 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   
-  // الـ formData هنا تستثني الـ id والـ created_at والـ pharmacy_id تماماً كما يتوقع الـ API الخاص بك
   const [formData, setFormData] = useState<Omit<Company, 'id' | 'created_at' | 'pharmacy_id'>>({
     name: '',
     contact_person: '',
@@ -28,7 +28,6 @@ export default function CompaniesPage() {
   const fetchCompanies = async () => {
     setLoading(true);
     try {
-      // استدعاء الدالة بدون معاملات (0 arguments) لأنها تجلب البيانات من جلسة Supabase تلقائياً
       const data = await getCompanies();
       setCompanies(data || []);
     } catch (err) {
@@ -40,9 +39,11 @@ export default function CompaniesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name.trim() || submitting) return;
+
+    setSubmitting(true);
     try {
       if (editingCompany) {
-        // الـ API يتكفل بالتحقق من الـ pharmacy_id تلقائياً
         await updateCompany(editingCompany.id, formData);
       } else {
         await addCompany(formData);
@@ -50,9 +51,12 @@ export default function CompaniesPage() {
       setIsModalOpen(false);
       setEditingCompany(null);
       setFormData({ name: '', contact_person: '', phone: '', email: '', address: '' });
-      fetchCompanies();
+      await fetchCompanies();
     } catch (err) {
       console.error("Submit error", err);
+      alert("حدث خطأ أثناء حفظ البيانات. يرجى المحاولة مرة أخرى.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -69,12 +73,13 @@ export default function CompaniesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذه الشركة؟')) {
+    if (confirm('هل أنت متأكد من حذف هذه الشركة نهائياً؟')) {
       try {
         await deleteCompany(id);
         fetchCompanies();
       } catch (err) {
         console.error("Delete error", err);
+        alert("تعذر حذف الشركة، قد تكون مرتبطة بسجلات أخرى.");
       }
     }
   };
@@ -85,11 +90,11 @@ export default function CompaniesPage() {
   );
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <header className="flex items-center justify-between">
+    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 text-right" dir="rtl">
+      <header className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            شركات <span className="nile-gradient-text">الأدوية</span>
+            شركات <span className="nile-gradient-text text-[#00CED1]">الأدوية</span>
           </h1>
           <p className="text-gray-400 mt-2 text-lg font-cairo">إدارة الموردين والشركات المصنعة للأدوية.</p>
         </div>
@@ -99,20 +104,20 @@ export default function CompaniesPage() {
             setFormData({ name: '', contact_person: '', phone: '', email: '', address: '' });
             setIsModalOpen(true);
           }}
-          className="nile-button flex items-center gap-2"
+          className="nile-button flex items-center gap-2 bg-[#00CED1] text-black px-5 py-3 rounded-xl font-bold font-cairo hover:opacity-90 transition-all shadow-[0_0_20px_rgba(0,206,209,0.15)]"
         >
           <Plus className="w-5 h-5" />
-          <span className="font-cairo">إضافة شركة جديدة</span>
+          <span>إضافة شركة جديدة</span>
         </button>
       </header>
 
       {/* Search Bar */}
-      <div className="glass-panel p-4 flex items-center gap-4">
+      <div className="glass-panel p-4 flex items-center gap-4 bg-white/[0.02] border border-white/5 rounded-2xl">
         <Search className="w-5 h-5 text-gray-500" />
         <input 
           type="text" 
           placeholder="ابحث عن شركة أو مندوب..." 
-          className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600"
+          className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600 text-right"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -124,53 +129,61 @@ export default function CompaniesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCompanies.map((company, i) => (
-            <motion.div
-              key={company.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="glass-panel p-6 border border-white/5 hover:border-[#00CED1]/30 transition-all group relative"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 rounded-xl bg-[#00CED1]/10 flex items-center justify-center text-[#00CED1] group-hover:scale-110 transition-transform">
-                  <Building2 className="w-6 h-6" />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => handleEdit(company)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors">
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(company.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+          {filteredCompanies.length > 0 ? (
+            filteredCompanies.map((company, i) => (
+              <motion.div
+                key={company.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="glass-panel p-6 border border-white/5 hover:border-[#00CED1]/30 transition-all group relative flex flex-col justify-between min-h-[220px]"
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#00CED1]/10 flex items-center justify-center text-[#00CED1] group-hover:scale-110 transition-transform border border-[#00CED1]/10">
+                      <Building2 className="w-6 h-6" />
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => handleEdit(company)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors" title="تعديل">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(company.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors" title="حذف">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
 
-              <h3 className="text-xl font-bold font-cairo mb-1">{company.name}</h3>
-              <p className="text-[#D4AF37] text-sm font-cairo mb-4">{company.contact_person || 'لا يوجد مندوب'}</p>
+                  <h3 className="text-xl font-bold font-cairo text-white mb-1 truncate">{company.name}</h3>
+                  <p className="text-[#D4AF37] text-sm font-cairo mb-4 truncate">{company.contact_person || 'لا يوجد مندوب مسجل'}</p>
+                </div>
 
-              <div className="space-y-2 mt-auto">
-                {company.phone && (
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <Phone className="w-4 h-4 text-[#00CED1]/70" />
-                    <span className="font-sans">{company.phone}</span>
-                  </div>
-                )}
-                {company.email && (
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <Mail className="w-4 h-4 text-[#00CED1]/70" />
-                    <span className="truncate">{company.email}</span>
-                  </div>
-                )}
-                {company.address && (
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <MapPin className="w-4 h-4 text-[#00CED1]/70" />
-                    <span className="truncate font-cairo">{company.address}</span>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                <div className="space-y-2 pt-2 border-t border-white/5">
+                  {company.phone && (
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <Phone className="w-4 h-4 text-[#00CED1]/70 flex-shrink-0" />
+                      <span className="font-sans truncate">{company.phone}</span>
+                    </div>
+                  )}
+                  {company.email && (
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <Mail className="w-4 h-4 text-[#00CED1]/70 flex-shrink-0" />
+                      <span className="truncate font-sans">{company.email}</span>
+                    </div>
+                  )}
+                  {company.address && (
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <MapPin className="w-4 h-4 text-[#00CED1]/70 flex-shrink-0" />
+                      <span className="truncate font-cairo">{company.address}</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-full py-20 text-center text-gray-500 font-cairo">
+              لا توجد شركات مطابقة للبحث الحالي.
+            </div>
+          )}
         </div>
       )}
 
@@ -182,31 +195,37 @@ export default function CompaniesPage() {
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }}
-              onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => !submitting && setIsModalOpen(false)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg glass-panel p-8 shadow-2xl border border-white/10"
+              className="relative w-full max-w-lg glass-panel p-8 shadow-2xl border border-white/10 bg-[#050505]/90 text-right"
+              dir="rtl"
             >
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold font-cairo">
-                  {editingCompany ? 'تعديل بيانات شركة' : 'إضافة شركة جديدة'}
+                <h2 className="text-2xl font-bold font-cairo text-white">
+                  {editingCompany ? 'تعديل بيانات الشركة' : 'إضافة شركة جديدة'}
                 </h2>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-white">
+                <button 
+                  disabled={submitting}
+                  onClick={() => setIsModalOpen(false)} 
+                  className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-white disabled:opacity-30"
+                >
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">اسم الشركة</label>
+                  <label className="text-sm font-medium text-gray-400 font-cairo block">اسم الشركة <span className="text-red-400">*</span></label>
                   <input 
                     required
+                    disabled={submitting}
                     type="text" 
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 font-cairo"
+                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 font-cairo text-white text-right disabled:opacity-50"
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
                   />
@@ -214,19 +233,21 @@ export default function CompaniesPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-400 font-cairo mr-1">المندوب</label>
+                    <label className="text-sm font-medium text-gray-400 font-cairo block">اسم المندوب</label>
                     <input 
+                      disabled={submitting}
                       type="text" 
-                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 font-cairo"
+                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 font-cairo text-white text-right disabled:opacity-50"
                       value={formData.contact_person}
                       onChange={e => setFormData({...formData, contact_person: e.target.value})}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-400 font-cairo mr-1">رقم الهاتف</label>
+                    <label className="text-sm font-medium text-gray-400 font-cairo block">رقم الهاتف</label>
                     <input 
+                      disabled={submitting}
                       type="text" 
-                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3"
+                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 text-white text-left font-sans disabled:opacity-50"
                       value={formData.phone}
                       onChange={e => setFormData({...formData, phone: e.target.value})}
                     />
@@ -234,27 +255,39 @@ export default function CompaniesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">البريد الإلكتروني</label>
+                  <label className="text-sm font-medium text-gray-400 font-cairo block">البريد الإلكتروني</label>
                   <input 
+                    disabled={submitting}
                     type="email" 
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3"
+                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 text-white text-left font-sans disabled:opacity-50"
                     value={formData.email}
                     onChange={e => setFormData({...formData, email: e.target.value})}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo mr-1">العنوان</label>
+                  <label className="text-sm font-medium text-gray-400 font-cairo block">العنوان</label>
                   <input 
+                    disabled={submitting}
                     type="text" 
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 font-cairo"
+                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 font-cairo text-white text-right disabled:opacity-50"
                     value={formData.address}
                     onChange={e => setFormData({...formData, address: e.target.value})}
                   />
                 </div>
 
-                <button type="submit" className="w-full nile-button py-4 font-bold text-lg mt-4 font-cairo">
-                  {editingCompany ? 'حفظ التغييرات' : 'إضافة الشركة'}
+                <button 
+                  type="submit" 
+                  disabled={submitting}
+                  className="w-full bg-[#00CED1] text-black py-4 font-bold text-lg mt-4 font-cairo rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {submitting ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : editingCompany ? (
+                    'حفظ التغييرات'
+                  ) : (
+                    'إضافة الشركة'
+                  )}
                 </button>
               </form>
             </motion.div>

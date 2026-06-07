@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { PackageOpen, Plus, Search, Filter, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Calendar, Hash, Tag, Edit2, Check, X, Loader2, Save } from 'lucide-react';
+import { PackageOpen, Plus, Search, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Calendar, Hash, Tag, Edit2, Check, X, Loader2, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { updateBatch, createBatch, getProductByBarcode } from '@/lib/api/products';
+import { updateBatch, createBatch } from '@/lib/api/products';
 import dynamic from 'next/dynamic';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
@@ -30,22 +30,49 @@ interface InventoryItem {
   batches: Batch[];
 }
 
+// واجهة مخصصة للمدخلات لضمان عدم تمرير قيم undefined للمكونات
+interface BatchFormInput {
+  barcode: string;
+  quantity: string;
+  purchase_price: string;
+  selling_price: string;
+  expiry_date: string;
+}
+
+const initialFormState: BatchFormInput = {
+  barcode: '',
+  quantity: '0',
+  purchase_price: '0',
+  selling_price: '0',
+  expiry_date: ''
+};
+
 export default function InventoryDashboard() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
   
   // Editing state
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Batch>>({});
+  const [editForm, setEditForm] = useState<BatchFormInput>(initialFormState);
   const [isSaving, setIsSaving] = useState(false);
 
   // Adding Batch state
   const [addingBatchForProduct, setAddingBatchForProduct] = useState<string | null>(null);
-  const [newBatchForm, setNewBatchForm] = useState<Partial<Batch>>({ quantity: 0, purchase_price: 0, selling_price: 0, barcode: '', expiry_date: '' });
+  const [newBatchForm, setNewBatchForm] = useState<BatchFormInput>(initialFormState);
   const [isAddingBatch, setIsAddingBatch] = useState(false);
 
+  // تنظيف رسائل الخطأ تلقائياً بعد فترة محددة
+  useEffect(() => {
+    if (inventoryError) {
+      const timer = setTimeout(() => setInventoryError(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [inventoryError]);
+
+  // الاشتراك في قنوات السوبابيز لجلب البيانات الحية
   useEffect(() => {
     fetchInventory();
 
@@ -69,19 +96,27 @@ export default function InventoryDashboard() {
 
       if (error) throw error;
 
-      const formatted = products.map((p) => {
-        const sortedBatches = p.batches.sort((a: any, b: any) => 
+      const formatted: InventoryItem[] = products.map((p) => {
+        // ترتيب التشغيلات من الأقرب انتهاءً للأحدث
+        const sortedBatches = [...(p.batches || [])].sort((a: Batch, b: Batch) => 
           new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime()
         );
         
+        // حساب الرصيد الإجمالي للتشغيلات
+        const totalQuantity = sortedBatches.reduce((acc: number, b: Batch) => acc + (b.quantity || 0), 0);
+        
+        // تحديد السعر الحالي (أول تشغيلة متوفرة، أو السعر الافتراضي للتشغيلة الأولى)
+        const activeBatch = sortedBatches.find((b: Batch) => b.quantity > 0) || sortedBatches[0];
+        const currentPrice = activeBatch ? activeBatch.selling_price : 0;
+
         return {
            id: p.id,
            name: p.name,
            type: p.type,
-           company: p.company,
+           company: p.company || '',
            inventory_method: p.inventory_method,
-           total_quantity: sortedBatches.reduce((acc: number, b: any) => acc + b.quantity, 0),
-           current_price: sortedBatches.length > 0 ? sortedBatches.find((b: any) => b.quantity > 0)?.selling_price || sortedBatches[0].selling_price : 0,
+           total_quantity: totalQuantity,
+           current_price: currentPrice,
            batches: sortedBatches
         };
       });
@@ -89,48 +124,64 @@ export default function InventoryDashboard() {
       setItems(formatted);
     } catch (error) {
       console.error("Error fetching inventory", error);
+      setInventoryError("حدث خطأ أثناء جلب البيانات من السيرفر.");
     } finally {
       setLoading(false);
     }
   };
 
-  const [inventoryError, setInventoryError] = useState<string | null>(null);
+  // دالة موحدة للتحقق من المدخلات الرقمية والباركود
+  const validateForm = (form: BatchFormInput, checkExpiry = false): boolean => {
+    const q = Number(form.quantity);
+    const p = Number(form.purchase_price);
+    const s = Number(form.selling_price);
+
+    if (!form.barcode.trim()) {
+      setInventoryError("خطأ: الباركود لا يمكن أن يكون فارغاً.");
+      return false;
+    }
+    if (isNaN(q) || q <= 0 || isNaN(p) || p <= 0 || isNaN(s) || s <= 0) {
+      setInventoryError("خطأ: الكمية والأسعار يجب أن تكون أرقاماً أكبر من صفر.");
+      return false;
+    }
+    if (checkExpiry && !form.expiry_date) {
+      setInventoryError("خطأ: يجب تحديد تاريخ انتهاء الصلاحية.");
+      return false;
+    }
+    return true;
+  };
 
   const startEditing = (batch: Batch) => {
     setEditingBatchId(batch.id);
-    setEditForm(batch);
+    setEditForm({
+      barcode: batch.barcode,
+      quantity: String(batch.quantity),
+      purchase_price: String(batch.purchase_price),
+      selling_price: String(batch.selling_price),
+      expiry_date: batch.expiry_date,
+    });
   };
 
   const cancelEditing = () => {
     setEditingBatchId(null);
-    setEditForm({});
+    setEditForm(initialFormState);
   };
 
   const handleSaveBatch = async (batchId: string) => {
-    const q = Number(editForm.quantity);
-    const p = Number(editForm.purchase_price);
-    const s = Number(editForm.selling_price);
-
-    if (q <= 0 || p <= 0 || s <= 0) {
-      setInventoryError("خطأ: الكمية والأسعار يجب أن تكون أكبر من صفر.");
-      setTimeout(() => setInventoryError(null), 3500);
-      return;
-    }
+    if (!validateForm(editForm)) return;
 
     setIsSaving(true);
-    setInventoryError(null);
     try {
       await updateBatch(batchId, {
-        quantity: q,
-        purchase_price: p,
-        selling_price: s,
-        barcode: editForm.barcode?.trim() || '',
+        quantity: Number(editForm.quantity),
+        purchase_price: Number(editForm.purchase_price),
+        selling_price: Number(editForm.selling_price),
+        barcode: editForm.barcode.trim(),
       });
       setEditingBatchId(null);
-      await fetchInventory(); // Refresh data
+      await fetchInventory();
     } catch (error) {
-      setInventoryError("فشل تحديث البيانات");
-      setTimeout(() => setInventoryError(null), 3000);
+      setInventoryError("فشل تحديث بيانات التشغيلة.");
     } finally {
       setIsSaving(false);
     }
@@ -138,54 +189,43 @@ export default function InventoryDashboard() {
 
   const startAddingBatch = (productId: string) => {
     setAddingBatchForProduct(productId);
-    setNewBatchForm({ quantity: 0, purchase_price: 0, selling_price: 0, barcode: '', expiry_date: '' });
+    setNewBatchForm(initialFormState);
   };
 
   const handleCreateBatch = async (productId: string) => {
-    const q = Number(newBatchForm.quantity);
-    const p = Number(newBatchForm.purchase_price);
-    const s = Number(newBatchForm.selling_price);
-    const barcodeTrimmed = newBatchForm.barcode?.trim();
-
-    if (q <= 0 || p <= 0 || s <= 0) {
-      setInventoryError("خطأ: الكمية والأسعار يجب أن تكون أكبر من صفر.");
-      setTimeout(() => setInventoryError(null), 3500);
-      return;
-    }
-
-    if (!barcodeTrimmed) {
-      setInventoryError("خطأ: الباركود لا يمكن أن يكون فارغاً.");
-      setTimeout(() => setInventoryError(null), 3500);
-      return;
-    }
+    if (!validateForm(newBatchForm, true)) return;
 
     setIsAddingBatch(true);
-    setInventoryError(null);
     try {
       await createBatch({
         product_id: productId,
-        barcode: barcodeTrimmed,
-        quantity: q,
-        purchase_price: p,
-        selling_price: s,
+        barcode: newBatchForm.barcode.trim(),
+        quantity: Number(newBatchForm.quantity),
+        purchase_price: Number(newBatchForm.purchase_price),
+        selling_price: Number(newBatchForm.selling_price),
         expiry_date: newBatchForm.expiry_date,
       });
       setAddingBatchForProduct(null);
       await fetchInventory();
     } catch (error) {
-      setInventoryError("فشل إضافة التشغيلة");
-      setTimeout(() => setInventoryError(null), 3000);
+      setInventoryError("فشل إضافة التشغيلة الجديدة.");
     } finally {
       setIsAddingBatch(false);
     }
   };
 
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(search.toLowerCase()) || 
-    (item.company || '').toLowerCase().includes(search.toLowerCase())
-  );
+  // استخدام useMemo لتحسين الأداء عند الفرز والبحث وتجنب إعادة العمليات الحسابية مع كل ريندر
+  const filteredItems = useMemo(() => {
+    const query = search.toLowerCase().trim();
+    if (!query) return items;
+    return items.filter(item => 
+      item.name.toLowerCase().includes(query) || 
+      item.company.toLowerCase().includes(query) ||
+      item.batches.some(b => b.barcode.includes(query))
+    );
+  }, [items, search]);
 
-  const handleCameraScan = async (barcode: string) => {
+  const handleCameraScan = (barcode: string) => {
     setSearch(barcode);
   };
 
@@ -210,7 +250,7 @@ export default function InventoryDashboard() {
           <Search className="w-5 h-5 text-gray-400 mr-3" />
           <input 
             type="text" 
-            placeholder="بحث بالاسم أو الشركة..." 
+            placeholder="بحث بالاسم، الشركة أو الباركود..." 
             className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-gray-500 py-2 font-cairo min-w-0"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -218,13 +258,13 @@ export default function InventoryDashboard() {
         </div>
         <button 
           onClick={fetchInventory}
-          className="glass-card px-4 py-3 md:py-2 flex justify-center items-center gap-2 text-[#00CED1] hover:bg-[#00CED1]/10 transition-colors font-cairo w-full md:w-auto"
+          disabled={loading}
+          className="glass-card px-4 py-3 md:py-2 flex justify-center items-center gap-2 text-[#00CED1] hover:bg-[#00CED1]/10 transition-colors font-cairo w-full md:w-auto disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> تحديث
         </button>
       </div>
 
-      {/* Background Live Scanner */}
       <LiveScanner onScan={handleCameraScan} />
 
       {/* Table Area */}
@@ -243,7 +283,7 @@ export default function InventoryDashboard() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {loading && items.length === 0 ? (
                 <tr>
                    <td colSpan={7} className="p-10 text-center text-gray-500 font-cairo">جاري التحميل...</td>
                 </tr>
@@ -251,7 +291,7 @@ export default function InventoryDashboard() {
                 <tr>
                    <td colSpan={7} className="p-10 text-center text-gray-500 flex flex-col items-center justify-center gap-2 font-cairo">
                       <AlertCircle className="w-8 h-8 opacity-50" />
-                      لا توجد نتائج
+                      لا توجد نتائج مطابقة للبحث
                    </td>
                 </tr>
               ) : (
@@ -260,14 +300,14 @@ export default function InventoryDashboard() {
                     <motion.tr 
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
+                      transition={{ delay: Math.min(i * 0.03, 0.3) }} // سقف زمني للأنيميشن لتجنب البطء مع القوائم الكبيرة
                       onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                       className={`border-b border-white/5 hover:bg-white/5 transition-colors group cursor-pointer ${expandedId === item.id ? 'bg-white/5' : ''}`}
                     >
                       <td className="p-5">
                         <div className="flex items-center gap-3">
                            <div className="w-8 h-8 rounded-lg bg-[#00CED1]/10 flex items-center justify-center group-hover:bg-[#00CED1]/20 transition-colors">
-                              <Tag className="w-4 h-4 text-[#00CED1]" />
+                             <Tag className="w-4 h-4 text-[#00CED1]" />
                            </div>
                            <span className="text-foreground font-medium font-cairo">{item.name}</span>
                         </div>
@@ -320,7 +360,7 @@ export default function InventoryDashboard() {
                                               type="number"
                                               className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
                                               value={newBatchForm.quantity}
-                                              onChange={(e) => setNewBatchForm({...newBatchForm, quantity: Number(e.target.value)})}
+                                              onChange={(e) => setNewBatchForm({...newBatchForm, quantity: e.target.value})}
                                             />
                                           </div>
                                         </div>
@@ -331,7 +371,7 @@ export default function InventoryDashboard() {
                                               type="number"
                                               className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
                                               value={newBatchForm.purchase_price}
-                                              onChange={(e) => setNewBatchForm({...newBatchForm, purchase_price: Number(e.target.value)})}
+                                              onChange={(e) => setNewBatchForm({...newBatchForm, purchase_price: e.target.value})}
                                             />
                                           </div>
                                           <div className="flex-1">
@@ -340,7 +380,7 @@ export default function InventoryDashboard() {
                                               type="number"
                                               className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
                                               value={newBatchForm.selling_price}
-                                              onChange={(e) => setNewBatchForm({...newBatchForm, selling_price: Number(e.target.value)})}
+                                              onChange={(e) => setNewBatchForm({...newBatchForm, selling_price: e.target.value})}
                                             />
                                           </div>
                                         </div>
@@ -361,7 +401,7 @@ export default function InventoryDashboard() {
                                             إلغاء
                                           </button>
                                           <button 
-                                            disabled={isAddingBatch || !newBatchForm.barcode || !newBatchForm.expiry_date}
+                                            disabled={isAddingBatch}
                                             onClick={() => handleCreateBatch(item.id)}
                                             className="px-3 py-1.5 rounded bg-gradient-to-r from-[#00CED1] to-[#00CED1]/80 text-black hover:opacity-90 font-bold font-cairo text-sm flex items-center gap-2 disabled:opacity-50"
                                           >
@@ -399,7 +439,7 @@ export default function InventoryDashboard() {
                                                 type="number"
                                                 className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
                                                 value={editForm.quantity}
-                                                onChange={(e) => setEditForm({...editForm, quantity: Number(e.target.value)})}
+                                                onChange={(e) => setEditForm({...editForm, quantity: e.target.value})}
                                               />
                                             </div>
                                           </div>
@@ -410,7 +450,7 @@ export default function InventoryDashboard() {
                                                 type="number"
                                                 className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
                                                 value={editForm.purchase_price}
-                                                onChange={(e) => setEditForm({...editForm, purchase_price: Number(e.target.value)})}
+                                                onChange={(e) => setEditForm({...editForm, purchase_price: e.target.value})}
                                               />
                                             </div>
                                             <div className="flex-1">
@@ -419,7 +459,7 @@ export default function InventoryDashboard() {
                                                 type="number"
                                                 className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
                                                 value={editForm.selling_price}
-                                                onChange={(e) => setEditForm({...editForm, selling_price: Number(e.target.value)})}
+                                                onChange={(e) => setEditForm({...editForm, selling_price: e.target.value})}
                                               />
                                             </div>
                                           </div>
@@ -515,5 +555,3 @@ export default function InventoryDashboard() {
     </div>
   );
 }
-
-import React from 'react';

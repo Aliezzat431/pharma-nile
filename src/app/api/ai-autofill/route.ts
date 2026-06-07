@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { treatmentTypes } from '@/lib/unitOptions';
+import Groq from 'groq-sdk';
 
-const MISTRAL_ENDPOINT = "https://api.mistral.ai/v1/chat/completions";
-const apiKey = process.env.MISTRAL_API_KEY;
-const MISTRAL_MODEL = "mistral-small-latest";
+// تهيئة مكتبة Groq SDK
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
-if (!apiKey) {
-  console.warn('MISTRAL_API_KEY is not configured'); 
-}
+// نستخدم موديل 70B لأنه الأقوى في استخراج البيانات بهياكل صلبة مثل JSON
+const GROQ_MODEL = "llama3-70b-8192";
 
 export async function POST(req: Request) {
   try {
@@ -20,76 +21,59 @@ export async function POST(req: Request) {
       );  
     }
 
-    if (!apiKey) {
+    if (!process.env.GROQ_API_KEY) {
       return NextResponse.json(
-        { error: 'MISTRAL_API_KEY is not configured in .env' },
+        { error: 'GROQ_API_KEY is not configured in .env' },
         { status: 500 }
       );
     }
 
+    // تجهيز الأنواع المتاحة في النظام لفرضها على دكتور محسن
     const availableTypes = treatmentTypes.map((t) => t.name).join(', ');
 
-    const prompt = `
-You are a pharmaceutical expert assistant in Egypt.
+    const systemPrompt = `You are a pharmaceutical expert assistant in Egypt, embedded in the PharmaNile ERP system ("Dr. Mohsen").
+Your job is to analyze an entered product name and output a clean, well-structured JSON object containing up to 3 likely exact matches or variations available in the Egyptian market.
 
-Analyze the following product name:
-"${productName}"
+Available exact types for the "type" field: [${availableTypes}]
 
-Provide up to 3 of the most likely exact matches or variations of this product (e.g., different concentrations, companies). If the name is specific enough, you can just return 1 match.
+Rules:
+1. The response MUST be ONLY a single valid JSON object.
+2. Do not include any markdown formatting blocks like \`\`\`json, no explanations, and no code blocks.
+3. The fields "name" and "company" MUST be in English (e.g., 'Panadol Extra', NOT 'بانادول').
+4. The field "type" MUST exactly match one of the values provided above.
+5. The field "unit_conversion" must be a positive number (default is 1).
 
-Return ONLY valid JSON without markdown, explanations, comments, or code blocks.
-
-The JSON must have exactly this structure:
-
+The required JSON schema layout:
 {
   "choices": [
     {
       "name": "Standardized medicine name",
-      "company": "Manufacturer company",
-      "type": "One of these exact values: ${availableTypes}",
+      "company": "Manufacturer company name",
+      "type": "Matched type from the allowed list",
       "unit_conversion": 1
     }
   ]
-}
+}`;
 
-Rules:
-- choices must be an array of objects.
-- type must exactly match one of the provided values.
-- unit_conversion must be a number.
-- The 'name' and 'company' fields MUST be in English (e.g., 'Panadol Extra', not 'بانادول إكسترا').
-- If information is unknown, make the best reasonable pharmaceutical guess.
-- Return JSON only.
-`;
+    const userMessage = `Analyze the product name: "${productName}"`;
 
-    const response = await fetch(MISTRAL_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MISTRAL_MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      }),
+    // الاتصال بـ Groq SDK
+    const chatCompletion = await groq.chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      temperature: 0.1, // درجة حرارة منخفضة جداً لضمان عدم الابتكار والالتزام بالـ JSON والأنواع المتاحة
+      response_format: { type: "json_object" } // تفعيل وضع الـ JSON الإجباري في Groq
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Mistral API error:', errorData);
-      return NextResponse.json(
-        { error: 'Failed to get response from AI' },
-        { status: 500 }
-      );
-    }
+    const rawText = chatCompletion.choices[0]?.message?.content?.trim() ?? '';
 
-    const data = await response.json();
-    const rawText = data.choices?.[0]?.message?.content?.trim() ?? '';
-
+    // البحث عن كائن الـ JSON داخل النص للتأمين الإضافي
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error('No JSON found in AI response:', rawText);
+      console.error('No JSON found in Groq response:', rawText);
       return NextResponse.json(
         { error: 'No valid JSON returned from AI' },
         { status: 500 }
@@ -98,6 +82,7 @@ Rules:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // معالجة البيانات وتوحيد الهيكل لضمان الحماية من الحقول المفقودة
     if (!parsed.choices || !Array.isArray(parsed.choices)) {
       return NextResponse.json({
         choices: [
@@ -119,12 +104,11 @@ Rules:
     }));
 
     return NextResponse.json({ choices: normalizedChoices });
+
   } catch (error: any) {
-    console.error('AI Auto-fill Error:', error);
+    console.error('Groq Auto-fill Error:', error);
     return NextResponse.json(
-      {
-        error: error?.message || 'Failed to generate medicine information',
-      },
+      { error: error?.message || 'Failed to generate medicine information' },
       { status: 500 }
     );
   }

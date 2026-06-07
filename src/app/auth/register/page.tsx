@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client"; // تأكد من صحة هذا المسار في مشروعك
+import { createClient } from "@/lib/supabase/client";
 import { Loader2, Lock, Mail, ShieldAlert, UserPlus, User, Building2, MapPin, Phone } from "lucide-react";
 
 interface PharmacyOption {
@@ -36,7 +36,6 @@ export default function RegisterPage() {
   useEffect(() => {
     async function loadPharmacies() {
       try {
-        // تهيئة العميل داخل الدالة لضمان استقرار الاتصال
         const supabaseClient = createClient();
         
         const { data, error: fetchError } = await supabaseClient
@@ -47,7 +46,7 @@ export default function RegisterPage() {
         if (fetchError) {
           console.error("Supabase Fetch Error:", fetchError);
           setError(`تعذر تحميل الفروع: ${fetchError.message}`);
-          setRegType("create"); // تحويله تلقائياً لإنشاء صيدلية في حال الفشل
+          setRegType("create");
           return;
         }
 
@@ -56,7 +55,6 @@ export default function RegisterPage() {
           setSelectedPharmacyId(data[0].id);
           setRegType("join");
         } else {
-          // إذا كان الجدول فارغاً تماماً
           setRegType("create");
         }
       } catch (err: any) {
@@ -128,7 +126,7 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError;
 
-      // 🔒 المرحلة الثالثة: إدخال البيانات المساعدة
+      // 🔒 المرحلة الثالثة: إدخال البيانات المساعدة في الجداول المخصصة
       if (data?.user) {
         await supabaseClient.from("user_profiles").insert([
           {
@@ -163,13 +161,13 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505] font-cairo">
-        <div className="w-full max-w-md p-8 glass-panel rounded-3xl text-center">
-          <div className="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-6">
+      <div className="min-h-screen flex items-center justify-center bg-[#050505] font-cairo" dir="rtl">
+        <div className="w-full max-w-md p-8 glass-panel rounded-3xl text-center border border-white/5 bg-background/50">
+          <div className="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/30">
             <UserPlus className="w-10 h-10 text-green-400" />
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">تم تسجيل الحساب بنجاح!</h2>
-          <p className="text-foreground/70 mb-6">جاري تحويلك لصفحة تسجيل الدخول...</p>
+          <p className="text-gray-400 mb-6">جاري تحويلك لصفحة تسجيل الدخول...</p>
           <Loader2 className="w-8 h-8 animate-spin text-[#00CED1] mx-auto" />
         </div>
       </div>
@@ -178,18 +176,19 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#050505] relative selection:bg-[#00CED1] selection:text-white py-20 px-4 overflow-y-auto font-cairo text-right" dir="rtl">
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#00CED1]/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#D4AF37]/10 rounded-full blur-[100px] pointer-events-none" />
+      {/* عناصر الإضاءة الخلفية النيون */}
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#00CED1]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#D4AF37]/5 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 animate-in fade-in zoom-in duration-700">
+      <div className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 border border-white/5 bg-background/50 animate-in fade-in zoom-in duration-700">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-[#00CED1] to-[#00CED1]/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,206,209,0.3)]">
+          <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-[#00CED1] to-[#00CED1]/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,206,209,0.2)] border border-[#00CED1]/20">
             <UserPlus className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 mb-2">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 mb-2">
             حساب جديد
           </h1>
-          <p className="text-foreground/50 text-sm">إنشاء حساب وإدارة فرع صيدليتك</p>
+          <p className="text-gray-400 text-sm">إنشاء حساب وإدارة فرع صيدليتك</p>
         </div>
 
         {error && (
@@ -203,23 +202,24 @@ export default function RegisterPage() {
         <div className="grid grid-cols-2 gap-2 mb-6 bg-black/60 p-1 rounded-xl border border-white/5">
           <button
             type="button"
+            disabled={pharmacies.length === 0 || isLoading}
             onClick={() => setRegType("join")}
-            disabled={pharmacies.length === 0}
             className={`py-2.5 text-sm font-medium rounded-lg transition-all ${
               regType === "join"
                 ? "bg-[#00CED1] text-black font-bold shadow-md"
-                : "text-foreground/50 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                : "text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
             }`}
           >
             انضمام لصيدلية
           </button>
           <button
             type="button"
+            disabled={isLoading}
             onClick={() => setRegType("create")}
             className={`py-2.5 text-sm font-medium rounded-lg transition-all ${
               regType === "create"
                 ? "bg-[#00CED1] text-black font-bold shadow-md"
-                : "text-foreground/50 hover:text-white"
+                : "text-gray-400 hover:text-white"
             }`}
           >
             إنشاء صيدلية جديدة
@@ -229,35 +229,37 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* الاسم الكامل */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground/70 mr-1 block">الاسم الكامل</label>
+            <label className="text-xs font-medium text-gray-400 mr-1 block">الاسم الكامل</label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                <User className="h-4 w-4 text-foreground/40" />
+                <User className="h-4 w-4 text-gray-500" />
               </div>
               <input
                 type="text"
                 value={name}
+                disabled={isLoading}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
-                placeholder="أحمد محمد"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1]/50 transition-all text-sm text-right disabled:opacity-50"
+                placeholder="د. أحمد محمد"
               />
             </div>
           </div>
 
-          {/* مدخلات الصيدلية */}
+          {/* مدخلات الصيدلية المتغيرة */}
           {regType === "join" ? (
             <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
-              <label className="text-xs font-medium text-foreground/70 mr-1 block">اختر الصيدلية المتاحة</label>
+              <label className="text-xs font-medium text-gray-400 mr-1 block">اختر الصيدلية المتاحة</label>
               <div className="relative">
                 <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <Building2 className="h-4 w-4 text-foreground/40" />
+                  <Building2 className="h-4 w-4 text-gray-500" />
                 </div>
                 <select
                   value={selectedPharmacyId}
+                  disabled={isLoading}
                   onChange={(e) => setSelectedPharmacyId(e.target.value)}
-                  required
-                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm appearance-none cursor-pointer"
+                  required={regType === "join"}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1]/50 transition-all text-sm appearance-none cursor-pointer text-right disabled:opacity-50"
                 >
                   {pharmacies.map((p) => (
                     <option key={p.id} value={p.id} className="bg-[#050505] text-white">
@@ -268,7 +270,7 @@ export default function RegisterPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-3 p-3 bg-white/[0.02] border border-white/5 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="space-y-3 p-3 bg-white/[0.01] border border-white/5 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-[#00CED1] mr-1 block">اسم الصيدلية الجديدة *</label>
                 <div className="relative">
@@ -278,39 +280,42 @@ export default function RegisterPage() {
                   <input
                     type="text"
                     value={newPharmacyName}
+                    disabled={isLoading}
                     onChange={(e) => setNewPharmacyName(e.target.value)}
                     required={regType === "create"}
-                    className="w-full bg-black/40 border border-[#00CED1]/20 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                    className="w-full bg-black/40 border border-[#00CED1]/20 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1]/50 transition-all text-sm text-right disabled:opacity-50"
                     placeholder="صيدلية النيل - فرع جديد"
                   />
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground/50 mr-1 block">العنوان</label>
+                <label className="text-xs font-medium text-gray-500 mr-1 block">العنوان</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <MapPin className="h-4 w-4 text-foreground/30" />
+                    <MapPin className="h-4 w-4 text-gray-600" />
                   </div>
                   <input
                     type="text"
                     value={newPharmacyAddress}
+                    disabled={isLoading}
                     onChange={(e) => setNewPharmacyAddress(e.target.value)}
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
-                    placeholder="العنوان الكامل"
+                    className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1]/50 transition-all text-sm text-right disabled:opacity-50"
+                    placeholder="القاهرة، شارع التحرير"
                   />
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground/50 mr-1 block">رقم هاتف الصيدلية</label>
+                <label className="text-xs font-medium text-gray-500 mr-1 block">رقم هاتف الصيدلية</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <Phone className="h-4 w-4 text-foreground/30" />
+                    <Phone className="h-4 w-4 text-gray-600" />
                   </div>
                   <input
                     type="text"
                     value={newPharmacyPhone}
+                    disabled={isLoading}
                     onChange={(e) => setNewPharmacyPhone(e.target.value)}
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                    className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
                     placeholder="01xxxxxxxxx"
                   />
                 </div>
@@ -320,18 +325,19 @@ export default function RegisterPage() {
 
           {/* البريد الإلكتروني */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground/70 mr-1 block">البريد الإلكتروني</label>
+            <label className="text-xs font-medium text-gray-400 mr-1 block">البريد الإلكتروني</label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                <Mail className="h-4 w-4 text-foreground/40" />
+                <Mail className="h-4 w-4 text-gray-500" />
               </div>
               <input
                 type="email"
                 value={email}
+                disabled={isLoading}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 dir="ltr"
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
                 placeholder="user@pharmacy.com"
               />
             </div>
@@ -339,42 +345,44 @@ export default function RegisterPage() {
 
           {/* كلمة المرور */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground/70 mr-1 block">كلمة المرور</label>
+            <label className="text-xs font-medium text-gray-400 mr-1 block">كلمة المرور</label>
             <div className="relative">
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                <Lock className="h-4 w-4 text-foreground/40" />
+                <Lock className="h-4 w-4 text-gray-500" />
               </div>
               <input
                 type="password"
                 value={password}
+                disabled={isLoading}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
                 dir="ltr"
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1] transition-all text-sm"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
                 placeholder="••••••••"
               />
             </div>
           </div>
 
+          {/* زر التقديم */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-black font-bold hover:shadow-[0_0_20px_rgba(0,206,209,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-black font-bold hover:opacity-90 hover:shadow-[0_0_20px_rgba(0,206,209,0.2)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4 text-sm"
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                جاري معالجة البيانات...
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>جاري معالجة البيانات...</span>
               </>
             ) : (
-              regType === "create" ? "إنشاء الصيدلية والحساب" : "إنشاء الحساب"
+              <span>{regType === "create" ? "إنشاء الصيدلية والحساب" : "إنشاء الحساب"}</span>
             )}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-foreground/50">
+          <p className="text-sm text-gray-400">
             لديك حساب بالفعل؟{" "}
             <a href="/auth/login" className="text-[#00CED1] hover:underline font-medium">
               تسجيل الدخول

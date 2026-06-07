@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  FileText, Search, ChevronDown, ChevronUp, Calendar, ShoppingBag, 
-  AlertCircle, Loader2, Check, Package, X, Printer, Download,
-  Filter, CreditCard, Wallet, Heart, TrendingUp, Hash, Eye, 
-  Clock, DollarSign, ArrowUpDown
+  FileText, Search, ChevronDown, ChevronUp, Calendar, 
+  AlertCircle, Loader2, X, Printer, Filter, CreditCard, 
+  Wallet, Heart, TrendingUp, Eye, Clock, DollarSign, ArrowUpDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -55,37 +54,40 @@ export default function InvoicesPage() {
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            id,
+            created_at,
+            total,
+            cost_total,
+            profit_total,
+            status,
+            payment_method,
+            customer_id,
+            customers (name),
+            order_items (id, order_id, name, price, quantity, unit, product_id, batch_id)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(500);
+
+        if (error) throw error;
+        if (isMounted) setOrders(data || []);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
     fetchOrders();
+    return () => { isMounted = false; };
   }, []);
-
-  const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          id,
-          created_at,
-          total,
-          cost_total,
-          profit_total,
-          status,
-          payment_method,
-          customer_id,
-          customers (name),
-          order_items (id, order_id, name, price, quantity, unit, product_id, batch_id)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(500);
-
-      if (error) throw error;
-      setOrders(data || []);
-    } catch (error) {
-      console.error("Error fetching orders", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -95,7 +97,7 @@ export default function InvoicesPage() {
 
     if (days > 0) return `منذ ${days} ${days === 1 ? 'يوم' : 'أيام'}`;
     if (hours > 0) return `منذ ${hours} ${hours === 1 ? 'ساعة' : 'ساعات'}`;
-    return `منذ ${mins} دقيقة`;
+    return `منذ ${mins > 0 ? mins : 1} دقيقة`;
   };
 
   const paymentLabel = (method?: string) => {
@@ -115,68 +117,84 @@ export default function InvoicesPage() {
     }
   };
 
-  // Filtering
-  let filtered = orders.filter(order => {
-    // Text search
-    const matchesSearch = search.length === 0 || 
-      order.id.toLowerCase().includes(search.toLowerCase()) ||
-      order.order_items.some(item => item.name.toLowerCase().includes(search.toLowerCase())) ||
-      (order.customers?.name || '').toLowerCase().includes(search.toLowerCase());
+  // Performance Optimization: Cache computed filters and sorts
+  const filteredAndSortedOrders = useMemo(() => {
+    const cleanSearch = search.trim().toLowerCase();
     
-    // Status filter
-    const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
-    
-    // Payment filter
-    const matchesPayment = filterPayment === 'all' || order.payment_method === filterPayment;
+    let result = orders.filter(order => {
+      const matchesSearch = cleanSearch.length === 0 || 
+        order.id.toLowerCase().includes(cleanSearch) ||
+        order.order_items.some(item => item.name.toLowerCase().includes(cleanSearch)) ||
+        (order.customers?.name || '').toLowerCase().includes(cleanSearch);
+      
+      const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
+      const matchesPayment = filterPayment === 'all' || order.payment_method === filterPayment;
 
-    // Date range filter
-    let matchesDate = true;
-    if (dateFrom) {
-      matchesDate = matchesDate && new Date(order.created_at) >= new Date(dateFrom);
-    }
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59);
-      matchesDate = matchesDate && new Date(order.created_at) <= to;
-    }
+      let matchesDate = true;
+      if (dateFrom) {
+        matchesDate = matchesDate && new Date(order.created_at) >= new Date(dateFrom);
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        matchesDate = matchesDate && new Date(order.created_at) <= to;
+      }
 
-    return matchesSearch && matchesStatus && matchesPayment && matchesDate;
-  });
+      return matchesSearch && matchesStatus && matchesPayment && matchesDate;
+    });
 
-  // Sorting
-  filtered = [...filtered].sort((a, b) => {
-    const dir = sortDir === 'asc' ? 1 : -1;
-    if (sortField === 'date') return dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    if (sortField === 'total') return dir * (a.total - b.total);
-    if (sortField === 'items') return dir * (a.order_items.length - b.order_items.length);
-    return 0;
-  });
+    return result.sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      if (sortField === 'date') return dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      if (sortField === 'total') return dir * (a.total - b.total);
+      if (sortField === 'items') return dir * (a.order_items.length - b.order_items.length);
+      return 0;
+    });
+  }, [orders, search, filterStatus, filterPayment, dateFrom, dateTo, sortField, sortDir]);
 
-  // Stats
-  const totalRevenue = filtered.reduce((acc, o) => o.status !== 'returned' ? acc + Number(o.total) : acc, 0);
-  const totalProfit = filtered.reduce((acc, o) => o.status !== 'returned' ? acc + Number(o.profit_total || 0) : acc, 0);
-  const totalInvoices = filtered.length;
-  const totalItems = filtered.reduce((a, o) => a + o.order_items.length, 0);
-  const cashCount = filtered.filter(o => o.payment_method === 'cash' && o.status !== 'returned').length;
-  const debtCount = filtered.filter(o => o.payment_method === 'debt').length;
+  // Performance Optimization: Cache stats derivations
+  const stats = useMemo(() => {
+    let revenue = 0;
+    let profit = 0;
+    let cash = 0;
+    let debt = 0;
+    let itemsCount = 0;
+
+    filteredAndSortedOrders.forEach(o => {
+      itemsCount += o.order_items.length;
+      if (o.status !== 'returned') {
+        revenue += Number(o.total || 0);
+        profit += Number(o.profit_total || 0);
+        if (o.payment_method === 'cash') cash++;
+      }
+      if (o.payment_method === 'debt') debt++;
+    });
+
+    return { totalRevenue: revenue, totalProfit: profit, cashCount: cash, debtCount: debt, totalItems: itemsCount };
+  }, [filteredAndSortedOrders]);
 
   const handlePrint = (order: Order) => {
     const win = window.open('', '_blank', 'width=320,height=600');
     if (!win) return;
     const items = order.order_items.map(i => 
-      `<tr><td style="padding:4px 2px;border-bottom:1px dashed #ccc">${i.name}</td><td style="padding:4px 2px;text-align:center;border-bottom:1px dashed #ccc">${i.quantity} ${i.unit}</td><td style="padding:4px 2px;text-align:left;border-bottom:1px dashed #ccc">${(i.price * i.quantity).toFixed(2)}</td></tr>`
+      `<tr>
+        <td style="padding:4px 2px;border-bottom:1px dashed #ccc">${i.name}</td>
+        <td style="padding:4px 2px;text-align:center;border-bottom:1px dashed #ccc">${i.quantity} ${i.unit}</td>
+        <td style="padding:4px 2px;text-align:left;border-bottom:1px dashed #ccc">${(i.price * i.quantity).toFixed(2)}</td>
+      </tr>`
     ).join('');
     
     win.document.write(`
       <html dir="rtl">
       <head><title>فاتورة #${order.id.slice(0, 8)}</title>
-      <style>body{font-family:'Cairo','Segoe UI',sans-serif;margin:0;padding:16px;font-size:12px;color:#333}
-      .header{text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:12px}
-      .logo{font-size:20px;font-weight:bold;color:#00CED1}
-      table{width:100%;border-collapse:collapse;margin:12px 0}
-      th{padding:6px 2px;text-align:right;border-bottom:2px solid #000;font-size:11px}
-      .total-row{border-top:2px solid #000;font-weight:bold;font-size:14px;padding-top:8px;margin-top:8px}
-      .footer{text-align:center;margin-top:20px;font-size:10px;color:#999;border-top:1px dashed #ccc;padding-top:12px}
+      <style>
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:16px;font-size:12px;color:#333}
+        .header{text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:12px}
+        .logo{font-size:20px;font-weight:bold;color:#00CED1}
+        table{width:100%;border-collapse:collapse;margin:12px 0}
+        th{padding:6px 2px;text-align:right;border-bottom:2px solid #000;font-size:11px}
+        .total-row{border-top:2px solid #000;font-weight:bold;font-size:14px;padding-top:8px;margin-top:8px}
+        .footer{text-align:center;margin-top:20px;font-size:10px;color:#999;border-top:1px dashed #ccc;padding-top:12px}
       </style></head>
       <body>
         <div class="header">
@@ -203,7 +221,7 @@ export default function InvoicesPage() {
           <p>شكراً لزيارتكم 💊</p>
           <p>${new Date(order.created_at).toLocaleString('ar-EG')}</p>
         </div>
-        <script>window.onload=()=>{window.print();}</script>
+        <script>window.onload=()=>{window.print();window.close();}</script>
       </body></html>
     `);
     win.document.close();
@@ -244,7 +262,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div className="font-cairo">
               <p className="text-gray-400 text-xs">إجمالي الإيرادات</p>
-              <p className="text-2xl font-bold text-[#D4AF37] mt-1">{totalRevenue.toLocaleString('ar-EG')} <span className="text-sm">ج.م</span></p>
+              <p className="text-2xl font-bold text-[#D4AF37] mt-1">{stats.totalRevenue.toLocaleString('ar-EG')} <span className="text-sm">ج.م</span></p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-[#D4AF37]" />
@@ -256,7 +274,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div className="font-cairo">
               <p className="text-gray-400 text-xs">صافي الربح</p>
-              <p className="text-2xl font-bold text-green-400 mt-1">{totalProfit.toLocaleString('ar-EG')} <span className="text-sm">ج.م</span></p>
+              <p className="text-2xl font-bold text-green-400 mt-1">{stats.totalProfit.toLocaleString('ar-EG')} <span className="text-sm">ج.م</span></p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-green-400" />
@@ -268,7 +286,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div className="font-cairo">
               <p className="text-gray-400 text-xs">عدد الفواتير</p>
-              <p className="text-2xl font-bold text-[#00CED1] mt-1">{totalInvoices}</p>
+              <p className="text-2xl font-bold text-[#00CED1] mt-1">{filteredAndSortedOrders.length}</p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-[#00CED1]/10 flex items-center justify-center">
               <FileText className="w-6 h-6 text-[#00CED1]" />
@@ -280,7 +298,7 @@ export default function InvoicesPage() {
           <div className="flex items-center justify-between">
             <div className="font-cairo">
               <p className="text-gray-400 text-xs">نقدي / آجل</p>
-              <p className="text-2xl font-bold text-foreground mt-1">{cashCount} / {debtCount}</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{stats.cashCount} / {stats.debtCount}</p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
               <Wallet className="w-6 h-6 text-gray-400" />
@@ -299,7 +317,6 @@ export default function InvoicesPage() {
             className="glass-card overflow-hidden"
           >
             <div className="p-5 grid grid-cols-1 md:grid-cols-4 gap-4 font-cairo">
-              {/* Date From */}
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">من تاريخ</label>
                 <input 
@@ -309,7 +326,6 @@ export default function InvoicesPage() {
                   className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm"
                 />
               </div>
-              {/* Date To */}
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">إلى تاريخ</label>
                 <input 
@@ -319,26 +335,24 @@ export default function InvoicesPage() {
                   className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm"
                 />
               </div>
-              {/* Status */}
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">حالة الفاتورة</label>
                 <select 
                   value={filterStatus}
                   onChange={e => setFilterStatus(e.target.value as FilterStatus)}
-                  className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm"
+                  className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm animate-none"
                 >
                   <option value="all">الكل</option>
                   <option value="completed">مكتمل</option>
                   <option value="returned">مرتجع</option>
                 </select>
               </div>
-              {/* Payment Method */}
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">طريقة الدفع</label>
                 <select 
                   value={filterPayment}
                   onChange={e => setFilterPayment(e.target.value as FilterPayment)}
-                  className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm"
+                  className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm animate-none"
                 >
                   <option value="all">الكل</option>
                   <option value="cash">نقدي</option>
@@ -402,13 +416,13 @@ export default function InvoicesPage() {
             <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
             <p className="font-cairo">جاري تحميل الفواتير...</p>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : filteredAndSortedOrders.length === 0 ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
             <AlertCircle className="w-10 h-10 opacity-40" />
             <p className="font-cairo">لا توجد فواتير مطابقة للبحث.</p>
           </div>
         ) : (
-          filtered.map((order, i) => {
+          filteredAndSortedOrders.map((order, i) => {
             const isExpanded = expandedId === order.id;
             const payment = paymentLabel(order.payment_method);
             const status = statusLabel(order.status);
@@ -419,7 +433,7 @@ export default function InvoicesPage() {
                 key={order.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.02 }}
+                transition={{ delay: Math.min(i * 0.01, 0.2) }} // Throttled fallback to handle dynamic lists cleanly
                 className={`glass-card overflow-hidden transition-all ${order.status === 'returned' ? 'opacity-60 border-red-500/20' : 'border-white/5'}`}
               >
                 {/* Order Header */}
@@ -485,7 +499,6 @@ export default function InvoicesPage() {
                       className="overflow-hidden"
                     >
                       <div className="border-t border-white/5 bg-black/5">
-                        {/* Items Table */}
                         <div className="p-5">
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm text-right font-cairo">
@@ -582,14 +595,12 @@ export default function InvoicesPage() {
               </div>
 
               <div ref={printRef} className="p-6 max-h-[70vh] overflow-y-auto">
-                {/* Invoice Header */}
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-[#00CED1] font-cairo">PharmaNile</h3>
                   <p className="text-xs text-gray-500 mt-1 font-cairo">صيدلية النيل - نظام الفواتير</p>
                   <div className="w-16 h-0.5 bg-[#D4AF37]/50 mx-auto mt-3"></div>
                 </div>
 
-                {/* Invoice Meta */}
                 <div className="grid grid-cols-2 gap-3 text-sm font-cairo mb-6">
                   <div className="bg-white/5 p-3 rounded-lg">
                     <span className="text-gray-500 block text-xs">رقم الفاتورة</span>
@@ -609,7 +620,6 @@ export default function InvoicesPage() {
                   </div>
                 </div>
 
-                {/* Items */}
                 <table className="w-full text-sm text-right font-cairo mb-6">
                   <thead className="text-xs text-gray-500 bg-white/5">
                     <tr>
@@ -631,7 +641,6 @@ export default function InvoicesPage() {
                   </tbody>
                 </table>
 
-                {/* Total */}
                 <div className="bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-xl p-4 flex items-center justify-between font-cairo">
                   <span className="text-lg font-bold text-foreground">الإجمالي النهائي</span>
                   <span className="text-2xl font-bold text-[#D4AF37]">{Number(previewInvoice.total).toFixed(2)} ج.م</span>
@@ -645,26 +654,25 @@ export default function InvoicesPage() {
                 )}
               </div>
 
-              <div className="p-4 border-t border-white/10 flex gap-3 bg-[#050505]/50">
-                 <button 
-                   onClick={() => setPreviewInvoice(null)}
-                   className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10"
-                 >
-                   إغلاق
-                 </button>
-                 <button 
-                   onClick={() => { handlePrint(previewInvoice); }}
-                   className="flex-1 py-3 rounded-xl font-cairo text-white bg-[#D4AF37]/20 border border-[#D4AF37]/50 hover:bg-[#D4AF37]/40 transition-colors font-bold flex items-center justify-center gap-2"
-                 >
-                   <Printer className="w-5 h-5" />
-                   طباعة الفاتورة
-                 </button>
+              <div className="p-4 border-t border-white/10 flex gap-3 bg-[#050505]/50 font-cairo">
+                <button
+                  onClick={() => handlePrint(previewInvoice)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-bold hover:bg-[#B8962F] transition-all text-sm"
+                >
+                  <Printer className="w-4 h-4" />
+                  طباعة الفاتورة
+                </button>
+                <button
+                  onClick={() => setPreviewInvoice(null)}
+                  className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 transition-all text-sm"
+                >
+                  إغلاق
+                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }
