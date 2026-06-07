@@ -92,8 +92,7 @@ export default function FinancialsPage() {
     setLoadingMonthly(true);
     try {
       const data = await getMonthlyReport(undefined, 12);
-      setShortages(data || []);
-      setMonthlyData(data || []);
+      setMonthlyData(data || []);   // ✅ هذا السطر يكفي
     } catch (err) {
       console.error('Error fetching monthly report:', err);
     } finally {
