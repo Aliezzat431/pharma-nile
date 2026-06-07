@@ -29,7 +29,8 @@ interface Order {
   status?: string;
   payment_method?: string;
   customer_id?: string;
-  customers?: { name: string } | null;
+  // التحديث هنا: تعديل النوع ليتوافق مع المصفوفة المسترجعة من Supabase 👇
+  customers?: { name: string }[] | null; 
   order_items: OrderItem[];
 }
 
@@ -77,7 +78,7 @@ export default function InvoicesPage() {
           .limit(500);
 
         if (error) throw error;
-        if (isMounted) setOrders(data || []);
+        if (isMounted) setOrders(data as unknown as Order[] || []);
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {
@@ -117,15 +118,16 @@ export default function InvoicesPage() {
     }
   };
 
-  // Performance Optimization: Cache computed filters and sorts
   const filteredAndSortedOrders = useMemo(() => {
     const cleanSearch = search.trim().toLowerCase();
     
     let result = orders.filter(order => {
+      // تعديل هنا للوصول إلى اسم العميل عبر العنصر الأول في المصفوفة 👇
+      const customerName = order.customers?.[0]?.name || '';
       const matchesSearch = cleanSearch.length === 0 || 
         order.id.toLowerCase().includes(cleanSearch) ||
         order.order_items.some(item => item.name.toLowerCase().includes(cleanSearch)) ||
-        (order.customers?.name || '').toLowerCase().includes(cleanSearch);
+        customerName.toLowerCase().includes(cleanSearch);
       
       const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
       const matchesPayment = filterPayment === 'all' || order.payment_method === filterPayment;
@@ -152,7 +154,6 @@ export default function InvoicesPage() {
     });
   }, [orders, search, filterStatus, filterPayment, dateFrom, dateTo, sortField, sortDir]);
 
-  // Performance Optimization: Cache stats derivations
   const stats = useMemo(() => {
     let revenue = 0;
     let profit = 0;
@@ -184,6 +185,9 @@ export default function InvoicesPage() {
       </tr>`
     ).join('');
     
+    // تعديل هنا لقراءة اسم العميل بشكل آمن 👇
+    const customerName = order.customers?.[0]?.name;
+
     win.document.write(`
       <html dir="rtl">
       <head><title>فاتورة #${order.id.slice(0, 8)}</title>
@@ -207,7 +211,7 @@ export default function InvoicesPage() {
         </div>
         <div style="font-size:11px;margin-bottom:8px">
           <span><strong>الدفع:</strong> ${paymentLabel(order.payment_method).text}</span>
-          ${order.customers?.name ? ` | <strong>العميل:</strong> ${order.customers.name}` : ''}
+          ${customerName ? ` | <strong>العميل:</strong> ${customerName}` : ''}
         </div>
         <table>
           <thead><tr><th>الصنف</th><th style="text-align:center">الكمية</th><th style="text-align:left">المبلغ</th></tr></thead>
@@ -427,13 +431,15 @@ export default function InvoicesPage() {
             const payment = paymentLabel(order.payment_method);
             const status = statusLabel(order.status);
             const PaymentIcon = payment.icon;
+            // جلب اسم العميل بأمان من المصفوفة 👇
+            const customerName = order.customers?.[0]?.name;
 
             return (
               <motion.div
                 key={order.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i * 0.01, 0.2) }} // Throttled fallback to handle dynamic lists cleanly
+                transition={{ delay: Math.min(i * 0.01, 0.2) }}
                 className={`glass-card overflow-hidden transition-all ${order.status === 'returned' ? 'opacity-60 border-red-500/20' : 'border-white/5'}`}
               >
                 {/* Order Header */}
@@ -460,8 +466,8 @@ export default function InvoicesPage() {
                         <Calendar className="w-3 h-3" />
                         {new Date(order.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         <span className="text-[#00CED1]">• {getTimeAgo(order.created_at)}</span>
-                        {order.customers?.name && (
-                          <span className="text-orange-400">• {order.customers.name}</span>
+                        {customerName && (
+                          <span className="text-orange-400">• {customerName}</span>
                         )}
                       </p>
                     </div>
@@ -539,9 +545,9 @@ export default function InvoicesPage() {
                           <div className="flex items-center gap-2 text-xs text-gray-500 font-cairo">
                             <Clock className="w-3 h-3" />
                             {new Date(order.created_at).toLocaleString('ar-EG')}
-                            {order.customers?.name && (
+                            {customerName && (
                               <span className="text-orange-400 flex items-center gap-1 mr-4">
-                                العميل: {order.customers.name}
+                                العميل: {customerName}
                               </span>
                             )}
                           </div>
@@ -616,58 +622,9 @@ export default function InvoicesPage() {
                   </div>
                   <div className="bg-white/5 p-3 rounded-lg">
                     <span className="text-gray-500 block text-xs">العميل</span>
-                    <span className="font-bold text-foreground">{previewInvoice.customers?.name || 'عميل عام'}</span>
+                    <span className="font-bold text-foreground">{previewInvoice.customers?.[0]?.name || 'عميل عام'}</span>
                   </div>
                 </div>
-
-                <table className="w-full text-sm text-right font-cairo mb-6">
-                  <thead className="text-xs text-gray-500 bg-white/5">
-                    <tr>
-                      <th className="px-3 py-2 rounded-tr-lg">الصنف</th>
-                      <th className="px-3 py-2">الكمية</th>
-                      <th className="px-3 py-2">السعر</th>
-                      <th className="px-3 py-2 rounded-tl-lg">المبلغ</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-foreground">
-                    {previewInvoice.order_items.map(item => (
-                      <tr key={item.id} className="border-b border-white/5">
-                        <td className="px-3 py-2 font-bold">{item.name}</td>
-                        <td className="px-3 py-2">{item.quantity} {item.unit}</td>
-                        <td className="px-3 py-2">{item.price}</td>
-                        <td className="px-3 py-2 font-bold text-[#D4AF37]">{(item.quantity * item.price).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <div className="bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-xl p-4 flex items-center justify-between font-cairo">
-                  <span className="text-lg font-bold text-foreground">الإجمالي النهائي</span>
-                  <span className="text-2xl font-bold text-[#D4AF37]">{Number(previewInvoice.total).toFixed(2)} ج.م</span>
-                </div>
-
-                {previewInvoice.profit_total !== undefined && previewInvoice.profit_total !== null && (
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center justify-between font-cairo mt-3 text-sm">
-                    <span className="text-green-400">صافي الربح</span>
-                    <span className="font-bold text-green-400">{Number(previewInvoice.profit_total).toFixed(2)} ج.م</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 border-t border-white/10 flex gap-3 bg-[#050505]/50 font-cairo">
-                <button
-                  onClick={() => handlePrint(previewInvoice)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-bold hover:bg-[#B8962F] transition-all text-sm"
-                >
-                  <Printer className="w-4 h-4" />
-                  طباعة الفاتورة
-                </button>
-                <button
-                  onClick={() => setPreviewInvoice(null)}
-                  className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 transition-all text-sm"
-                >
-                  إغلاق
-                </button>
               </div>
             </motion.div>
           </div>
