@@ -25,13 +25,24 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, BarChart, Bar, Cell, TooltipProps
+  ResponsiveContainer, BarChart, Bar, Cell
 } from 'recharts';
 import Skeleton from '@/components/ui/Skeleton';
 import GlassTable from '@/components/ui/GlassTable';
 
-// Custom Arabic tooltip for the chart - Fixed TypeScript Typings 👇
-const ArabicTooltip = ({ active, payload, label }: TooltipProps<any, any>) => {
+// 1. بناء واجهة مخصصة ومستقلة لتجنب مشاكل Recharts المعطوبة في الـ Build 👇
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    color?: string;
+    name?: string;
+    value?: any;
+  }>;
+  label?: any;
+}
+
+// 2. تطبيق الواجهة الجديدة على المكون
+const ArabicTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
   return (
     <div className="glass-card p-3 text-right min-w-[140px]" dir="rtl">
@@ -67,7 +78,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Dashboard fetch error", err);
     } finally {
-      loading && setLoading(false);
+      setLoading(false);
     }
   };
 
