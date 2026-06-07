@@ -30,13 +30,13 @@ import {
 import Skeleton from '@/components/ui/Skeleton';
 import GlassTable from '@/components/ui/GlassTable';
 
-// Custom Arabic tooltip for the chart
-const ArabicTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
-  if (!active || !payload?.length) return null;
+// Custom Arabic tooltip for the chart - Fixed TypeScript Typings 👇
+const ArabicTooltip = ({ active, payload, label }: TooltipProps<any, any>) => {
+  if (!active || !payload || !payload.length) return null;
   return (
     <div className="glass-card p-3 text-right min-w-[140px]" dir="rtl">
       <p className="text-xs font-bold text-gray-400 font-cairo mb-2">{label}</p>
-      {payload.map((p, i) => (
+      {payload.map((p: any, i: number) => (
         <div key={i} className="flex items-center justify-between gap-3 text-xs font-cairo">
           <span style={{ color: p.color }}>{p.name}</span>
           <span className="font-bold text-white">{Number(p.value).toLocaleString('ar-EG')} ج.م</span>
@@ -67,7 +67,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Dashboard fetch error", err);
     } finally {
-      setLoading(false);
+      loading && setLoading(false);
     }
   };
 
@@ -99,7 +99,6 @@ export default function Dashboard() {
     { label: 'عميل جديد', icon: UserPlus, href: '/customers', color: 'bg-white/5 border-white/10' },
   ];
 
-  // Weekly data with Arabic day names (already comes from RPC with Arabic names)
   const weeklyData = stats?.weeklyData || [];
 
   return (
