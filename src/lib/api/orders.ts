@@ -17,7 +17,7 @@ export async function processCheckout(
   paymentMethod: 'cash' | 'debt' | 'sadqah' = 'cash',
   customerId?: string
 ) {
-  // Enforce security by extracting credentials via supabase.auth.getUser()
+
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     throw new Error('Unauthenticated user. Cannot process checkout.');
@@ -28,7 +28,6 @@ export async function processCheckout(
     throw new Error('Unauthorized: No pharmacy associated with this profile.');
   }
 
-  // ── VALIDATION GUARDS ─────────────────────────────────────
   if (!cart || cart.length === 0) {
     throw new Error('Validation Error: Cart is empty.');
   }
@@ -48,7 +47,6 @@ export async function processCheckout(
     }
   }
 
-  // Pre-validate stock availability (client-side guard before hitting the DB)
   const productIds = [...new Set(cart.map(i => i.id))];
   const { data: allBatches } = await supabase
     .from('batches')
@@ -66,8 +64,7 @@ export async function processCheckout(
     }
   }
 
-  // ── FAST PATH: single DB round-trip via RPC ───────────────
-  // Build cart payload for the RPC
+
   const rpcCart = cart.map(item => ({
     product_id: item.id,
     name:       item.name,
@@ -100,10 +97,7 @@ export async function processCheckout(
   return { id: rpcResult.order_id, total: rpcResult.total };
 }
 
-/**
- * Pure-JS fallback checkout (original logic preserved).
- * Used only if the RPC is unavailable (e.g., migration not yet run).
- */
+
 async function _jsCheckoutFallback(
   cart: CartItem[],
   total: number,
@@ -211,7 +205,6 @@ export async function processReturn(orderId: string) {
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error('Unauthorized');
 
-  // 1. Fetch the full order with items
   const { data: order, error: fetchError } = await supabase
     .from('orders')
     .select('*, order_items(*)')
@@ -227,7 +220,6 @@ export async function processReturn(orderId: string) {
     throw new Error('This order has already been returned');
   }
 
-  // 2. Restore stock to specific batches
   for (const item of order.order_items) {
     if (item.batch_id) {
       const { data: batch } = await supabase
@@ -247,7 +239,6 @@ export async function processReturn(orderId: string) {
     }
   }
 
-  // 3. Deduct from customer debt if it was a debt order
   if (order.payment_method === 'debt' && order.customer_id) {
     const { data: customer } = await supabase
       .from('customers')
@@ -266,7 +257,6 @@ export async function processReturn(orderId: string) {
     }
   }
 
-  // 4. Mark order as returned (trigger will auto-update monthly_summaries)
   const { error: updateError } = await supabase
     .from('orders')
     .update({ status: 'returned' })
@@ -278,3 +268,4 @@ export async function processReturn(orderId: string) {
     throw updateError;
   }
 }
+

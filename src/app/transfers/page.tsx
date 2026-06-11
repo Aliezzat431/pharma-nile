@@ -26,7 +26,6 @@ export default function TransfersPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Modals state
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState<any>(null);
   const [requestQuantity, setRequestQuantity] = useState(1);
@@ -113,7 +112,7 @@ export default function TransfersPage() {
   const handleShip = async (transfer: any) => {
     setLoading(true);
     try {
-      // Find the product id in our pharmacy for this transfer
+
       const myProduct = myProducts.find(p => p.name.toLowerCase() === transfer.product_name.toLowerCase());
       if (!myProduct) {
         throw new Error('المنتج غير موجود في قائمة المنتجات الخاصة بك');
@@ -168,7 +167,7 @@ export default function TransfersPage() {
         </div>
       )}
 
-      {/* TABS */}
+      {}
       <div className="flex gap-4 p-1 bg-[var(--glass-surface)] rounded-2xl w-fit">
         <button
           onClick={() => setActiveTab('requests')}
@@ -184,7 +183,7 @@ export default function TransfersPage() {
         </button>
       </div>
 
-      {/* SEARCH TAB */}
+      {}
       {activeTab === 'search' && (
         <div className="space-y-6 animate-in slide-in-from-bottom-4">
           <form onSubmit={handleSearch} className="flex gap-4">
@@ -247,7 +246,7 @@ export default function TransfersPage() {
         </div>
       )}
 
-      {/* REQUESTS TAB */}
+      {}
       {activeTab === 'requests' && (
         <div className="space-y-4">
           <div className="overflow-x-auto rounded-3xl border border-[var(--glass-border)] bg-[var(--glass-surface)]">
@@ -347,7 +346,7 @@ export default function TransfersPage() {
         </div>
       )}
 
-      {/* REQUEST MODAL */}
+      {}
       {isRequestModalOpen && selectedResult && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[var(--background)] border border-[var(--glass-border)] rounded-3xl p-8 max-w-md w-full shadow-2xl">
@@ -405,7 +404,7 @@ export default function TransfersPage() {
         </div>
       )}
 
-      {/* RECEIVE MODAL */}
+      {}
       {isReceiveModalOpen && selectedTransfer && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[var(--background)] border border-[var(--glass-border)] rounded-3xl p-8 max-w-md w-full shadow-2xl">
@@ -471,3 +470,4 @@ export default function TransfersPage() {
     </div>
   );
 }
+

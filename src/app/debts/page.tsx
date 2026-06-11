@@ -4,7 +4,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Phone, Search, Plus, X, History, CreditCard, Loader2, ArrowUpRight, DollarSign, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Debtor, getDebtors, addDebtor, recordPayment, getPaymentHistory, DebtPayment } from '@/lib/api/debts';
-
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { debtorSchema, debtPaymentSchema } from '@/lib/validations';
+import { z } from 'zod';
+import { cn } from '@/lib/utils';
 export default function DebtsPage() {
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,8 +20,18 @@ export default function DebtsPage() {
   const [paymentHistory, setPaymentHistory] = useState<DebtPayment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  const [formData, setFormData] = useState({ name: '', phone: '' });
-  const [paymentData, setPaymentData] = useState({ amount: '', payment_type: 'partial' as 'partial' | 'full', note: '' });
+  type DebtorFormValues = z.infer<typeof debtorSchema>;
+  const { register: registerAdd, handleSubmit: handleSubmitAdd, formState: { errors: errorsAdd }, reset: resetAdd } = useForm<DebtorFormValues>({
+    resolver: zodResolver(debtorSchema),
+    defaultValues: { name: '', phone: '' }
+  });
+
+  type PaymentFormValues = z.infer<typeof debtPaymentSchema>;
+  const { register: registerPayment, handleSubmit: handleSubmitPayment, formState: { errors: errorsPayment }, reset: resetPayment, setValue: setPaymentValue, watch: watchPayment } = useForm<PaymentFormValues>({
+    resolver: zodResolver(debtPaymentSchema),
+    defaultValues: { payment_type: 'partial', note: '' }
+  });
+  const currentPaymentType = watchPayment('payment_type');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,13 +51,12 @@ export default function DebtsPage() {
     }
   };
 
-  const handleAddDebtor = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onAddDebtor = async (data: DebtorFormValues) => {
     setErrorMessage(null);
     try {
-      await addDebtor(formData);
+      await addDebtor(data);
       setIsAddModalOpen(false);
-      setFormData({ name: '', phone: '' });
+      resetAdd();
       await fetchDebtors();
     } catch (err) {
       console.error("Add debtor error", err);
@@ -51,26 +64,19 @@ export default function DebtsPage() {
     }
   };
 
-  const handleRecordPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onRecordPayment = async (data: PaymentFormValues) => {
     if (!selectedDebtor) return;
     setErrorMessage(null);
     
-    const parsedAmount = parseFloat(paymentData.amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      setErrorMessage("يرجى إدخال مبلغ سداد صحيح أكبر من الصفر.");
-      return;
-    }
-
     try {
       await recordPayment({
         debtor_id: selectedDebtor.id,
-        amount: parsedAmount,
-        payment_type: paymentData.payment_type,
-        note: paymentData.note
+        amount: data.amount,
+        payment_type: data.payment_type,
+        note: data.note
       });
       setIsPaymentModalOpen(false);
-      setPaymentData({ amount: '', payment_type: 'partial', note: '' });
+      resetPayment();
       await fetchDebtors();
     } catch (err) {
       console.error("Payment error", err);
@@ -94,7 +100,6 @@ export default function DebtsPage() {
     }
   };
 
-  // تحسين البحث وحمايته باستخدام useMemo لتفادي التكرار عند إعادة الريندر
   const filteredDebtors = useMemo(() => {
     const searchLower = search.trim().toLowerCase();
     if (!searchLower) return debtors;
@@ -105,7 +110,6 @@ export default function DebtsPage() {
     );
   }, [debtors, search]);
 
-  // حساب إجمالي الديون بشكل آمن ومعزز بالأداء
   const totalOutstanding = useMemo(() => {
     return debtors.reduce((acc, d) => acc + (Number(d.total_debt) || 0), 0);
   }, [debtors]);
@@ -141,7 +145,7 @@ export default function DebtsPage() {
         </button>
       </header>
 
-      {/* Summary Stats */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="glass-panel p-6 border border-white/5 rounded-2xl bg-white/5">
            <div className="flex justify-between items-center mb-2">
@@ -164,7 +168,7 @@ export default function DebtsPage() {
         </div>
       </div>
 
-      {/* Search Bar */}
+      {}
       <div className="glass-panel p-4 flex items-center gap-4 border border-white/5 rounded-xl bg-white/5">
         <Search className="w-5 h-5 text-gray-500" />
         <input 
@@ -220,7 +224,7 @@ export default function DebtsPage() {
                   onClick={() => {
                     setErrorMessage(null);
                     setSelectedDebtor(debtor);
-                    setPaymentData({ amount: debtor.total_debt.toString(), payment_type: 'full', note: '' });
+                    resetPayment();
                     setIsPaymentModalOpen(true);
                   }}
                   className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#00CED1] text-black font-bold font-cairo hover:shadow-[0_0_15px_rgba(0,206,209,0.3)] transition-all text-sm"
@@ -243,7 +247,7 @@ export default function DebtsPage() {
         </div>
       )}
 
-      {/* Add Debtor Modal */}
+      {}
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -257,14 +261,31 @@ export default function DebtsPage() {
               className="relative w-full max-w-md glass-panel p-8 bg-[#0a0a0a] border border-white/10 rounded-2xl z-10 text-right"
             >
               <h2 className="text-2xl font-bold font-cairo mb-6 text-white">إضافة عميل ديون جديد</h2>
-              <form onSubmit={handleAddDebtor} className="space-y-6">
+              <form onSubmit={handleSubmitAdd(onAddDebtor)} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-400 font-cairo block">اسم العميل بالكامل</label>
-                  <input required type="text" className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 font-cairo text-white focus:border-[#00CED1] transition-colors" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  <input 
+                    type="text" 
+                    {...registerAdd('name')}
+                    className={cn(
+                      "w-full bg-white/5 border outline-none rounded-xl p-3 font-cairo text-white focus:border-[#00CED1] transition-colors",
+                      errorsAdd.name ? "border-red-500" : "border-white/10"
+                    )}
+                  />
+                  {errorsAdd.name && <p className="text-red-400 text-xs font-cairo">{errorsAdd.name.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-400 font-cairo block">رقم الهاتف</label>
-                  <input type="text" className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 text-white focus:border-[#00CED1] transition-colors font-sans" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="01xxxxxxxxx" />
+                  <input 
+                    type="text" 
+                    {...registerAdd('phone')}
+                    className={cn(
+                      "w-full bg-white/5 border outline-none rounded-xl p-3 text-white focus:border-[#00CED1] transition-colors font-sans",
+                      errorsAdd.phone ? "border-red-500" : "border-white/10"
+                    )}
+                    placeholder="01xxxxxxxxx" 
+                  />
+                  {errorsAdd.phone && <p className="text-red-400 text-xs font-cairo">{errorsAdd.phone.message}</p>}
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button type="submit" className="flex-1 bg-[#00CED1] text-black py-3 rounded-xl font-bold font-cairo hover:bg-[#00CED1]/90 transition-colors">إضافة العميل</button>
@@ -276,7 +297,7 @@ export default function DebtsPage() {
         )}
       </AnimatePresence>
 
-      {/* Payment Modal */}
+      {}
       <AnimatePresence>
         {isPaymentModalOpen && selectedDebtor && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -292,13 +313,23 @@ export default function DebtsPage() {
               <h2 className="text-2xl font-bold font-cairo mb-1 text-white">تسجيل عملية سداد</h2>
               <p className="text-gray-400 font-cairo text-sm mb-6">العميل: <span className="text-[#00CED1] font-bold">{selectedDebtor.name}</span></p>
               
-              <form onSubmit={handleRecordPayment} className="space-y-6">
+              <form onSubmit={handleSubmitPayment(onRecordPayment)} className="space-y-6">
                  <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-400 font-cairo block">المبلغ المسدد</label>
                   <div className="relative">
-                    <input required type="number" step="0.01" className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 pr-4 pl-12 text-2xl font-bold text-[#00CED1] font-sans text-left" value={paymentData.amount} onChange={e => setPaymentData({...paymentData, amount: e.target.value})} placeholder="0.00" />
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      {...registerPayment('amount')}
+                      className={cn(
+                        "w-full bg-white/5 border outline-none rounded-xl p-3 pr-4 pl-12 text-2xl font-bold text-[#00CED1] font-sans text-left",
+                        errorsPayment.amount ? "border-red-500" : "border-white/10"
+                      )}
+                      placeholder="0.00" 
+                    />
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-cairo text-xs">ج.م</span>
                   </div>
+                  {errorsPayment.amount && <p className="text-red-400 text-xs font-cairo">{errorsPayment.amount.message}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -306,20 +337,32 @@ export default function DebtsPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       type="button"
-                      onClick={() => setPaymentData({...paymentData, payment_type: 'partial'})}
-                      className={`py-3 rounded-xl font-cairo text-sm border transition-all ${paymentData.payment_type === 'partial' ? 'bg-[#00CED1]/10 border-[#00CED1] text-[#00CED1] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                      onClick={() => setPaymentValue('payment_type', 'partial')}
+                      className={`py-3 rounded-xl font-cairo text-sm border transition-all ${currentPaymentType === 'partial' ? 'bg-[#00CED1]/10 border-[#00CED1] text-[#00CED1] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
                     >سداد جزئي</button>
                     <button 
                       type="button"
-                      onClick={() => setPaymentData({...paymentData, payment_type: 'full', amount: selectedDebtor.total_debt.toString()})}
-                      className={`py-3 rounded-xl font-cairo text-sm border transition-all ${paymentData.payment_type === 'full' ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                      onClick={() => {
+                        setPaymentValue('payment_type', 'full');
+                        setPaymentValue('amount', selectedDebtor.total_debt);
+                      }}
+                      className={`py-3 rounded-xl font-cairo text-sm border transition-all ${currentPaymentType === 'full' ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
                     >كلي (تصفية الحساب)</button>
                   </div>
+                  {errorsPayment.payment_type && <p className="text-red-400 text-xs font-cairo">{errorsPayment.payment_type.message}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-400 font-cairo block">ملاحظات (اختياري)</label>
-                  <textarea className="w-full bg-white/5 border border-white/10 outline-none rounded-xl p-3 font-cairo resize-none h-20 text-white focus:border-[#00CED1] text-sm" value={paymentData.note} onChange={e => setPaymentData({...paymentData, note: e.target.value})} placeholder="مثال: استلام نقدي بموجب إيصال" />
+                  <textarea 
+                    {...registerPayment('note')}
+                    className={cn(
+                      "w-full bg-white/5 border outline-none rounded-xl p-3 font-cairo resize-none h-20 text-white focus:border-[#00CED1] text-sm",
+                      errorsPayment.note ? "border-red-500" : "border-white/10"
+                    )}
+                    placeholder="مثال: استلام نقدي بموجب إيصال" 
+                  />
+                  {errorsPayment.note && <p className="text-red-400 text-xs font-cairo">{errorsPayment.note.message}</p>}
                 </div>
 
                 <div className="flex gap-3 pt-2">
@@ -332,7 +375,7 @@ export default function DebtsPage() {
         )}
       </AnimatePresence>
 
-      {/* History Modal */}
+      {}
       <AnimatePresence>
         {isHistoryModalOpen && selectedDebtor && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">

@@ -6,46 +6,49 @@ import { PackageOpen, Save, ArrowLeft, Loader2, Barcode as BarcodeIcon, Tag, Cal
 import { motion, AnimatePresence } from 'framer-motion';
 import { treatmentTypes } from '@/lib/unitOptions';
 import { createProductWithBatch } from '@/lib/api/createProduct';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { productSchema } from '@/lib/validations';
+import { z } from 'zod';
+import { cn } from '@/lib/utils';
+
+type ProductFormValues = z.infer<typeof productSchema>;
 
 export default function CreateProduct() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [aiChoices, setAiChoices] = useState<any[]>([]);
   const [showChoices, setShowChoices] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    // Product
-    name: '',
-    type: treatmentTypes[0].name,
-    company: '',
-    unit_conversion: 1,
-    inventory_method: 'FEFO',
-    
-    // Batch
-    barcode: '',
-    quantity: 0,
-    purchase_price: 0,
-    selling_price: 0,
-    expiry_date: '',
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ProductFormValues>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: '',
+      type: treatmentTypes[0].name,
+      company: '',
+      unit_conversion: 1,
+      barcode: '',
+      quantity: 0,
+      purchase_price: 0,
+      selling_price: 0,
+      expiry_date: '',
+    }
   });
 
-  const selectedTreatmentType = treatmentTypes.find(t => t.name === formData.type);
+  const watchType = watch('type');
+  const watchName = watch('name');
+  
+  const selectedTreatmentType = treatmentTypes.find(t => t.name === watchType);
   const showUnitConversion = selectedTreatmentType?.hasConversion;
-
-  const [formError, setFormError] = useState<string | null>(null);
 
   const showError = (msg: string) => {
     setFormError(msg);
     setTimeout(() => setFormError(null), 3000);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleAiAutofill = async () => {
-    if (!formData.name) {
+    if (!watchName) {
       showError("الرجاء إدخال اسم المنتج أولاً لاستخدام الإكمال الذكي");
       return;
     }
@@ -54,7 +57,7 @@ export default function CreateProduct() {
       const res = await fetch('/api/ai-autofill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productName: formData.name })
+        body: JSON.stringify({ productName: watchName })
       });
       const data = await res.json();
       
@@ -62,15 +65,11 @@ export default function CreateProduct() {
 
       if (data.choices && data.choices.length > 0) {
         if (data.choices.length === 1) {
-          // If only 1 choice, auto-fill directly
           const choice = data.choices[0];
-          setFormData(prev => ({
-            ...prev,
-            name: choice.name || prev.name,
-            company: choice.company || prev.company,
-            type: choice.type || prev.type,
-            unit_conversion: choice.unit_conversion || prev.unit_conversion,
-          }));
+          if (choice.name) setValue('name', choice.name);
+          if (choice.company) setValue('company', choice.company);
+          if (choice.type) setValue('type', choice.type);
+          if (choice.unit_conversion) setValue('unit_conversion', choice.unit_conversion);
         } else {
           setAiChoices(data.choices);
           setShowChoices(true);
@@ -85,37 +84,21 @@ export default function CreateProduct() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // 1. String Trimming Guard
-    const trimmedName = formData.name.trim();
-    if (!trimmedName) {
-      showError('خطأ: يجب إدخال اسم المنتج بشكل صحيح ولا يمكن أن يكون مسافات فارغة.');
-      return;
-    }
-
-    // 2. Zero or Negative Numbers Protection
-    const qty = Number(formData.quantity);
-    const pPrice = Number(formData.purchase_price);
-    const sPrice = Number(formData.selling_price);
-    const uConv = showUnitConversion ? Number(formData.unit_conversion) : 1;
-
-    if (qty <= 0 || pPrice <= 0 || sPrice <= 0 || uConv <= 0) {
-      showError('خطأ: الكمية، الأسعار، ومعامل التحويل يجب أن تكون أكبر من صفر.');
-      return;
-    }
-
+  const onSubmit = async (data: ProductFormValues) => {
     setLoading(true);
-
     try {
       const { success, error } = await createProductWithBatch({
-        ...formData,
-        unit: 'علبة', // Default base unit
-        quantity: Number(formData.quantity),
-        purchase_price: Number(formData.purchase_price),
-        selling_price: Number(formData.selling_price),
-        unit_conversion: showUnitConversion ? Number(formData.unit_conversion) : 1,
+        name: data.name,
+        type: data.type,
+        company: data.company || '',
+        inventory_method: 'FEFO',
+        barcode: data.barcode,
+        expiry_date: data.expiry_date,
+        unit: 'علبة',
+        quantity: data.quantity,
+        purchase_price: data.purchase_price,
+        selling_price: data.selling_price,
+        unit_conversion: showUnitConversion ? data.unit_conversion : 1,
         pharmacy_id: localStorage.getItem('selected_pharmacy_id') || undefined,
       });
 
@@ -165,13 +148,10 @@ export default function CreateProduct() {
                   <div 
                     key={idx}
                     onClick={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        name: choice.name || prev.name,
-                        company: choice.company || prev.company,
-                        type: choice.type || prev.type,
-                        unit_conversion: choice.unit_conversion || prev.unit_conversion,
-                      }));
+                      if (choice.name) setValue('name', choice.name);
+                      if (choice.company) setValue('company', choice.company);
+                      if (choice.type) setValue('type', choice.type);
+                      if (choice.unit_conversion) setValue('unit_conversion', choice.unit_conversion);
                       setShowChoices(false);
                     }}
                     className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-[#00CED1]/10 hover:border-[#00CED1]/30 cursor-pointer transition-all text-right group"
@@ -217,9 +197,8 @@ export default function CreateProduct() {
         </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         
-        {/* Product Details Section */}
         <div className="glass-panel p-8 space-y-6 relative overflow-hidden">
            <div className="absolute top-0 right-0 w-1 h-full bg-[#00CED1]"></div>
            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 font-cairo">
@@ -232,13 +211,14 @@ export default function CreateProduct() {
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">اسم المنتج <span className="text-red-400">*</span></label>
                   <input 
-                    required
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors font-cairo text-right"
+                    {...register('name')}
+                    className={cn(
+                      "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo text-right",
+                      errors.name ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    )}
                     placeholder="مثال: بانادول إكسترا 500 مجم"
                   />
+                  {errors.name && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.name.message}</p>}
                 </div>
                 <button 
                   type="button" 
@@ -256,9 +236,7 @@ export default function CreateProduct() {
                   <Factory className="w-4 h-4" /> الشركة المصنعة <span className="text-gray-500 text-xs">(اختياري)</span>
                 </label>
                 <input 
-                  name="company"
-                  value={formData.company}
-                  onChange={handleChange}
+                  {...register('company')}
                   className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors font-cairo text-right"
                   placeholder="مثال: فاركو أو GSK"
                 />
@@ -267,16 +245,17 @@ export default function CreateProduct() {
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">التصنيف (النوع) <span className="text-red-400">*</span></label>
                 <select 
-                  required
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors appearance-none font-cairo"
+                  {...register('type')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors appearance-none font-cairo",
+                    errors.type ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
                 >
                   {treatmentTypes.map(t => (
                     <option key={t.id} value={t.name}>{t.name}</option>
                   ))}
                 </select>
+                {errors.type && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.type.message}</p>}
               </div>
 
               {showUnitConversion ? (
@@ -285,15 +264,15 @@ export default function CreateProduct() {
                     معامل التحويل (عدد الأشرطة/الأمبولات بالعلبة) <span className="text-red-400">*</span>
                   </label>
                   <input 
-                    required
                     type="number"
                     min="1"
-                    name="unit_conversion"
-                    value={formData.unit_conversion}
-                    onChange={handleChange}
-                    className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors font-cairo"
+                    {...register('unit_conversion')}
+                    className={cn(
+                      "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                      errors.unit_conversion ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    )}
                   />
-                  <p className="text-xs text-gray-500 mt-1 font-cairo">مثال: العلبة بها 3 أشرطة، اكتب 3</p>
+                  {errors.unit_conversion && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.unit_conversion.message}</p>}
                 </div>
               ) : (
                 <div></div>
@@ -301,7 +280,6 @@ export default function CreateProduct() {
            </div>
         </div>
 
-        {/* Initial Batch Section */}
         <div className="glass-panel p-8 space-y-6 relative overflow-hidden">
            <div className="absolute top-0 right-0 w-1 h-full bg-[#D4AF37]"></div>
            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 font-cairo">
@@ -316,13 +294,14 @@ export default function CreateProduct() {
                   <BarcodeIcon className="w-4 h-4" /> الباركود <span className="text-red-400">*</span>
                 </label>
                 <input 
-                  required
-                  name="barcode"
-                  value={formData.barcode}
-                  onChange={handleChange}
-                  className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors font-cairo"
+                  {...register('barcode')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                    errors.barcode ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
                   placeholder="امسح أو اكتب الباركود..."
                 />
+                {errors.barcode && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.barcode.message}</p>}
               </div>
 
               <div className="lg:col-span-1">
@@ -330,26 +309,28 @@ export default function CreateProduct() {
                   <Calendar className="w-4 h-4" /> تاريخ الانتهاء <span className="text-red-400">*</span>
                 </label>
                 <input 
-                  required
                   type="date"
-                  name="expiry_date"
-                  value={formData.expiry_date}
-                  onChange={handleChange}
-                  className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors [color-scheme:dark] font-cairo"
+                  {...register('expiry_date')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors [color-scheme:dark] font-cairo",
+                    errors.expiry_date ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
                 />
+                {errors.expiry_date && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.expiry_date.message}</p>}
               </div>
 
               <div className="lg:col-span-1">
                 <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">الكمية (بالعلب) <span className="text-red-400">*</span></label>
                 <input 
-                  required
                   type="number"
                   min="0"
-                  name="quantity"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors font-cairo"
+                  {...register('quantity')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                    errors.quantity ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
                 />
+                {errors.quantity && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.quantity.message}</p>}
               </div>
 
               <div>
@@ -357,15 +338,16 @@ export default function CreateProduct() {
                   <DollarSign className="w-4 h-4 text-red-400" /> سعر الشراء (ج.م) <span className="text-red-400">*</span>
                 </label>
                 <input 
-                  required
                   type="number"
                   step="0.01"
                   min="0"
-                  name="purchase_price"
-                  value={formData.purchase_price}
-                  onChange={handleChange}
-                  className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors font-cairo"
+                  {...register('purchase_price')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                    errors.purchase_price ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
                 />
+                {errors.purchase_price && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.purchase_price.message}</p>}
               </div>
 
               <div>
@@ -373,15 +355,16 @@ export default function CreateProduct() {
                   <DollarSign className="w-4 h-4 text-green-400" /> سعر البيع (ج.م) <span className="text-red-400">*</span>
                 </label>
                 <input 
-                  required
                   type="number"
                   step="0.01"
                   min="0"
-                  name="selling_price"
-                  value={formData.selling_price}
-                  onChange={handleChange}
-                  className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors font-cairo"
+                  {...register('selling_price')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                    errors.selling_price ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
                 />
+                {errors.selling_price && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.selling_price.message}</p>}
               </div>
 
            </div>
@@ -402,3 +385,4 @@ export default function CreateProduct() {
     </div>
   );
 }
+

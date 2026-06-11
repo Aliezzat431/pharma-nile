@@ -67,7 +67,7 @@ export default function ReturnsPage() {
     try {
       await processReturn(order.id);
       setReturnSuccess(order.id);
-      // Remove the returned order from local state immediately
+
       setOrders(prev => prev.filter(o => o.id !== order.id));
       setExpandedId(null);
       setTimeout(() => setReturnSuccess(null), 3000);
@@ -116,7 +116,7 @@ export default function ReturnsPage() {
         </div>
       </header>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -157,7 +157,7 @@ export default function ReturnsPage() {
         </motion.div>
       </div>
 
-      {/* Search */}
+      {}
       <div className="glass-panel p-2 flex items-center gap-3">
         <Search className="w-5 h-5 text-gray-400 mr-3" />
         <input
@@ -169,7 +169,7 @@ export default function ReturnsPage() {
         />
       </div>
 
-      {/* Orders List */}
+      {}
       <div className="space-y-3">
         {loading ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
@@ -195,7 +195,7 @@ export default function ReturnsPage() {
                 transition={{ delay: i * 0.03 }}
                 className="glass-card overflow-hidden transition-all border-white/5"
               >
-                {/* Order Header */}
+                {}
                 <div
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
                   className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
@@ -230,7 +230,7 @@ export default function ReturnsPage() {
                     {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
                   </div>
 
-                {/* Expanded: Order Items + Return Button */}
+                {}
                 <AnimatePresence>
                   {isExpanded && (
                     <motion.div
@@ -240,7 +240,7 @@ export default function ReturnsPage() {
                       className="overflow-hidden"
                     >
                       <div className="border-t border-white/5 bg-black/5">
-                        {/* Items Table */}
+                        {}
                         <div className="p-5">
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {order.order_items.map((item) => (
@@ -264,7 +264,7 @@ export default function ReturnsPage() {
                           </div>
                         </div>
 
-                        {/* Return Action */}
+                        {}
                         <div className="p-5 pt-0 flex justify-end">
                           <button
                             onClick={(e) => {
@@ -283,7 +283,7 @@ export default function ReturnsPage() {
                           </button>
                         </div>
 
-                        {/* Return Success */}
+                        {}
                         {justReturned && (
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
@@ -357,3 +357,4 @@ export default function ReturnsPage() {
     </div>
   );
 }
+

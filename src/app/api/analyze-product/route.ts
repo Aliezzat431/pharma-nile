@@ -1,14 +1,12 @@
-// app/api/ai/analyze-product/route.ts
+
 import { NextResponse } from 'next/server';
 import { treatmentTypes } from '@/lib/unitOptions';
 import Groq from 'groq-sdk';
 
-// تهيئة مكتبة Groq SDK
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// نستخدم موديل 70B لأنه الأقوى في استخراج البيانات بهياكل صلبة مثل JSON
 const GROQ_MODEL = "llama3-70b-8192";
 
 export async function POST(req: Request) {
@@ -29,7 +27,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // تجهيز الأنواع المتاحة في النظام لفرضها على دكتور محسن
     const availableTypes = treatmentTypes.map((t) => t.name).join(', ');
 
     const systemPrompt = `You are a pharmaceutical expert assistant in Egypt, embedded in the PharmaNile ERP system ("Dr. Mohsen").
@@ -58,7 +55,6 @@ The required JSON schema layout:
 
     const userMessage = `Analyze the product name: "${productName}"`;
 
-    // الاتصال بـ Groq SDK
     const chatCompletion = await groq.chat.completions.create({
       model: GROQ_MODEL,
       messages: [

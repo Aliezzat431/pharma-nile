@@ -2,12 +2,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
 
-// تهيئة مكتبة Groq SDK
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// موديل Llama 3 المدعوم والقوي جداً في تنفيذ المهام البرمجية وفهم السياق العربي
 const GROQ_MODEL = "llama3-70b-8192";
 
 const supabase = createClient(
@@ -23,7 +21,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    // 1. جلب سياق العمليات الأخيرة لتعزيز وعي العميل الذكي
     const { data: recentLogs } = await supabase
       .from('agent_action_logs')
       .select('*')
@@ -56,7 +53,6 @@ export async function POST(req: Request) {
 سجل العمليات الأخيرة في النظام للوعي: ${JSON.stringify(recentLogs || [])}
 `;
 
-    // 2. إعداد الرسائل وتجهيز الـ History متوافق مع Groq Chat Completion
     const formattedMessages = [
       { role: "system" as const, content: systemPrompt },
       ...(history || [])
@@ -68,7 +64,6 @@ export async function POST(req: Request) {
       { role: "user" as const, content: message }
     ];
 
-    // 3. الاتصال بـ Groq عبر الـ SDK الرسمي
     const chatCompletion = await groq.chat.completions.create({
       messages: formattedMessages,
       model: GROQ_MODEL,
@@ -77,10 +72,8 @@ export async function POST(req: Request) {
 
     const aiResponse = chatCompletion.choices[0]?.message?.content || "";
 
-    // 4. تحليل الأوامر المستخرجة من رد النموذج (Actions Parsing)
     let action: any = null;
-    
-    // تحسين الـ Regex لـ [OPEN_IFRAME:/url:Title] ليدعم الحروف العربية والمسافات بشكل مستقر
+
     const iframeMatch = aiResponse.match(/\[OPEN_IFRAME:([^:]+):([^\]]+)\]/);
     if (iframeMatch) {
       action = {
@@ -90,7 +83,6 @@ export async function POST(req: Request) {
       };
     }
 
-    // تحسين الـ Regex لـ [ASK_PERMISSION:Message:Table:Action:Payload] ليدعم الكائنات المعقدة والنصوص العربية والأسطر
     const permissionMatch = aiResponse.match(/\[ASK_PERMISSION:(.*?):(.*?):(.*?):(\{[\s\S]*?\})\]/);
     if (permissionMatch) {
       try {
@@ -108,14 +100,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // 5. تطهير وتنظيف نص الرد الموجه للمستخدم النهائي تماماً من هذه الأكواد الهيكلية
     const cleanContent = aiResponse
       .replace(/\[OPEN_IFRAME:.*?\]/g, "")
       .replace(/\[ASK_PERMISSION:.*?\]/g, "")
       .replace(/\s+/g, " ") // تنظيف المسافات الزائدة الناتجة عن الحذف
       .trim();
 
-    // 6. العودة بالرد النهائي النظيف والـ action المطلوب إن وجد
     return NextResponse.json({ 
       reply: cleanContent || "تمام يا فندم، أنا معاك وجاهز لأي أمر.", 
       action 

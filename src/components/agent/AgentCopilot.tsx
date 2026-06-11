@@ -37,7 +37,7 @@ export default function AgentCopilot() {
     setIsLoading(true);
 
     try {
-      // Create a context summary to send alongside
+
       const response = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,7 +53,6 @@ export default function AgentCopilot() {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
       }
 
-      // Handle Tools/Actions from the Agent
       if (data.action) {
         handleAgentAction(data.action);
       }
@@ -83,7 +82,7 @@ export default function AgentCopilot() {
         }));
         break;
       case 'EXECUTE_SUCCESS':
-        // A direct DB execution succeeded without needing permission
+
         break;
     }
   };
@@ -95,7 +94,7 @@ export default function AgentCopilot() {
     setMessages(prev => [...prev, { role: 'user', content: '[تمت الموافقة على طلب التنفيذ]' }]);
     
     try {
-      // In a real implementation, this hits an API that executes the payload and logs to agent_action_logs
+
       const response = await fetch('/api/agent/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,7 +119,7 @@ export default function AgentCopilot() {
 
   return (
     <>
-      {/* Floating Button */}
+      {}
       {!isChatOpen && (
         <motion.button
           initial={{ scale: 0 }}
@@ -132,7 +131,7 @@ export default function AgentCopilot() {
         </motion.button>
       )}
 
-      {/* Chat Window */}
+      {}
       <AnimatePresence>
         {isChatOpen && (
           <motion.div
@@ -141,7 +140,7 @@ export default function AgentCopilot() {
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             className="fixed bottom-6 left-6 w-[400px] h-[600px] glass-panel border border-[#00CED1]/30 shadow-2xl flex flex-col overflow-hidden z-50"
           >
-            {/* Header */}
+            {}
             <div className="h-16 bg-[#00CED1]/10 border-b border-white/10 flex items-center justify-between px-4">
               <div className="flex items-center gap-3">
                 <div className="bg-[#00CED1] p-2 rounded-lg">
@@ -160,7 +159,7 @@ export default function AgentCopilot() {
               </button>
             </div>
 
-            {/* Messages Area */}
+            {}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((msg, i) => (
                 <div 
@@ -181,7 +180,7 @@ export default function AgentCopilot() {
                 </div>
               ))}
               
-              {/* Approval Box */}
+              {}
               {agentPendingApproval && (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -224,7 +223,7 @@ export default function AgentCopilot() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
+            {}
             <div className="p-4 border-t border-white/10 bg-black/40">
               <div className="flex gap-2">
                 <input
@@ -252,3 +251,4 @@ export default function AgentCopilot() {
     </>
   );
 }
+

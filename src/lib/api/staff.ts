@@ -31,3 +31,4 @@ export async function updateStaffRole(userId: string, role: 'admin' | 'staff') {
     throw error;
   }
 }
+

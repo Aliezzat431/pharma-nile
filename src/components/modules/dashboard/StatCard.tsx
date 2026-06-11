@@ -15,7 +15,7 @@ interface StatCardProps {
 export function StatCard({ label, value, subValue, icon: Icon, variant = 'teal' }: StatCardProps) {
   return (
     <div className="glass-card p-6 relative overflow-hidden group">
-      {/* Decorative Glow */}
+      {}
       <div className={cn(
         "absolute -right-10 -bottom-10 w-32 h-32 blur-[60px] opacity-20 transition-opacity group-hover:opacity-40",
         variant === 'teal' ? "bg-nile-teal" : 
@@ -44,3 +44,4 @@ export function StatCard({ label, value, subValue, icon: Icon, variant = 'teal' 
     </div>
   );
 }
+

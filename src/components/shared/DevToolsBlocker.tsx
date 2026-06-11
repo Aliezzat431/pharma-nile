@@ -5,19 +5,19 @@ import { useEffect } from 'react';
 export default function DevToolsBlocker() {
   useEffect(() => {
     const blockDevTools = (e: KeyboardEvent) => {
-      // F12
+
       if (e.key === 'F12') {
         e.preventDefault();
         e.stopPropagation();
         return false;
       }
-      // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (Dev Tools)
+
       if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
         e.preventDefault();
         e.stopPropagation();
         return false;
       }
-      // Ctrl+U (View Source)
+
       if (e.ctrlKey && e.key.toUpperCase() === 'U') {
         e.preventDefault();
         e.stopPropagation();
@@ -41,3 +41,4 @@ export default function DevToolsBlocker() {
 
   return null;
 }
+

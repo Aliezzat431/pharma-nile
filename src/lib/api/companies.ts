@@ -11,9 +11,7 @@ export interface Company {
   created_at?: string;
 }
 
-/**
- * جلب شركات التوزيع الخاصة بصيدلية معينة فقط
- */
+
 export async function getCompanies(): Promise<Company[]> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -32,9 +30,7 @@ export async function getCompanies(): Promise<Company[]> {
   return data as Company[];
 }
 
-/**
- * إضافة شركة توزيع جديدة وربطها بالصيدلية
- */
+
 export async function addCompany(company: Omit<Company, 'id' | 'created_at' | 'pharmacy_id'>): Promise<Company> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -53,9 +49,7 @@ export async function addCompany(company: Omit<Company, 'id' | 'created_at' | 'p
   return data as Company;
 }
 
-/**
- * تحديث بيانات شركة مع التحقق من ملكية الصيدلية لها (حماية الـ Mutation)
- */
+
 export async function updateCompany(id: string, updates: Partial<Omit<Company, 'id' | 'pharmacy_id' | 'created_at'>>): Promise<Company> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -76,9 +70,7 @@ export async function updateCompany(id: string, updates: Partial<Omit<Company, '
   return data as Company;
 }
 
-/**
- * حذف شركة توزيع معينة تابعة للصيدلية
- */
+
 export async function deleteCompany(id: string): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -95,3 +87,4 @@ export async function deleteCompany(id: string): Promise<void> {
     throw error;
   }
 }
+

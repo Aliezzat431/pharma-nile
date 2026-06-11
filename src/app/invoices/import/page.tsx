@@ -249,7 +249,7 @@ export default function InvoiceImportPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto pb-12 animate-in fade-in duration-500">
-      {/* ── Header ──────────────────────────────────────── */}
+      {}
       <header className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
@@ -266,7 +266,7 @@ export default function InvoiceImportPage() {
           </div>
         </div>
 
-        {/* Mode Toggle */}
+        {}
         <div className="flex gap-2 mt-5">
           <button
             onClick={() => { setMode('ai'); resetAll(); }}
@@ -301,7 +301,7 @@ export default function InvoiceImportPage() {
         </div>
       </header>
 
-      {/* ── Content ───────────────────────────────────── */}
+      {}
       <AnimatePresence mode="wait">
         {mode === 'ai' ? (
           <motion.div
@@ -311,7 +311,7 @@ export default function InvoiceImportPage() {
             exit={{ opacity: 0, y: -10 }}
             className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[70vh]"
           >
-            {/* LEFT — Items Table Panel */}
+            {}
             <ItemsPanel
               items={items}
               scanning={scanning}
@@ -328,7 +328,7 @@ export default function InvoiceImportPage() {
               onRemoveItem={removeItem}
             />
 
-            {/* RIGHT — Upload / AI UI */}
+            {}
             <div className="flex flex-col gap-5 order-1 lg:order-2">
               <div
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
@@ -351,51 +351,34 @@ export default function InvoiceImportPage() {
                 />
 
                 {!selectedFile ? (
-                  <div className="text-center space-y-4">
-                    <div className="relative mx-auto w-20 h-20">
-                      <div className="absolute inset-0 rounded-full animate-ping opacity-20"
-                           style={{ background: `radial-gradient(circle, var(--nile-teal), transparent)` }} />
-                      <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
-                           style={{ background: 'rgba(0,206,209,0.1)', border: '1px solid rgba(0,206,209,0.3)' }}>
-                        <Upload className="w-9 h-9" style={{ color: TEAL }} />
-                      </div>
+                  <div className="flex flex-col items-center gap-4 py-8">
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center relative shadow-[0_0_40px_rgba(0,206,209,0.15)]"
+                         style={{ background: 'linear-gradient(135deg, rgba(0,206,209,0.1), rgba(212,175,55,0.1))' }}>
+                      <Upload className="w-8 h-8 text-[var(--nile-teal)] relative z-10" />
                     </div>
-                    <div>
-                      <p className="text-lg font-bold font-cairo text-white">
-                        {dragOver ? 'أفلت الصورة هنا' : 'اسحب وأفلت صورة الفاتورة'}
+                    <div className="text-center">
+                      <p className="font-bold text-lg font-cairo text-white mb-1">
+                        اسحب وأفلت صورة الفاتورة هنا
                       </p>
-                      <p className="text-gray-500 text-sm font-cairo mt-1">أو اضغط للاختيار من جهازك</p>
-                      <p className="text-gray-600 text-xs font-cairo mt-2">يدعم JPG, PNG, WEBP حتى 20 ميجا</p>
+                      <p className="text-sm font-cairo text-gray-500">
+                        أو اضغط لتصفح الملفات (PNG, JPG)
+                      </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-full relative">
-                    <img src={previewUrl!} alt="Invoice preview" className="w-full max-h-[450px] object-contain rounded-xl" />
-                    <div className="absolute top-2 right-2 flex gap-2">
-                      <button
-                        onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                        className="glass-card px-3 py-1.5 text-xs font-cairo flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors"
-                      >
-                        <RefreshCw className="w-3 h-3" /> تغيير الصورة
-                      </button>
-                      <button
-                        onClick={e => { e.stopPropagation(); setSelectedFile(null); setPreviewUrl(null); setItems([]); setPhase('upload'); }}
-                        className="glass-card p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+                  <div className="relative w-full h-[250px] rounded-2xl overflow-hidden border border-white/10 group">
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center backdrop-blur-sm">
+                      <p className="font-cairo text-white font-bold flex items-center gap-2">
+                        <Edit3 className="w-5 h-5" />
+                        تغيير الصورة
+                      </p>
                     </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 font-cairo">
-                      <FileImage className="w-4 h-4" />
-                      {selectedFile.name}
-                      <span className="text-gray-600">•</span>
-                      {(selectedFile.size / 1024).toFixed(1)} KB
-                    </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={previewUrl!} alt="Invoice" className="w-full h-full object-contain" />
                   </div>
                 )}
               </div>
 
-              {/* Error */}
               <AnimatePresence>
                 {scanError && (
                   <motion.div
@@ -413,7 +396,7 @@ export default function InvoiceImportPage() {
                 )}
               </AnimatePresence>
 
-              {/* Scan button */}
+              {}
               <button
                 onClick={handleScan}
                 disabled={!selectedFile || scanning || phase === 'done'}
@@ -435,7 +418,7 @@ export default function InvoiceImportPage() {
                 )}
               </button>
 
-              {/* How it works */}
+              {}
               <div className="glass-panel p-5">
                 <h3 className="font-bold font-cairo text-sm mb-4 text-gray-300 flex items-center gap-2">
                   <Sparkles className="w-4 h-4" style={{ color: GOLD }} />
@@ -458,7 +441,7 @@ export default function InvoiceImportPage() {
             </div>
           </motion.div>
         ) : (
-          /* ── MANUAL MODE ─────────────────────────────── */
+          
           <motion.div
             key="manual"
             initial={{ opacity: 0, y: 10 }}
@@ -684,7 +667,6 @@ export default function InvoiceImportPage() {
   );
 }
 
-// ── Missing Sub-Component: ItemsPanel ────────────────────────────────────
 interface ItemsPanelProps {
   items: ExtractedItem[];
   scanning: boolean;
@@ -760,7 +742,7 @@ function ItemsPanel({
 
   return (
     <div className="glass-panel p-5 flex flex-col gap-4 order-2 lg:order-1 min-h-[500px]">
-      {/* Panel Action Header */}
+      {}
       <div className="flex justify-between items-center border-b border-white/5 pb-3 flex-wrap gap-2">
         <div>
           <h2 className="font-bold font-cairo text-white text-base">الأصناف المستخرجة ({items.length})</h2>
@@ -773,7 +755,7 @@ function ItemsPanel({
         </div>
       </div>
 
-      {/* Stats Counter Row */}
+      {}
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
           <span className="block text-emerald-400 text-sm font-bold font-mono">{newCount}</span>
@@ -789,7 +771,7 @@ function ItemsPanel({
         </div>
       </div>
 
-      {/* Items Scroll Container */}
+      {}
       <div className="flex-1 overflow-y-auto max-h-[55vh] space-y-3 pr-1 custom-scrollbar">
         <AnimatePresence initial={false}>
           {items.map((item, idx) => (
@@ -804,7 +786,7 @@ function ItemsPanel({
                 ${item._status === 'error' ? 'border-red-500/30 bg-red-500/[0.02]' : ''}
               `}
             >
-              {/* Checking Box & Basic Title */}
+              {}
               <div className="flex items-start gap-2.5">
                 <button
                   onClick={() => onToggleCheck(idx)}
@@ -834,7 +816,7 @@ function ItemsPanel({
                     </h4>
                   )}
 
-                  {/* Inline Editable Fields Layout */}
+                  {}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
                     <div>
                       <span className="text-[9px] text-gray-500 font-cairo block">الكمية</span>
@@ -879,7 +861,7 @@ function ItemsPanel({
                   </div>
                 </div>
 
-                {/* Rightmost Context Options (Edit/Remove/Status) */}
+                {}
                 <div className="flex flex-col items-center justify-between gap-2 self-stretch flex-shrink-0 pl-1">
                   {item._status === 'pending' && (
                     <div className="flex flex-col gap-1">
@@ -908,7 +890,7 @@ function ItemsPanel({
         </AnimatePresence>
       </div>
 
-      {/* CTA Bottom Panel Button Trigger */}
+      {}
       {checkedCount > 0 && (
         <button
           onClick={onSaveAll}

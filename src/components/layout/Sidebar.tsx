@@ -124,7 +124,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {}
       {isMobile && !isCollapsed && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] md:hidden"
@@ -139,7 +139,7 @@ export default function Sidebar() {
         }}
         className={`bg-[var(--panel-bg)] backdrop-blur-xl border-l border-[var(--glass-border)] h-screen fixed right-0 top-0 flex flex-col z-[100] transition-all duration-500 ease-in-out`}
       >
-      {/* Brand Header */}
+      {}
       <div className={`p-6 pb-2 mb-4 transition-all duration-500 ${isCollapsed ? 'px-4' : 'p-8'}`}>
         <div className={`flex items-center gap-3 bg-gradient-to-l bg-[var(--nile-teal)]/10 to-transparent p-3 rounded-2xl border-r-4 border-[var(--nile-teal)] relative group overflow-hidden`}>
           <div className="w-10 h-10 min-w-[40px] rounded-xl bg-[var(--nile-teal)] flex items-center justify-center neon-glow-teal z-10 transition-transform group-hover:rotate-12">
@@ -161,7 +161,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation Links - Scrollable */}
+      {}
       <nav className="flex-1 px-3 space-y-6 overflow-y-auto custom-scrollbar scroll-smooth py-4">
         {menuGroups.map((group, gIdx) => (
           <div key={group.title} className="space-y-1">
@@ -195,14 +195,14 @@ export default function Sidebar() {
                       {(isActive && !isCollapsed) && <div className="mr-auto w-1.5 h-1.5 rounded-full bg-[var(--nile-teal)] neon-glow-teal" />}
                     </Link>
                     
-                    {/* Tooltip for collapsed state */}
+                    {}
                     {isCollapsed && (
                       <div className="absolute left-full ml-4 px-3 py-2 bg-[var(--background)] border border-[var(--glass-border)] rounded-lg text-[var(--foreground)] text-xs font-bold font-cairo opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[200] whitespace-nowrap shadow-2xl">
                         {item.label}
                       </div>
                     )}
                     
-                    {/* Open in Window Button (only in expanded or on hover in collapsed) */}
+                    {}
                     {!isCollapsed && (
                       <button
                         onClick={(e) => {
@@ -228,7 +228,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer / User Profile Section */}
+      {}
       <div className="p-4 border-t border-[var(--glass-border)] space-y-3">
         <div className={`flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${isCollapsed ? 'justify-center' : 'bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)]'}`}>
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--nile-teal)] to-[var(--royal-gold)] p-[2px]">
@@ -265,7 +265,7 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Egypt Style Ornament (Optional/Subtle) */}
+      {}
       {!isCollapsed && (
         <div className="absolute top-[20%] -left-20 w-40 h-40 bg-[var(--nile-teal)]/5 rounded-full blur-[80px] -z-10" />
       )}
@@ -273,3 +273,4 @@ export default function Sidebar() {
     </>
   );
 }
+

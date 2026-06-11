@@ -1,4 +1,4 @@
-// lib/api/ai.ts
+
 export interface AiProductChoice {
   name: string;
   company: string;

@@ -12,18 +12,15 @@ interface PharmacyOption {
 
 export default function RegisterPage() {
   const router = useRouter();
-  
-  // بيانات المستخدم
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
-  // إدارة الصيدليات
+
   const [regType, setRegType] = useState<"join" | "create">("join");
   const [pharmacies, setPharmacies] = useState<PharmacyOption[]>([]);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState("");
-  
-  // بيانات الصيدلية الجديدة
+
   const [newPharmacyName, setNewPharmacyName] = useState("");
   const [newPharmacyAddress, setNewPharmacyAddress] = useState("");
   const [newPharmacyPhone, setNewPharmacyPhone] = useState("");
@@ -32,7 +29,6 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // جلب الصيدليات النشطة المتاحة عند تحميل الشاشة
   useEffect(() => {
     async function loadPharmacies() {
       try {
@@ -90,7 +86,6 @@ export default function RegisterPage() {
     try {
       let targetPharmacyId = selectedPharmacyId;
 
-      // 🏢 المرحلة الأولى: إنشاء صيدلية جديدة
       if (regType === "create") {
         const { data: newPharmacy, error: pharmError } = await supabaseClient
           .from("pharmacies")
@@ -111,7 +106,6 @@ export default function RegisterPage() {
         targetPharmacyId = newPharmacy.id;
       }
 
-      // 🔑 المرحلة الثانية: التسجيل في Supabase Auth
       const { data, error: signUpError } = await supabaseClient.auth.signUp({
         email: email.trim(),
         password,
@@ -126,7 +120,6 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError;
 
-      // 🔒 المرحلة الثالثة: إدخال البيانات المساعدة في الجداول المخصصة
       if (data?.user) {
         await supabaseClient.from("user_profiles").insert([
           {
@@ -176,7 +169,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#050505] relative selection:bg-[#00CED1] selection:text-white py-20 px-4 overflow-y-auto font-cairo text-right" dir="rtl">
-      {/* عناصر الإضاءة الخلفية النيون */}
+      {}
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#00CED1]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#D4AF37]/5 rounded-full blur-[100px] pointer-events-none" />
 
@@ -198,7 +191,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* أزرار اختيار وضع الصيدلية */}
+        {}
         <div className="grid grid-cols-2 gap-2 mb-6 bg-black/60 p-1 rounded-xl border border-white/5">
           <button
             type="button"
@@ -227,7 +220,7 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* الاسم الكامل */}
+          {}
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-400 mr-1 block">الاسم الكامل</label>
             <div className="relative">
@@ -246,7 +239,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* مدخلات الصيدلية المتغيرة */}
+          {}
           {regType === "join" ? (
             <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
               <label className="text-xs font-medium text-gray-400 mr-1 block">اختر الصيدلية المتاحة</label>
@@ -323,7 +316,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* البريد الإلكتروني */}
+          {}
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-400 mr-1 block">البريد الإلكتروني</label>
             <div className="relative">
@@ -343,7 +336,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* كلمة المرور */}
+          {}
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-400 mr-1 block">كلمة المرور</label>
             <div className="relative">
@@ -364,7 +357,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* زر التقديم */}
+          {}
           <button
             type="submit"
             disabled={isLoading}

@@ -16,10 +16,7 @@ export interface RecentTransaction {
   payment_method: string;
 }
 
-/**
- * Uses the server-side get_dashboard_stats RPC to fetch all stats
- * in a single DB round-trip instead of 5 separate queries.
- */
+
 export async function getDashboardStats(): Promise<DashboardStats> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -41,7 +38,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   if (error || !data) {
     console.error('Error fetching dashboard stats via RPC:', error);
-    // Graceful fallback: return zeros
+
     return {
       todaySales: `ج.م 0`,
       todayProfit: `ج.م 0`,
@@ -52,7 +49,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     };
   }
 
-  // Map Arabic day names for weekly chart
   const arabicDays: Record<string, string> = {
     'Sunday':    'الأحد',
     'Monday':    'الاثنين',
@@ -95,3 +91,4 @@ export async function getRecentTransactions(): Promise<RecentTransaction[]> {
   if (error) return [];
   return data || [];
 }
+

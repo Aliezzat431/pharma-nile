@@ -13,7 +13,7 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
   }, [user, loading, router]);
 
   if (loading || !user) {
-    // Simple loading placeholder
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-obsidian">
         <div className="glass-panel p-6 rounded-xl">
@@ -25,3 +25,4 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
 
   return <>{children}</>;
 }
+

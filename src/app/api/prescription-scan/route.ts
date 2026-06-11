@@ -39,11 +39,9 @@ export async function POST(req: Request) {
 
     const groq = new Groq({ apiKey: GROQ_API_KEY });
 
-    // ✅ استخدام موديل أكبر وأدق في القراءة
-// ✅ السطر الصحيح (الأقوى في قراءة الخط العربي والطبي):
+
 const visionModel = 'llama-3.2-90b-vision-preview';
 
-    // ✅ Prompt محسّن جذرياً - يسمح بالعربية والإنجليزية معاً
     const prompt = `You are "Dr. Mohsen", an expert Egyptian pharmacist with 20 years of experience reading handwritten Arabic medical prescriptions.
 
 Your task: Read this prescription image CAREFULLY and extract medications with MAXIMUM ACCURACY.
@@ -111,7 +109,6 @@ Output:
 
 NOW ANALYZE THIS PRESCRIPTION IMAGE:`;
 
-    // 1. Vision Analysis
     const completion = await groq.chat.completions.create({
       model: visionModel,
       temperature: 0.15,
@@ -133,7 +130,6 @@ NOW ANALYZE THIS PRESCRIPTION IMAGE:`;
 
     const rawText = completion.choices?.[0]?.message?.content?.trim() || '{}';
 
-    // 2. Parse JSON safely
     let parsedData: any;
     try {
       parsedData = JSON.parse(rawText);
@@ -152,7 +148,6 @@ NOW ANALYZE THIS PRESCRIPTION IMAGE:`;
       throw new Error('مخرجات الـ AI لا تحتوي على مصفوفة أدوية صالحة.');
     }
 
-    // 3. Clean and validate
     const medicines: ExtractedPrescriptionItem[] = rawMedicines.map((item: any) => {
       const confidence = Math.min(1, Math.max(0, Number(item.confidence) || 0.5));
       
@@ -168,7 +163,6 @@ NOW ANALYZE THIS PRESCRIPTION IMAGE:`;
       };
     }).filter(med => med.medicine_name.length > 0); // Remove empty entries
 
-    // 4. Quality check - flag suspicious results
     const lowConfidenceCount = medicines.filter(m => m.confidence < 0.5).length;
     const overallQuality = parsedData.overall_quality || 
       (lowConfidenceCount > medicines.length / 2 ? 'poor' : 

@@ -16,14 +16,13 @@ export default function AuditLogsPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [search, setSearch] = useState('');
 
-  // Check role manually from metadata or a separate profile call if needed
-  // In our setup, we assume we need to verify admin status
+
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
         router.push('/auth/login');
       } else {
-        // Simple check for admin role in metadata or just proceed if allowed
+
         setIsAdmin(true); 
         fetchLogs();
       }
@@ -68,13 +67,13 @@ export default function AuditLogsPage() {
         </button>
       </header>
 
-      {/* Warning Banner */}
+      {}
       <div className="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex gap-3">
          <AlertTriangle className="text-yellow-500 w-5 h-5 shrink-0" />
          <p className="text-sm text-yellow-200/70 font-cairo">هذه الصفحة مخصصة للمسؤولين فقط. يتم تسجيل كافة عمليات الدخول والاطلاع على هذه السجلات.</p>
       </div>
 
-      {/* Filters */}
+      {}
       <div className="glass-panel p-2 flex items-center gap-3">
         <div className="pl-3 text-gray-500">
            <Search className="w-5 h-5" />
@@ -88,7 +87,7 @@ export default function AuditLogsPage() {
         />
       </div>
 
-      {/* Logs Table-like View */}
+      {}
       <div className="space-y-3">
         {loading ? (
           <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-red-500" /></div>
@@ -137,3 +136,4 @@ export default function AuditLogsPage() {
     </div>
   );
 }
+

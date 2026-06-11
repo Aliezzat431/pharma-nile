@@ -29,5 +29,5 @@ export default function Skeleton({ className = '', count = 1 }: SkeletonProps) {
   );
 }
 
-// Add shimmer animation in CSS or Tailwind config if needed
-// For simplicity, we use framer-motion opacity animation as base.
+
+

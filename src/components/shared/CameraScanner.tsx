@@ -64,7 +64,7 @@ export default function LiveScanner({ onScan, enabled = true }: LiveScannerProps
           disableFlip: false,
         },
         (decodedText) => {
-          // Debounce: ignore same barcode within 3 seconds
+
           const now = Date.now();
           if (decodedText === lastScanTimeRef.current.toString()) return;
           if (now - lastScanTimeRef.current < 3000) return;
@@ -76,7 +76,7 @@ export default function LiveScanner({ onScan, enabled = true }: LiveScannerProps
         () => {}
       );
     } catch (err: any) {
-      // Silently ignore "no camera" errors (desktop dev, etc.)
+
       if (err?.name === 'NotFoundError' || err?.message?.includes('Requested device not found')) return;
       console.warn('Scanner init skipped:', err?.message || err);
     }
@@ -94,7 +94,7 @@ export default function LiveScanner({ onScan, enabled = true }: LiveScannerProps
           const stopPromise = scannerRef.current.stop();
           if (stopPromise) stopPromise.catch(() => {});
         } catch (e) {
-             // Ignore synchronous throw if scanner not fully started
+
         }
         try { scannerRef.current.clear(); } catch {}
         scannerRef.current = null;
@@ -102,8 +102,7 @@ export default function LiveScanner({ onScan, enabled = true }: LiveScannerProps
     };
   }, [enabled, startScanner]);
 
-  // Render a visually hidden div that html5-qrcode needs to mount the video element
-  // No UI at all! Acts as magic in the background.
+
   return (
     <div 
       id="hidden-scanner-viewport" 
@@ -122,3 +121,4 @@ export default function LiveScanner({ onScan, enabled = true }: LiveScannerProps
     />
   );
 }
+

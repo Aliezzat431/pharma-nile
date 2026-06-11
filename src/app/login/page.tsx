@@ -4,24 +4,31 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema } from "@/lib/validations";
+import { z } from "zod";
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { signIn, loading, user } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" }
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
     setError(null);
     try {
-      await signIn(email, password);
+      await signIn(data.email, data.password);
     } catch (err: any) {
       setError(err.message || "خطأ في تسجيل الدخول");
     }
   };
 
-  // If already logged in, redirect (client side) – simple placeholder
   if (user) {
     if (typeof window !== "undefined") {
       window.location.href = "/dashboard";
@@ -32,7 +39,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-obsidian">
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         className="glass-panel w-full max-w-md p-8 space-y-6"
       >
         <h2 className="text-2xl font-bold nile-gradient-text text-center mb-4">
@@ -47,15 +54,15 @@ export default function LoginPage() {
           </label>
           <input
             type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            {...register("email")}
             className={cn(
               "w-full rounded-xl bg-white/5 px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-nile-teal",
-              "placeholder:text-foreground/40"
+              "placeholder:text-foreground/40",
+              errors.email && "focus:ring-red-500 border border-red-500"
             )}
             placeholder="example@domain.com"
           />
+          {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
         </div>
         <div className="space-y-2">
           <label className="block text-sm font-medium text-foreground/70">
@@ -63,15 +70,15 @@ export default function LoginPage() {
           </label>
           <input
             type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            {...register("password")}
             className={cn(
               "w-full rounded-xl bg-white/5 px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-nile-teal",
-              "placeholder:text-foreground/40"
+              "placeholder:text-foreground/40",
+              errors.password && "focus:ring-red-500 border border-red-500"
             )}
             placeholder="••••••••"
           />
+          {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
         </div>
         <button
           type="submit"
@@ -91,3 +98,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

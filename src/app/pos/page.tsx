@@ -14,6 +14,14 @@ import { analyzeProduct } from '@/lib/api/ai'; // Import the new AI helper
 import { undoManager } from '@/lib/undo-manager';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/hooks/useAuth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { customerSchema } from '@/lib/validations';
+import { z } from 'zod';
+import { cn } from '@/lib/utils';
+import { POSHeader } from './components/POSHeader';
+import { POSProductCard } from './components/POSProductCard';
+import { POSCartItem } from './components/POSCartItem';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
 
@@ -33,93 +41,11 @@ export default function POSTerminal() {
   const [batchModal, setBatchModal] = useState<{ isOpen: boolean; item: any | null }>({ isOpen: false, item: null });
   const [batchDistributions, setBatchDistributions] = useState<any[]>([]);
 
-  // AI Agent dynamic windows (Iframes spawned by the AI)
   const [agentWindows, setAgentWindows] = useState<{ id: string; url: string; title: string; x?: number; y?: number }[]>([]);
 
-  // AI Suggestions State (Dr. Mohsen)
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  // ===== AI ROSETTA (PRESCRIPTION) READER STATE =====
-  const [isRosettaOpen, setIsRosettaOpen] = useState(false);
-  const [rosettaFile, setRosettaFile] = useState<File | null>(null);
-  const [rosettaPreview, setRosettaPreview] = useState<string | null>(null);
-  const [isRosettaLoading, setIsRosettaLoading] = useState(false);
-  const [rosettaMedicines, setRosettaMedicines] = useState<any[]>([]);
-  const [rosettaError, setRosettaError] = useState<string | null>(null);
-  const [rosettaSearches, setRosettaSearches] = useState<Record<number, string>>({});
-  const [rosettaSearchResults, setRosettaSearchResults] = useState<Record<number, any[]>>({});
-  const [rosettaAddedIndices, setRosettaAddedIndices] = useState<Set<number>>(new Set());
-  const rosettaFileRef = useRef<HTMLInputElement>(null);
-
-  const handleRosettaFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setRosettaFile(file);
-    setRosettaPreview(URL.createObjectURL(file));
-    setRosettaMedicines([]);
-    setRosettaError(null);
-    setRosettaSearches({});
-    setRosettaSearchResults({});
-    setRosettaAddedIndices(new Set());
-  };
-
-  const handleRosettaScan = async () => {
-    if (!rosettaFile) return;
-    setIsRosettaLoading(true);
-    setRosettaError(null);
-    setRosettaMedicines([]);
-    try {
-      const fd = new FormData();
-      fd.append('prescription', rosettaFile);
-      const res = await fetch('/api/prescription-scan', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'فشل تحليل الروشتة');
-      setRosettaMedicines(data.medicines || []);
-      // Auto-populate search fields with medicine names
-      const searches: Record<number, string> = {};
-      (data.medicines || []).forEach((m: any, idx: number) => { searches[idx] = m.medicine_name; });
-      setRosettaSearches(searches);
-      // Auto-search for each medicine
-      if (pharmacyId) {
-        const { searchProducts } = await import('@/lib/api/products');
-        const resultsMap: Record<number, any[]> = {};
-        await Promise.all(
-          (data.medicines || []).map(async (m: any, idx: number) => {
-            try {
-              const r = await searchProducts(m.medicine_name, pharmacyId);
-              resultsMap[idx] = r as any[];
-            } catch { resultsMap[idx] = []; }
-          })
-        );
-        setRosettaSearchResults(resultsMap);
-      }
-    } catch (err: any) {
-      setRosettaError(err.message || 'حدث خطأ');
-    } finally {
-      setIsRosettaLoading(false);
-    }
-  };
-
-  const handleRosettaAddToCart = (product: any, idx: number) => {
-    addProductToCart(product, false);
-    setRosettaAddedIndices(prev => new Set(prev).add(idx));
-  };
-
-  const handleRosettaSearch = async (idx: number, query: string) => {
-    setRosettaSearches(prev => ({ ...prev, [idx]: query }));
-    if (!pharmacyId || query.length < 2) {
-      setRosettaSearchResults(prev => ({ ...prev, [idx]: [] }));
-      return;
-    }
-    try {
-      const { searchProducts } = await import('@/lib/api/products');
-      const r = await searchProducts(query, pharmacyId);
-      setRosettaSearchResults(prev => ({ ...prev, [idx]: r as any[] }));
-    } catch { /* ignore */ }
-  };
-
-  // Custom Pills Modal State
   const [pillsModal, setPillsModal] = useState<{
     isOpen: boolean;
     type: 'UNIT_CHANGE' | 'CHECKOUT' | null;
@@ -147,7 +73,6 @@ export default function POSTerminal() {
     });
   };
 
-  // --- AI Handlers ---
   const handleAskAI = async () => {
     if (!searchInput.trim()) return;
     setIsAiLoading(true);
@@ -180,10 +105,9 @@ export default function POSTerminal() {
     setSearchInput('');
   };
 
-  // Debounced search logic for live filtering
   useEffect(() => {
     const handleRemoteCommand = (event: MessageEvent) => {
-      // Security check: only allow same origin
+
       if (event.origin !== window.location.origin) return;
 
       const { command, data } = event.data;
@@ -197,7 +121,7 @@ export default function POSTerminal() {
           console.log(`AI Agent added ${product.name} to cart`);
         }
       } else if (command === 'OPEN_WINDOW') {
-        // The AI can spawn windows based on its vision
+
         setAgentWindows(prev => [
           ...prev,
           {
@@ -276,7 +200,7 @@ export default function POSTerminal() {
       addProductToCart(product);
       setSearchInput('');
     } else {
-      // If no exact barcode match, put it in the search bar so text search can find it
+
       setSearchInput(barcode);
     }
   };
@@ -286,20 +210,18 @@ export default function POSTerminal() {
     handleCameraScanRef.current = handleCameraScan;
   });
 
-  // Global hardware barcode scanner listener
   useEffect(() => {
     let barcodeBuffer = '';
     let lastKeyTime = Date.now();
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is typing normally in an input field
+
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
       const currentTime = Date.now();
 
-      // If time between keystrokes is > 50ms, reset buffer (differentiate human typing from scanner)
       if (currentTime - lastKeyTime > 50) {
         barcodeBuffer = '';
       }
@@ -352,9 +274,13 @@ export default function POSTerminal() {
   const [customerSearch, setCustomerSearch] = useState('');
 
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
-  const [newCustomerName, setNewCustomerName] = useState('');
-  const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [isSavingCustomer, setIsSavingCustomer] = useState(false);
+
+  type POSCustomerFormValues = z.infer<typeof customerSchema>;
+  const { register: registerCustomer, handleSubmit: handleSubmitCustomer, formState: { errors: customerErrors }, reset: resetCustomer } = useForm<POSCustomerFormValues>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: { name: '', phone: '', email: '', address: '', creditLimit: 0 }
+  });
 
   useEffect(() => {
     if (paymentMethod === 'debt') {
@@ -364,23 +290,15 @@ export default function POSTerminal() {
     }
   }, [paymentMethod]);
 
-  const handleCreateCustomer = async () => {
-    const trimmedName = newCustomerName.trim();
-    const trimmedPhone = newCustomerPhone.trim();
-    if (!trimmedName) {
-      alert("خطأ: اسم العميل لا يمكن أن يكون فارغاً.");
-      return;
-    }
-
+  const onAddCustomer = async (data: POSCustomerFormValues) => {
     setIsSavingCustomer(true);
     try {
       const { addCustomer } = await import('@/lib/api/customers');
-      const newCust = await addCustomer({ name: trimmedName, phone: trimmedPhone });
+      const newCust = await addCustomer({ name: data.name, phone: data.phone || '' });
       setCustomers([...customers, newCust]);
       setSelectedCustomerId(newCust.id);
       setIsAddingCustomer(false);
-      setNewCustomerName('');
-      setNewCustomerPhone('');
+      resetCustomer();
     } catch (e) {
       console.error(e);
       alert('فشل إضافة عميل جديد');
@@ -390,7 +308,7 @@ export default function POSTerminal() {
   };
 
   const executeCheckoutProcess = async (cartToProcess: any[], totalToProcess: number) => {
-    // 1. Zero or Negative Numbers Protection
+
     if (totalToProcess < 0) {
       alert("خطأ: الإجمالي لا يمكن أن يكون قيمة سالبة.");
       return;
@@ -404,7 +322,7 @@ export default function POSTerminal() {
         alert(`خطأ: السعر للمنتج ${item.name} غير صالح.`);
         return;
       }
-      // 2. Stock Out-of-Bounds Guard
+
       const stockAvailable = item.activeBatches?.reduce((sum: number, b: any) => sum + Number(b.quantity), 0) || 0;
       if (item.quantity > stockAvailable) {
         alert(`خطأ: الكمية المطلوبة من ${item.name} (${item.quantity}) تتجاوز المخزون المتاح (${stockAvailable}).`);
@@ -414,7 +332,7 @@ export default function POSTerminal() {
 
     setIsProcessing(true);
     try {
-      // Map cart items — batch distributions already carry per-batch prices
+
       const itemsWithCost = cartToProcess.map(item => ({
         ...item,
         costPrice: item.activeBatches?.[0]?.purchase_price || 0,
@@ -428,7 +346,6 @@ export default function POSTerminal() {
         paymentMethod === 'debt' ? selectedCustomerId : undefined
       );
 
-      // Register for Undo
       if (result?.id) {
         undoManager.push({
           type: 'SALE',
@@ -516,24 +433,11 @@ export default function POSTerminal() {
   return (
     <div className="w-full h-full flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500">
 
-      {/* Left side - Product Search & Input */}
+      {/* 1. اللوحة اليسرى: البحث، الماسح، والنتائج */}
       <div className="flex-1 min-h-[50vh] lg:min-h-0 flex flex-col gap-6">
-        <header className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold font-cairo">نقطة <span className="text-[#00CED1]">البيع</span> (POS)</h1>
-          <div className="flex gap-4 w-full md:w-auto">
-            <div className="glass-card px-4 py-2 text-sm text-gray-300 flex items-center justify-center gap-2 font-cairo w-full md:w-auto">
-              <Barcode className="w-4 h-4 text-[#00CED1]" /> الماسح جاهز
-            </div>
-            <button
-              onClick={() => setIsRosettaOpen(true)}
-              className="glass-card px-4 py-2 text-sm font-bold font-cairo flex items-center justify-center gap-2 w-full md:w-auto bg-gradient-to-r from-purple-600/20 to-violet-600/20 border border-purple-500/40 text-purple-300 hover:border-purple-400/70 hover:text-purple-200 transition-all hover:scale-105 shadow-[0_0_15px_rgba(139,92,246,0.15)]"
-            >
-              <FileText className="w-4 h-4" /> قراءة روشتة بالذكاء الاصطناعي
-            </button>
-          </div>
-        </header>
+        <POSHeader />
 
-        {/* Search Bar */}
+        {/* شريط البحث */}
         <form onSubmit={handleBarcodeSubmit} className="glass-panel p-2 flex items-center gap-3 relative">
           <div className="pl-3 text-gray-400">
             {isSearching ? <Loader2 className="w-5 h-5 animate-spin text-[#00CED1]" /> : <Search className="w-5 h-5" />}
@@ -548,16 +452,16 @@ export default function POSTerminal() {
           />
         </form>
 
-        {/* Live Barcode Scanner - Always On */}
+        {/* الماسح الضوئي */}
         <LiveScanner onScan={handleCameraScan} />
 
-        {/* Search Results / Products Area */}
+        {/* قائمة المنتجات */}
         <div className="flex-1 glass-card p-6 overflow-y-auto relative">
           <h2 className="text-lg font-medium text-gray-400 mb-4 border-b border-white/10 pb-2 font-cairo">
             {searchInput.length >= 2 ? 'نتائج البحث' : 'قائمة المنتجات'}
           </h2>
 
-          {/* --- UPDATED EMPTY STATE WITH AI INTEGRATION --- */}
+          {/* حالة عدم وجود نتائج */}
           {searchInput.length >= 2 && searchResults.length === 0 && !isSearching && (
             <div className="flex flex-col items-center justify-center p-10 text-gray-500 gap-3">
               <AlertCircle className="w-10 h-10 text-yellow-500/50" />
@@ -615,83 +519,15 @@ export default function POSTerminal() {
           )}
 
           <div className="flex flex-col gap-4">
-            {searchResults.map((product) => {
-              const isExpanded = expandedProductIds.has(product.id);
-
-              return (
-                <div
-                  key={product.id}
-                  className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-colors group hover:border-[#00CED1]/50 flex flex-col"
-                >
-                  {/* Header (Click to quick-add with default FEFO) */}
-                  <div
-                    onClick={() => addProductToCart(product, false)}
-                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/10 relative"
-                  >
-                    <div>
-                      <h3 className="font-bold text-lg text-white group-hover:text-[#00CED1] transition-colors">{product.name}</h3>
-                      <p className="text-sm text-gray-400 font-cairo">{product.company} • السنتر: {product.total_quantity} {product.unit}</p>
-                    </div>
-                    <div className="flex items-center gap-4 text-right">
-                      <div>
-                        <span className="text-[#D4AF37] font-bold text-lg font-cairo cursor-crosshair block">{product.current_price} ج.م</span>
-                        <span className="text-xs text-green-500 font-cairo bg-green-500/10 px-2 py-0.5 rounded-full block mt-1">يُسحب بالأقدم</span>
-                      </div>
-
-                      <button
-                        onClick={(e) => toggleProductBatches(e, product.id)}
-                        className={`text-gray-400 transition-transform bg-[#050505]/40 border border-white/10 p-2 rounded-lg hover:text-white ${isExpanded ? 'rotate-180' : ''}`}
-                        title="عرض التشغيلات المتاحة"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Batches Table Detail */}
-                  <AnimatePresence>
-                    {isExpanded && product.activeBatches && product.activeBatches.length > 0 && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="bg-[#050505]/70 border-t border-white/5 p-3 overflow-hidden"
-                      >
-                        <h4 className="text-xs text-gray-400 mb-2 font-cairo">التشغيلات المتاحة للاختيار من السلة (Batches)</h4>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm text-right">
-                            <thead className="text-xs text-gray-500 uppercase bg-white/5 font-cairo">
-                              <tr>
-                                <th className="px-3 py-2 rounded-tr-lg">رقم التشغيلة</th>
-                                <th className="px-3 py-2">تاريخ الانتهاء</th>
-                                <th className="px-3 py-2">الكمية</th>
-                                <th className="px-3 py-2 rounded-tl-lg">سعر البيع</th>
-                              </tr>
-                            </thead>
-                            <tbody className="font-cairo text-gray-300">
-                              {product.activeBatches.map((b: any, idx: number) => {
-                                const isClosest = idx === 0;
-                                return (
-                                  <tr key={b.id} className={`border-b border-white/5 hover:bg-white/5 ${isClosest ? 'bg-[#00CED1]/5 text-[#00CED1]' : ''}`}>
-                                    <td className="px-3 py-2 font-mono text-xs">{b.barcode || b.id.substring(0, 8)}</td>
-                                    <td className="px-3 py-2">
-                                      {new Date(b.expiry_date).toLocaleDateString('ar-EG')}
-                                      {isClosest && <span className="ml-2 text-[10px] bg-[#00CED1] text-black px-1.5 py-0.5 rounded-sm">الأقرب انتهاءً</span>}
-                                    </td>
-                                    <td className="px-3 py-2">{b.quantity}</td>
-                                    <td className="px-3 py-2">{b.selling_price} ج.م</td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
+            {searchResults.map((product) => (
+              <POSProductCard
+                key={product.id}
+                product={product as any}
+                isExpanded={expandedProductIds.has(product.id)}
+                onAddToCart={addProductToCart}
+                onToggleBatches={toggleProductBatches}
+              />
+            ))}
           </div>
 
           {searchInput.length < 2 && (
@@ -702,7 +538,7 @@ export default function POSTerminal() {
         </div>
       </div>
 
-      {/* Right side - Cart & Checkout */}
+      {}
       <div className="w-full lg:w-[450px] flex flex-col gap-6 h-[50vh] lg:h-auto lg:flex-none">
         <div className="glass-panel flex-1 p-0 overflow-hidden flex flex-col relative">
           <div className="p-6 border-b border-white/5 flex justify-between items-center">
@@ -717,11 +553,11 @@ export default function POSTerminal() {
             )}
           </div>
 
-          {/* Cart Items */}
+          {}
           <div className="flex-1 overflow-y-auto p-2">
             <AnimatePresence>
               {cart.map((item: any) => {
-                // Calculate item total from batch distributions
+
                 const itemTotal = item.batchDistributions && item.batchDistributions.length > 0
                   ? item.batchDistributions.reduce((s: number, d: any) => s + d.quantity * d.price, 0)
                   : item.price * item.quantity;
@@ -729,110 +565,27 @@ export default function POSTerminal() {
                 const totalStock = item.activeBatches?.reduce((s: number, b: any) => s + Number(b.quantity), 0) || 0;
 
                 return (
-                  <motion.div
+                  <POSCartItem
                     key={item.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="mx-2 my-2 glass-card group relative overflow-hidden"
-                  >
-                    <div className="p-4 flex justify-between items-center">
-                      <div className="z-10 flex-1">
-                        <h3 className="font-semibold text-white truncate max-w-[200px] font-cairo">{item.name}</h3>
-                        <div className="flex items-center gap-3 mt-1.5">
-                          {/* Quantity Controls */}
-                          <div className="flex items-center gap-1 bg-[#050505]/50 border border-white/10 rounded-lg">
-                            <button
-                              onClick={() => {
-                                if (item.quantity > 1) {
-                                  dispatch(updateQuantity({ id: item.id, quantity: item.quantity - 1 }));
-                                }
-                              }}
-                              className="px-2 py-1 text-gray-400 hover:text-white transition-colors text-sm font-bold"
-                            >−</button>
-                            <span className="text-sm text-[#00CED1] font-bold font-cairo min-w-[24px] text-center">{item.quantity}</span>
-                            <button
-                              onClick={() => {
-                                if (item.quantity < totalStock) {
-                                  dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }));
-                                }
-                              }}
-                              className="px-2 py-1 text-gray-400 hover:text-white transition-colors text-sm font-bold"
-                            >+</button>
-                          </div>
-                          <select
-                            value={item.unit}
-                            onChange={(e) => {
-                              const newUnit = e.target.value;
-                              if (["قرص", "كبسولة", "قطعة", "لبوسة"].includes(newUnit)) {
-                                setPillsModal({
-                                  isOpen: true,
-                                  type: 'UNIT_CHANGE',
-                                  items: [item],
-                                  currentIndex: 0,
-                                  pendingTargetUnit: newUnit,
-                                });
-                                setPillsInput((item.customPills || 10).toString());
-                              } else {
-                                dispatch(updateUnit({ id: item.id, unit: newUnit }));
-                              }
-                            }}
-                            className="bg-[#050505]/50 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-white outline-none font-cairo focus:border-[#00CED1]/50"
-                          >
-                            {item.availableUnits?.map((u: string) => (
-                              <option key={u} value={u}>{u}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 z-10">
-                        <span className="font-bold text-white text-lg font-cairo ml-2">{Number(itemTotal.toFixed(2))} ج.م</span>
-                        <button
-                          onClick={() => {
-                            setBatchModal({ isOpen: true, item });
-                            setBatchDistributions(item.batchDistributions || []);
-                          }}
-                          className="text-gray-400 hover:text-[#00CED1] transition-colors bg-white/5 p-2 rounded-lg"
-                          title="توزيع التشغيلات"
-                        >
-                          <Package className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => dispatch(removeFromCart(item.id))}
-                          className="text-gray-500 hover:text-red-400 transition-colors bg-white/5 p-2 rounded-lg"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <div className="absolute left-0 top-0 w-1 h-full bg-[#00CED1] opacity-50"></div>
-                    </div>
-
-                    {/* Batch Distribution Breakdown (auto-shown when spanning multiple batches) */}
-                    {hasMultipleBatches && (
-                      <div className="px-4 pb-3 pt-1 border-t border-white/5">
-                        <p className="text-[10px] text-[#D4AF37] font-cairo mb-1.5 flex items-center gap-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>
-                          تم التقسيم على أكثر من تشغيلة (كل تشغيلة بسعرها)
-                        </p>
-                        {item.batchDistributions.map((d: any, idx: number) => (
-                          <div key={d.batchId} className="flex items-center justify-between text-[11px] font-cairo py-1 px-2 rounded-md mb-0.5" style={{background: idx === 0 ? 'rgba(0,206,209,0.08)' : 'rgba(212,175,55,0.06)'}}>
-                            <span className="text-gray-400">
-                              تشغيلة {idx + 1}
-                              <span className="text-gray-600 mx-1">•</span>
-                              <span className="text-gray-500">{new Date(d.expiry).toLocaleDateString('ar-EG')}</span>
-                            </span>
-                            <span dir="ltr" className="font-mono">
-                              <span className={idx === 0 ? 'text-[#00CED1]' : 'text-[#D4AF37]'}>{d.quantity}</span>
-                              <span className="text-gray-600"> × </span>
-                              <span className={idx === 0 ? 'text-[#00CED1]' : 'text-[#D4AF37]'}>{d.price}</span>
-                              <span className="text-gray-600"> = </span>
-                              <span className="text-white font-bold">{Number((d.quantity * d.price).toFixed(2))}</span>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
+                    item={item}
+                    itemTotal={itemTotal}
+                    totalStock={totalStock}
+                    hasMultipleBatches={hasMultipleBatches}
+                    onShowBatchModal={(i) => {
+                      setBatchModal({ isOpen: true, item: i });
+                      setBatchDistributions(i.batchDistributions || []);
+                    }}
+                    onShowPillsModal={(i, newUnit) => {
+                      setPillsModal({
+                        isOpen: true,
+                        type: 'UNIT_CHANGE',
+                        items: [i],
+                        currentIndex: 0,
+                        pendingTargetUnit: newUnit,
+                      });
+                      setPillsInput((i.customPills || 10).toString());
+                    }}
+                  />
                 );
               })}
             </AnimatePresence>
@@ -863,10 +616,10 @@ export default function POSTerminal() {
             )}
           </div>
 
-          {/* Checkout Section */}
+          {}
           <div className="p-6 bg-[#050505]/80 border-t border-white/10 backdrop-blur-md">
 
-            {/* Payment Method Selector */}
+            {}
             <div className="mb-6 space-y-3">
               <label className="text-xs text-gray-500 font-cairo block mr-1">طريقة الدفع</label>
               <div className="grid grid-cols-3 gap-2">
@@ -885,7 +638,7 @@ export default function POSTerminal() {
               </div>
             </div>
 
-            {/* Customer Selection (if Debt) */}
+            {}
             <AnimatePresence>
               {paymentMethod === 'debt' && (
                 <motion.div
@@ -911,30 +664,42 @@ export default function POSTerminal() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="bg-[#D4AF37]/5 border border-[#D4AF37]/20 p-3 rounded-xl mb-3 space-y-3"
+                        className="bg-[#D4AF37]/5 border border-[#D4AF37]/20 p-3 rounded-xl mb-3"
                       >
-                        <input
-                          type="text"
-                          placeholder="اسم العميل"
-                          value={newCustomerName}
-                          onChange={e => setNewCustomerName(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50"
-                        />
-                        <input
-                          type="text"
-                          placeholder="رقم الهاتف (اختياري)"
-                          value={newCustomerPhone}
-                          onChange={e => setNewCustomerPhone(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50"
-                        />
-                        <button
-                          onClick={handleCreateCustomer}
-                          disabled={!newCustomerName.trim() || isSavingCustomer}
-                          className="w-full py-2 rounded-lg bg-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/30 border border-[#D4AF37]/30 flex items-center justify-center gap-2 font-bold font-cairo disabled:opacity-50 transition-colors"
-                        >
-                          {isSavingCustomer ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                          حفظ وتحديد
-                        </button>
+                        <form onSubmit={handleSubmitCustomer(onAddCustomer)} className="space-y-3">
+                          <div>
+                            <input
+                              type="text"
+                              placeholder="اسم العميل"
+                              {...registerCustomer('name')}
+                              className={cn(
+                                "w-full bg-black/40 border rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50",
+                                customerErrors.name ? "border-red-500" : "border-white/10"
+                              )}
+                            />
+                            {customerErrors.name && <p className="text-red-400 text-xs mt-1 font-cairo">{customerErrors.name.message}</p>}
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              placeholder="رقم الهاتف (اختياري)"
+                              {...registerCustomer('phone')}
+                              className={cn(
+                                "w-full bg-black/40 border rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50",
+                                customerErrors.phone ? "border-red-500" : "border-white/10"
+                              )}
+                            />
+                            {customerErrors.phone && <p className="text-red-400 text-xs mt-1 font-cairo">{customerErrors.phone.message}</p>}
+                          </div>
+                          <button
+                            type="submit"
+                            disabled={isSavingCustomer}
+                            className="w-full py-2 rounded-lg bg-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/30 border border-[#D4AF37]/30 flex items-center justify-center gap-2 font-bold font-cairo disabled:opacity-50 transition-colors"
+                          >
+                            {isSavingCustomer ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            حفظ وتحديد
+                          </button>
+                        </form>
                       </motion.div>
                     ) : (
                       <select
@@ -1140,228 +905,8 @@ export default function POSTerminal() {
         )}
       </AnimatePresence>
 
-      {/* ===== AI ROSETTA READER MODAL ===== */}
-      <AnimatePresence>
-        {isRosettaOpen && (
-          <div className="fixed inset-0 bg-[#050505]/85 backdrop-blur-md z-[70] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 24 }}
-              className="bg-[#0a0a14] border border-purple-500/30 rounded-2xl shadow-[0_0_60px_rgba(139,92,246,0.25)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
-            >
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-purple-500/20 bg-gradient-to-r from-purple-900/30 to-violet-900/20 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg">
-                    <ClipboardList className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold font-cairo text-white">قارئ الروشتة الذكي</h2>
-                    <p className="text-xs text-purple-300/70 font-cairo">د. محسن يحلل الروشتة ويقترح الأدوية تلقائياً</p>
-                  </div>
-                </div>
-                <button onClick={() => setIsRosettaOpen(false)} className="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-lg">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-
-                {/* Upload Zone */}
-                <div
-                  onClick={() => rosettaFileRef.current?.click()}
-                  className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all group ${
-                    rosettaFile
-                      ? 'border-purple-500/60 bg-purple-500/5'
-                      : 'border-purple-500/30 hover:border-purple-500/60 hover:bg-purple-500/5'
-                  }`}
-                >
-                  <input
-                    ref={rosettaFileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleRosettaFileChange}
-                  />
-                  {rosettaPreview ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <img
-                        src={rosettaPreview}
-                        alt="الروشتة"
-                        className="max-h-48 rounded-xl border border-white/10 shadow-xl object-contain"
-                      />
-                      <span className="text-xs text-purple-300/70 font-cairo">{rosettaFile?.name} — انقر للتغيير</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
-                        <Upload className="w-7 h-7 text-purple-400" />
-                      </div>
-                      <div>
-                        <p className="text-white font-bold font-cairo">ارفع صورة الروشتة</p>
-                        <p className="text-xs text-gray-500 font-cairo mt-1">JPG, PNG, WebP — انقر أو اسحب الصورة هنا</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Scan Button */}
-                {rosettaFile && (
-                  <button
-                    onClick={handleRosettaScan}
-                    disabled={isRosettaLoading}
-                    className="w-full py-3.5 rounded-xl font-bold font-cairo bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-500 hover:to-violet-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2.5 shadow-[0_4px_20px_rgba(139,92,246,0.4)] hover:shadow-[0_4px_28px_rgba(139,92,246,0.55)] hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    {isRosettaLoading ? (
-                      <><Loader2 className="w-5 h-5 animate-spin" /> جاري تحليل الروشتة...</>
-                    ) : (
-                      <><Pill className="w-5 h-5" /> تحليل الروشتة بالذكاء الاصطناعي</>
-                    )}
-                  </button>
-                )}
-
-                {/* Error */}
-                {rosettaError && (
-                  <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-                    <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-                    <p className="text-red-300 font-cairo text-sm">{rosettaError}</p>
-                  </div>
-                )}
-
-                {/* Results */}
-                {rosettaMedicines.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold font-cairo text-purple-300 flex items-center gap-2">
-                        <ClipboardList className="w-4 h-4" />
-                        الأدوية المستخرجة ({rosettaMedicines.length})
-                      </h3>
-                      <span className="text-xs bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full font-cairo border border-purple-500/30">
-                        {rosettaAddedIndices.size} / {rosettaMedicines.length} تمت الإضافة
-                      </span>
-                    </div>
-
-                    {rosettaMedicines.map((med, idx) => {
-                      const isAdded = rosettaAddedIndices.has(idx);
-                      const results = rosettaSearchResults[idx] || [];
-                      const query = rosettaSearches[idx] ?? med.medicine_name;
-
-                      return (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05 }}
-                          className={`rounded-2xl border overflow-hidden transition-all ${
-                            isAdded
-                              ? 'border-green-500/40 bg-green-500/5'
-                              : 'border-purple-500/25 bg-white/3'
-                          }`}
-                        >
-                          {/* Medicine Header */}
-                          <div className={`px-4 py-3 flex items-start justify-between gap-3 ${
-                            isAdded ? 'bg-green-500/10' : 'bg-purple-500/10'
-                          }`}>
-                            <div className="flex items-start gap-3 flex-1 min-w-0">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                                isAdded ? 'bg-green-500/20' : 'bg-purple-500/20'
-                              }`}>
-                                {isAdded
-                                  ? <CheckCircle2 className="w-4 h-4 text-green-400" />
-                                  : <Pill className="w-4 h-4 text-purple-400" />
-                                }
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className={`font-bold font-cairo truncate ${
-                                  isAdded ? 'text-green-300' : 'text-white'
-                                }`}>{med.medicine_name}</h4>
-                                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                                  {med.dosage && <span className="text-xs text-gray-400 font-cairo">💊 {med.dosage}</span>}
-                                  {med.frequency && <span className="text-xs text-gray-400 font-cairo">🕐 {med.frequency}</span>}
-                                  {med.duration && <span className="text-xs text-gray-400 font-cairo">📅 {med.duration}</span>}
-                                  {med.notes && <span className="text-xs text-yellow-400/70 font-cairo">📝 {med.notes}</span>}
-                                </div>
-                              </div>
-                            </div>
-                            {isAdded && (
-                              <span className="text-xs text-green-400 font-cairo font-bold shrink-0 mt-1">✓ تمت الإضافة</span>
-                            )}
-                          </div>
-
-                          {/* Search field + results */}
-                          {!isAdded && (
-                            <div className="p-3 space-y-2">
-                              <div className="relative">
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                                <input
-                                  type="text"
-                                  value={query}
-                                  onChange={e => handleRosettaSearch(idx, e.target.value)}
-                                  placeholder="ابحث في المخزون..."
-                                  className="w-full bg-white/5 border border-white/10 rounded-xl pr-10 pl-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-purple-500/50 font-cairo transition-colors"
-                                />
-                              </div>
-
-                              {results.length > 0 ? (
-                                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                                  {results.map((prod: any) => (
-                                    <div
-                                      key={prod.id}
-                                      className="flex items-center justify-between p-2.5 bg-white/5 hover:bg-white/10 border border-white/8 rounded-xl transition-colors cursor-pointer group/item"
-                                      onClick={() => handleRosettaAddToCart(prod, idx)}
-                                    >
-                                      <div className="min-w-0 flex-1">
-                                        <p className="text-sm text-white font-cairo truncate font-medium">{prod.name}</p>
-                                        <p className="text-xs text-gray-500 font-cairo">{prod.company} • {prod.total_quantity} {prod.unit}</p>
-                                      </div>
-                                      <div className="flex items-center gap-2 shrink-0 mr-2">
-                                        <span className="text-[#D4AF37] font-bold text-sm font-cairo">{prod.current_price} ج.م</span>
-                                        <button
-                                          onClick={e => { e.stopPropagation(); handleRosettaAddToCart(prod, idx); }}
-                                          className="p-1.5 rounded-lg bg-purple-500/20 text-purple-300 hover:bg-purple-500/40 transition-colors opacity-0 group-hover/item:opacity-100"
-                                        >
-                                          <ShoppingCart className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : query.length >= 2 ? (
-                                <p className="text-xs text-gray-600 font-cairo text-center py-2">لا توجد نتائج في المخزون لهذا الدواء</p>
-                              ) : null}
-                            </div>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-
-                    {/* Quick summary footer */}
-                    {rosettaAddedIndices.size === rosettaMedicines.length && rosettaMedicines.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="p-4 bg-green-500/10 border border-green-500/30 rounded-2xl text-center"
-                      >
-                        <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                        <p className="font-bold text-green-300 font-cairo">تمت إضافة جميع أدوية الروشتة إلى السلة!</p>
-                        <button
-                          onClick={() => setIsRosettaOpen(false)}
-                          className="mt-3 px-6 py-2 rounded-xl bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30 transition-colors font-cairo text-sm font-bold"
-                        >
-                          إغلاق والمتابعة للدفع
-                        </button>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Floating Copilot Button */}
+      {}
       <button
         onClick={() => setIsCopilotOpen(!isCopilotOpen)}
         className="fixed bottom-6 right-6 p-4 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#f2cd56] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-110 transition-transform z-50 flex items-center justify-center font-bold"
@@ -1370,7 +915,7 @@ export default function POSTerminal() {
         {isCopilotOpen ? <X className="w-8 h-8" /> : <Bot className="w-8 h-8" />}
       </button>
 
-      {/* Copilot Iframe Modal/Widget */}
+      {}
       <AnimatePresence>
         {isCopilotOpen && (
           <motion.div
@@ -1394,7 +939,7 @@ export default function POSTerminal() {
         )}
       </AnimatePresence>
 
-      {/* Dynamic Agent Visual Workspaces (Draggable Windows) */}
+      {}
       <AnimatePresence>
         {agentWindows.map((win) => (
           <motion.div

@@ -5,15 +5,24 @@ import { Users, Search, Plus, X, Phone, Mail, MapPin, CreditCard, ChevronRight, 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Customer, getCustomers, addCustomer, recordCustomerPayment } from '@/lib/api/customers';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { customerSchema } from '@/lib/validations';
+import { z } from 'zod';
+import { cn } from '@/lib/utils';
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', phone: '', email: '', address: '' });
 
-  // Selection & Payment
+  type CustomerFormValues = z.infer<typeof customerSchema>;
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<CustomerFormValues>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: { name: '', phone: '', email: '', address: '' }
+  });
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPaymentMode, setIsPaymentMode] = useState(false);
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
@@ -33,12 +42,11 @@ export default function CustomersPage() {
     setLoading(false);
   };
 
-  const handleAddCustomer = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: CustomerFormValues) => {
     try {
-      await addCustomer(formData);
+      await addCustomer(data);
       setIsAddModalOpen(false);
-      setFormData({ name: '', phone: '', email: '', address: '' });
+      reset();
       fetchCustomers();
     } catch (err) {
       console.error("Add customer error", err);
@@ -54,7 +62,6 @@ export default function CustomersPage() {
     });
   };
 
-  // تصفية العملاء بناءً على البحث والفلتر الحالي أولاً
   let filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(search.toLowerCase()) || 
     (c.phone && c.phone.includes(search))
@@ -63,7 +70,6 @@ export default function CustomersPage() {
   if (filterDebt === 'debtors') filteredCustomers = filteredCustomers.filter(c => c.total_debt > 0);
   if (filterDebt === 'clear') filteredCustomers = filteredCustomers.filter(c => c.total_debt === 0);
 
-  // تحديد وإلغاء تحديد العناصر الظاهرة فقط أمام المستخدم لمنع الأخطاء
   const selectAll = () => {
     const allFilteredIds = filteredCustomers.map(c => c.id);
     const isAllSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.has(id));
@@ -79,7 +85,6 @@ export default function CustomersPage() {
     });
   };
 
-  // ربط العملاء المحددين بالقائمة المفلترة فقط لضمان دقة العمليات وحساب المجموع المعروض
   const selectedCustomers = filteredCustomers.filter(c => selectedIds.has(c.id));
   const totalSelectedDebt = selectedCustomers.reduce((acc, c) => acc + c.total_debt, 0);
 
@@ -95,7 +100,6 @@ export default function CustomersPage() {
     setIsPaymentMode(true);
   };
 
-  // تنفيذ المدفوعات بالتوازي باستخدام Promise.all لتحسين الأداء والأمان
   const handleExecutePayments = async () => {
     setProcessingPayment(true);
     try {
@@ -156,7 +160,7 @@ export default function CustomersPage() {
         </div>
       </header>
 
-      {/* Selection Action Bar */}
+      {}
       <AnimatePresence>
         {selectedCustomers.length > 0 && !isPaymentMode && (
           <motion.div 
@@ -194,7 +198,7 @@ export default function CustomersPage() {
         )}
       </AnimatePresence>
 
-      {/* Payment Success Toast */}
+      {}
       <AnimatePresence>
         {paymentSuccess && (
           <motion.div 
@@ -209,7 +213,7 @@ export default function CustomersPage() {
         )}
       </AnimatePresence>
 
-      {/* Filters Area */}
+      {}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 glass-panel p-2 flex items-center gap-3">
           <Search className="w-5 h-5 text-gray-500 mr-2" />
@@ -272,7 +276,7 @@ export default function CustomersPage() {
                 transition={{ delay: i * 0.05 }}
                 className={`glass-panel p-6 border transition-all group relative ${isSelected ? 'border-[#00CED1]/50 bg-[#00CED1]/5 shadow-[0_0_15px_rgba(0,206,209,0.1)]' : 'border-white/5 hover:border-[#00CED1]/30'}`}
               >
-                {/* Selection Checkbox */}
+                {}
                 <button 
                   onClick={() => toggleSelect(customer.id)}
                   className={`absolute top-4 left-4 w-7 h-7 rounded-lg flex items-center justify-center transition-all border ${isSelected ? 'bg-[#00CED1] border-[#00CED1] text-black' : 'bg-white/5 border-white/20 text-transparent hover:border-[#00CED1]/50'}`}
@@ -348,7 +352,7 @@ export default function CustomersPage() {
         </div>
       )}
 
-      {/* =========== Payment Panel (In-Page Modal) =========== */}
+      {}
       <AnimatePresence>
         {isPaymentMode && (
           <div className="fixed inset-0 bg-[#050505]/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
@@ -440,7 +444,7 @@ export default function CustomersPage() {
                         </div>
                       </div>
 
-                      {/* Status indicator */}
+                      {}
                       <div className={`mt-3 p-2 rounded-lg flex items-center justify-between text-xs font-cairo border ${
                         !isValid && currentAmount > 0 ? 'bg-red-500/10 border-red-500/20 text-red-400' :
                         isFull ? 'bg-green-500/10 border-green-500/20 text-green-400' :
@@ -457,7 +461,7 @@ export default function CustomersPage() {
                 })}
               </div>
 
-              {/* Summary & Actions */}
+              {}
               <div className="p-4 border-t border-white/10 bg-[#050505]/50">
                 <div className="flex items-center justify-between mb-4 font-cairo text-sm">
                   <span className="text-2xl font-bold text-green-400">{totalPaymentAmount.toLocaleString()} ج.م</span>
@@ -489,7 +493,7 @@ export default function CustomersPage() {
         )}
       </AnimatePresence>
 
-      {/* Add Customer Modal */}
+      {}
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -513,16 +517,18 @@ export default function CustomersPage() {
                 <h2 className="text-2xl font-bold font-cairo">إضافة عميل جديد</h2>
               </div>
 
-              <form onSubmit={handleAddCustomer} className="space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-400 font-cairo ml-1 block">الاسم بالكامل</label>
                   <input 
-                    required
                     type="text" 
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo text-lg text-right"
-                    value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    {...register("name")}
+                    className={cn(
+                      "w-full bg-white/5 border focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo text-lg text-right",
+                      errors.name ? "border-red-500" : "border-white/10"
+                    )}
                   />
+                  {errors.name && <p className="text-red-400 text-xs font-cairo">{errors.name.message}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -530,19 +536,25 @@ export default function CustomersPage() {
                     <label className="text-sm font-medium text-gray-400 font-cairo ml-1 block">البريد الإلكتروني</label>
                     <input 
                       type="email" 
-                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 text-right"
-                      value={formData.email}
-                      onChange={e => setFormData({...formData, email: e.target.value})}
+                      {...register("email")}
+                      className={cn(
+                        "w-full bg-white/5 border focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 text-right",
+                        errors.email ? "border-red-500" : "border-white/10"
+                      )}
                     />
+                    {errors.email && <p className="text-red-400 text-xs font-cairo">{errors.email.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-400 font-cairo ml-1 block">رقم الهاتف</label>
                     <input 
                       type="text" 
-                      className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 text-right"
-                      value={formData.phone}
-                      onChange={e => setFormData({...formData, phone: e.target.value})}
+                      {...register("phone")}
+                      className={cn(
+                        "w-full bg-white/5 border focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 text-right",
+                        errors.phone ? "border-red-500" : "border-white/10"
+                      )}
                     />
+                    {errors.phone && <p className="text-red-400 text-xs font-cairo">{errors.phone.message}</p>}
                   </div>
                 </div>
 
@@ -550,10 +562,13 @@ export default function CustomersPage() {
                   <label className="text-sm font-medium text-gray-400 font-cairo ml-1 block">العنوان بالتفصيل</label>
                   <input 
                     type="text" 
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo text-right"
-                    value={formData.address}
-                    onChange={e => setFormData({...formData, address: e.target.value})}
+                    {...register("address")}
+                    className={cn(
+                      "w-full bg-white/5 border focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo text-right",
+                      errors.address ? "border-red-500" : "border-white/10"
+                    )}
                   />
+                  {errors.address && <p className="text-red-400 text-xs font-cairo">{errors.address.message}</p>}
                 </div>
 
                 <button type="submit" className="w-full nile-button py-5 font-bold text-xl mt-4 font-cairo">

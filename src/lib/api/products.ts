@@ -8,7 +8,7 @@ export interface Product {
   unit_conversion: number;
   company_id: string;
   inventory_method: string;
-  // Computed fields from the view if we rely on it, otherwise null initially
+
   total_quantity?: number;
   current_price?: number;
   company?: string;
@@ -28,9 +28,8 @@ export interface Batch {
   pharmacy_id?: string;
 }
 
-// Fetch all products with their active batches and computed prices
 export async function searchProducts(query: string, pharmacyId: string) {
-  // Using a simple ilike search on the product name or barcode lookup
+
   const { data: products, error } = await supabase
     .from('products')
     .select(`
@@ -48,8 +47,7 @@ export async function searchProducts(query: string, pharmacyId: string) {
     return [];
   }
 
-  // Formatting products to make it easy for POS
-  // We attach the active selling price from the batch that expires first (FEFO)
+
   return products.map((p) => {
     const activeBatches = p.batches
       .filter((b: Batch) => b.quantity > 0)
@@ -81,7 +79,7 @@ export async function getProducts(pharmacyId: string) {
 }
 
 export async function getProductByBarcode(barcode: string, pharmacyId: string) {
-  // First get the product via batch barcode
+
   const { data: batch, error: batchError } = await supabase
     .from('batches')
     .select('id, product_id')
@@ -93,7 +91,6 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
 
   if (batchError || !batch) return null;
 
-  // Then fetch the full product with all its active batches
   const { data: products, error } = await supabase
     .from('products')
     .select(`
@@ -124,7 +121,6 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
   };
 }
 
-// Update an existing batch
 export async function updateBatch(batchId: string, updates: Partial<Batch>) {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -184,3 +180,4 @@ export async function createBatch(batch: Partial<Batch>) {
   }
   return data;
 }
+

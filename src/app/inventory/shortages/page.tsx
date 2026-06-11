@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 
-// تحديد بنية البيانات بدقة بدلاً من any
 interface ShortageItem {
   product_id: string;
   name: string;
@@ -25,13 +24,11 @@ export default function ShortagesPage() {
   const { user } = useAuth();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
 
-  // جلب البيانات الحية والاشتراك في التغييرات
   useEffect(() => {
     if (!user || !pharmacyId) return;
 
     fetchShortages();
 
-    // المزامنة الفورية عند تعديل المخزون
     const channel = supabase
       .channel('shortages-sync')
       .on(
@@ -53,7 +50,7 @@ export default function ShortagesPage() {
     setErrorMessage(null);
 
     try {
-      // جلب المنتجات التي يقل رصيدها عن 10 قطع
+
       const { data, error } = await supabase
         .from('product_inventory')
         .select('*')
@@ -71,14 +68,12 @@ export default function ShortagesPage() {
     }
   };
 
-  // تحسين الأداء عبر useMemo لمنع إعادة تصفية المصفوفة مع كل ريندر غير ضروري
   const filteredShortages = useMemo(() => {
     const query = search.toLowerCase().trim();
     if (!query) return shortages;
     return shortages.filter(item => item.name.toLowerCase().includes(query));
   }, [shortages, search]);
 
-  // حساب العدادات من البيانات المجلوبة مباشرة لتجنب تكرار الكود
   const stats = useMemo(() => {
     return {
       critical: shortages.filter(s => s.total_quantity === 0).length,
@@ -111,7 +106,7 @@ export default function ShortagesPage() {
         </button>
       </header>
 
-      {/* Stats Summary */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
          <div className="glass-panel p-6 border-red-500/20 bg-red-500/5">
             <p className="text-gray-400 text-sm font-cairo mb-2">إجمالي النواقص الحاد (رصيد 0)</p>
@@ -127,7 +122,7 @@ export default function ShortagesPage() {
          </div>
       </div>
 
-      {/* Search Bar */}
+      {}
       <div className="flex gap-4">
         <div className="flex-1 glass-panel p-2 flex items-center gap-3">
           <Search className="w-5 h-5 text-gray-400 mr-2" />
@@ -141,7 +136,7 @@ export default function ShortagesPage() {
         </div>
       </div>
 
-      {/* Error Alert Box */}
+      {}
       {errorMessage && (
         <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-3 font-cairo">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -149,7 +144,7 @@ export default function ShortagesPage() {
         </div>
       )}
 
-      {/* Data Table */}
+      {}
       <div className="glass-panel overflow-hidden border-white/5">
          <div className="overflow-x-auto">
             <table className="w-full text-right border-collapse">

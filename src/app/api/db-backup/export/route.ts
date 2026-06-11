@@ -27,7 +27,6 @@ export async function GET() {
       let page = 0;
       let hasMore = true;
 
-      // حلقة تكرارية لجلب البيانات على دفعات متتالية لضمان جلب كل السجلات دون نقصان
       while (hasMore) {
         const from = page * BATCH_SIZE;
         const to = from + BATCH_SIZE - 1;
@@ -39,7 +38,7 @@ export async function GET() {
           .order('created_at', { ascending: true }); // ترتيب ثابت لضمان سلامة الـ Range الفني
 
         if (error) {
-          // إذا كان الجدول لا يحتوي على حقل created_at، نقوم بالجلب بدون ترتيب محدد كتأمين بديل
+
           if (error.message.includes('"created_at" does not exist')) {
             const { data: fallbackData, error: fallbackError } = await supabase
               .from(table)
@@ -60,7 +59,7 @@ export async function GET() {
 
         if (data && data.length > 0) {
           allRows = [...allRows, ...data];
-          // إذا كان عدد السجلات المسترجعة أقل من حجم الدفعة، فهذا يعني أننا وصلنا لنهاية الجدول
+
           hasMore = data.length === BATCH_SIZE;
           page++;
         } else {
@@ -71,13 +70,11 @@ export async function GET() {
       backupData[table] = allRows;
     }
 
-    // توثيق وقت التصدير
     backupData.exported_at = new Date().toISOString();
     const jsonString = JSON.stringify(backupData);
 
     const todayStr = new Date().toLocaleDateString('en-CA'); // صيغة تضمن الحصول على YYYY-MM-DD بشكل ناصع
 
-    // العودة بالرد مباشرة بنص الـ JSON مع إجبار المتصفح على تحميله كملف مرفق
     return new NextResponse(jsonString, {
       status: 200,
       headers: {

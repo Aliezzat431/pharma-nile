@@ -10,8 +10,28 @@ export function SaleTerminal() {
   const [results, setResults] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [quickItems, setQuickItems] = useState<any[]>([]);
+  const [isLoadingQuick, setIsLoadingQuick] = useState(true);
 
-  // Search logic
+  React.useEffect(() => {
+    const fetchQuickItems = async () => {
+      try {
+        const { data } = await supabase
+          .from('batches')
+          .select('*, products(name, type)')
+          .gt('quantity', 0)
+          .order('created_at', { ascending: false })
+          .limit(12);
+        setQuickItems(data || []);
+      } catch (err) {
+        console.error('Error fetching quick items', err);
+      } finally {
+        setIsLoadingQuick(false);
+      }
+    };
+    fetchQuickItems();
+  }, []);
+
   const handleSearch = async (val: string) => {
     setQuery(val);
     if (val.length < 2) {
@@ -49,7 +69,7 @@ export function SaleTerminal() {
     setIsProcessing(true);
     
     try {
-      // 1. Record Sale
+
       const { data: sale, error: saleError } = await supabase
         .from('sales')
         .insert({
@@ -62,7 +82,6 @@ export function SaleTerminal() {
 
       if (saleError) throw saleError;
 
-      // 2. Update Quantities
       for (const item of cart) {
         const { error: updateError } = await supabase
           .from('batches')
@@ -83,7 +102,7 @@ export function SaleTerminal() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-160px)]">
-      {/* Search & Selection */}
+      {}
       <div className="lg:col-span-2 space-y-6 flex flex-col">
         <div className="relative">
           <input 
@@ -114,13 +133,45 @@ export function SaleTerminal() {
           )}
         </div>
 
-        <div className="flex-1 glass-panel p-6 flex flex-col items-center justify-center opacity-30">
-          <ShoppingCart className="w-20 h-20 mb-4" />
-          <p className="text-xl font-bold">باقي الشاشة هيكون فيه عرض الأصناف الأكثر مبيعاً</p>
-        </div>
+        {isLoadingQuick ? (
+          <div className="flex-1 glass-panel p-6 flex flex-col items-center justify-center">
+            <ShoppingCart className="w-10 h-10 mb-4 text-nile-teal animate-bounce" />
+            <p className="text-gray-400 font-cairo">جاري تحميل الأصناف السريعة...</p>
+          </div>
+        ) : (
+          <div className="flex-1 glass-panel p-6 overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 font-cairo text-white flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-nile-teal" /> الأصناف السريعة المتاحة
+            </h3>
+            {quickItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 opacity-50">
+                <p className="text-xl font-bold">لا توجد أصناف متاحة للبيع السريع</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {quickItems.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => addToCart(item)}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl glass-card hover:bg-nile-teal/10 hover:border-nile-teal/30 focus:neon-glow-teal transition-all group gap-2 text-center"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-black/40 border border-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <ShoppingCart className="w-5 h-5 text-nile-teal" />
+                    </div>
+                    <div className="flex flex-col gap-1 w-full">
+                      <span className="font-bold text-sm text-foreground font-cairo truncate">{item.products?.name}</span>
+                      <span className="text-xs text-nile-teal font-inter font-bold">{item.selling_price} ج.م</span>
+                      <span className="text-[10px] text-gray-500 font-cairo truncate">المتاح: {item.quantity}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Cart & Billing */}
+      {}
       <div className="glass-panel p-8 flex flex-col">
         <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
           <ShoppingCart className="text-nile-teal" />
@@ -175,3 +226,4 @@ export function SaleTerminal() {
     </div>
   );
 }
+

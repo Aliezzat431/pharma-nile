@@ -29,7 +29,7 @@ interface Order {
   status?: string;
   payment_method?: string;
   customer_id?: string;
-  // التحديث هنا: تعديل النوع ليتوافق مع المصفوفة المسترجعة من Supabase 👇
+
   customers?: { name: string }[] | null; 
   order_items: OrderItem[];
 }
@@ -122,7 +122,7 @@ export default function InvoicesPage() {
     const cleanSearch = search.trim().toLowerCase();
     
     let result = orders.filter(order => {
-      // تعديل هنا للوصول إلى اسم العميل عبر العنصر الأول في المصفوفة 👇
+
       const customerName = order.customers?.[0]?.name || '';
       const matchesSearch = cleanSearch.length === 0 || 
         order.id.toLowerCase().includes(cleanSearch) ||
@@ -184,8 +184,7 @@ export default function InvoicesPage() {
         <td style="padding:4px 2px;text-align:left;border-bottom:1px dashed #ccc">${(i.price * i.quantity).toFixed(2)}</td>
       </tr>`
     ).join('');
-    
-    // تعديل هنا لقراءة اسم العميل بشكل آمن 👇
+
     const customerName = order.customers?.[0]?.name;
 
     win.document.write(`
@@ -260,7 +259,7 @@ export default function InvoicesPage() {
         </button>
       </header>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5">
           <div className="flex items-center justify-between">
@@ -311,7 +310,7 @@ export default function InvoicesPage() {
         </motion.div>
       </div>
 
-      {/* Filters Panel */}
+      {}
       <AnimatePresence>
         {showFilters && (
           <motion.div 
@@ -377,7 +376,7 @@ export default function InvoicesPage() {
         )}
       </AnimatePresence>
 
-      {/* Search Bar */}
+      {}
       <div className="glass-panel p-2 flex items-center gap-3">
         <Search className="w-5 h-5 text-gray-400 mr-3" />
         <input
@@ -394,7 +393,7 @@ export default function InvoicesPage() {
         )}
       </div>
 
-      {/* Sort Bar */}
+      {}
       <div className="flex items-center gap-2 font-cairo text-xs text-gray-500">
         <span>ترتيب بحسب:</span>
         {[
@@ -413,7 +412,7 @@ export default function InvoicesPage() {
         ))}
       </div>
 
-      {/* Invoices List */}
+      {}
       <div className="space-y-3">
         {loading ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
@@ -431,7 +430,7 @@ export default function InvoicesPage() {
             const payment = paymentLabel(order.payment_method);
             const status = statusLabel(order.status);
             const PaymentIcon = payment.icon;
-            // جلب اسم العميل بأمان من المصفوفة 👇
+
             const customerName = order.customers?.[0]?.name;
 
             return (
@@ -442,7 +441,7 @@ export default function InvoicesPage() {
                 transition={{ delay: Math.min(i * 0.01, 0.2) }}
                 className={`glass-card overflow-hidden transition-all ${order.status === 'returned' ? 'opacity-60 border-red-500/20' : 'border-white/5'}`}
               >
-                {/* Order Header */}
+                {}
                 <div
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
                   className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
@@ -495,7 +494,7 @@ export default function InvoicesPage() {
                   </div>
                 </div>
 
-                {/* Expanded: Order Items */}
+                {}
                 <AnimatePresence>
                   {isExpanded && (
                     <motion.div
@@ -540,7 +539,7 @@ export default function InvoicesPage() {
                           </div>
                         </div>
 
-                        {/* Actions */}
+                        {}
                         <div className="p-5 pt-0 flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2 text-xs text-gray-500 font-cairo">
                             <Clock className="w-3 h-3" />
@@ -578,7 +577,7 @@ export default function InvoicesPage() {
         )}
       </div>
 
-      {/* Invoice Preview Modal */}
+      {}
       <AnimatePresence>
         {previewInvoice && (
           <div className="fixed inset-0 bg-[#050505]/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
@@ -633,3 +632,4 @@ export default function InvoicesPage() {
     </div>
   );
 }
+

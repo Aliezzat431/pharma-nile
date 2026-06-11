@@ -30,3 +30,4 @@ const inventorySlice = createSlice({
 
 export const { setSearchQuery, toggleLowStockFilter, toggleExpiringFilter } = inventorySlice.actions;
 export default inventorySlice.reducer;
+

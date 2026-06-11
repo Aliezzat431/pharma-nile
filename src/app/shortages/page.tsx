@@ -62,7 +62,7 @@ export default function ShortagesPage() {
       setCompanies(compRes);
 
       if (shortageRes.data) {
-        // Map data to include exact product info
+
         const mapped: ShortageItem[] = shortageRes.data.map((item: any) => ({
           id: item.product_id || item.id,
           name: item.name,
@@ -111,7 +111,6 @@ export default function ShortagesPage() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    // Grouping by company for clearer ordering
     const grouped: Record<string, ShortageItem[]> = {};
     selectedItems.forEach(item => {
       if (!grouped[item.company_name]) grouped[item.company_name] = [];
@@ -249,7 +248,7 @@ export default function ShortagesPage() {
         </div>
       </header>
 
-      {/* Filters Bar */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="glass-panel p-2 flex items-center gap-3">
           <Search className="w-5 h-5 text-gray-500 mr-3" />
@@ -290,7 +289,7 @@ export default function ShortagesPage() {
         </div>
       </div>
 
-      {/* Stats Summary */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: 'إجمالي النواقص', value: items.length, icon: AlertCircle, color: 'text-gray-400' },
@@ -310,7 +309,7 @@ export default function ShortagesPage() {
         ))}
       </div>
 
-      {/* Table Section */}
+      {}
       <div className="relative">
         {loading ? (
           <div className="space-y-4">
@@ -328,3 +327,4 @@ export default function ShortagesPage() {
     </div>
   );
 }
+

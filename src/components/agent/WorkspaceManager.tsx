@@ -46,7 +46,7 @@ export default function WorkspaceManager() {
                 left: iframe.isMinimized ? '20px' : `calc(50vw - 400px + ${staggerOffset}px)`,
               }}
             >
-              {/* Window Header */}
+              {}
               <div 
                 className={`h-12 border-b flex items-center justify-between px-4 cursor-move ${
                   isActive ? 'bg-[#111111]' : 'bg-[#0A0A0A]'
@@ -76,7 +76,7 @@ export default function WorkspaceManager() {
                 </div>
               </div>
 
-              {/* Iframe Content */}
+              {}
               {!iframe.isMinimized && (
                 <div className="flex-1 w-full bg-[#050505] relative">
                   <iframe 
@@ -84,7 +84,7 @@ export default function WorkspaceManager() {
                     className="w-full h-full border-none"
                     title={iframe.title}
                   />
-                  {/* Overlay to catch mouse events when not active if needed, but standard iframe focus works */}
+                  {}
                 </div>
               )}
             </motion.div>
@@ -94,3 +94,4 @@ export default function WorkspaceManager() {
     </>
   );
 }
+

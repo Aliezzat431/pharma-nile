@@ -2,12 +2,10 @@ import { NextResponse } from 'next/server';
 import { treatmentTypes } from '@/lib/unitOptions';
 import Groq from 'groq-sdk';
 
-// تهيئة مكتبة Groq SDK
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// نستخدم موديل 70B لأنه الأقوى في استخراج البيانات بهياكل صلبة مثل JSON
 const GROQ_MODEL = "llama3-70b-8192";
 
 export async function POST(req: Request) {
@@ -28,7 +26,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // تجهيز الأنواع المتاحة في النظام لفرضها على دكتور محسن
     const availableTypes = treatmentTypes.map((t) => t.name).join(', ');
 
     const systemPrompt = `You are a pharmaceutical expert assistant in Egypt, embedded in the PharmaNile ERP system ("Dr. Mohsen").
@@ -57,7 +54,6 @@ The required JSON schema layout:
 
     const userMessage = `Analyze the product name: "${productName}"`;
 
-    // الاتصال بـ Groq SDK
     const chatCompletion = await groq.chat.completions.create({
       model: GROQ_MODEL,
       messages: [
@@ -70,7 +66,6 @@ The required JSON schema layout:
 
     const rawText = chatCompletion.choices[0]?.message?.content?.trim() ?? '';
 
-    // البحث عن كائن الـ JSON داخل النص للتأمين الإضافي
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.error('No JSON found in Groq response:', rawText);
@@ -82,7 +77,6 @@ The required JSON schema layout:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
-    // معالجة البيانات وتوحيد الهيكل لضمان الحماية من الحقول المفقودة
     if (!parsed.choices || !Array.isArray(parsed.choices)) {
       return NextResponse.json({
         choices: [

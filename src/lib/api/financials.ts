@@ -23,10 +23,7 @@ export interface MonthlyReport {
   returns_total: number;
 }
 
-/**
- * Fetches financial stats via a single server-side RPC.
- * Replaces JS-side aggregation of a raw orders dump.
- */
+
 export async function getFinancialStats(days: number = 30): Promise<FinancialStats | null> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -74,12 +71,7 @@ export async function getFinancialStats(days: number = 30): Promise<FinancialSta
   };
 }
 
-/**
- * Fetches pre-aggregated monthly summaries — reads from monthly_summaries
- * table so it's instant regardless of how many orders exist.
- * @param year   Optional: filter to a specific year
- * @param monthsBack  How many months back to return (default 12)
- */
+
 export async function getMonthlyReport(
   year?: number,
   monthsBack: number = 12
@@ -114,10 +106,7 @@ export async function getMonthlyReport(
   }));
 }
 
-/**
- * Direct read from monthly_summaries for quick widgets
- * (e.g. compare this month vs last month)
- */
+
 export async function getCurrentMonthSummary() {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -139,3 +128,4 @@ export async function getCurrentMonthSummary() {
   }
   return data;
 }
+

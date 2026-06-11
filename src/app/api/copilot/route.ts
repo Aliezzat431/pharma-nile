@@ -2,12 +2,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
 
-// تهيئة مكتبة Groq SDK
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// استخدام الموديل الأقوى والأسرع في معالجة الأوامر الهيكلية
 const GROQ_MODEL = "llama3-70b-8192";
 
 const supabase = createClient(
@@ -23,8 +21,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    // 1. جلب بيانات الصيدلية اللحظية لتعزيز وعي صانع القرار (دكتور محسن)
-    // الحصول على تاريخ اليوم بصيغة YYYY-MM-DD بالتوقيت المحلي للصيدلية
+
     const todayStr = new Date().toLocaleDateString('en-CA'); 
 
     const [salesResponse, shortagesResponse, debtorsResponse] = await Promise.all([
@@ -33,7 +30,6 @@ export async function POST(req: Request) {
       supabase.from('customers').select('id, name, total_debt').order('total_debt', { ascending: false }).limit(5)
     ]);
 
-    // معالجة الأخطاء المحتملة أثناء استعلام البيانات
     if (salesResponse.error) console.error("Sales fetch error:", salesResponse.error.message);
     if (shortagesResponse.error) console.error("Inventory fetch error:", shortagesResponse.error.message);
 
@@ -69,7 +65,6 @@ export async function POST(req: Request) {
 - قائمة أعلى المدينين كودياً: ${JSON.stringify(topDebtors)}
 `;
 
-    // 2. إعداد وصياغة الرسائل متوافقة مع Groq Chat Completion
     const formattedMessages = [
       { role: "system" as const, content: systemInstruction },
       ...(chatHistory || [])
@@ -81,7 +76,6 @@ export async function POST(req: Request) {
       { role: "user" as const, content: message }
     ];
 
-    // 3. إرسال الطلب لـ Groq SDK
     const chatCompletion = await groq.chat.completions.create({
       messages: formattedMessages,
       model: GROQ_MODEL,
@@ -90,11 +84,9 @@ export async function POST(req: Request) {
 
     const aiResponse = chatCompletion.choices[0]?.message?.content || "";
 
-    // 4. معالجة وتفكيك الـ Actions والـ Commands ديناميكياً
     const actions: any[] = [];
     const commands: any[] = [];
 
-    // خريطة الواجهات لترجمة الـ Actions المكتوبة من "دكتور محسن" تلقائياً
     const actionMap: { [key: string]: string } = {
       'POS': 'نقطة البيع',
       'INVENTORY': 'المخزن والأصناف',
@@ -103,7 +95,6 @@ export async function POST(req: Request) {
       'STAFF': 'إدارة الموظفين'
     };
 
-    // استخراج الـ Actions ديناميكياً باستخدام Regex مرن
     const actionRegex = /\[ACTION:(\w+)\]/g;
     let actionMatch;
     while ((actionMatch = actionRegex.exec(aiResponse)) !== null) {
@@ -116,7 +107,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // استخراج أوامر التنفيذ المباشر [EXECUTE:TYPE:JSON] ودعم الأسطر والمسافات بمرونة عبر [\s\S]*?
     const executeRegex = /\[EXECUTE:(\w+):(\{[\s\S]*?\})\]/g;
     let executeMatch;
     while ((executeMatch = executeRegex.exec(aiResponse)) !== null) {
@@ -130,14 +120,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // 5. تطهير رد الشات النهائي من الأكواد البرمجية قبل تسليمه للواجهة الأمامية
     const cleanContent = aiResponse
       .replace(/\[ACTION:.*?\]/g, "")
       .replace(/\[EXECUTE:.*?\]/g, "")
       .replace(/\s+/g, " ")
       .trim();
 
-    // 6. العودة بالاستجابة الهيكلية النظيفة
     return NextResponse.json({
       content: cleanContent || "تمام يا فندم، متاح معاك لمتابعة الصيدلية.",
       actions,

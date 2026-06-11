@@ -12,12 +12,10 @@ class UndoManager {
   private lastAction: UndoAction | null = null;
   private listeners: ((action: UndoAction | null) => void)[] = [];
 
-  // Register a new action that can be undone
   push(action: UndoAction) {
     this.lastAction = { ...action, timestamp: Date.now() };
     this.notify();
 
-    // Auto-clear after 10 seconds
     setTimeout(() => {
       if (this.lastAction?.timestamp === action.timestamp) {
         this.clear();
@@ -41,14 +39,13 @@ class UndoManager {
     this.listeners.forEach(l => l(this.lastAction));
   }
 
-  // THE MAGIC: Reversing the database changes
   async undo() {
     if (!this.lastAction) return { success: false, message: 'لا يوجد شيء للتراجع عنه' };
 
     const { type, payload } = this.lastAction;
     try {
       if (type === 'SALE') {
-        // 1. Fetch the order items to know what to restore
+
         const { data: items } = await supabase.from('order_items').select('*').eq('order_id', payload.orderId);
         
         if (items) {
@@ -61,8 +58,7 @@ class UndoManager {
             }
           }
         }
-          
-        // 2. Mark order as cancelled
+
         await supabase.from('orders').update({ status: 'cancelled' }).eq('id', payload.orderId);
         
         return { success: true, message: 'تم التراجع عن البيع وإعادة المخزون' };
@@ -94,3 +90,4 @@ class UndoManager {
 }
 
 export const undoManager = new UndoManager();
+

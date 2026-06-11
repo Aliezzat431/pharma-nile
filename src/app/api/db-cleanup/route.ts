@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     let result;
 
     if (type === 'audit') {
-      // إصلاح البج: حساب تاريخ مستقل تماماً دون تعديل الوقت الحالي
+
       const auditThreshold = new Date();
       auditThreshold.setDate(auditThreshold.getDate() - 60);
       
@@ -27,14 +27,14 @@ export async function POST(req: Request) {
         .lt('created_at', auditThreshold.toISOString());
 
     } else if (type === 'orders') {
-      // حذف الفواتير الملغاة مع تفعيل كاونتر الإحصاء
+
       result = await supabase
         .from('orders')
         .delete({ count: 'exact' })
         .eq('status', 'cancelled');
 
     } else if (type === 'sessions') {
-      // إصلاح البج: حساب تاريخ مستقل تماماً نطرح منه سنة كاملة (365 يوماً) بأمان
+
       const sessionThreshold = new Date();
       sessionThreshold.setFullYear(sessionThreshold.getFullYear() - 1);
       
@@ -47,7 +47,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'نوع التنظيف غير مدعوم بالنظام' }, { status: 400 });
     }
 
-    // التحقق من وجود أخطاء في استعلام Supabase
     if (result.error) throw result.error;
 
     return NextResponse.json({ 

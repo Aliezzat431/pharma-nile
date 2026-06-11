@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// تهيئة عميل Supabase باستخدام مفتاح صيانة الخدمة (Service Role) لتخطي سياسات الـ RLS عند الحاجة
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -12,7 +11,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { actionType, payload, isUndo = false } = body;
 
-    // التحقق الأولي من سلامة البيانات المرسلة
     if (!actionType || !payload || !payload.table) {
       return NextResponse.json(
         { error: 'Invalid payload. "actionType" and "payload.table" are required.' },
@@ -31,11 +29,10 @@ export async function POST(req: Request) {
     const tableName = payload.table;
     const dataToExecute = payload.data;
     const recordId = dataToExecute?.id || payload.id || null; 
-    // ملاحظة: في الـ DELETE غالباً ما يتم إرسال id السجل فقط بدون كائن data كامل
 
-    // ==========================================
-    // ↩️ عمليات التراجع (UNDO)
-    // ==========================================
+
+
+
     if (isUndo) {
       const { logId } = body;
 
@@ -43,7 +40,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Missing logId for undo operation' }, { status: 400 });
       }
 
-      // جلب سجل العملية السابقة من جدول الـ Logs
       const { data: log, error: logError } = await supabase
         .from('agent_action_logs')
         .select('*')
@@ -59,7 +55,7 @@ export async function POST(req: Request) {
       let undoResult: { error: any } | null = null;
 
       if (log.action_type === 'INSERT') {
-        // التراجع عن الإدخال = حذف السجل الذي تم إنشاؤه
+
         const targetId = log.record_id || log.new_payload?.id;
         if (!targetId) throw new Error('Missing record ID for undoing INSERT');
 
@@ -69,7 +65,7 @@ export async function POST(req: Request) {
           .eq('id', targetId);
       } 
       else if (log.action_type === 'UPDATE' || log.action_type === 'DELETE') {
-        // التراجع عن التعديل أو الحذف = إعادة البيانات القديمة كاملة (Upsert)
+
         if (!log.previous_payload) throw new Error('Missing previous payload to restore data');
         
         undoResult = await supabase
@@ -79,7 +75,6 @@ export async function POST(req: Request) {
 
       if (undoResult?.error) throw undoResult.error;
 
-      // تحديث حالة السجل الحالي بأنه تم التراجع عنه بنجاح
       await supabase
         .from('agent_action_logs')
         .update({ undone: true })
@@ -90,9 +85,8 @@ export async function POST(req: Request) {
       });
     }
 
-    // ==========================================
-    // 🔍 جلب البيانات السابقة قبل التعديل/الحذف
-    // ==========================================
+
+
     let previousPayload = null;
 
     if ((actionType === 'UPDATE' || actionType === 'DELETE') && recordId) {
@@ -106,9 +100,8 @@ export async function POST(req: Request) {
       previousPayload = prevData;
     }
 
-    // ==========================================
-    // ⚡ تنفيذ العملية الأساسية (EXECUTE ACTION)
-    // ==========================================
+
+
     let resultData: any = null;
     let executionError: any = null;
 
@@ -151,12 +144,10 @@ export async function POST(req: Request) {
 
     if (executionError) throw executionError;
 
-    // تحديد المعرف النهائي للسجل المتأثر لتوثيقه في السجلات
     const finalRecordId = recordId || resultData?.id || null;
 
-    // ==========================================
-    // 📝 تدوين السجلات (LOG ACTION)
-    // ==========================================
+
+
     const { error: logInsertError } = await supabase
       .from('agent_action_logs')
       .insert({
@@ -170,7 +161,7 @@ export async function POST(req: Request) {
 
     if (logInsertError) {
       console.error('Failed to write agent log:', logInsertError);
-      // اختياري: يمكنك اختيار تمرير العملية حتى لو فشل السجل أو إلقاء خطأ كما فعلت أنت
+
       throw logInsertError;
     }
 

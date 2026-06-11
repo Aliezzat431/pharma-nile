@@ -30,7 +30,6 @@ import {
 import Skeleton from '@/components/ui/Skeleton';
 import GlassTable from '@/components/ui/GlassTable';
 
-// 1. بناء واجهة مخصصة ومستقلة لتجنب مشاكل Recharts المعطوبة في الـ Build 👇
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
@@ -41,7 +40,6 @@ interface CustomTooltipProps {
   label?: any;
 }
 
-// 2. تطبيق الواجهة الجديدة على المكون
 const ArabicTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
   return (
@@ -114,7 +112,7 @@ export default function Dashboard() {
 
   return (
     <div className="w-full max-w-full mx-auto space-y-10">
-      {/* Hero Header */}
+      {}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
           <motion.h1 
@@ -145,7 +143,7 @@ export default function Dashboard() {
         </div>
       </header>
       
-      {/* Stats Grid */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, i) => {
           const Content = (
@@ -176,7 +174,7 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Monthly Summary Strip */}
+      {}
       {(monthSummary || loading) && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -219,7 +217,7 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Quick Actions & Productivity */}
+      {}
       <div className="space-y-4">
         <h2 className="text-xl font-bold font-cairo flex items-center gap-3">
            <Activity className="w-5 h-5 text-[#00CED1]" />
@@ -244,9 +242,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Insights Grid */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sales Chart */}
+        {}
         <div className="lg:col-span-2 glass-panel p-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -327,7 +325,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Recent Transactions Feed */}
+        {}
         <div className="glass-panel p-6 flex flex-col space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold font-cairo">آخر العمليات</h2>
@@ -372,3 +370,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

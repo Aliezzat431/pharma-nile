@@ -111,7 +111,7 @@ export default function CompaniesPage() {
         </button>
       </header>
 
-      {/* Search Bar */}
+      {}
       <div className="glass-panel p-4 flex items-center gap-4 bg-white/[0.02] border border-white/5 rounded-2xl">
         <Search className="w-5 h-5 text-gray-500" />
         <input 
@@ -187,7 +187,7 @@ export default function CompaniesPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">

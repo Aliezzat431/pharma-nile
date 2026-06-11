@@ -19,7 +19,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // جلب الصيدليات النشطة عند تحميل الصفحة
   useEffect(() => {
     const loadPharmacies = async () => {
       try {
@@ -63,13 +62,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // تسجيل الدخول الأساسي عبر الـ Auth Hook
+
       await signIn(email, password, adminKey);
 
-      // حفظ الصيدلية المختارة في المتصفح للرجوع إليها محلياً
       localStorage.setItem('selected_pharmacy_id', selectedPharmacyId);
-      
-      // تحديث بيانات الـ user_metadata لتتوافق مع سياسات الـ RLS الصارمة المستندة للـ Tenant
+
       const supabase = createClient();
       const { error: updateError } = await supabase.auth.updateUser({
         data: { pharmacy_id: selectedPharmacyId }
@@ -90,11 +87,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] relative selection:bg-[var(--nile-teal)] selection:text-white py-12 px-4 overflow-y-auto font-cairo text-right" dir="rtl">
-      {/* عناصر الإضاءة الخلفية النيون */}
+      {}
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--nile-teal)]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[var(--royal-gold)]/5 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* حاوية تسجيل الدخول */}
+      {}
       <div className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 border border-white/5 bg-background/50 animate-in fade-in zoom-in duration-700">
         <div className="text-center mb-8">
           <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--nile-teal)]/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,206,209,0.2)] border border-[var(--nile-teal)]/20">
@@ -114,7 +111,7 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* البريد الإلكتروني */}
+          {}
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-400 mr-1 block">
               البريد الإلكتروني
@@ -136,7 +133,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* كلمة المرور */}
+          {}
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-400 mr-1 block">
               كلمة المرور
@@ -158,7 +155,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* اختيار الفرع */}
+          {}
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-400 mr-1 block">
               اختر الفرع / الصيدلية
@@ -190,7 +187,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* كود المدير */}
+          {}
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--royal-gold)]/80 mr-1 block">
               كود المدير (اختياري للموظف)
@@ -211,7 +208,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* زر الدخول */}
+          {}
           <button
             type="submit"
             disabled={isLoading || pharmacies.length === 0}

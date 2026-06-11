@@ -39,7 +39,7 @@ export default function CopilotPage() {
   }, [messages, loading]);
 
   const addTab = (type: string, title: string) => {
-    // التحقق مما إذا كانت علامة التبويب من هذا النوع مفتوحة بالفعل لمنع التكرار
+
     const existing = tabs.find(t => t.type === type);
     if (existing) {
       setActiveTabId(existing.id);
@@ -56,7 +56,7 @@ export default function CopilotPage() {
     
     setTabs(prev => {
       const newTabs = prev.filter(t => t.id !== id);
-      // إذا تم إغلاق التبويب النشط حالياً، يتم تحويل المستخدم تلقائياً للتبويب السابق له مباشرة
+
       if (activeTabId === id) {
         const closedIndex = prev.findIndex(t => t.id === id);
         const nextActiveIndex = closedIndex > 0 ? closedIndex - 1 : 0;
@@ -70,7 +70,7 @@ export default function CopilotPage() {
     if (!input.trim() || loading) return;
 
     const userMsg = input.trim();
-    // تحديث المحادثة فوراً برسالة المستخدم وإفراغ حقل الإدخال لسرعة الاستجابة اللمسية
+
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setInput('');
     setLoading(true);
@@ -89,10 +89,8 @@ export default function CopilotPage() {
       const data = await response.json();
       if (data.error) throw new Error(data.error);
 
-      // إضافة رد المساعد محسن إلى الواجهة
       setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
-      
-      // 1. التعامل مع أوامر واجهة المستخدم لفتح النوافذ التفاعلية والأدوات
+
       if (data.actions && Array.isArray(data.actions)) {
         data.actions.forEach((act: any) => {
           if (act.type && act.title) {
@@ -101,7 +99,6 @@ export default function CopilotPage() {
         });
       }
 
-      // 2. التحكم البرمي المباشر في صفحات الـ Iframes وتنفيذ العمليات بداخلها تلقائياً
       if (data.commands && Array.isArray(data.commands) && data.commands.length > 0) {
         setTimeout(() => {
           const iframes = document.querySelectorAll('iframe');
@@ -126,11 +123,11 @@ export default function CopilotPage() {
   return (
     <div className="h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-6 w-full max-w-7xl mx-auto" dir="rtl">
       
-      {/* اليمين: صندوق المحادثة الذكية مع محسن */}
+      {}
       <div className="w-full lg:w-[450px] flex flex-col h-full gap-4 order-last lg:order-first">
         <div className="flex-1 glass-panel flex flex-col overflow-hidden relative border border-white/5 bg-background/50">
           
-          {/* شريط رأس المحادثة */}
+          {}
           <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
              <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#00CED1]/10 flex items-center justify-center border border-[#00CED1]/20">
@@ -144,7 +141,7 @@ export default function CopilotPage() {
              </div>
           </div>
 
-          {/* منطقة الرسائل */}
+          {}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
             {messages.map((msg, i) => (
               <motion.div 
@@ -174,7 +171,7 @@ export default function CopilotPage() {
             <div ref={chatEndRef} />
           </div>
 
-          {/* مدخل المحادثة */}
+          {}
           <div className="p-4 bg-background/50 border-t border-white/5">
             <div className="relative flex items-center gap-2">
               <input 
@@ -197,10 +194,10 @@ export default function CopilotPage() {
         </div>
       </div>
 
-      {/* اليسار: ساحة العمل المتعددة النوافذ والمهام */}
+      {}
       <div className="flex-1 flex flex-col glass-panel overflow-hidden border border-white/5 bg-background/50 h-full">
         
-        {/* شريط علامات التبويب الذكي */}
+        {}
         <div className="flex items-center gap-1 p-2 bg-white/5 border-b border-white/5 overflow-x-auto scrollbar-hide">
            {tabs.map((tab) => {
              const isActive = activeTabId === tab.id;
@@ -232,7 +229,7 @@ export default function CopilotPage() {
            })}
         </div>
 
-        {/* مساحة العرض المتغيرة المحتوى */}
+        {}
         <div className="flex-1 relative w-full h-full">
           <AnimatePresence mode="wait">
             {tabs.map((tab) => {
@@ -247,7 +244,7 @@ export default function CopilotPage() {
                   transition={{ duration: 0.2 }}
                   className="absolute inset-0 w-full h-full"
                 >
-                  {/* شاشة الترحيب الافتراضية */}
+                  {}
                   {tab.type === 'welcome' && (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-6 text-center p-6">
                        <div className="w-28 h-28 rounded-[2.2rem] bg-gradient-to-br from-[#00CED1] to-[#00CED1]/60 flex items-center justify-center shadow-[0_0_30px_rgba(0,206,209,0.2)] relative">
@@ -262,7 +259,7 @@ export default function CopilotPage() {
                     </div>
                   )}
 
-                  {/* شاشات الـ Iframes المضمنة لربط النظام ببعضه */}
+                  {}
                   {(tab.type === 'pos' || tab.type === 'inventory' || tab.type === 'customers' || tab.type === 'financials') && (
                     <iframe 
                       src={`/${tab.type === 'pos' ? 'pos' : tab.type}?minimal=true`} 
@@ -271,7 +268,7 @@ export default function CopilotPage() {
                     />
                   )}
 
-                  {/* تبويب الرسوم البيانية ومخططات المبيعات */}
+                  {}
                   {tab.type === 'sales_chart' && (
                     <div className="p-8 w-full h-full flex flex-col text-right">
                        <h3 className="text-xl font-bold font-cairo text-white mb-6">التحليلات والمخططات الإحصائية</h3>

@@ -29,10 +29,8 @@ export async function POST(req: Request) {
 
     const groq = new Groq({ apiKey: GROQ_API_KEY });
 
-    // استخدام موديل الرؤية القوي والمستقر للـ OCR
     const visionModel = 'meta-llama/llama-4-scout-17b-16e-instruct';
 
-    // تم تعديل الهيكل المطلوب ليكون كائن JSON يحتوي على مصفوفة لتفعيل خاصية الـ json_object الإجبارية
     const prompt = `You are an expert pharmaceutical invoice OCR extractor system.
 Analyze this Arabic medical invoice image and extract all medicine items from the rows.
 
@@ -60,7 +58,6 @@ Target JSON Layout Structure:
   ]
 }`;
 
-    // 1. الاتصال بـ Groq Vision API مع تفعيل الـ JSON Mode الإجباري
     const completion = await groq.chat.completions.create({
       model: visionModel,
       messages: [
@@ -82,12 +79,11 @@ Target JSON Layout Structure:
 
     const rawText = completion.choices[0]?.message?.content || '{}';
 
-    // 2. تحليل النص المستخرج بأمان
     let parsedData: any;
     try {
       parsedData = JSON.parse(rawText);
     } catch (parseErr) {
-      // الـ Fallback الذكي الذي قمت ببنائه يدوياً للتأمين الإضافي في حال حدوث أي خطأ هيكلي
+
       console.warn('Direct JSON parse failed, trying depth extraction fallback...');
       const start = rawText.indexOf('{');
       const end = rawText.lastIndexOf('}');
@@ -107,12 +103,10 @@ Target JSON Layout Structure:
       throw new Error('مخرجات الـ AI لا تحتوي على مصفوفة أصناف صالحة.');
     }
 
-    // حساب تاريخ افتراضي مرن (بعد سنتين من التاريخ الحالي) لو كانت الفاتورة بدون تاريخ صلاحية واضح
     const fallbackExpiry = new Date();
     fallbackExpiry.setFullYear(fallbackExpiry.getFullYear() + 2);
     const fallbackExpiryStr = fallbackExpiry.toLocaleDateString('en-CA');
 
-    // 3. تطهير وفلترة البيانات الناتجة لمنع مدخلات الـ Null أو الـ NaN
     const processedItems: ExtractedInvoiceItem[] = rawItems.map((item: any) => ({
       product_name:   String(item.product_name || 'Unknown Item').trim(),
       quantity:       Math.max(1, Math.round(Number(item.quantity) || 1)),
@@ -123,7 +117,6 @@ Target JSON Layout Structure:
       is_new:         true,
     }));
 
-    // 4. العودة بالبيانات النهائية الجاهزة للعرض في جدول المراجعة قبل الحفظ
     return NextResponse.json({ 
       success: true,
       items: processedItems, 

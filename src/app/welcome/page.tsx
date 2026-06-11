@@ -94,7 +94,7 @@ export default function WelcomePage() {
   return (
     <div ref={targetRef} className="min-h-screen bg-[var(--background)] text-white font-cairo overflow-hidden relative selection:bg-[var(--nile-teal)]/30" dir="rtl">
       
-      {/* Sticky Header */}
+      {}
       <header className="fixed top-0 left-0 w-full z-[100] bg-[var(--background)]/80 backdrop-blur-xl border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center transition-all duration-500">
          <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[var(--nile-teal)] flex items-center justify-center shadow-[0_0_20px_var(--nile-teal-glow)]">
@@ -115,7 +115,7 @@ export default function WelcomePage() {
          </div>
       </header>
 
-      {/* Dynamic Animated Blobs */}
+      {}
       <motion.div 
         animate={{ scale: [1, 1.2, 1], x: [0, -50, 0], y: [0, -50, 0] }}
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
@@ -129,7 +129,7 @@ export default function WelcomePage() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/[0.01] rounded-full blur-[160px] pointer-events-none" />
 
 
-      {/* Hero Section */}
+      {}
       <section className="relative pt-24 pb-32 px-6">
         <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
           <motion.div
@@ -188,7 +188,7 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      {/* Stats Quick View */}
+      {}
       <section className="pb-20 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
            {[
@@ -213,7 +213,7 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      {/* Core Features Grid */}
+      {}
       <section className="py-24 px-6 relative overflow-hidden bg-white/[0.01]">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
@@ -267,7 +267,7 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      {/* Dynamic Interactive Tour */}
+      {}
       <section id="live-demo" className="bg-black/20">
         <div className="text-center pt-24 -mb-16">
           <h2 className="text-5xl font-black mb-6">جولة داخل <span className="nile-gradient-text">عالم فارما نايل</span></h2>
@@ -276,7 +276,7 @@ export default function WelcomePage() {
         <InteractiveDemo />
       </section>
 
-      {/* Legacy Video Preview Section (Optional / Secondary) */}
+      {}
       <section className="py-24 px-6 relative overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
             <h2 className="text-3xl font-bold mb-10">لسه عاوز تشوف أكتر؟ <br /><span className="text-[var(--royal-gold)]">خد جولة بصرية سريعة</span></h2>
@@ -308,7 +308,7 @@ export default function WelcomePage() {
           </div>
       </section>
 
-      {/* Comparison Table */}
+      {}
       <section className="py-24 px-6 bg-white/[0.02]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
@@ -346,7 +346,7 @@ export default function WelcomePage() {
       </section>
 
 
-      {/* Final CTA */}
+      {}
       <section className="py-32 px-6">
         <div className="max-w-5xl mx-auto glass-card p-16 text-center relative overflow-hidden group border border-white/5 rounded-3xl">
           <div className="relative z-10 flex flex-col items-center">
@@ -379,7 +379,7 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      {/* Video Modal Popup */}
+      {}
       {isVideoOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <motion.div 
@@ -393,7 +393,7 @@ export default function WelcomePage() {
             >
               إغلاق الفتحة ✕
             </button>
-            {/* هنا تضع رابط يوتيوب أو فيديو الشرح الفعلي الخاص بك */}
+            {}
             <iframe 
               className="w-full h-full rounded-2xl"
               src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
@@ -406,7 +406,7 @@ export default function WelcomePage() {
         </div>
       )}
 
-      {/* Footer */}
+      {}
       <footer className="py-16 border-t border-white/5 bg-[#080808]">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-right">
            <div className="space-y-4">

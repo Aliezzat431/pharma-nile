@@ -77,7 +77,7 @@ export default function InteractiveDemo() {
 
   return (
     <div className="w-full max-w-7xl mx-auto py-32 px-6 font-cairo">
-      {/* Tab Header Navigation */}
+      {}
       <div className="flex flex-wrap justify-center gap-4 mb-20">
          {TOUR_STEPS.map((s, idx) => (
            <button
@@ -95,10 +95,10 @@ export default function InteractiveDemo() {
          ))}
       </div>
 
-      {/* Slide Content */}
+      {}
       <div className="glass-panel min-h-[600px] overflow-hidden border-white/10 relative p-8 md:p-16 flex flex-col md:flex-row items-center gap-16">
         
-        {/* Text Side */}
+        {}
         <div className="flex-1 space-y-8 z-10 text-right md:text-right">
            <AnimatePresence mode="wait">
              <motion.div
@@ -135,14 +135,14 @@ export default function InteractiveDemo() {
              </motion.div>
            </AnimatePresence>
 
-           {/* Navigation Buttons */}
+           {}
            <div className="flex items-center gap-6 pt-12 justify-center md:justify-start">
               <button 
                 onClick={prevStep}
                 disabled={currentStep === 0}
                 className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center text-white disabled:opacity-20 hover:bg-white/10 transition-all cursor-pointer"
               >
-                 <ArrowRight className="w-6 h-6" /> {/* RTL: Right arrow goes back */}
+                 <ArrowRight className="w-6 h-6" /> {}
               </button>
 
               <div className="flex gap-2">
@@ -157,12 +157,12 @@ export default function InteractiveDemo() {
                 className="h-14 px-8 rounded-full bg-[var(--nile-teal)] text-black font-black flex items-center gap-3 disabled:opacity-20 hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(0,206,209,0.3)] cursor-pointer"
               >
                  <span>الخطوة التالية</span>
-                 <ArrowLeft className="w-5 h-5" /> {/* RTL: Left arrow goes next */}
+                 <ArrowLeft className="w-5 h-5" /> {}
               </button>
            </div>
         </div>
 
-        {/* Visual Side */}
+        {}
         <div className="flex-1 w-full relative">
            <AnimatePresence mode="wait">
              <motion.div
@@ -180,13 +180,13 @@ export default function InteractiveDemo() {
                       className="w-full h-auto rounded-xl border border-white/10"
                    />
                 </div>
-                {/* Decorative Elements */}
+                {}
                 <div className="absolute -top-10 -left-10 w-40 h-40 bg-[var(--nile-teal)]/10 rounded-full blur-[80px] -z-10" />
                 <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-[var(--royal-gold)]/10 rounded-full blur-[80px] -z-10" />
              </motion.div>
            </AnimatePresence>
 
-           {/* Floating Floating Badges */}
+           {}
            <motion.div 
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity }}
@@ -197,7 +197,7 @@ export default function InteractiveDemo() {
            </motion.div>
         </div>
 
-        {/* Background Text Overlay */}
+        {}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[15rem] font-black text-white/[0.02] pointer-events-none select-none uppercase tracking-tighter">
            {step.id}
         </div>
@@ -205,3 +205,4 @@ export default function InteractiveDemo() {
     </div>
   );
 }
+

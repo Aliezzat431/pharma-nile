@@ -65,3 +65,4 @@ export async function getAuditLogs(limit = 100): Promise<AuditLog[]> {
   
   return data as AuditLog[];
 }
+

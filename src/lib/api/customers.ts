@@ -126,7 +126,6 @@ export async function recordCustomerPayment(payment: Omit<CustomerPayment, 'id' 
     throw paymentError;
   }
 
-  // Update total_debt balance
   const { data: currentCustomer } = await supabase
     .from('customers')
     .select('total_debt')
@@ -144,3 +143,4 @@ export async function recordCustomerPayment(payment: Omit<CustomerPayment, 'id' 
 
   return paymentData as CustomerPayment;
 }
+

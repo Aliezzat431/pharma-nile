@@ -93,7 +93,7 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto space-y-3">
-        {/* Theme Toggle Button */}
+        {}
         <button 
           onClick={toggleTheme}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-foreground/50 hover:text-amber-500 hover:bg-amber-500/5 transition-all duration-300 group"
@@ -111,7 +111,7 @@ export function Sidebar() {
           )}
         </button>
 
-        {/* Logout Button */}
+        {}
         <button 
           onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-foreground/50 hover:text-red-400 hover:bg-red-400/5 transition-all duration-300 group"
@@ -123,3 +123,4 @@ export function Sidebar() {
     </div>
   );
 }
+

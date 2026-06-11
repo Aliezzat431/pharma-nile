@@ -28,7 +28,6 @@ const ARABIC_MONTHS: Record<string, string> = {
   'December':  'ديسمبر',
 };
 
-// تحسين دالة التنسيق لتكون أكثر أماناً ضد القيم الفارغة أو النصوص
 const tl = (v?: number | string | null) => {
   const num = Number(v);
   return isNaN(num) ? '٠' : num.toLocaleString('ar-EG');
@@ -100,7 +99,6 @@ export default function FinancialsPage() {
     }
   };
 
-  // معالجة وحفظ مصفوفة الرسم البياني لمنع التدوير العكسي والعمليات المعقدة مع كل ريندر
   const monthlyChartData = useMemo(() => {
     if (!monthlyData.length) return [];
     return [...monthlyData].reverse().map(m => ({
@@ -113,7 +111,6 @@ export default function FinancialsPage() {
 
   const currentMonth = monthlyData[0] || null;
 
-  // حساب آمن لمتوسط الفاتورة لتفادي القسمة على صفر (NaN / Infinity)
   const averageInvoiceValue = useMemo(() => {
     if (!stats || !stats.totalTransactions || stats.totalTransactions === 0) return 0;
     return stats.totalSales / stats.totalTransactions;
@@ -122,7 +119,7 @@ export default function FinancialsPage() {
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
       
-      {/* Header */}
+      {}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
@@ -131,7 +128,7 @@ export default function FinancialsPage() {
           <p className="text-gray-400 mt-2 text-lg font-cairo">تحليل الأرباح، المبيعات والتدفقات النقدية — محدّث لحظياً.</p>
         </div>
         <div className="flex gap-3 flex-wrap">
-          {/* Tab switcher */}
+          {}
           <div className="glass-card p-1 flex gap-1 bg-white/5 rounded-xl border border-white/10">
             <button 
               onClick={() => setActiveTab('daily')}
@@ -162,7 +159,7 @@ export default function FinancialsPage() {
         </div>
       </header>
 
-      {/* ── CURRENT MONTH HERO ─────────────────────────────── */}
+      {}
       {currentMonth && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -198,7 +195,7 @@ export default function FinancialsPage() {
             </div>
           </div>
 
-          {/* Payment breakdown bar */}
+          {}
           <div className="mt-5 relative z-10 border-t border-white/5 pt-4">
             <p className="text-xs text-gray-500 font-cairo mb-2">توزيع طرق الدفع هذا الشهر</p>
             <div className="flex gap-4 flex-wrap">
@@ -223,10 +220,10 @@ export default function FinancialsPage() {
         </motion.div>
       )}
 
-      {/* ── DAILY TAB ──────────────────────────────────────── */}
+      {}
       {activeTab === 'daily' && (
         <>
-          {/* Primary Metrics */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { label: 'إجمالي المبيعات', value: stats?.totalSales,       icon: Wallet,       color: '#00CED1' },
@@ -254,7 +251,7 @@ export default function FinancialsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Daily Revenue Chart */}
+            {}
             <div className="lg:col-span-2 glass-panel p-8 h-[450px] border border-white/5 rounded-2xl bg-white/5">
                <h2 className="text-xl font-bold font-cairo mb-8">منحنى المبيعات والأرباح اليومي</h2>
                <div className="w-full h-full pb-10">
@@ -281,7 +278,7 @@ export default function FinancialsPage() {
                </div>
             </div>
 
-            {/* Payment Methods Distribution */}
+            {}
             <div className="glass-panel p-8 flex flex-col justify-between border border-white/5 rounded-2xl bg-white/5">
                <h2 className="text-xl font-bold font-cairo mb-6">طرق الدفع</h2>
                <div className="h-56">
@@ -324,10 +321,10 @@ export default function FinancialsPage() {
         </>
       )}
 
-      {/* ── MONTHLY TAB ────────────────────────────────────── */}
+      {}
       {activeTab === 'monthly' && (
         <>
-          {/* Monthly Bar Chart */}
+          {}
           <div className="glass-panel p-8 h-[420px] border border-white/5 rounded-2xl bg-white/5">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold font-cairo">الأداء الشهري — آخر 12 شهر</h2>
@@ -351,7 +348,7 @@ export default function FinancialsPage() {
             )}
           </div>
 
-          {/* Monthly table */}
+          {}
           <div className="glass-panel p-6 border border-white/5 rounded-2xl bg-white/5">
             <h2 className="text-xl font-bold font-cairo mb-6 flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-[#D4AF37]" />

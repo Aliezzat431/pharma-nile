@@ -97,7 +97,7 @@ export default function SadqahPage() {
         </div>
       </header>
 
-      {/* Summary Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="glass-panel p-8 relative overflow-hidden group">
           <div className="z-10 relative">
@@ -165,7 +165,7 @@ export default function SadqahPage() {
         </div>
       </div>
 
-      {/* Search */}
+      {}
       <div className="glass-panel p-4 flex items-center gap-4">
         <Search className="w-5 h-5 text-gray-500" />
 
@@ -178,7 +178,7 @@ export default function SadqahPage() {
         />
       </div>
 
-      {/* Table */}
+      {}
       <div className="glass-panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right">

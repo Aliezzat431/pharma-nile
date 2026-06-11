@@ -17,29 +17,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'لم يتم إرفاق الملف.' }, { status: 400 });
     }
 
-    // 1. تقنية "اقتطاع العينة الحجمية" (Chunk Sampling)
-    // بدلاً من قراءة الملف بالكامل، نقرأ أول 50 كيلوبايت فقط وهي كافية جداً لفهم الهيكل ومسميات الحقول
+
     const sampleStream = file.slice(0, 50 * 1024); 
     const sampleText = await sampleStream.text();
     
     let sampleData: any;
     try {
-      // محاولة إغلاق القوس لتشكيل JSON سليم في حال انقطع النص بسبب حجم العينة
+
       let cleanSample = sampleText.trim();
       if (!cleanSample.endsWith('}')) {
-        // تنظيف تقريبي سريع لجعل النص صالحاً للقراءة كـ JSON لعينة فقط
+
         const lastOpenBracket = cleanSample.lastIndexOf('[');
         const lastOpenBrace = cleanSample.lastIndexOf('{');
         const cutIndex = Math.max(lastOpenBracket, lastOpenBrace);
         cleanSample = cleanSample.substring(0, cutIndex) + '\n  ]\n}'; 
       }
-      // إذا فشل الـ Parse المباشر بسبب القطع، سنمرر النص الخام للـ AI وهو عبقري في فهم الأنماط حتى لو مقطوعة!
+
       sampleData = cleanSample;
     } catch (e) {
       sampleData = sampleText.substring(0, 5000); // Fallback لنص خام
     }
 
-    // جداول النظام المستهدفة في نظام PharmaNile
     const targetSchema = {
       pharmacies: ['id', 'name', 'address'],
       companies: ['id', 'name', 'country'],
@@ -48,7 +46,6 @@ export async function POST(req: Request) {
       orders: ['id', 'pharmacy_id', 'customer_id', 'total', 'created_at']
     };
 
-    // 2. استدعاء الـ AI لدراسة العينة المستقطعة فقط
     const systemPrompt = `You are an expert data migration system.
 Your job is to analyze a raw sample (potentially truncated) of an uploaded pharmacy data file and map it to our target database schema.
 
@@ -74,7 +71,6 @@ Return ONLY a valid JSON object matching this structure:
 
     const mappingSchema = JSON.parse(chatCompletion.choices[0]?.message?.content || "{}");
 
-    // 3. قراءة الملف بالكامل الآن للضخ المباشر بعد أن أصبح لدينا الخريطة الأمنية
     const fullText = await file.text();
     const fullData = JSON.parse(fullText);
 
@@ -86,7 +82,6 @@ Return ONLY a valid JSON object matching this structure:
     const executionOrder = ['pharmacies', 'companies', 'customers', 'products', 'orders'];
     const CHUNK_SIZE = 500;
 
-    // 4. حلقة التحويل والضخ المبنية على خريطة العينة
     for (const targetTable of executionOrder) {
       const sourceKey = Object.keys(mappingSchema.table_mapping).find(
         key => mappingSchema.table_mapping[key] === targetTable
@@ -107,7 +102,6 @@ Return ONLY a valid JSON object matching this structure:
           return newRow;
         });
 
-        // الضخ على دفعات صغيرة لحماية اتصال قاعدة البيانات
         for (let i = 0; i < transformedRows.length; i += CHUNK_SIZE) {
           const chunk = transformedRows.slice(i, i + CHUNK_SIZE);
           const { error } = await supabase.from(targetTable).upsert(chunk, { onConflict: 'id' });

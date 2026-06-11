@@ -66,3 +66,4 @@ export async function endShift(sessionId: string) {
   if (error) throw error;
   return true;
 }
+

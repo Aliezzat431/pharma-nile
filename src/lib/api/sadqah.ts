@@ -42,3 +42,4 @@ export async function getSadqahStats() {
 
   return { entries, totalAmount };
 }
+

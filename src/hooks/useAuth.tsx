@@ -26,10 +26,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
 
   useEffect(() => {
-    // 1. Initial manual fetch
+
     supabase.auth.getSession().then(({ data: { session: sess }, error }) => {
       if (error) {
-        // Only log serious errors, ignore common refresh token missing errors
+
         if (error.message !== 'refresh_token_not_found') {
           console.error('[Auth] Initial session fetch error:', error.message);
         }
@@ -42,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    // 2. Auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
       console.log(`[Auth] State change event: ${event}`);
       setSession(sess);
@@ -63,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('📧 Email:', email);
     console.log('🔑 Admin key provided:', !!adminKey);
     try {
-      // Step 1: Supabase auth
+
       console.log('⏳ Step 1: Calling supabase.auth.signInWithPassword...');
       const { data: { user: authUser }, error } = await supabase.auth.signInWithPassword({ email, password });
       
@@ -75,7 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!authUser) throw new Error("User not found");
 
-      // Step 2: Fetch user profile
       console.log('⏳ Step 2: Fetching user_profiles for id:', authUser.id);
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
@@ -90,7 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       console.log('✅ Step 2 OK - Profile:', profile);
 
-      // Step 3: Admin key check
       if (profile?.role === 'admin') {
         console.log('⏳ Step 3: Admin role detected, checking admin key...');
         if (!adminKey) {
@@ -153,3 +150,4 @@ export function useAuth() {
   }
   return context;
 }
+

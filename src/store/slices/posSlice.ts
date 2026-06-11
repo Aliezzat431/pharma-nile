@@ -34,10 +34,7 @@ const initialState: PosState = {
   total: 0,
 };
 
-/**
- * Auto-distribute a requested quantity across batches using FEFO
- * (First Expiry First Out). Each batch portion keeps its own price.
- */
+
 function autoDistribute(
   activeBatches: any[] | undefined,
   requestedQty: number,
@@ -47,7 +44,6 @@ function autoDistribute(
 ): BatchDistribution[] {
   if (!activeBatches || activeBatches.length === 0) return [];
 
-  // Batches are already sorted FEFO from the API (earliest expiry first)
   const distributions: BatchDistribution[] = [];
   let remaining = requestedQty;
 
@@ -58,7 +54,6 @@ function autoDistribute(
 
     const take = Math.min(available, remaining);
 
-    // Calculate per-unit price from this batch's selling_price
     const multi = getMultiplier(
       { unit_conversion: unitConversion, unit: 'علبة' },
       unit,
@@ -81,17 +76,17 @@ function autoDistribute(
   return distributions;
 }
 
-/** Calculate total from all cart items using their batch distributions */
+
 function calcTotal(cart: CartItem[]): number {
   return cart.reduce((sum, item) => {
     if (item.batchDistributions && item.batchDistributions.length > 0) {
-      // Weighted total: Σ(batch_qty × batch_price)
+
       return sum + item.batchDistributions.reduce(
         (batchSum, d) => batchSum + d.quantity * d.price,
         0,
       );
     }
-    // Fallback if no distributions
+
     return sum + item.price * item.quantity;
   }, 0);
 }
@@ -104,7 +99,7 @@ const posSlice = createSlice({
       const existingItem = state.cart.find((item) => item.id === action.payload.id);
       if (existingItem) {
         existingItem.quantity += action.payload.quantity;
-        // Re-distribute across batches with new total quantity
+
         existingItem.batchDistributions = autoDistribute(
           existingItem.activeBatches,
           existingItem.quantity,
@@ -114,7 +109,7 @@ const posSlice = createSlice({
         );
       } else {
         const newItem = { ...action.payload };
-        // Auto-distribute for new items
+
         newItem.batchDistributions = autoDistribute(
           newItem.activeBatches,
           newItem.quantity,
@@ -134,7 +129,7 @@ const posSlice = createSlice({
       const item = state.cart.find((item) => item.id === action.payload.id);
       if (item) {
         item.quantity = action.payload.quantity;
-        // Re-distribute across batches
+
         item.batchDistributions = autoDistribute(
           item.activeBatches,
           item.quantity,
@@ -152,10 +147,10 @@ const posSlice = createSlice({
         if (action.payload.customPills) {
           item.customPills = action.payload.customPills;
         }
-        // Update display price
+
         const multi = getMultiplier({ unit_conversion: item.unitConversion, unit: "علبة" }, item.unit, item.customPills || 10);
         item.price = Number((item.basePrice / multi).toFixed(2));
-        // Re-distribute with new unit pricing
+
         item.batchDistributions = autoDistribute(
           item.activeBatches,
           item.quantity,
@@ -170,7 +165,7 @@ const posSlice = createSlice({
       const item = state.cart.find((item) => item.id === action.payload.id);
       if (item) {
         item.batchDistributions = action.payload.distributions;
-        // Update quantity to match total distribution
+
         const totalDist = action.payload.distributions.reduce((sum, d) => sum + d.quantity, 0);
         if (totalDist > 0) {
           item.quantity = totalDist;
@@ -187,3 +182,4 @@ const posSlice = createSlice({
 
 export const { addToCart, removeFromCart, updateQuantity, updateUnit, updateBatchDistribution, clearCart } = posSlice.actions;
 export default posSlice.reducer;
+

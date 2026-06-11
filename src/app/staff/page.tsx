@@ -17,6 +17,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAllStaff, UserProfile } from '@/lib/api/staff';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { staffCreateSchema } from '@/lib/validations';
+import { z } from 'zod';
+import { cn } from '@/lib/utils';
 
 interface Session {
   id: string;
@@ -34,14 +39,13 @@ export default function StaffManagement() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Modal State
-  const [newStaff, setNewStaff] = useState({
-    email: '',
-    password: '',
-    full_name: '',
-    role: 'staff' as 'admin' | 'staff'
+
+  type StaffFormValues = z.infer<typeof staffCreateSchema>;
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<StaffFormValues>({
+    resolver: zodResolver(staffCreateSchema),
+    defaultValues: { email: '', password: '', full_name: '', role: 'staff' }
   });
+  
   const [addLoading, setAddLoading] = useState(false);
 
   useEffect(() => {
@@ -77,21 +81,20 @@ export default function StaffManagement() {
     }
   };
 
-  const handleAddStaff = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: StaffFormValues) => {
     setAddLoading(true);
     try {
       const res = await fetch('/api/staff/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newStaff)
+        body: JSON.stringify(data)
       });
       
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create staff');
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Failed to create staff');
 
       setIsAddModalOpen(false);
-      setNewStaff({ email: '', password: '', full_name: '', role: 'staff' });
+      reset();
       fetchData();
     } catch (err: any) {
       alert(err.message);
@@ -129,7 +132,7 @@ export default function StaffManagement() {
         </motion.button>
       </header>
 
-      {/* Stats Dashboard */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-8 flex flex-col gap-4 border-white/5 relative overflow-hidden group">
              <div className="flex justify-between items-center z-10">
@@ -168,7 +171,7 @@ export default function StaffManagement() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Staff List */}
+        {}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center gap-4 mb-2">
             <div className="flex-1 glass-panel p-1 flex items-center gap-3 group focus-within:border-[#00CED1]/50 transition-all">
@@ -251,7 +254,7 @@ export default function StaffManagement() {
           </div>
         </div>
 
-        {/* Right Sidebar: Recent Activity */}
+        {}
         <div className="space-y-6">
           <h2 className="text-xl font-bold font-cairo flex items-center gap-3 px-2">
             <Clock className="w-5 h-5 text-[#D4AF37]" />
@@ -281,7 +284,7 @@ export default function StaffManagement() {
         </div>
       </div>
 
-      {/* Add Staff Modal */}
+      {}
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -313,64 +316,61 @@ export default function StaffManagement() {
                 </button>
               </div>
 
-              <form onSubmit={handleAddStaff} className="space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo">الاسم الكامل</label>
-                    <div className="glass-panel p-3 flex items-center gap-3">
+                    <div className={cn("glass-panel p-3 flex items-center gap-3", errors.full_name && "border-red-500/50")}>
                       <UsersIcon className="w-4 h-4 text-gray-500" />
                       <input 
                         type="text" 
-                        required
+                        {...register("full_name")}
                         className="flex-1 bg-transparent border-none outline-none font-cairo"
                         placeholder="أدخل الاسم الرباعي..."
-                        value={newStaff.full_name}
-                        onChange={e => setNewStaff({...newStaff, full_name: e.target.value})}
                       />
                     </div>
+                    {errors.full_name && <p className="text-red-400 text-xs font-cairo">{errors.full_name.message}</p>}
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo">البريد الإلكتروني</label>
-                    <div className="glass-panel p-3 flex items-center gap-3">
+                    <div className={cn("glass-panel p-3 flex items-center gap-3", errors.email && "border-red-500/50")}>
                       <Mail className="w-4 h-4 text-gray-500" />
                       <input 
                         type="email" 
-                        required
+                        {...register("email")}
                         className="flex-1 bg-transparent border-none outline-none font-inter"
                         placeholder="staff@pharmanile.com"
-                        value={newStaff.email}
-                        onChange={e => setNewStaff({...newStaff, email: e.target.value})}
                       />
                     </div>
+                    {errors.email && <p className="text-red-400 text-xs font-cairo">{errors.email.message}</p>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo">كلمة المرور</label>
-                      <div className="glass-panel p-3">
+                      <div className={cn("glass-panel p-3", errors.password && "border-red-500/50")}>
                         <input 
                           type="password" 
-                          required
+                          {...register("password")}
                           className="w-full bg-transparent border-none outline-none font-inter"
                           placeholder="••••••••"
-                          value={newStaff.password}
-                          onChange={e => setNewStaff({...newStaff, password: e.target.value})}
                         />
                       </div>
+                      {errors.password && <p className="text-red-400 text-xs font-cairo">{errors.password.message}</p>}
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo">الصلاحيات</label>
                       <div className="glass-panel p-3">
                         <select 
+                          {...register("role")}
                           className="w-full bg-transparent border-none outline-none font-cairo text-sm"
-                          value={newStaff.role}
-                          onChange={e => setNewStaff({...newStaff, role: e.target.value as any})}
                         >
                           <option value="staff" className="bg-[#111]">موظف صيدلية</option>
                           <option value="admin" className="bg-[#111]">مدير نظام</option>
                         </select>
                       </div>
+                      {errors.role && <p className="text-red-400 text-xs font-cairo">{errors.role.message}</p>}
                     </div>
                   </div>
                 </div>
@@ -394,7 +394,7 @@ export default function StaffManagement() {
                 </div>
               </form>
               
-              {/* Background Glow */}
+              {}
               <div className="absolute top-[-100px] right-[-100px] w-64 h-64 bg-[#00CED1]/10 rounded-full blur-[80px] -z-10" />
             </motion.div>
           </div>
@@ -403,3 +403,4 @@ export default function StaffManagement() {
     </div>
   );
 }
+

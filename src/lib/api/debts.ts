@@ -19,9 +19,7 @@ export interface DebtPayment {
   note?: string;
 }
 
-/**
- * جلب جميع العملاء المدينين التابعين لصيدلية معينة
- */
+
 export async function getDebtors(): Promise<Debtor[]> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -41,9 +39,7 @@ export async function getDebtors(): Promise<Debtor[]> {
   return data || [];
 }
 
-/**
- * إضافة عميل ديون جديد وربطه بمعرف الصيدلية
- */
+
 export async function addDebtor(debtorData: Omit<Debtor, 'id' | 'total_debt' | 'created_at' | 'pharmacy_id'>): Promise<Debtor> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -77,9 +73,7 @@ export async function addDebtor(debtorData: Omit<Debtor, 'id' | 'total_debt' | '
   return data;
 }
 
-/**
- * تسجيل عملية سداد (جزئي أو كلي) وتحديث مديونية العميل
- */
+
 export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_date' | 'pharmacy_id'>): Promise<DebtPayment> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -92,7 +86,6 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
     throw new Error("Validation Error: Malicious characters detected in payment note.");
   }
 
-  // 1. بدء معاملة لتسجيل حركة السداد
   const { data: paymentData, error: paymentError } = await supabase
     .from('debt_payments')
     .insert([
@@ -112,7 +105,6 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
     throw paymentError;
   }
 
-  // 2. تحديث الرصيد المتبقي في حساب العميل (خصم القيمة المسددة)
   const { error: debtorError } = await supabase.rpc('update_debtor_balance', {
     target_debtor_id: payment.debtor_id,
     payment_amount: payment.amount,
@@ -137,7 +129,6 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
     }
   }
 
-  // 3. تسجيل معاملة مالية واردة في الخزينة لضبط تقارير الأرباح
   await supabase
     .from('financial_transactions')
     .insert([
@@ -153,9 +144,7 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
   return paymentData as DebtPayment;
 }
 
-/**
- * جلب سجل السداد الخاص بعميل محدد داخل الصيدلية لضمان الأمان
- */
+
 export async function getPaymentHistory(debtorId: string): Promise<DebtPayment[]> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -194,3 +183,4 @@ export async function getDebtorDetails(id: string) {
   }
   return data;
 }
+

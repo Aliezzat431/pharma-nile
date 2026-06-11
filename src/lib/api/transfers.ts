@@ -32,7 +32,7 @@ export async function requestTransfer(
   quantity: number,
   notes: string = ''
 ) {
-  // Sync stale JWT token for RLS if needed
+
   const { data: { user } } = await supabase.auth.getUser();
   if (user && user.user_metadata?.pharmacy_id !== toPharmacyId) {
     await supabase.auth.updateUser({ data: { pharmacy_id: toPharmacyId } });
@@ -78,14 +78,13 @@ export async function getTransfers(pharmacyId: string) {
 }
 
 export async function shipTransfer(transferId: string, fromPharmacyId: string, productId: string) {
-  // Sync stale JWT token for RLS if needed
+
   const { data: { user } } = await supabase.auth.getUser();
   if (user && user.user_metadata?.pharmacy_id !== fromPharmacyId) {
     await supabase.auth.updateUser({ data: { pharmacy_id: fromPharmacyId } });
     await supabase.auth.refreshSession();
   }
 
-  // First, verify the transfer
   const { data: transfer, error: fetchError } = await supabase
     .from('stock_transfers')
     .select('*')
@@ -96,7 +95,6 @@ export async function shipTransfer(transferId: string, fromPharmacyId: string, p
   if (fetchError || !transfer) throw new Error('Transfer not found or unauthorized');
   if (transfer.status !== 'pending') throw new Error('Transfer is not pending');
 
-  // Deduct stock using FEFO
   let remainingToDeduct = transfer.quantity;
   const { data: batches } = await supabase
     .from('batches')
@@ -129,7 +127,6 @@ export async function shipTransfer(transferId: string, fromPharmacyId: string, p
     remainingToDeduct -= deduction;
   }
 
-  // Update status
   const { error: updateError } = await supabase
     .from('stock_transfers')
     .update({ status: 'shipped' })
@@ -143,7 +140,7 @@ export async function receiveTransfer(
   toPharmacyId: string, 
   receiveDetails: { productId: string, batchId?: string, price?: number, cost?: number, expiryDate?: string }
 ) {
-  // Sync stale JWT token for RLS if needed
+
   const { data: { user } } = await supabase.auth.getUser();
   if (user && user.user_metadata?.pharmacy_id !== toPharmacyId) {
     await supabase.auth.updateUser({ data: { pharmacy_id: toPharmacyId } });
@@ -161,13 +158,13 @@ export async function receiveTransfer(
   if (transfer.status !== 'shipped') throw new Error('Transfer is not shipped');
 
   if (receiveDetails.batchId) {
-    // Add to existing batch
+
     const { data: batch } = await supabase.from('batches').select('quantity').eq('id', receiveDetails.batchId).single();
     if (batch) {
       await supabase.from('batches').update({ quantity: Number(batch.quantity) + Number(transfer.quantity) }).eq('id', receiveDetails.batchId);
     }
   } else {
-    // Create new batch
+
     await supabase.from('batches').insert([{
       pharmacy_id: toPharmacyId,
       product_id: receiveDetails.productId,
@@ -179,7 +176,6 @@ export async function receiveTransfer(
     }]);
   }
 
-  // Update status
   const { error: updateError } = await supabase
     .from('stock_transfers')
     .update({ status: 'completed' })
@@ -189,14 +185,13 @@ export async function receiveTransfer(
 }
 
 export async function cancelTransfer(transferId: string, pharmacyId: string) {
-  // Sync stale JWT token for RLS if needed
+
   const { data: { user } } = await supabase.auth.getUser();
   if (user && user.user_metadata?.pharmacy_id !== pharmacyId) {
     await supabase.auth.updateUser({ data: { pharmacy_id: pharmacyId } });
     await supabase.auth.refreshSession();
   }
 
-  // Only allow canceling if it is pending and the user is involved
   const { error } = await supabase
     .from('stock_transfers')
     .update({ status: 'cancelled' })
@@ -206,3 +201,4 @@ export async function cancelTransfer(transferId: string, pharmacyId: string) {
     
   if (error) throw error;
 }
+

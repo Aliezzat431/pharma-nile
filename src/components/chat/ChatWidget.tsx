@@ -18,12 +18,12 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Socket server has been removed per purely Next.js architecture request
-    // This is now a stub. In the future, this could use Supabase Realtime Channels.
+
+
   }, []);
 
   useEffect(() => {
-    // Auto scroll
+
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
@@ -38,7 +38,6 @@ export default function ChatWidget() {
       timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
     };
 
-    // Simulate instantly seeing your own message since there is no server bounce-back anymore
     setMessages((prev) => [...prev, msgData]);
     setInput('');
   };
@@ -54,7 +53,7 @@ export default function ChatWidget() {
             className="glass-panel w-[350px] mb-4 shadow-[0_0_30px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col dir-rtl"
             style={{ height: '450px' }}
           >
-            {/* Header */}
+            {}
             <div className="bg-[#00CED1]/20 p-4 border-b border-white/10 flex items-center justify-between backdrop-blur-md">
               <div className="flex items-center gap-2">
                  <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
@@ -69,7 +68,7 @@ export default function ChatWidget() {
               </button>
             </div>
 
-            {/* Chat Area */}
+            {}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
                {messages.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-gray-500 text-sm italic text-center">
@@ -95,7 +94,7 @@ export default function ChatWidget() {
                <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */ }
+            { }
             <form onSubmit={sendMessage} className="p-3 bg-[#050505]/50 border-t border-white/10 flex gap-2">
                <input 
                  type="text" 
@@ -117,7 +116,7 @@ export default function ChatWidget() {
         )}
       </AnimatePresence>
 
-      {/* Floating Action Button */}
+      {}
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all ${
@@ -131,3 +130,4 @@ export default function ChatWidget() {
     </div>
   );
 }
+

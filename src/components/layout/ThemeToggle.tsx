@@ -62,7 +62,7 @@ export default function ThemeToggle({ align = "right" }: { align?: "left" | "rig
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop to close */}
+            {}
             <div 
               className="fixed inset-0 z-40" 
               onClick={() => setIsOpen(false)}
@@ -119,3 +119,4 @@ export default function ThemeToggle({ align = "right" }: { align?: "left" | "rig
     </div>
   );
 }
+

@@ -11,7 +11,7 @@ export function useInventory() {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      // Fetch products with their current batches
+
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -32,7 +32,6 @@ export function useInventory() {
   useEffect(() => {
     fetchInventory();
 
-    // Setup Realtime subscription
     const subscription = supabase
       .channel('inventory_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'batches' }, () => {
@@ -47,3 +46,4 @@ export function useInventory() {
 
   return { products, loading, error, refresh: fetchInventory };
 }
+

@@ -30,16 +30,14 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
     handleLayout();
     window.addEventListener('sidebar-toggle', handleLayout);
-    
-    // Global Keyboard Shortcuts
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Command Palette: Ctrl+K
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCmdOpen(prev => !prev);
       }
 
-      // Quick Navigation: Alt + Shift + [Key]
       if (e.altKey && e.shiftKey) {
         const key = e.key.toLowerCase();
         const routes: Record<string, string> = {
@@ -110,7 +108,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     <div className="flex h-screen w-full relative">
       {(!isMinimal && !isCopilot) && <Sidebar />}
       
-      {/* Main Content Area */}
+      {}
       <main 
         className={`flex-1 h-screen overflow-y-auto overflow-x-hidden relative z-10 transition-all duration-500 ease-in-out ${
           (isMinimal || isCopilot) 
@@ -120,11 +118,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             : 'mr-0 md:mr-72 p-4 sm:p-6 md:p-8 w-full'
         }`}
       >
-        {/* Quick Actions Header for Main Content */}
+        {}
         {(!isMinimal && !isCopilot) && (
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 pointer-events-auto gap-4 md:gap-0">
             <div className="flex items-center gap-4 w-full md:w-auto">
-              {/* Mobile Sidebar Toggle */}
+              {}
               <button 
                 onClick={() => window.dispatchEvent(new Event('sidebar-toggle'))}
                 className="md:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
@@ -162,7 +160,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         </div>
       </main>
       
-      {/* Background ambient lighting effects */}
+      {}
       <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-[var(--nile-teal)]/5 blur-[120px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
       <div className="fixed bottom-[-10%] right-[20%] w-[50vw] h-[50vw] rounded-full bg-[var(--royal-gold)]/3 blur-[150px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
       
@@ -171,4 +169,5 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     </div>
   );
 }
+
 

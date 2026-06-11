@@ -19,8 +19,7 @@ export default function UndoToast() {
     setIsUndoing(true);
     const result = await undoManager.undo();
     setIsUndoing(false);
-    
-    // You could trigger a global toast here to show result.message
+
     alert(result.message);
   };
 
@@ -60,7 +59,7 @@ export default function UndoToast() {
               </button>
             </div>
 
-            {/* Progress Bar Timer */}
+            {}
             <motion.div 
               initial={{ scaleX: 1 }}
               animate={{ scaleX: 0 }}
@@ -73,3 +72,4 @@ export default function UndoToast() {
     </AnimatePresence>
   );
 }
+
