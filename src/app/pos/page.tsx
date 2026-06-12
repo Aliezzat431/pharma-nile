@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import { POSHeader } from './components/POSHeader';
 import { POSProductCard } from './components/POSProductCard';
 import { POSCartItem } from './components/POSCartItem';
+import { BatchDistributionModal } from './components/BatchDistributionModal';
+import { PillsConfirmModal } from './components/PillsConfirmModal';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
 
@@ -742,168 +744,25 @@ export default function POSTerminal() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {batchModal.isOpen && batchModal.item && (
-          <div className="fixed inset-0 bg-[#050505]/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-card w-full max-w-lg overflow-hidden relative border border-[#00CED1]/30"
-            >
-              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-                <div>
-                  <h2 className="text-xl font-bold font-cairo text-white">توزيع التشغيلات</h2>
-                  <p className="text-sm font-cairo text-gray-400 mt-1">{batchModal.item.name} - الكمية المطلوبة: {batchModal.item.quantity}</p>
-                </div>
-                <button
-                  onClick={() => setBatchModal({ isOpen: false, item: null })}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4">
-                {batchModal.item.activeBatches?.length ? (
-                  batchModal.item.activeBatches.map((b: any) => {
-                    const existingDist = batchDistributions.find(d => d.batchId === b.id);
-                    const assignedVal = existingDist ? existingDist.quantity : 0;
+      <BatchDistributionModal 
+        isOpen={batchModal.isOpen}
+        item={batchModal.item}
+        onClose={() => setBatchModal({ isOpen: false, item: null })}
+        batchDistributions={batchDistributions}
+        setBatchDistributions={setBatchDistributions}
+      />
 
-                    return (
-                      <div key={b.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
-                        <div>
-                          <p className="text-gray-300 font-cairo font-bold">انتهاء: {new Date(b.expiry_date).toLocaleDateString('ar-EG')}</p>
-                          <p className="text-sm text-gray-500 font-cairo mt-1">الكمية المتاحة: {b.quantity} | السعر: {b.selling_price} ج.م</p>
-                        </div>
-                        <input
-                          type="number"
-                          min="0"
-                          max={b.quantity}
-                          value={assignedVal || ''}
-                          placeholder="0"
-                          onChange={(e) => {
-                            let val = Number(e.target.value);
-                            if (val < 0) val = 0;
-                            if (val > b.quantity) val = b.quantity;
-                            const otherDists = batchDistributions.filter(d => d.batchId !== b.id);
-                            if (val > 0) {
-                              setBatchDistributions([...otherDists, { batchId: b.id, quantity: val, price: b.selling_price, purchasePrice: b.purchase_price, expiry: b.expiry_date }]);
-                            } else {
-                              setBatchDistributions(otherDists);
-                            }
-                          }}
-                          className="w-24 bg-[#050505]/50 border border-white/20 rounded-lg px-3 py-2 text-center text-white outline-none focus:border-[#00CED1] font-cairo font-bold"
-                        />
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-center text-gray-500 font-cairo py-6">لا توجد تشغيلات مسجلة لهذا المنتج.</p>
-                )}
-
-                {(() => {
-                  const totalDist = batchDistributions.reduce((acc, curr) => acc + curr.quantity, 0);
-                  const target = batchModal.item.quantity;
-                  return (
-                    <div className={`p-3 rounded-lg flex justify-between items-center font-cairo text-sm mt-4 border ${totalDist === target ? 'bg-green-500/10 border-green-500/50 text-green-400' : totalDist > target ? 'bg-red-500/10 border-red-500/50 text-red-400' : 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'}`}>
-                      <span>إجمالي الموزع: {totalDist}</span>
-                      <span>المطلوب: {target}</span>
-                    </div>
-                  );
-                })()}
-
-              </div>
-              <div className="p-4 border-t border-white/10 flex gap-3 bg-[#050505]/50">
-                <button
-                  onClick={() => setBatchModal({ isOpen: false, item: null })}
-                  className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10"
-                >
-                  إلغاء
-                </button>
-                <button
-                  onClick={() => {
-                    const totalDist = batchDistributions.reduce((acc, curr) => acc + curr.quantity, 0);
-                    if (totalDist > batchModal.item.quantity) {
-                      alert("الكمية الموزعة لا يجب أن تتجاوز الكمية المطلوبة للمنتج في السلة.");
-                      return;
-                    }
-                    dispatch(updateBatchDistribution({ id: batchModal.item.id, distributions: batchDistributions }));
-                    setBatchModal({ isOpen: false, item: null });
-                  }}
-                  className="flex-1 py-3 rounded-xl font-cairo text-white bg-[#00CED1]/20 border border-[#00CED1]/50 hover:bg-[#00CED1]/40 transition-colors font-bold"
-                >
-                  حفظ التوزيع
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {pillsModal.isOpen && (
-          <div className="fixed inset-0 bg-[#050505]/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-card w-full max-w-md overflow-hidden relative border border-[#00CED1]/30"
-            >
-              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-                <h2 className="text-xl font-bold font-cairo text-white">تأكيد كمية الوحدة</h2>
-                <button
-                  onClick={() => setPillsModal({ ...pillsModal, isOpen: false })}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="p-6">
-                <p className="text-gray-300 font-cairo mb-6 leading-relaxed">
-                  {pillsModal.type === 'UNIT_CHANGE'
-                    ? `أنت تحاول تغيير الوحدة إلى "${pillsModal.pendingTargetUnit}" للمنتج "${pillsModal.items[0]?.name}".`
-                    : `عملية الدفع تتطلب تأكيد كمية وحدة "${pillsModal.items[pillsModal.currentIndex]?.unit}" للمنتج "${pillsModal.items[pillsModal.currentIndex]?.name}".`
-                  }
-                  <br /><br />
-                  كم <strong>{pillsModal.type === 'UNIT_CHANGE' ? pillsModal.pendingTargetUnit : pillsModal.items[pillsModal.currentIndex]?.unit}</strong> في الشريط الواحد؟
-                </p>
-
-                <div className="flex items-center gap-4 mb-2">
-                  <input
-                    type="number"
-                    value={pillsInput}
-                    onChange={(e) => setPillsInput(e.target.value)}
-                    className="w-full bg-[#050505]/50 border border-white/20 rounded-xl px-4 py-3 text-2xl text-center text-[#00CED1] font-bold outline-none focus:border-[#00CED1] transition-colors"
-                    autoFocus
-                    onKeyDown={(e) => e.key === 'Enter' && handlePillsConfirm()}
-                  />
-                </div>
-
-                {pillsModal.type === 'CHECKOUT' && pillsModal.items.length > 1 && (
-                  <div className="text-xs text-gray-500 font-cairo text-center mt-4 bg-white/5 py-1 px-3 rounded-full inline-block mx-auto">
-                    منتج {pillsModal.currentIndex + 1} من {pillsModal.items.length}
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 border-t border-white/10 flex gap-3 bg-[#050505]/50">
-                <button
-                  onClick={() => setPillsModal({ ...pillsModal, isOpen: false })}
-                  className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10"
-                >
-                  إلغاء
-                </button>
-                <button
-                  onClick={handlePillsConfirm}
-                  className="flex-1 py-3 rounded-xl font-cairo text-white bg-[#00CED1]/20 border border-[#00CED1]/50 hover:bg-[#00CED1]/40 transition-colors font-bold"
-                >
-                  تأكيد
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <PillsConfirmModal 
+        isOpen={pillsModal.isOpen}
+        type={pillsModal.type}
+        items={pillsModal.items}
+        currentIndex={pillsModal.currentIndex}
+        pendingTargetUnit={pillsModal.pendingTargetUnit}
+        pillsInput={pillsInput}
+        setPillsInput={setPillsInput}
+        onClose={() => setPillsModal({ ...pillsModal, isOpen: false })}
+        onConfirm={handlePillsConfirm}
+      />
 
 
       {}

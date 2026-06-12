@@ -4,11 +4,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Phone, Search, Plus, X, History, CreditCard, Loader2, ArrowUpRight, DollarSign, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Debtor, getDebtors, addDebtor, recordPayment, getPaymentHistory, DebtPayment } from '@/lib/api/debts';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { debtorSchema, debtPaymentSchema } from '@/lib/validations';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
+import { AddDebtorModal } from './components/AddDebtorModal';
+import { PaymentModal } from './components/PaymentModal';
+import { HistoryModal } from './components/HistoryModal';
 export default function DebtsPage() {
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,17 +22,7 @@ export default function DebtsPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
 
   type DebtorFormValues = z.infer<typeof debtorSchema>;
-  const { register: registerAdd, handleSubmit: handleSubmitAdd, formState: { errors: errorsAdd }, reset: resetAdd } = useForm<DebtorFormValues>({
-    resolver: zodResolver(debtorSchema) as any,
-    defaultValues: { name: '', phone: '' }
-  });
-
   type PaymentFormValues = z.infer<typeof debtPaymentSchema>;
-  const { register: registerPayment, handleSubmit: handleSubmitPayment, formState: { errors: errorsPayment }, reset: resetPayment, setValue: setPaymentValue, watch: watchPayment } = useForm<PaymentFormValues>({
-    resolver: zodResolver(debtPaymentSchema) as any,
-    defaultValues: { payment_type: 'partial', note: '' }
-  });
-  const currentPaymentType = watchPayment('payment_type');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -56,7 +47,6 @@ export default function DebtsPage() {
     try {
       await addDebtor(data);
       setIsAddModalOpen(false);
-      resetAdd();
       await fetchDebtors();
     } catch (err) {
       console.error("Add debtor error", err);
@@ -76,7 +66,6 @@ export default function DebtsPage() {
         note: data.note
       });
       setIsPaymentModalOpen(false);
-      resetPayment();
       await fetchDebtors();
     } catch (err) {
       console.error("Payment error", err);
@@ -224,7 +213,6 @@ export default function DebtsPage() {
                   onClick={() => {
                     setErrorMessage(null);
                     setSelectedDebtor(debtor);
-                    resetPayment();
                     setIsPaymentModalOpen(true);
                   }}
                   className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#00CED1] text-black font-bold font-cairo hover:shadow-[0_0_15px_rgba(0,206,209,0.3)] transition-all text-sm"
@@ -249,175 +237,30 @@ export default function DebtsPage() {
 
       {}
       <AnimatePresence>
-        {isAddModalOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsAddModalOpen(false)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md glass-panel p-8 bg-[#0a0a0a] border border-white/10 rounded-2xl z-10 text-right"
-            >
-              <h2 className="text-2xl font-bold font-cairo mb-6 text-white">إضافة عميل ديون جديد</h2>
-              <form onSubmit={handleSubmitAdd(onAddDebtor)} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo block">اسم العميل بالكامل</label>
-                  <input 
-                    type="text" 
-                    {...registerAdd('name')}
-                    className={cn(
-                      "w-full bg-white/5 border outline-none rounded-xl p-3 font-cairo text-white focus:border-[#00CED1] transition-colors",
-                      errorsAdd.name ? "border-red-500" : "border-white/10"
-                    )}
-                  />
-                  {errorsAdd.name && <p className="text-red-400 text-xs font-cairo">{errorsAdd.name.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo block">رقم الهاتف</label>
-                  <input 
-                    type="text" 
-                    {...registerAdd('phone')}
-                    className={cn(
-                      "w-full bg-white/5 border outline-none rounded-xl p-3 text-white focus:border-[#00CED1] transition-colors font-sans",
-                      errorsAdd.phone ? "border-red-500" : "border-white/10"
-                    )}
-                    placeholder="01xxxxxxxxx" 
-                  />
-                  {errorsAdd.phone && <p className="text-red-400 text-xs font-cairo">{errorsAdd.phone.message}</p>}
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button type="submit" className="flex-1 bg-[#00CED1] text-black py-3 rounded-xl font-bold font-cairo hover:bg-[#00CED1]/90 transition-colors">إضافة العميل</button>
-                  <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 bg-white/5 border border-white/10 text-white rounded-xl font-cairo hover:bg-white/10">إلغاء</button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
+        <AddDebtorModal 
+          isOpen={isAddModalOpen} 
+          onClose={() => setIsAddModalOpen(false)} 
+          onAddDebtor={onAddDebtor} 
+        />
       </AnimatePresence>
 
-      {}
       <AnimatePresence>
-        {isPaymentModalOpen && selectedDebtor && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsPaymentModalOpen(false)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-              className="relative w-full max-w-md glass-panel p-8 bg-[#0a0a0a] border border-white/10 rounded-2xl z-10 text-right"
-            >
-              <h2 className="text-2xl font-bold font-cairo mb-1 text-white">تسجيل عملية سداد</h2>
-              <p className="text-gray-400 font-cairo text-sm mb-6">العميل: <span className="text-[#00CED1] font-bold">{selectedDebtor.name}</span></p>
-              
-              <form onSubmit={handleSubmitPayment(onRecordPayment)} className="space-y-6">
-                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo block">المبلغ المسدد</label>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      step="0.01" 
-                      {...registerPayment('amount')}
-                      className={cn(
-                        "w-full bg-white/5 border outline-none rounded-xl p-3 pr-4 pl-12 text-2xl font-bold text-[#00CED1] font-sans text-left",
-                        errorsPayment.amount ? "border-red-500" : "border-white/10"
-                      )}
-                      placeholder="0.00" 
-                    />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-cairo text-xs">ج.م</span>
-                  </div>
-                  {errorsPayment.amount && <p className="text-red-400 text-xs font-cairo">{errorsPayment.amount.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo block">نوع السداد</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button 
-                      type="button"
-                      onClick={() => setPaymentValue('payment_type', 'partial')}
-                      className={`py-3 rounded-xl font-cairo text-sm border transition-all ${currentPaymentType === 'partial' ? 'bg-[#00CED1]/10 border-[#00CED1] text-[#00CED1] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
-                    >سداد جزئي</button>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setPaymentValue('payment_type', 'full');
-                        setPaymentValue('amount', selectedDebtor.total_debt);
-                      }}
-                      className={`py-3 rounded-xl font-cairo text-sm border transition-all ${currentPaymentType === 'full' ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
-                    >كلي (تصفية الحساب)</button>
-                  </div>
-                  {errorsPayment.payment_type && <p className="text-red-400 text-xs font-cairo">{errorsPayment.payment_type.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-400 font-cairo block">ملاحظات (اختياري)</label>
-                  <textarea 
-                    {...registerPayment('note')}
-                    className={cn(
-                      "w-full bg-white/5 border outline-none rounded-xl p-3 font-cairo resize-none h-20 text-white focus:border-[#00CED1] text-sm",
-                      errorsPayment.note ? "border-red-500" : "border-white/10"
-                    )}
-                    placeholder="مثال: استلام نقدي بموجب إيصال" 
-                  />
-                  {errorsPayment.note && <p className="text-red-400 text-xs font-cairo">{errorsPayment.note.message}</p>}
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button type="submit" className="flex-1 bg-[#00CED1] text-black py-3 rounded-xl font-bold font-cairo hover:bg-[#00CED1]/90 transition-colors">تأكيد السداد</button>
-                  <button type="button" onClick={() => setIsPaymentModalOpen(false)} className="px-4 bg-white/5 border border-white/10 text-white rounded-xl font-cairo hover:bg-white/10">إلغاء</button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
+        <PaymentModal 
+          isOpen={isPaymentModalOpen} 
+          onClose={() => setIsPaymentModalOpen(false)} 
+          selectedDebtor={selectedDebtor} 
+          onRecordPayment={onRecordPayment} 
+        />
       </AnimatePresence>
 
-      {}
       <AnimatePresence>
-        {isHistoryModalOpen && selectedDebtor && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsHistoryModalOpen(false)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.93 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.93 }}
-              className="relative w-full max-w-2xl glass-panel p-8 bg-[#0a0a0a] border border-white/10 rounded-2xl z-10 max-h-[80vh] flex flex-col text-right"
-            >
-              <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
-                <h2 className="text-2xl font-bold font-cairo text-white">سجل الدفعات للعميل: {selectedDebtor.name}</h2>
-                <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto space-y-3 pl-1">
-                {historyLoading ? (
-                  <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#00CED1] w-8 h-8" /></div>
-                ) : paymentHistory.length > 0 ? (
-                  paymentHistory.map((p) => (
-                    <div key={p.id} className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between hover:bg-white/10 transition-colors">
-                       <div>
-                          <p className="font-bold text-[#00CED1] text-lg font-sans">{(p.amount || 0).toLocaleString()} ج.م</p>
-                          <p className="text-xs text-gray-500 font-cairo mt-0.5">{new Date(p.payment_date).toLocaleString('ar-EG')}</p>
-                          {p.note && <p className="text-xs text-gray-400 font-cairo mt-1 bg-white/5 px-2 py-1 rounded-md inline-block opacity-90">{p.note}</p>}
-                       </div>
-                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold font-cairo ${p.payment_type === 'full' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-blue-500/20 text-blue-400'}`}>
-                          {p.payment_type === 'full' ? 'تصفية كاملة' : 'سداد جزئي'}
-                       </span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-20 text-gray-500 font-cairo text-sm">لا توجد عمليات سداد مسجلة لهذا العميل حتى الآن.</div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
+        <HistoryModal 
+          isOpen={isHistoryModalOpen} 
+          onClose={() => setIsHistoryModalOpen(false)} 
+          selectedDebtor={selectedDebtor} 
+          paymentHistory={paymentHistory} 
+          historyLoading={historyLoading} 
+        />
       </AnimatePresence>
     </div>
   );
