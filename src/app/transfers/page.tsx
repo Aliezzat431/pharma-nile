@@ -156,7 +156,7 @@ export default function TransfersPage() {
   if (!pharmacyId) return <div className="p-8 text-center">جاري التحميل...</div>;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6 fade-in font-cairo" dir="rtl">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 fade-in font-cairo" dir="rtl">
       <div>
         <h1 className="text-3xl font-bold font-cairo">تحويلات الفروع</h1>
         <p className="text-[var(--text-muted)] mt-2">إدارة طلبات النواقص من الفروع الأخرى</p>
@@ -252,15 +252,15 @@ export default function TransfersPage() {
         <div className="space-y-4">
           <div className="overflow-x-auto rounded-3xl border border-[var(--glass-border)] bg-[var(--glass-surface)]">
             <table className="w-full text-sm text-right">
-              <thead className="bg-[var(--glass-surface-heavy)] text-[var(--text-muted)] font-bold">
+              <thead className="bg-[var(--glass-surface-heavy)] text-[var(--text-muted)] font-bold text-sm md:text-base">
                 <tr>
-                  <th className="px-6 py-4 rounded-tr-3xl">المنتج</th>
-                  <th className="px-6 py-4">الكمية</th>
-                  <th className="px-6 py-4">المرسل</th>
-                  <th className="px-6 py-4">المستقبل</th>
-                  <th className="px-6 py-4">الحالة</th>
-                  <th className="px-6 py-4">التاريخ</th>
-                  <th className="px-6 py-4 rounded-tl-3xl text-center">الإجراء</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 rounded-tr-3xl whitespace-nowrap">المنتج</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">الكمية</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">المرسل</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">المستقبل</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">الحالة</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">التاريخ</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 rounded-tl-3xl text-center whitespace-nowrap">الإجراء</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--glass-border)]">
@@ -289,24 +289,24 @@ export default function TransfersPage() {
                     }
 
                     return (
-                      <tr key={t.id} className="hover:bg-[var(--glass-surface-heavy)] transition-colors">
-                        <td className="px-6 py-4 font-bold text-[var(--foreground)]">{t.product_name}</td>
-                        <td className="px-6 py-4 font-bold">{t.quantity}</td>
-                        <td className="px-6 py-4">
+                      <tr key={t.id} className="hover:bg-[var(--glass-surface-heavy)] transition-colors text-sm md:text-base">
+                        <td className="px-4 md:px-6 py-3 md:py-4 font-bold text-[var(--foreground)] whitespace-nowrap">{t.product_name}</td>
+                        <td className="px-4 md:px-6 py-3 md:py-4 font-bold whitespace-nowrap">{t.quantity}</td>
+                        <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
                           {isSender ? <span className="text-[var(--primary)] font-bold">(أنت)</span> : t.from_pharmacy?.name}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
                           {isReceiver ? <span className="text-[var(--primary)] font-bold">(أنت)</span> : t.to_pharmacy?.name}
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>
+                        <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                          <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>
                             {statusLabel}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-[var(--text-muted)]">
+                        <td className="px-4 md:px-6 py-3 md:py-4 text-[var(--text-muted)] whitespace-nowrap">
                           {new Date(t.created_at).toLocaleDateString('ar-EG')}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-4 md:px-6 py-3 md:py-4 text-center whitespace-nowrap">
                           <div className="flex gap-2 justify-center">
                             {isSender && t.status === 'pending' && (
                               <button

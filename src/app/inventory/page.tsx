@@ -116,7 +116,7 @@ export default function InventoryDashboard() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12 p-2 sm:p-4">
       <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
@@ -158,14 +158,14 @@ export default function InventoryDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-right border-collapse">
             <thead>
-              <tr className="border-b border-white/5 bg-white/5 font-cairo text-gray-400">
-                <th className="p-5 font-semibold text-right">اسم المنتج</th>
-                <th className="p-5 font-semibold text-right">التصنيف</th>
-                <th className="p-5 font-semibold text-right">الشركة</th>
-                <th className="p-5 font-semibold text-right">النظام</th>
-                <th className="p-5 font-semibold text-right">الرصيد</th>
-                <th className="p-5 font-semibold text-left">أقل سعر</th>
-                <th className="p-5 text-center w-10"></th>
+              <tr className="border-b border-white/5 bg-white/5 font-cairo text-gray-400 text-sm md:text-base">
+                <th className="p-3 md:p-5 font-semibold text-right whitespace-nowrap">اسم المنتج</th>
+                <th className="p-3 md:p-5 font-semibold text-right whitespace-nowrap">التصنيف</th>
+                <th className="p-3 md:p-5 font-semibold text-right whitespace-nowrap hidden md:table-cell">الشركة</th>
+                <th className="p-3 md:p-5 font-semibold text-right whitespace-nowrap">النظام</th>
+                <th className="p-3 md:p-5 font-semibold text-right whitespace-nowrap">الرصيد</th>
+                <th className="p-3 md:p-5 font-semibold text-left whitespace-nowrap">أقل سعر</th>
+                <th className="p-3 md:p-5 text-center w-10"></th>
               </tr>
             </thead>
             <tbody>
@@ -190,24 +190,24 @@ export default function InventoryDashboard() {
                       onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                       className={`border-b border-white/5 hover:bg-white/5 transition-colors group cursor-pointer ${expandedId === item.id ? 'bg-white/5' : ''}`}
                     >
-                      <td className="p-5">
-                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 rounded-lg bg-[#00CED1]/10 flex items-center justify-center group-hover:bg-[#00CED1]/20 transition-colors">
-                             <Tag className="w-4 h-4 text-[#00CED1]" />
+                      <td className="p-3 md:p-5 whitespace-nowrap">
+                        <div className="flex items-center gap-2 md:gap-3">
+                           <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-[#00CED1]/10 flex items-center justify-center group-hover:bg-[#00CED1]/20 transition-colors shrink-0">
+                             <Tag className="w-3 h-3 md:w-4 md:h-4 text-[#00CED1]" />
                            </div>
-                           <span className="text-foreground font-medium font-cairo">{item.name}</span>
+                           <span className="text-foreground font-medium font-cairo text-sm md:text-base">{item.name}</span>
                         </div>
                       </td>
-                      <td className="p-5 text-gray-500 font-cairo">{item.type}</td>
-                      <td className="p-5 text-gray-500 font-cairo">{item.company}</td>
-                      <td className="p-5 text-gray-500 font-cairo text-xs font-bold">{item.inventory_method}</td>
-                      <td className="p-5">
-                         <span className={`font-bold ${item.total_quantity < 10 ? 'text-orange-400' : 'text-green-400'} font-cairo`}>
+                      <td className="p-3 md:p-5 text-gray-500 font-cairo text-sm md:text-base whitespace-nowrap">{item.type}</td>
+                      <td className="p-3 md:p-5 text-gray-500 font-cairo text-sm md:text-base whitespace-nowrap hidden md:table-cell">{item.company}</td>
+                      <td className="p-3 md:p-5 text-gray-500 font-cairo text-xs font-bold whitespace-nowrap">{item.inventory_method}</td>
+                      <td className="p-3 md:p-5 whitespace-nowrap">
+                         <span className={`font-bold ${item.total_quantity < 10 ? 'text-orange-400' : 'text-green-400'} font-cairo text-sm md:text-base`}>
                             {item.total_quantity}
                          </span>
                       </td>
-                      <td className="p-5 text-left font-bold text-foreground font-cairo">{item.current_price} ج.م</td>
-                      <td className="p-5 text-center">
+                      <td className="p-3 md:p-5 text-left font-bold text-foreground font-cairo text-sm md:text-base whitespace-nowrap">{item.current_price} ج.م</td>
+                      <td className="p-3 md:p-5 text-center">
                          {expandedId === item.id ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
                       </td>
                     </motion.tr>

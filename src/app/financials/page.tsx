@@ -14,23 +14,23 @@ import {
 const COLORS = ['#00CED1', '#D4AF37', '#FF4E4E'];
 
 const ARABIC_MONTHS: Record<string, string> = {
-  'January':   'يناير',
-  'February':  'فبراير',
-  'March':     'مارس',
-  'April':     'أبريل',
-  'May':       'مايو',
-  'June':      'يونيو',
-  'July':      'يوليو',
-  'August':    'أغسطس',
-  'September': 'سبتمبر',
-  'October':   'أكتوبر',
-  'November':  'نوفمبر',
-  'December':  'ديسمبر',
+  'January':   'ÙŠÙ†Ø§ÙŠØ±',
+  'February':  'ÙØ¨Ø±Ø§ÙŠØ±',
+  'March':     'Ù…Ø§Ø±Ø³',
+  'April':     'Ø£Ø¨Ø±ÙŠÙ„',
+  'May':       'Ù…Ø§ÙŠÙˆ',
+  'June':      'ÙŠÙˆÙ†ÙŠÙˆ',
+  'July':      'ÙŠÙˆÙ„ÙŠÙˆ',
+  'August':    'Ø£ØºØ³Ø·Ø³',
+  'September': 'Ø³Ø¨ØªÙ…Ø¨Ø±',
+  'October':   'Ø£ÙƒØªÙˆØ¨Ø±',
+  'November':  'Ù†ÙˆÙÙ…Ø¨Ø±',
+  'December':  'Ø¯ÙŠØ³Ù…Ø¨Ø±',
 };
 
 const tl = (v?: number | string | null) => {
   const num = Number(v);
-  return isNaN(num) ? '٠' : num.toLocaleString('ar-EG');
+  return isNaN(num) ? 'Ù ' : num.toLocaleString('ar-EG');
 };
 
 const CustomTooltip = ({
@@ -51,7 +51,7 @@ const CustomTooltip = ({
         <div key={i} className="flex items-center justify-between gap-3 text-xs font-cairo my-1">
           <span style={{ color: p.color }}>{p.name}</span>
           <span className="font-bold text-white">
-            {Number(p.value || 0).toLocaleString('ar-EG')} ج.م
+            {Number(p.value || 0).toLocaleString('ar-EG')} Ø¬.Ù…
           </span>
         </div>
       ))}
@@ -91,7 +91,7 @@ export default function FinancialsPage() {
     setLoadingMonthly(true);
     try {
       const data = await getMonthlyReport(undefined, 12);
-      setMonthlyData(data || []);   // ✅ هذا السطر يكفي
+      setMonthlyData(data || []);   // âœ… Ù‡Ø°Ø§ Ø§Ù„Ø³Ø·Ø± ÙŠÙƒÙÙŠ
     } catch (err) {
       console.error('Error fetching monthly report:', err);
     } finally {
@@ -117,15 +117,15 @@ export default function FinancialsPage() {
   }, [stats]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+    <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
       
       {}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            التقارير <span className="nile-gradient-text text-[#00CED1]">المالية</span>
+            Ø§Ù„ØªÙ‚Ø§Ø±ÙŠØ± <span className="nile-gradient-text text-[#00CED1]">Ø§Ù„Ù…Ø§Ù„ÙŠØ©</span>
           </h1>
-          <p className="text-gray-400 mt-2 text-lg font-cairo">تحليل الأرباح، المبيعات والتدفقات النقدية — محدّث لحظياً.</p>
+          <p className="text-gray-400 mt-2 text-lg font-cairo">ØªØ­Ù„ÙŠÙ„ Ø§Ù„Ø£Ø±Ø¨Ø§Ø­ØŒ Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª ÙˆØ§Ù„ØªØ¯ÙÙ‚Ø§Øª Ø§Ù„Ù†Ù‚Ø¯ÙŠØ© â€” Ù…Ø­Ø¯Ù‘Ø« Ù„Ø­Ø¸ÙŠØ§Ù‹.</p>
         </div>
         <div className="flex gap-3 flex-wrap">
           {}
@@ -134,14 +134,14 @@ export default function FinancialsPage() {
               onClick={() => setActiveTab('daily')}
               className={`px-4 py-2 rounded-xl text-sm font-cairo transition-all ${activeTab === 'daily' ? 'bg-[#00CED1]/25 text-[#00CED1] font-bold' : 'text-gray-400 hover:text-white'}`}
             >
-              يومي
+              ÙŠÙˆÙ…ÙŠ
             </button>
             <button 
               onClick={() => setActiveTab('monthly')}
               className={`px-4 py-2 rounded-xl text-sm font-cairo transition-all flex items-center gap-1.5 ${activeTab === 'monthly' ? 'bg-[#D4AF37]/25 text-[#D4AF37] font-bold' : 'text-gray-400 hover:text-white'}`}
             >
               <CalendarDays className="w-3.5 h-3.5" />
-              شهري
+              Ø´Ù‡Ø±ÙŠ
             </button>
           </div>
 
@@ -151,9 +151,9 @@ export default function FinancialsPage() {
               onChange={(e) => setRange(Number(e.target.value))}
               className="glass-panel px-4 py-2 text-sm bg-transparent outline-none font-cairo border border-white/10 rounded-xl"
             >
-              <option value={7} className="bg-[#050505]">آخر 7 أيام</option>
-              <option value={30} className="bg-[#050505]">آخر 30 يوم</option>
-              <option value={90} className="bg-[#050505]">آخر 3 أشهر</option>
+              <option value={7} className="bg-[#050505]">Ø¢Ø®Ø± 7 Ø£ÙŠØ§Ù…</option>
+              <option value={30} className="bg-[#050505]">Ø¢Ø®Ø± 30 ÙŠÙˆÙ…</option>
+              <option value={90} className="bg-[#050505]">Ø¢Ø®Ø± 3 Ø£Ø´Ù‡Ø±</option>
             </select>
           )}
         </div>
@@ -172,7 +172,7 @@ export default function FinancialsPage() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <CalendarDays className="w-4 h-4 text-[#D4AF37]" />
-                <p className="text-xs text-gray-400 font-cairo">ملخص الشهر الحالي</p>
+                <p className="text-xs text-gray-400 font-cairo">Ù…Ù„Ø®Øµ Ø§Ù„Ø´Ù‡Ø± Ø§Ù„Ø­Ø§Ù„ÙŠ</p>
               </div>
               <h2 className="text-2xl font-bold font-cairo text-white">
                 {ARABIC_MONTHS[currentMonth.month_name?.trim()?.split(' ')[0]] || currentMonth.month_name} {currentMonth.year}
@@ -180,10 +180,10 @@ export default function FinancialsPage() {
             </div>
             <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: 'إجمالي المبيعات', value: currentMonth.total_revenue, color: '#00CED1', suffix: 'ج.م' },
-                { label: 'صافي الربح',       value: currentMonth.total_profit,  color: '#D4AF37', suffix: 'ج.م' },
-                { label: 'عدد الطلبات',       value: currentMonth.total_orders,  color: '#a78bfa', suffix: '' },
-                { label: 'المرتجعات',          value: currentMonth.returns_total, color: '#f87171', suffix: 'ج.m' },
+                { label: 'Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª', value: currentMonth.total_revenue, color: '#00CED1', suffix: 'Ø¬.Ù…' },
+                { label: 'ØµØ§ÙÙŠ Ø§Ù„Ø±Ø¨Ø­',       value: currentMonth.total_profit,  color: '#D4AF37', suffix: 'Ø¬.Ù…' },
+                { label: 'Ø¹Ø¯Ø¯ Ø§Ù„Ø·Ù„Ø¨Ø§Øª',       value: currentMonth.total_orders,  color: '#a78bfa', suffix: '' },
+                { label: 'Ø§Ù„Ù…Ø±ØªØ¬Ø¹Ø§Øª',          value: currentMonth.returns_total, color: '#f87171', suffix: 'Ø¬.m' },
               ].map(m => (
                 <div key={m.label} className="glass-card p-4 border border-white/5 bg-black/20 rounded-xl">
                   <p className="text-gray-500 font-cairo text-xs mb-1">{m.label}</p>
@@ -197,12 +197,12 @@ export default function FinancialsPage() {
 
           {}
           <div className="mt-5 relative z-10 border-t border-white/5 pt-4">
-            <p className="text-xs text-gray-500 font-cairo mb-2">توزيع طرق الدفع هذا الشهر</p>
+            <p className="text-xs text-gray-500 font-cairo mb-2">ØªÙˆØ²ÙŠØ¹ Ø·Ø±Ù‚ Ø§Ù„Ø¯ÙØ¹ Ù‡Ø°Ø§ Ø§Ù„Ø´Ù‡Ø±</p>
             <div className="flex gap-4 flex-wrap">
               {[
-                { label: 'نقدي',   value: currentMonth.cash_revenue,   color: '#00CED1' },
-                { label: 'آجل',    value: currentMonth.debt_revenue,   color: '#D4AF37' },
-                { label: 'صدقات', value: currentMonth.sadqah_revenue, color: '#f472b6' },
+                { label: 'Ù†Ù‚Ø¯ÙŠ',   value: currentMonth.cash_revenue,   color: '#00CED1' },
+                { label: 'Ø¢Ø¬Ù„',    value: currentMonth.debt_revenue,   color: '#D4AF37' },
+                { label: 'ØµØ¯Ù‚Ø§Øª', value: currentMonth.sadqah_revenue, color: '#f472b6' },
               ].map(p => {
                 const totalRev = currentMonth.total_revenue || 0;
                 const pct = totalRev > 0 ? ((p.value / totalRev) * 100).toFixed(1) : '0';
@@ -211,7 +211,7 @@ export default function FinancialsPage() {
                     <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
                     <span className="text-gray-400">{p.label}</span>
                     <span className="font-bold" style={{ color: p.color }}>{pct}%</span>
-                    <span className="text-gray-600">({tl(p.value)} ج.م)</span>
+                    <span className="text-gray-600">({tl(p.value)} Ø¬.Ù…)</span>
                   </div>
                 );
               })}
@@ -226,10 +226,10 @@ export default function FinancialsPage() {
           {}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: 'إجمالي المبيعات', value: stats?.totalSales,       icon: Wallet,       color: '#00CED1' },
-              { label: 'إجمالي الأرباح',  value: stats?.totalProfit,      icon: TrendingUp,   color: '#D4AF37' },
-              { label: 'إجمالي التكاليف', value: stats?.totalCost,        icon: ArrowDownRight, color: '#FF4E4E' },
-              { label: 'متوسط الفاتورة',   value: averageInvoiceValue,     icon: BarChart,     color: '#94a3b8' }
+              { label: 'Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª', value: stats?.totalSales,       icon: Wallet,       color: '#00CED1' },
+              { label: 'Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø£Ø±Ø¨Ø§Ø­',  value: stats?.totalProfit,      icon: TrendingUp,   color: '#D4AF37' },
+              { label: 'Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„ØªÙƒØ§Ù„ÙŠÙ', value: stats?.totalCost,        icon: ArrowDownRight, color: '#FF4E4E' },
+              { label: 'Ù…ØªÙˆØ³Ø· Ø§Ù„ÙØ§ØªÙˆØ±Ø©',   value: averageInvoiceValue,     icon: BarChart,     color: '#94a3b8' }
             ].map((item, i) => (
               <motion.div
                 key={item.label}
@@ -243,7 +243,7 @@ export default function FinancialsPage() {
                    <item.icon className="w-5 h-5 opacity-40 group-hover:scale-110 transition-transform" style={{ color: item.color }} />
                 </div>
                 <p className="text-3xl font-bold font-sans">
-                  {loading ? '...' : Number(item.value || 0).toLocaleString()} <span className="text-xs font-normal text-gray-500">ج.م</span>
+                  {loading ? '...' : Number(item.value || 0).toLocaleString()} <span className="text-xs font-normal text-gray-500">Ø¬.Ù…</span>
                 </p>
                 <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full opacity-5 blur-2xl group-hover:opacity-10 transition-opacity" style={{ backgroundColor: item.color }} />
               </motion.div>
@@ -253,7 +253,7 @@ export default function FinancialsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {}
             <div className="lg:col-span-2 glass-panel p-8 h-[450px] border border-white/5 rounded-2xl bg-white/5">
-               <h2 className="text-xl font-bold font-cairo mb-8">منحنى المبيعات والأرباح اليومي</h2>
+               <h2 className="text-xl font-bold font-cairo mb-8">Ù…Ù†Ø­Ù†Ù‰ Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª ÙˆØ§Ù„Ø£Ø±Ø¨Ø§Ø­ Ø§Ù„ÙŠÙˆÙ…ÙŠ</h2>
                <div className="w-full h-full pb-10">
                   {loading ? (
                     <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-[#00CED1]" /></div>
@@ -270,8 +270,8 @@ export default function FinancialsPage() {
                         <XAxis dataKey="date" stroke="#444" tick={{ fontSize: 10, fontFamily: 'Cairo' }} />
                         <YAxis stroke="#444" tick={{ fontSize: 10 }} />
                         <Tooltip content={<CustomTooltip />} />
-                        <Area type="monotone" dataKey="revenue" name="إيرادات" stroke="#00CED1" fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
-                        <Area type="monotone" dataKey="profit"  name="أرباح"   stroke="#D4AF37" fillOpacity={0} strokeWidth={2} strokeDasharray="5 5" />
+                        <Area type="monotone" dataKey="revenue" name="Ø¥ÙŠØ±Ø§Ø¯Ø§Øª" stroke="#00CED1" fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
+                        <Area type="monotone" dataKey="profit"  name="Ø£Ø±Ø¨Ø§Ø­"   stroke="#D4AF37" fillOpacity={0} strokeWidth={2} strokeDasharray="5 5" />
                       </AreaChart>
                     </ResponsiveContainer>
                   )}
@@ -280,7 +280,7 @@ export default function FinancialsPage() {
 
             {}
             <div className="glass-panel p-8 flex flex-col justify-between border border-white/5 rounded-2xl bg-white/5">
-               <h2 className="text-xl font-bold font-cairo mb-6">طرق الدفع</h2>
+               <h2 className="text-xl font-bold font-cairo mb-6">Ø·Ø±Ù‚ Ø§Ù„Ø¯ÙØ¹</h2>
                <div className="h-56">
                   {loading ? (
                     <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-[#00CED1]" /></div>
@@ -298,7 +298,7 @@ export default function FinancialsPage() {
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(v: any) => [`${Number(v || 0).toLocaleString('ar-EG')} ج.م`]} />
+                          <Tooltip formatter={(v: any) => [`${Number(v || 0).toLocaleString('ar-EG')} Ø¬.Ù…`]} />
                        </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -309,10 +309,10 @@ export default function FinancialsPage() {
                        <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i] }} />
                           <span className="text-gray-400 text-sm">
-                            {item.name === 'Cash' ? 'نقدي' : item.name === 'Debt' ? 'آجل' : 'صدقات'}
+                            {item.name === 'Cash' ? 'Ù†Ù‚Ø¯ÙŠ' : item.name === 'Debt' ? 'Ø¢Ø¬Ù„' : 'ØµØ¯Ù‚Ø§Øª'}
                           </span>
                        </div>
-                       <span className="font-bold text-sm">{item.value.toLocaleString()} ج.م</span>
+                       <span className="font-bold text-sm">{item.value.toLocaleString()} Ø¬.Ù…</span>
                     </div>
                   ))}
                </div>
@@ -327,8 +327,8 @@ export default function FinancialsPage() {
           {}
           <div className="glass-panel p-8 h-[420px] border border-white/5 rounded-2xl bg-white/5">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold font-cairo">الأداء الشهري — آخر 12 شهر</h2>
-              <p className="text-xs text-gray-500 font-cairo">مزامنة فورية للملخصات المالية</p>
+              <h2 className="text-xl font-bold font-cairo">Ø§Ù„Ø£Ø¯Ø§Ø¡ Ø§Ù„Ø´Ù‡Ø±ÙŠ â€” Ø¢Ø®Ø± 12 Ø´Ù‡Ø±</h2>
+              <p className="text-xs text-gray-500 font-cairo">Ù…Ø²Ø§Ù…Ù†Ø© ÙÙˆØ±ÙŠØ© Ù„Ù„Ù…Ù„Ø®ØµØ§Øª Ø§Ù„Ù…Ø§Ù„ÙŠØ©</p>
             </div>
             {loadingMonthly ? (
               <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-[#D4AF37]" /></div>
@@ -341,8 +341,8 @@ export default function FinancialsPage() {
                          tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend formatter={(v) => <span className="font-cairo text-xs text-gray-400">{v}</span>} />
-                  <Bar dataKey="revenue" name="الإيرادات" fill="#00CED1" fillOpacity={0.9} radius={[4,4,0,0]} />
-                  <Bar dataKey="profit"  name="الأرباح"   fill="#D4AF37" fillOpacity={0.9} radius={[4,4,0,0]} />
+                  <Bar dataKey="revenue" name="Ø§Ù„Ø¥ÙŠØ±Ø§Ø¯Ø§Øª" fill="#00CED1" fillOpacity={0.9} radius={[4,4,0,0]} />
+                  <Bar dataKey="profit"  name="Ø§Ù„Ø£Ø±Ø¨Ø§Ø­"   fill="#D4AF37" fillOpacity={0.9} radius={[4,4,0,0]} />
                 </ReBarChart>
               </ResponsiveContainer>
             )}
@@ -352,7 +352,7 @@ export default function FinancialsPage() {
           <div className="glass-panel p-6 border border-white/5 rounded-2xl bg-white/5">
             <h2 className="text-xl font-bold font-cairo mb-6 flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-[#D4AF37]" />
-              ملخص شهري تفصيلي
+              Ù…Ù„Ø®Øµ Ø´Ù‡Ø±ÙŠ ØªÙØµÙŠÙ„ÙŠ
             </h2>
             {loadingMonthly ? (
               <div className="flex items-center justify-center py-12"><Loader2 className="animate-spin text-[#D4AF37]" /></div>
@@ -361,7 +361,7 @@ export default function FinancialsPage() {
                 <table className="w-full text-right font-cairo text-sm border-collapse">
                   <thead className="text-xs text-gray-400 bg-white/5">
                     <tr className="border-b border-white/10">
-                      <th className="px-4 py-4 rounded-tr-xl">الشهر</th>
+                      <th className="px-4 py-4 rounded-tr-xl whitespace-nowrap">الشهر</th>
                       <th className="px-4 py-4">الإيرادات</th>
                       <th className="px-4 py-4">الأرباح</th>
                       <th className="px-4 py-4">التكاليف</th>
@@ -383,19 +383,19 @@ export default function FinancialsPage() {
                           transition={{ delay: Math.min(i * 0.03, 0.3) }}
                           className={`border-b border-white/5 hover:bg-white/5 transition-colors ${isCurrentMonth ? 'bg-[#00CED1]/5' : ''}`}
                         >
-                          <td className="px-4 py-3 font-bold text-white">
+                          <td className="px-4 py-3 font-bold text-white whitespace-nowrap">
                             {monthLabel} {m.year}
                             {isCurrentMonth && (
                               <span className="mr-2 text-[10px] px-1.5 py-0.5 rounded-full bg-[#00CED1]/20 text-[#00CED1]">الحالي</span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-[#00CED1] font-bold">{tl(m.total_revenue)} ج.م</td>
-                          <td className="px-4 py-3 text-green-400 font-bold">{tl(m.total_profit)} ج.م</td>
-                          <td className="px-4 py-3 text-red-400">{tl(m.total_cost)} ج.م</td>
-                          <td className="px-4 py-3 text-gray-300">{m.total_orders}</td>
-                          <td className="px-4 py-3 text-[#00CED1]">{tl(m.cash_revenue)}</td>
-                          <td className="px-4 py-3 text-[#D4AF37]">{tl(m.debt_revenue)}</td>
-                          <td className="px-4 py-3 text-red-400/70">{tl(m.returns_total)}</td>
+                          <td className="px-4 py-3 text-[#00CED1] font-bold whitespace-nowrap">{tl(m.total_revenue)} ج.م</td>
+                          <td className="px-4 py-3 text-green-400 font-bold whitespace-nowrap">{tl(m.total_profit)} ج.م</td>
+                          <td className="px-4 py-3 text-red-400 whitespace-nowrap">{tl(m.total_cost)} ج.م</td>
+                          <td className="px-4 py-3 text-gray-300 whitespace-nowrap">{m.total_orders}</td>
+                          <td className="px-4 py-3 text-[#00CED1] whitespace-nowrap">{tl(m.cash_revenue)}</td>
+                          <td className="px-4 py-3 text-[#D4AF37] whitespace-nowrap">{tl(m.debt_revenue)}</td>
+                          <td className="px-4 py-3 text-red-400/70 whitespace-nowrap">{tl(m.returns_total)}</td>
                         </motion.tr>
                       );
                     })}
@@ -403,7 +403,7 @@ export default function FinancialsPage() {
                 </table>
                 {monthlyData.length === 0 && (
                   <div className="text-center py-12 text-gray-500 font-cairo">
-                    لا توجد بيانات شهرية مسجلة حالياً.
+                    Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª Ø´Ù‡Ø±ÙŠØ© Ù…Ø³Ø¬Ù„Ø© Ø­Ø§Ù„ÙŠØ§Ù‹.
                   </div>
                 )}
               </div>
@@ -414,3 +414,4 @@ export default function FinancialsPage() {
     </div>
   );
 }
+

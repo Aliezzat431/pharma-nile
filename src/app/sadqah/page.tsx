@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import {
@@ -14,13 +14,13 @@ import { getSadqahStats } from '@/lib/api/sadqah';
 import type { SadqahEntry } from '@/lib/api/sadqah';
 
 const AHADITH = [
-  'قال رسول الله ﷺ: "ما نقصت صدقة من مال". [رواه مسلم]',
-  'قال رسول الله ﷺ: "اتقوا النار ولو بشق تمرة". [متفق عليه]',
-  'قال رسول الله ﷺ: "كل امرئ في ظل صدقته يوم القيامة". [رواه أحمد وصححه ابن حبان]',
-  'قال رسول الله ﷺ: "إن صدقة السر تطفئ غضب الرب". [رواه الطبراني وصححه الألباني]',
-  'قال رسول الله ﷺ: "الساعي على الأرملة والمسكين كالمجاهد في سبيل الله". [متفق عليه]',
-  'قال رسول الله ﷺ: "صنائع المعروف تقي مصارع السوء". [رواه الطبراني وصححه الألباني]',
-  'قال رسول الله ﷺ: "أحب الأعمال إلى الله سرور تدخله على مسلم". [رواه الطبراني وحسنه الألباني]'
+  'Ù‚Ø§Ù„ Ø±Ø³ÙˆÙ„ Ø§Ù„Ù„Ù‡ ï·º: "Ù…Ø§ Ù†Ù‚ØµØª ØµØ¯Ù‚Ø© Ù…Ù† Ù…Ø§Ù„". [Ø±ÙˆØ§Ù‡ Ù…Ø³Ù„Ù…]',
+  'Ù‚Ø§Ù„ Ø±Ø³ÙˆÙ„ Ø§Ù„Ù„Ù‡ ï·º: "Ø§ØªÙ‚ÙˆØ§ Ø§Ù„Ù†Ø§Ø± ÙˆÙ„Ùˆ Ø¨Ø´Ù‚ ØªÙ…Ø±Ø©". [Ù…ØªÙÙ‚ Ø¹Ù„ÙŠÙ‡]',
+  'Ù‚Ø§Ù„ Ø±Ø³ÙˆÙ„ Ø§Ù„Ù„Ù‡ ï·º: "ÙƒÙ„ Ø§Ù…Ø±Ø¦ ÙÙŠ Ø¸Ù„ ØµØ¯Ù‚ØªÙ‡ ÙŠÙˆÙ… Ø§Ù„Ù‚ÙŠØ§Ù…Ø©". [Ø±ÙˆØ§Ù‡ Ø£Ø­Ù…Ø¯ ÙˆØµØ­Ø­Ù‡ Ø§Ø¨Ù† Ø­Ø¨Ø§Ù†]',
+  'Ù‚Ø§Ù„ Ø±Ø³ÙˆÙ„ Ø§Ù„Ù„Ù‡ ï·º: "Ø¥Ù† ØµØ¯Ù‚Ø© Ø§Ù„Ø³Ø± ØªØ·ÙØ¦ ØºØ¶Ø¨ Ø§Ù„Ø±Ø¨". [Ø±ÙˆØ§Ù‡ Ø§Ù„Ø·Ø¨Ø±Ø§Ù†ÙŠ ÙˆØµØ­Ø­Ù‡ Ø§Ù„Ø£Ù„Ø¨Ø§Ù†ÙŠ]',
+  'Ù‚Ø§Ù„ Ø±Ø³ÙˆÙ„ Ø§Ù„Ù„Ù‡ ï·º: "Ø§Ù„Ø³Ø§Ø¹ÙŠ Ø¹Ù„Ù‰ Ø§Ù„Ø£Ø±Ù…Ù„Ø© ÙˆØ§Ù„Ù…Ø³ÙƒÙŠÙ† ÙƒØ§Ù„Ù…Ø¬Ø§Ù‡Ø¯ ÙÙŠ Ø³Ø¨ÙŠÙ„ Ø§Ù„Ù„Ù‡". [Ù…ØªÙÙ‚ Ø¹Ù„ÙŠÙ‡]',
+  'Ù‚Ø§Ù„ Ø±Ø³ÙˆÙ„ Ø§Ù„Ù„Ù‡ ï·º: "ØµÙ†Ø§Ø¦Ø¹ Ø§Ù„Ù…Ø¹Ø±ÙˆÙ ØªÙ‚ÙŠ Ù…ØµØ§Ø±Ø¹ Ø§Ù„Ø³ÙˆØ¡". [Ø±ÙˆØ§Ù‡ Ø§Ù„Ø·Ø¨Ø±Ø§Ù†ÙŠ ÙˆØµØ­Ø­Ù‡ Ø§Ù„Ø£Ù„Ø¨Ø§Ù†ÙŠ]',
+  'Ù‚Ø§Ù„ Ø±Ø³ÙˆÙ„ Ø§Ù„Ù„Ù‡ ï·º: "Ø£Ø­Ø¨ Ø§Ù„Ø£Ø¹Ù…Ø§Ù„ Ø¥Ù„Ù‰ Ø§Ù„Ù„Ù‡ Ø³Ø±ÙˆØ± ØªØ¯Ø®Ù„Ù‡ Ø¹Ù„Ù‰ Ù…Ø³Ù„Ù…". [Ø±ÙˆØ§Ù‡ Ø§Ù„Ø·Ø¨Ø±Ø§Ù†ÙŠ ÙˆØ­Ø³Ù†Ù‡ Ø§Ù„Ø£Ù„Ø¨Ø§Ù†ÙŠ]'
 ];
 
 
@@ -80,15 +80,15 @@ export default function SadqahPage() {
     ) || [];
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            سجل <span className="text-[#FF69B4]">الصدقات</span>
+            Ø³Ø¬Ù„ <span className="text-[#FF69B4]">Ø§Ù„ØµØ¯Ù‚Ø§Øª</span>
           </h1>
 
           <p className="text-gray-400 mt-2 text-lg font-cairo">
-            تتبع الأدوية والمساعدات التي تم تقديمها كصدقة.
+            ØªØªØ¨Ø¹ Ø§Ù„Ø£Ø¯ÙˆÙŠØ© ÙˆØ§Ù„Ù…Ø³Ø§Ø¹Ø¯Ø§Øª Ø§Ù„ØªÙŠ ØªÙ… ØªÙ‚Ø¯ÙŠÙ…Ù‡Ø§ ÙƒØµØ¯Ù‚Ø©.
           </p>
         </div>
 
@@ -102,11 +102,11 @@ export default function SadqahPage() {
         <div className="glass-panel p-8 relative overflow-hidden group">
           <div className="z-10 relative">
             <p className="text-gray-400 font-cairo mb-2">
-              إجمالي قيمة الصدقات
+              Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ù‚ÙŠÙ…Ø© Ø§Ù„ØµØ¯Ù‚Ø§Øª
             </p>
 
             <p className="text-4xl font-bold text-[#FF69B4]">
-              {stats?.totalAmount?.toLocaleString() ?? '0'} ج.م
+              {stats?.totalAmount?.toLocaleString() ?? '0'} Ø¬.Ù…
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export default function SadqahPage() {
         <div className="glass-panel p-8 relative overflow-hidden group">
           <div className="z-10 relative">
             <p className="text-gray-400 font-cairo mb-2">
-              عدد العمليات الخيرية
+              Ø¹Ø¯Ø¯ Ø§Ù„Ø¹Ù…Ù„ÙŠØ§Øª Ø§Ù„Ø®ÙŠØ±ÙŠØ©
             </p>
 
             <p className="text-4xl font-bold text-white">
@@ -133,7 +133,7 @@ export default function SadqahPage() {
 
         <div className="glass-panel p-8 bg-gradient-to-br from-[#FF69B4]/10 to-transparent border border-[#FF69B4]/20 min-h-[220px] flex flex-col justify-center">
           <p className="text-xs text-[#FF69B4] mb-4 font-semibold">
-            ✨ فضل الصدقة
+            âœ¨ ÙØ¶Ù„ Ø§Ù„ØµØ¯Ù‚Ø©
           </p>
 
           <motion.blockquote
@@ -159,8 +159,8 @@ export default function SadqahPage() {
           </div>
 
           <p className="mt-5 text-xs text-gray-500 leading-relaxed">
-            هذا السجل مخصص لمتابعة الأدوية التي تم صرفها بدون مقابل بنية الصدقة
-            لتسهيل الجرد والمحاسبة.
+            Ù‡Ø°Ø§ Ø§Ù„Ø³Ø¬Ù„ Ù…Ø®ØµØµ Ù„Ù…ØªØ§Ø¨Ø¹Ø© Ø§Ù„Ø£Ø¯ÙˆÙŠØ© Ø§Ù„ØªÙŠ ØªÙ… ØµØ±ÙÙ‡Ø§ Ø¨Ø¯ÙˆÙ† Ù…Ù‚Ø§Ø¨Ù„ Ø¨Ù†ÙŠØ© Ø§Ù„ØµØ¯Ù‚Ø©
+            Ù„ØªØ³Ù‡ÙŠÙ„ Ø§Ù„Ø¬Ø±Ø¯ ÙˆØ§Ù„Ù…Ø­Ø§Ø³Ø¨Ø©.
           </p>
         </div>
       </div>
@@ -171,7 +171,7 @@ export default function SadqahPage() {
 
         <input
           type="text"
-          placeholder="ابحث عن دواء أو عملية معينة..."
+          placeholder="Ø§Ø¨Ø­Ø« Ø¹Ù† Ø¯ÙˆØ§Ø¡ Ø£Ùˆ Ø¹Ù…Ù„ÙŠØ© Ù…Ø¹ÙŠÙ†Ø©..."
           className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -185,19 +185,19 @@ export default function SadqahPage() {
             <thead className="bg-white/5 font-cairo text-gray-400 text-sm">
               <tr>
                 <th className="px-6 py-4 font-medium">
-                  رقم العملية
+                  Ø±Ù‚Ù… Ø§Ù„Ø¹Ù…Ù„ÙŠØ©
                 </th>
 
                 <th className="px-6 py-4 font-medium">
-                  الأصناف
+                  Ø§Ù„Ø£ØµÙ†Ø§Ù
                 </th>
 
                 <th className="px-6 py-4 font-medium">
-                  التاريخ
+                  Ø§Ù„ØªØ§Ø±ÙŠØ®
                 </th>
 
                 <th className="px-6 py-4 font-medium">
-                  القيمة التقديرية
+                  Ø§Ù„Ù‚ÙŠÙ…Ø© Ø§Ù„ØªÙ‚Ø¯ÙŠØ±ÙŠØ©
                 </th>
               </tr>
             </thead>
@@ -251,7 +251,7 @@ export default function SadqahPage() {
                     </td>
 
                     <td className="px-6 py-4 font-bold text-white whitespace-nowrap">
-                      {entry.amount.toLocaleString()} ج.م
+                      {entry.amount.toLocaleString()} Ø¬.Ù…
                     </td>
                   </motion.tr>
                 ))
@@ -261,7 +261,7 @@ export default function SadqahPage() {
                     colSpan={4}
                     className="px-6 py-20 text-center text-gray-500 font-cairo"
                   >
-                    لا توجد سجلات صدقة مطابقة للبحث.
+                    Ù„Ø§ ØªÙˆØ¬Ø¯ Ø³Ø¬Ù„Ø§Øª ØµØ¯Ù‚Ø© Ù…Ø·Ø§Ø¨Ù‚Ø© Ù„Ù„Ø¨Ø­Ø«.
                   </td>
                 </tr>
               )}
@@ -272,3 +272,4 @@ export default function SadqahPage() {
     </div>
   );
 }
+

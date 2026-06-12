@@ -143,7 +143,7 @@ export default function SalesDashboardPage() {
   const paymentData = generatePaymentData();
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12 p-2 sm:p-4">
       <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
@@ -152,20 +152,20 @@ export default function SalesDashboardPage() {
           </h1>
           <p className="text-gray-400 mt-2 font-cairo">نظرة شاملة على أداء المبيعات والأرباح لمتجرك</p>
         </div>
-        <div className="flex flex-wrap md:flex-nowrap bg-black/40 border border-white/5 rounded-xl p-1 overflow-hidden font-cairo w-full md:w-auto overflow-x-auto">
+        <div className="flex flex-nowrap bg-black/40 border border-white/5 rounded-xl p-1 overflow-hidden font-cairo w-full lg:w-auto overflow-x-auto snap-x">
           {[
             { id: 'today', label: 'اليوم' },
             { id: 'week', label: 'هذا الأسبوع' },
             { id: 'month', label: 'هذا الشهر' },
             { id: 'all', label: 'الكل' }
           ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setDateRange(tab.id as any)}
-              className={"flex-1 md:flex-none px-4 py-2 text-sm rounded-lg transition-all whitespace-nowrap " + (dateRange === tab.id ? "bg-[#00CED1]/20 text-[#00CED1] font-bold" : "text-gray-400 hover:text-white")}
-            >
-              {tab.label}
-            </button>
+              <button
+                key={tab.id}
+                onClick={() => setDateRange(tab.id as any)}
+                className={"flex-1 lg:flex-none px-4 py-2 text-sm rounded-lg transition-all whitespace-nowrap snap-center " + (dateRange === tab.id ? "bg-[#00CED1]/20 text-[#00CED1] font-bold" : "text-gray-400 hover:text-white")}
+              >
+                {tab.label}
+              </button>
           ))}
         </div>
       </header>

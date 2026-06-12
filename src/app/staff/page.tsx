@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -103,7 +103,7 @@ export default function StaffManagement() {
   );
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+    <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
       <header className="flex flex-col md:flex-row items-center justify-between gap-6 mb-4">
         <div>
           <motion.h1 
@@ -112,9 +112,9 @@ export default function StaffManagement() {
             className="text-4xl font-bold flex items-center gap-3 font-cairo"
           >
              <UsersIcon className="text-[#00CED1] w-10 h-10" />
-             إدارة <span className="nile-gradient-text">طاقم العمل</span>
+             Ø¥Ø¯Ø§Ø±Ø© <span className="nile-gradient-text">Ø·Ø§Ù‚Ù… Ø§Ù„Ø¹Ù…Ù„</span>
           </motion.h1>
-          <p className="text-gray-400 mt-2 font-cairo text-lg">إدارة صلاحيات الموظفين، تتبع النشاط، وإضافة حسابات جديدة.</p>
+          <p className="text-gray-400 mt-2 font-cairo text-lg">Ø¥Ø¯Ø§Ø±Ø© ØµÙ„Ø§Ø­ÙŠØ§Øª Ø§Ù„Ù…ÙˆØ¸ÙÙŠÙ†ØŒ ØªØªØ¨Ø¹ Ø§Ù„Ù†Ø´Ø§Ø·ØŒ ÙˆØ¥Ø¶Ø§ÙØ© Ø­Ø³Ø§Ø¨Ø§Øª Ø¬Ø¯ÙŠØ¯Ø©.</p>
         </div>
         <motion.button 
           whileHover={{ scale: 1.05 }}
@@ -122,7 +122,7 @@ export default function StaffManagement() {
           onClick={() => setIsAddModalOpen(true)}
           className="nile-button-primary flex items-center gap-3 px-8 py-4 rounded-2xl text-lg font-bold shadow-[0_0_20px_rgba(0,206,209,0.3)] font-cairo"
         >
-          <UserPlus className="w-6 h-6" /> إضافة موظف جديد
+          <UserPlus className="w-6 h-6" /> Ø¥Ø¶Ø§ÙØ© Ù…ÙˆØ¸Ù Ø¬Ø¯ÙŠØ¯
         </motion.button>
       </header>
 
@@ -130,7 +130,7 @@ export default function StaffManagement() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-8 flex flex-col gap-4 border-white/5 relative overflow-hidden group">
              <div className="flex justify-between items-center z-10">
-                 <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">الموظفين النشطين</h3>
+                 <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">Ø§Ù„Ù…ÙˆØ¸ÙÙŠÙ† Ø§Ù„Ù†Ø´Ø·ÙŠÙ†</h3>
                  <div className="p-3 bg-green-500/10 rounded-xl text-green-400">
                     <UserCheck className="w-6 h-6" />
                  </div>
@@ -141,7 +141,7 @@ export default function StaffManagement() {
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-8 flex flex-col gap-4 border-[#00CED1]/20 neon-glow-teal relative overflow-hidden group">
              <div className="flex justify-between items-center z-10">
-                 <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">إجمالي الفريق</h3>
+                 <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„ÙØ±ÙŠÙ‚</h3>
                  <div className="p-3 bg-[#00CED1]/10 rounded-xl text-[#00CED1]">
                     <UsersIcon className="w-6 h-6" />
                  </div>
@@ -152,13 +152,13 @@ export default function StaffManagement() {
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card p-8 flex flex-col gap-4 border-white/5 relative overflow-hidden group">
              <div className="flex justify-between items-center z-10">
-                 <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">آخر نشاط</h3>
+                 <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">Ø¢Ø®Ø± Ù†Ø´Ø§Ø·</h3>
                  <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
                     <Clock className="w-6 h-6" />
                  </div>
              </div>
              <p className="text-xl font-bold z-10 font-cairo">
-                {sessions[0] ? new Date(sessions[0].start_time).toLocaleTimeString('ar-EG') : 'لا يوجد'}
+                {sessions[0] ? new Date(sessions[0].start_time).toLocaleTimeString('ar-EG') : 'Ù„Ø§ ÙŠÙˆØ¬Ø¯'}
              </p>
              <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all" />
           </motion.div>
@@ -172,7 +172,7 @@ export default function StaffManagement() {
               <Search className="w-5 h-5 text-gray-500 mr-3" />
               <input 
                 type="text" 
-                placeholder="بحث باسم الموظف أو الدور الوظيفي..." 
+                placeholder="Ø¨Ø­Ø« Ø¨Ø§Ø³Ù… Ø§Ù„Ù…ÙˆØ¸Ù Ø£Ùˆ Ø§Ù„Ø¯ÙˆØ± Ø§Ù„ÙˆØ¸ÙŠÙÙŠ..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500 py-3 font-cairo font-medium"
@@ -185,17 +185,17 @@ export default function StaffManagement() {
               <table className="w-full text-right border-collapse">
                 <thead>
                   <tr className="border-b border-white/10 bg-white/5 font-cairo">
-                    <th className="p-6 font-bold text-gray-400 text-right uppercase tracking-wider text-xs">الموظف</th>
-                    <th className="p-6 font-bold text-gray-400 text-right uppercase tracking-wider text-xs">الدور</th>
-                    <th className="p-6 font-bold text-gray-400 text-right uppercase tracking-wider text-xs">تاريخ الانضمام</th>
-                    <th className="p-6 font-bold text-gray-400 text-center uppercase tracking-wider text-xs">الإجراءات</th>
+                    <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">Ø§Ù„Ù…ÙˆØ¸Ù</th>
+                    <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">Ø§Ù„Ø¯ÙˆØ±</th>
+                    <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">ØªØ§Ø±ÙŠØ® Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù…</th>
+                    <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-center uppercase tracking-wider text-xs">Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡Ø§Øª</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {loading ? (
                     <tr><td colSpan={4} className="p-20 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-[#00CED1]" /></td></tr>
                   ) : filteredStaff.length === 0 ? (
-                    <tr><td colSpan={4} className="p-20 text-center text-gray-500 font-cairo text-lg">لا يوجد موظفين بهذا الاسم</td></tr>
+                    <tr><td colSpan={4} className="p-20 text-center text-gray-500 font-cairo text-lg">Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ù…ÙˆØ¸ÙÙŠÙ† Ø¨Ù‡Ø°Ø§ Ø§Ù„Ø§Ø³Ù…</td></tr>
                   ) : (
                     filteredStaff.map((staff, i) => (
                       <motion.tr 
@@ -205,7 +205,7 @@ export default function StaffManagement() {
                         key={staff.id} 
                         className="group hover:bg-white/[0.02] transition-all cursor-default"
                       >
-                        <td className="p-6">
+                        <td className="p-6 whitespace-nowrap">
                            <div className="flex items-center gap-4">
                               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00CED1]/20 to-[#D4AF37]/20 flex items-center justify-center font-bold text-[#00CED1] border border-white/10 group-hover:scale-110 transition-transform">
                                  {staff.full_name?.substring(0, 2) || 'ST'}
@@ -216,25 +216,25 @@ export default function StaffManagement() {
                               </div>
                            </div>
                         </td>
-                        <td className="p-6">
+                        <td className="p-6 whitespace-nowrap">
                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold border font-cairo flex items-center w-fit gap-2 ${
                              staff.role === 'admin' 
                               ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
                               : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                            }`}>
                               <Shield className="w-3 h-3" />
-                              {staff.role === 'admin' ? 'مدير نظام' : 'موظف'}
+                              {staff.role === 'admin' ? 'Ù…Ø¯ÙŠØ± Ù†Ø¸Ø§Ù…' : 'Ù…ÙˆØ¸Ù'}
                            </span>
                         </td>
                         <td className="p-6 text-gray-400 font-medium">
                           {new Date(staff.created_at).toLocaleDateString('ar-EG')}
                         </td>
-                        <td className="p-6">
+                        <td className="p-6 whitespace-nowrap">
                            <div className="flex items-center justify-center gap-2">
-                             <button className="p-2.5 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5" title="تعديل">
+                             <button className="p-2.5 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5" title="ØªØ¹Ø¯ÙŠÙ„">
                                 <Shield className="w-4 h-4" />
                              </button>
-                             <button className="p-2.5 rounded-xl bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all border border-red-500/10" title="حذف">
+                             <button className="p-2.5 rounded-xl bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all border border-red-500/10" title="Ø­Ø°Ù">
                                 <Trash2 className="w-4 h-4" />
                              </button>
                            </div>
@@ -252,7 +252,7 @@ export default function StaffManagement() {
         <div className="space-y-6">
           <h2 className="text-xl font-bold font-cairo flex items-center gap-3 px-2">
             <Clock className="w-5 h-5 text-[#D4AF37]" />
-            أحدث النشاطات
+            Ø£Ø­Ø¯Ø« Ø§Ù„Ù†Ø´Ø§Ø·Ø§Øª
           </h2>
           <div className="glass-panel p-6 space-y-5 border-white/5">
             {sessions.length > 0 ? (
@@ -261,18 +261,18 @@ export default function StaffManagement() {
                   <div className={`absolute top-0 right-[-5px] w-[10px] h-[10px] rounded-full ${session.status === 'active' ? 'bg-[#00CED1] shadow-[0_0_10px_#00CED1]' : 'bg-gray-600'}`} />
                   <p className="text-sm font-bold text-white font-cairo">{session.username}</p>
                   <p className="text-[10px] text-gray-500 font-bold uppercase">
-                    {session.shift_type === 'Morning' ? 'صباحية' : 'مسائية'} • {new Date(session.start_time).toLocaleTimeString('ar-EG')}
+                    {session.shift_type === 'Morning' ? 'ØµØ¨Ø§Ø­ÙŠØ©' : 'Ù…Ø³Ø§Ø¦ÙŠØ©'} â€¢ {new Date(session.start_time).toLocaleTimeString('ar-EG')}
                   </p>
                   {session.status === 'active' && (
-                    <span className="inline-block mt-2 px-2 py-0.5 rounded bg-[#00CED1]/10 text-[#00CED1] text-[10px] font-bold">نشط الآن</span>
+                    <span className="inline-block mt-2 px-2 py-0.5 rounded bg-[#00CED1]/10 text-[#00CED1] text-[10px] font-bold">Ù†Ø´Ø· Ø§Ù„Ø¢Ù†</span>
                   )}
                 </div>
               ))
             ) : (
-              <p className="text-center text-gray-500 py-10 font-cairo">لا يوجد نشاط مسجل</p>
+              <p className="text-center text-gray-500 py-10 font-cairo">Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ù†Ø´Ø§Ø· Ù…Ø³Ø¬Ù„</p>
             )}
             <button className="w-full py-4 rounded-xl bg-white/5 text-gray-400 font-bold text-xs hover:bg-white/10 transition-all font-cairo border border-dashed border-white/10">
-              عرض كل سجلات الدخول
+              Ø¹Ø±Ø¶ ÙƒÙ„ Ø³Ø¬Ù„Ø§Øª Ø§Ù„Ø¯Ø®ÙˆÙ„
             </button>
           </div>
         </div>
@@ -290,4 +290,6 @@ export default function StaffManagement() {
     </div>
   );
 }
+
+
 

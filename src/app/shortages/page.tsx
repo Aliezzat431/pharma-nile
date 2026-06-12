@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { 
@@ -25,7 +25,7 @@ interface ShortageItem {
   name: string;
   company_name: string;
   total_quantity: number;
-  priority: 'عالي' | 'متوسط' | 'عادي';
+  priority: 'Ø¹Ø§Ù„ÙŠ' | 'Ù…ØªÙˆØ³Ø·' | 'Ø¹Ø§Ø¯ÙŠ';
 }
 
 export default function ShortagesPage() {
@@ -66,9 +66,9 @@ export default function ShortagesPage() {
         const mapped: ShortageItem[] = shortageRes.data.map((item: any) => ({
           id: item.product_id || item.id,
           name: item.name,
-          company_name: item.company || 'غير محدد',
+          company_name: item.company || 'ØºÙŠØ± Ù…Ø­Ø¯Ø¯',
           total_quantity: item.total_quantity,
-          priority: item.total_quantity < 5 ? 'عالي' : item.total_quantity < 10 ? 'متوسط' : 'عادي'
+          priority: item.total_quantity < 5 ? 'Ø¹Ø§Ù„ÙŠ' : item.total_quantity < 10 ? 'Ù…ØªÙˆØ³Ø·' : 'Ø¹Ø§Ø¯ÙŠ'
         }));
         setItems(mapped);
       }
@@ -119,20 +119,20 @@ export default function ShortagesPage() {
 
     const content = `
       <div dir="rtl" style="font-family: Arial, sans-serif; padding: 40px;">
-        <h1 style="text-align: center; color: #00CED1;">طلب توريد أدوية - PharmaNile</h1>
-        <p style="text-align: center; color: #666;">التاريخ: ${new Date().toLocaleDateString('ar-EG')}</p>
+        <h1 style="text-align: center; color: #00CED1;">Ø·Ù„Ø¨ ØªÙˆØ±ÙŠØ¯ Ø£Ø¯ÙˆÙŠØ© - PharmaNile</h1>
+        <p style="text-align: center; color: #666;">Ø§Ù„ØªØ§Ø±ÙŠØ®: ${new Date().toLocaleDateString('ar-EG')}</p>
         <hr style="border: 1px solid #eee; margin: 20px 0;" />
         
         ${Object.entries(grouped).map(([company, products]) => `
           <div style="margin-bottom: 30px; border: 1px solid #eee; padding: 15px; border-radius: 8px;">
-            <h2 style="color: #333; margin-top: 0;">الشركة: ${company}</h2>
+            <h2 style="color: #333; margin-top: 0;">Ø§Ù„Ø´Ø±ÙƒØ©: ${company}</h2>
             <table style="width: 100%; border-collapse: collapse;">
               <thead>
                 <tr style="background: #f9f9f9;">
-                  <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: right;">الصنف</th>
-                  <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: center;">الرصيد الحالي</th>
-                  <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: center;">الأولوية</th>
-                  <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: center;">الكمية المطلوبة</th>
+                  <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: right;">Ø§Ù„ØµÙ†Ù</th>
+                  <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: center;">Ø§Ù„Ø±ØµÙŠØ¯ Ø§Ù„Ø­Ø§Ù„ÙŠ</th>
+                  <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: center;">Ø§Ù„Ø£ÙˆÙ„ÙˆÙŠØ©</th>
+                  <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: center;">Ø§Ù„ÙƒÙ…ÙŠØ© Ø§Ù„Ù…Ø·Ù„ÙˆØ¨Ø©</th>
                 </tr>
               </thead>
               <tbody>
@@ -153,7 +153,7 @@ export default function ShortagesPage() {
 
     printWindow.document.write(`
       <html>
-        <head><title>طباعة النواقص - PharmaNile</title></head>
+        <head><title>Ø·Ø¨Ø§Ø¹Ø© Ø§Ù„Ù†ÙˆØ§Ù‚Øµ - PharmaNile</title></head>
         <body onload="window.print(); window.close();">
           ${content}
         </body>
@@ -176,7 +176,7 @@ export default function ShortagesPage() {
       className: 'w-[50px] text-center'
     },
     {
-      header: 'الصنف',
+      header: 'Ø§Ù„ØµÙ†Ù',
       accessor: (item: ShortageItem) => (
         <div className="flex flex-col text-right">
           <span className="font-bold font-cairo">{item.name}</span>
@@ -186,7 +186,7 @@ export default function ShortagesPage() {
       className: 'text-right'
     },
     {
-      header: 'الشركة',
+      header: 'Ø§Ù„Ø´Ø±ÙƒØ©',
       accessor: (item: ShortageItem) => (
         <div className="flex items-center justify-end gap-2 text-gray-400">
           <span className="text-xs font-cairo">{item.company_name}</span>
@@ -196,7 +196,7 @@ export default function ShortagesPage() {
       className: 'text-right'
     },
     {
-      header: 'الرصيد',
+      header: 'Ø§Ù„Ø±ØµÙŠØ¯',
       accessor: (item: ShortageItem) => (
         <span className={`font-bold font-inter ${item.total_quantity < 5 ? 'text-red-400' : 'text-orange-400'}`}>
           {item.total_quantity}
@@ -205,20 +205,20 @@ export default function ShortagesPage() {
       className: 'text-center w-[100px]'
     },
     {
-      header: 'الأولوية',
+      header: 'Ø§Ù„Ø£ÙˆÙ„ÙˆÙŠØ©',
       accessor: (item: ShortageItem) => (
         <select 
           value={item.priority}
           onChange={(e) => updatePriority(item.id, e.target.value as any)}
           className={`bg-[#050505]/50 border border-white/10 rounded-lg px-2 py-1 text-xs outline-none font-cairo transition-colors
-            ${item.priority === 'عالي' ? 'text-red-400 border-red-500/30' : 
-              item.priority === 'متوسط' ? 'text-orange-400 border-orange-500/30' : 
+            ${item.priority === 'Ø¹Ø§Ù„ÙŠ' ? 'text-red-400 border-red-500/30' : 
+              item.priority === 'Ù…ØªÙˆØ³Ø·' ? 'text-orange-400 border-orange-500/30' : 
               'text-blue-400 border-blue-500/30'}
           `}
         >
-          <option value="عالي">عالي</option>
-          <option value="متوسط">متوسط</option>
-          <option value="عادي">عادي</option>
+          <option value="Ø¹Ø§Ù„ÙŠ">Ø¹Ø§Ù„ÙŠ</option>
+          <option value="Ù…ØªÙˆØ³Ø·">Ù…ØªÙˆØ³Ø·</option>
+          <option value="Ø¹Ø§Ø¯ÙŠ">Ø¹Ø§Ø¯ÙŠ</option>
         </select>
       )
     }
@@ -228,8 +228,8 @@ export default function ShortagesPage() {
     <div className="space-y-8 pb-20 animate-entrance">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold font-cairo tracking-tight">إدارة <span className="nile-gradient-text">النواقص</span></h1>
-          <p className="text-gray-500 font-cairo text-lg">تتبع الأصناف التي اقتربت من النفاد وقم بطلبها من الشركات.</p>
+          <h1 className="text-4xl font-bold font-cairo tracking-tight">Ø¥Ø¯Ø§Ø±Ø© <span className="nile-gradient-text">Ø§Ù„Ù†ÙˆØ§Ù‚Øµ</span></h1>
+          <p className="text-gray-500 font-cairo text-lg">ØªØªØ¨Ø¹ Ø§Ù„Ø£ØµÙ†Ø§Ù Ø§Ù„ØªÙŠ Ø§Ù‚ØªØ±Ø¨Øª Ù…Ù† Ø§Ù„Ù†ÙØ§Ø¯ ÙˆÙ‚Ù… Ø¨Ø·Ù„Ø¨Ù‡Ø§ Ù…Ù† Ø§Ù„Ø´Ø±ÙƒØ§Øª.</p>
         </div>
 
         <div className="flex items-center gap-4">
@@ -243,7 +243,7 @@ export default function ShortagesPage() {
             `}
           >
             <Printer className="w-5 h-5" />
-            <span>طباعة طلب توريد ({selectedIds.size})</span>
+            <span>Ø·Ø¨Ø§Ø¹Ø© Ø·Ù„Ø¨ ØªÙˆØ±ÙŠØ¯ ({selectedIds.size})</span>
           </button>
         </div>
       </header>
@@ -254,7 +254,7 @@ export default function ShortagesPage() {
           <Search className="w-5 h-5 text-gray-500 mr-3" />
           <input 
             type="text" 
-            placeholder="ابحث عن صنف..."
+            placeholder="Ø§Ø¨Ø­Ø« Ø¹Ù† ØµÙ†Ù..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none py-3 text-white placeholder-gray-500 font-cairo"
@@ -268,7 +268,7 @@ export default function ShortagesPage() {
             onChange={(e) => setFilterCompany(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none py-3 text-white appearance-none font-cairo cursor-pointer"
           >
-            <option value="all" className="bg-[#111]">جميع الشركات</option>
+            <option value="all" className="bg-[#111]">Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø´Ø±ÙƒØ§Øª</option>
             {companies.map(c => (
               <option key={c.id} value={c.name} className="bg-[#111]">{c.name}</option>
             ))}
@@ -278,13 +278,13 @@ export default function ShortagesPage() {
         <div className="flex items-center justify-between glass-panel px-6 py-2">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-[#00CED1]" />
-            <span className="text-sm font-bold font-cairo">تحديد الكل</span>
+            <span className="text-sm font-bold font-cairo">ØªØ­Ø¯ÙŠØ¯ Ø§Ù„ÙƒÙ„</span>
           </div>
           <button 
             onClick={toggleSelectAll}
             className="text-xs bg-[#00CED1]/10 text-[#00CED1] px-3 py-1.5 rounded-lg border border-[#00CED1]/20 hover:bg-[#00CED1]/20 font-bold"
           >
-            {selectedIds.size === filteredItems.length ? 'إلغاء التحديد' : 'تحديد المصفى'}
+            {selectedIds.size === filteredItems.length ? 'Ø¥Ù„ØºØ§Ø¡ Ø§Ù„ØªØ­Ø¯ÙŠØ¯' : 'ØªØ­Ø¯ÙŠØ¯ Ø§Ù„Ù…ØµÙÙ‰'}
           </button>
         </div>
       </div>
@@ -292,10 +292,10 @@ export default function ShortagesPage() {
       {}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'إجمالي النواقص', value: items.length, icon: AlertCircle, color: 'text-gray-400' },
-          { label: 'أولوية عالية', value: items.filter(i => i.priority === 'عالي').length, icon: Clock, color: 'text-red-400' },
-          { label: 'شركات متأثرة', value: new Set(items.map(i => i.company_name)).size, icon: Building2, color: 'text-[#D4AF37]' },
-          { label: 'مختار للطلب', value: selectedIds.size, icon: CheckCircle2, color: 'text-[#00CED1]' },
+          { label: 'Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù†ÙˆØ§Ù‚Øµ', value: items.length, icon: AlertCircle, color: 'text-gray-400' },
+          { label: 'Ø£ÙˆÙ„ÙˆÙŠØ© Ø¹Ø§Ù„ÙŠØ©', value: items.filter(i => i.priority === 'Ø¹Ø§Ù„ÙŠ').length, icon: Clock, color: 'text-red-400' },
+          { label: 'Ø´Ø±ÙƒØ§Øª Ù…ØªØ£Ø«Ø±Ø©', value: new Set(items.map(i => i.company_name)).size, icon: Building2, color: 'text-[#D4AF37]' },
+          { label: 'Ù…Ø®ØªØ§Ø± Ù„Ù„Ø·Ù„Ø¨', value: selectedIds.size, icon: CheckCircle2, color: 'text-[#00CED1]' },
         ].map((stat, i) => (
           <div key={i} className="glass-card p-4 h-auto flex items-center gap-4 border-white/5">
             <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
@@ -320,11 +320,12 @@ export default function ShortagesPage() {
           <GlassTable 
             columns={columns} 
             data={filteredItems} 
-            emptyMessage="لا توجد نواقص مطابقة للبحث"
+            emptyMessage="Ù„Ø§ ØªÙˆØ¬Ø¯ Ù†ÙˆØ§Ù‚Øµ Ù…Ø·Ø§Ø¨Ù‚Ø© Ù„Ù„Ø¨Ø­Ø«"
           />
         )}
       </div>
     </div>
   );
 }
+
 

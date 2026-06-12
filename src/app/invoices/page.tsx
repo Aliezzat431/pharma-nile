@@ -240,10 +240,10 @@ export default function InvoicesPage() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      <header className="flex items-center justify-between mb-2">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
+    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12 p-2 sm:p-4">
+      <header className="flex flex-col md:flex-row items-center justify-between mb-2 gap-4">
+        <div className="w-full text-center md:text-right">
+          <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-3 font-cairo text-foreground">
             <FileText className="text-[#D4AF37]" />
             سجل <span className="text-[#D4AF37]">الفواتير</span>
           </h1>
@@ -377,12 +377,12 @@ export default function InvoicesPage() {
       </AnimatePresence>
 
       {}
-      <div className="glass-panel p-2 flex items-center gap-3">
-        <Search className="w-5 h-5 text-gray-400 mr-3" />
+      <div className="glass-panel p-2 flex items-center gap-2 md:gap-3">
+        <Search className="w-5 h-5 text-gray-400 mr-2 md:mr-3" />
         <input
           type="text"
-          placeholder="بحث برقم الفاتورة، اسم المنتج، أو اسم العميل..."
-          className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-gray-500 py-2 font-cairo"
+          placeholder="بحث برقم الفاتورة، اسم المنتج..."
+          className="flex-1 w-full bg-transparent border-none outline-none text-foreground placeholder-gray-500 py-2 font-cairo text-sm md:text-base min-w-0"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -394,8 +394,8 @@ export default function InvoicesPage() {
       </div>
 
       {}
-      <div className="flex items-center gap-2 font-cairo text-xs text-gray-500">
-        <span>ترتيب بحسب:</span>
+      <div className="flex flex-wrap items-center gap-2 font-cairo text-xs text-gray-500">
+        <span className="w-full md:w-auto mb-1 md:mb-0">ترتيب بحسب:</span>
         {[
           { key: 'date' as SortField, label: 'التاريخ' },
           { key: 'total' as SortField, label: 'الإجمالي' },
@@ -444,53 +444,55 @@ export default function InvoicesPage() {
                 {}
                 <div
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                  className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
+                  className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-white/5 transition-colors gap-4 sm:gap-0"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#D4AF37]/10">
-                      <FileText className="w-6 h-6 text-[#D4AF37]" />
+                  <div className="flex items-start md:items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-xl flex items-center justify-center bg-[#D4AF37]/10">
+                      <FileText className="w-5 h-5 md:w-6 md:h-6 text-[#D4AF37]" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-bold text-foreground font-cairo">فاتورة #{order.id.slice(0, 8)}</h3>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-cairo font-bold ${status.bg} ${status.color}`}>
+                      <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                        <h3 className="font-bold text-foreground font-cairo text-sm md:text-base">فاتورة #{order.id.slice(0, 8)}</h3>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-cairo font-bold whitespace-nowrap ${status.bg} ${status.color}`}>
                           {status.text}
                         </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-cairo font-bold flex items-center gap-1 ${payment.bg} ${payment.color}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-cairo font-bold flex items-center gap-1 whitespace-nowrap ${payment.bg} ${payment.color}`}>
                           <PaymentIcon className="w-3 h-3" />
                           {payment.text}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 font-cairo mt-1 flex items-center gap-2">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(order.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        <span className="text-[#00CED1]">• {getTimeAgo(order.created_at)}</span>
+                      <p className="text-[10px] md:text-xs text-gray-500 font-cairo mt-1 flex flex-wrap items-center gap-1 md:gap-2">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(order.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <span className="text-[#00CED1] whitespace-nowrap">• {getTimeAgo(order.created_at)}</span>
                         {customerName && (
-                          <span className="text-orange-400">• {customerName}</span>
+                          <span className="text-orange-400 whitespace-nowrap">• {customerName}</span>
                         )}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 md:gap-6 border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0">
                     <div className="text-left">
-                      <p className="text-xs text-gray-500 font-cairo">الإجمالي</p>
-                      <p className={`text-xl font-bold font-cairo ${order.status === 'returned' ? 'text-red-400 line-through' : 'text-[#D4AF37]'}`}>
+                      <p className="text-[10px] md:text-xs text-gray-500 font-cairo">الإجمالي</p>
+                      <p className={`text-base md:text-xl font-bold font-cairo ${order.status === 'returned' ? 'text-red-400 line-through' : 'text-[#D4AF37]'}`}>
                         {Number(order.total).toLocaleString('ar-EG')} ج.م
                       </p>
                     </div>
                     {order.profit_total !== undefined && order.profit_total !== null && order.status !== 'returned' && (
                       <div className="text-left hidden md:block">
-                        <p className="text-xs text-gray-500 font-cairo">الربح</p>
+                        <p className="text-[10px] md:text-xs text-gray-500 font-cairo">الربح</p>
                         <p className="text-sm font-bold font-cairo text-green-400">
                           {Number(order.profit_total).toLocaleString('ar-EG')} ج.م
                         </p>
                       </div>
                     )}
                     <div className="text-gray-400">
-                      <span className="text-xs font-cairo">{order.order_items.length} أصناف</span>
+                      <span className="text-[10px] md:text-xs font-cairo">{order.order_items.length} أصناف</span>
                     </div>
-                    {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                    {isExpanded ? <ChevronUp className="w-4 h-4 md:w-5 md:h-5 text-gray-500" /> : <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />}
                   </div>
                 </div>
 
@@ -540,27 +542,27 @@ export default function InvoicesPage() {
                         </div>
 
                         {}
-                        <div className="p-5 pt-0 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-xs text-gray-500 font-cairo">
+                        <div className="p-4 md:p-5 pt-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-3 mt-4 md:mt-0">
+                          <div className="flex flex-wrap items-center gap-2 text-[10px] md:text-xs text-gray-500 font-cairo">
                             <Clock className="w-3 h-3" />
                             {new Date(order.created_at).toLocaleString('ar-EG')}
                             {customerName && (
-                              <span className="text-orange-400 flex items-center gap-1 mr-4">
+                              <span className="text-orange-400 flex items-center gap-1 md:mr-4">
                                 العميل: {customerName}
                               </span>
                             )}
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex w-full md:w-auto gap-2 mt-2 md:mt-0">
                             <button
                               onClick={(e) => { e.stopPropagation(); setPreviewInvoice(order); }}
-                              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00CED1]/10 text-[#00CED1] border border-[#00CED1]/20 font-bold hover:bg-[#00CED1]/20 transition-all font-cairo text-sm"
+                              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00CED1]/10 text-[#00CED1] border border-[#00CED1]/20 font-bold hover:bg-[#00CED1]/20 transition-all font-cairo text-sm"
                             >
                               <Eye className="w-4 h-4" />
                               معاينة
                             </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); handlePrint(order); }}
-                              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 font-bold hover:bg-[#D4AF37]/20 transition-all font-cairo text-sm"
+                              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 font-bold hover:bg-[#D4AF37]/20 transition-all font-cairo text-sm"
                             >
                               <Printer className="w-4 h-4" />
                               طباعة

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Building2, Phone, Mail, Plus, Search, Trash2, Edit, X, MapPin, Loader2 } from 'lucide-react';
@@ -55,7 +55,7 @@ export default function CompaniesPage() {
       await fetchCompanies();
     } catch (err) {
       console.error("Submit error", err);
-      alert("حدث خطأ أثناء حفظ البيانات. يرجى المحاولة مرة أخرى.");
+      alert("Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø­ÙØ¸ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª. ÙŠØ±Ø¬Ù‰ Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø© Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.");
     } finally {
       setSubmitting(false);
     }
@@ -74,13 +74,13 @@ export default function CompaniesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذه الشركة نهائياً؟')) {
+    if (confirm('Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø­Ø°Ù Ù‡Ø°Ù‡ Ø§Ù„Ø´Ø±ÙƒØ© Ù†Ù‡Ø§Ø¦ÙŠØ§Ù‹ØŸ')) {
       try {
         await deleteCompany(id);
         fetchCompanies();
       } catch (err) {
         console.error("Delete error", err);
-        alert("تعذر حذف الشركة، قد تكون مرتبطة بسجلات أخرى.");
+        alert("ØªØ¹Ø°Ø± Ø­Ø°Ù Ø§Ù„Ø´Ø±ÙƒØ©ØŒ Ù‚Ø¯ ØªÙƒÙˆÙ† Ù…Ø±ØªØ¨Ø·Ø© Ø¨Ø³Ø¬Ù„Ø§Øª Ø£Ø®Ø±Ù‰.");
       }
     }
   };
@@ -91,13 +91,13 @@ export default function CompaniesPage() {
   );
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 text-right" dir="rtl">
+    <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 text-right" dir="rtl">
       <header className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            شركات <span className="nile-gradient-text text-[#00CED1]">الأدوية</span>
+            Ø´Ø±ÙƒØ§Øª <span className="nile-gradient-text text-[#00CED1]">Ø§Ù„Ø£Ø¯ÙˆÙŠØ©</span>
           </h1>
-          <p className="text-gray-400 mt-2 text-lg font-cairo">إدارة الموردين والشركات المصنعة للأدوية.</p>
+          <p className="text-gray-400 mt-2 text-lg font-cairo">Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„Ù…ÙˆØ±Ø¯ÙŠÙ† ÙˆØ§Ù„Ø´Ø±ÙƒØ§Øª Ø§Ù„Ù…ØµÙ†Ø¹Ø© Ù„Ù„Ø£Ø¯ÙˆÙŠØ©.</p>
         </div>
         <button 
           onClick={() => {
@@ -108,7 +108,7 @@ export default function CompaniesPage() {
           className="nile-button flex items-center gap-2 bg-[#00CED1] text-black px-5 py-3 rounded-xl font-bold font-cairo hover:opacity-90 transition-all shadow-[0_0_20px_rgba(0,206,209,0.15)]"
         >
           <Plus className="w-5 h-5" />
-          <span>إضافة شركة جديدة</span>
+          <span>Ø¥Ø¶Ø§ÙØ© Ø´Ø±ÙƒØ© Ø¬Ø¯ÙŠØ¯Ø©</span>
         </button>
       </header>
 
@@ -117,7 +117,7 @@ export default function CompaniesPage() {
         <Search className="w-5 h-5 text-gray-500" />
         <input 
           type="text" 
-          placeholder="ابحث عن شركة أو مندوب..." 
+          placeholder="Ø§Ø¨Ø­Ø« Ø¹Ù† Ø´Ø±ÙƒØ© Ø£Ùˆ Ù…Ù†Ø¯ÙˆØ¨..." 
           className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600 text-right"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -145,17 +145,17 @@ export default function CompaniesPage() {
                       <Building2 className="w-6 h-6" />
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => handleEdit(company)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors" title="تعديل">
+                      <button onClick={() => handleEdit(company)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors" title="ØªØ¹Ø¯ÙŠÙ„">
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(company.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors" title="حذف">
+                      <button onClick={() => handleDelete(company.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors" title="Ø­Ø°Ù">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
 
                   <h3 className="text-xl font-bold font-cairo text-white mb-1 truncate">{company.name}</h3>
-                  <p className="text-[#D4AF37] text-sm font-cairo mb-4 truncate">{company.contact_person || 'لا يوجد مندوب مسجل'}</p>
+                  <p className="text-[#D4AF37] text-sm font-cairo mb-4 truncate">{company.contact_person || 'Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ù…Ù†Ø¯ÙˆØ¨ Ù…Ø³Ø¬Ù„'}</p>
                 </div>
 
                 <div className="space-y-2 pt-2 border-t border-white/5">
@@ -182,7 +182,7 @@ export default function CompaniesPage() {
             ))
           ) : (
             <div className="col-span-full py-20 text-center text-gray-500 font-cairo">
-              لا توجد شركات مطابقة للبحث الحالي.
+              Ù„Ø§ ØªÙˆØ¬Ø¯ Ø´Ø±ÙƒØ§Øª Ù…Ø·Ø§Ø¨Ù‚Ø© Ù„Ù„Ø¨Ø­Ø« Ø§Ù„Ø­Ø§Ù„ÙŠ.
             </div>
           )}
         </div>
@@ -201,3 +201,4 @@ export default function CompaniesPage() {
     </div>
   );
 }
+
