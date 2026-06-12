@@ -19,7 +19,7 @@ export default function CustomersPage() {
 
   type CustomerFormValues = z.infer<typeof customerSchema>;
   const { register, handleSubmit, formState: { errors }, reset } = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerSchema),
+    resolver: zodResolver(customerSchema) as any,
     defaultValues: { name: '', phone: '', email: '', address: '' }
   });
 

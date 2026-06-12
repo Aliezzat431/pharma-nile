@@ -22,7 +22,7 @@ export default function CreateProduct() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as any,
     defaultValues: {
       name: '',
       type: treatmentTypes[0].name,

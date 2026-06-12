@@ -22,13 +22,13 @@ export default function DebtsPage() {
 
   type DebtorFormValues = z.infer<typeof debtorSchema>;
   const { register: registerAdd, handleSubmit: handleSubmitAdd, formState: { errors: errorsAdd }, reset: resetAdd } = useForm<DebtorFormValues>({
-    resolver: zodResolver(debtorSchema),
+    resolver: zodResolver(debtorSchema) as any,
     defaultValues: { name: '', phone: '' }
   });
 
   type PaymentFormValues = z.infer<typeof debtPaymentSchema>;
   const { register: registerPayment, handleSubmit: handleSubmitPayment, formState: { errors: errorsPayment }, reset: resetPayment, setValue: setPaymentValue, watch: watchPayment } = useForm<PaymentFormValues>({
-    resolver: zodResolver(debtPaymentSchema),
+    resolver: zodResolver(debtPaymentSchema) as any,
     defaultValues: { payment_type: 'partial', note: '' }
   });
   const currentPaymentType = watchPayment('payment_type');

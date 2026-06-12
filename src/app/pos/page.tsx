@@ -278,7 +278,7 @@ export default function POSTerminal() {
 
   type POSCustomerFormValues = z.infer<typeof customerSchema>;
   const { register: registerCustomer, handleSubmit: handleSubmitCustomer, formState: { errors: customerErrors }, reset: resetCustomer } = useForm<POSCustomerFormValues>({
-    resolver: zodResolver(customerSchema),
+    resolver: zodResolver(customerSchema) as any,
     defaultValues: { name: '', phone: '', email: '', address: '', creditLimit: 0 }
   });
 

@@ -42,7 +42,7 @@ export default function StaffManagement() {
 
   type StaffFormValues = z.infer<typeof staffCreateSchema>;
   const { register, handleSubmit, formState: { errors }, reset } = useForm<StaffFormValues>({
-    resolver: zodResolver(staffCreateSchema),
+    resolver: zodResolver(staffCreateSchema) as any,
     defaultValues: { email: '', password: '', full_name: '', role: 'staff' }
   });
   
