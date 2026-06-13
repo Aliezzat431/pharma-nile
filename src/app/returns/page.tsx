@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -74,7 +74,7 @@ export default function ReturnsPage() {
       setTimeout(() => setReturnSuccess(null), 3000);
     } catch (error: any) {
       console.error('Return error:', error);
-      alert(`ÙØ´Ù„ ÙÙŠ Ø¹Ù…Ù„ÙŠØ© Ø§Ù„Ø§Ø±ØªØ¬Ø§Ø¹: ${error?.message || 'Ø®Ø·Ø£ ØºÙŠØ± Ù…Ø¹Ø±ÙˆÙ'}`);
+      alert(`فشل في عملية الارتجاع: ${error?.message || 'خطأ غير معروف'}`);
     } finally {
       setReturningId(null);
     }
@@ -86,9 +86,9 @@ export default function ReturnsPage() {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const mins = Math.floor(diff / (1000 * 60));
 
-    if (days > 0) return `Ù…Ù†Ø° ${days} ${days === 1 ? 'ÙŠÙˆÙ…' : 'Ø£ÙŠØ§Ù…'}`;
-    if (hours > 0) return `Ù…Ù†Ø° ${hours} ${hours === 1 ? 'Ø³Ø§Ø¹Ø©' : 'Ø³Ø§Ø¹Ø§Øª'}`;
-    return `Ù…Ù†Ø° ${mins} Ø¯Ù‚ÙŠÙ‚Ø©`;
+    if (days > 0) return `منذ ${days} ${days === 1 ? 'يوم' : 'أيام'}`;
+    if (hours > 0) return `منذ ${hours} ${hours === 1 ? 'ساعة' : 'ساعات'}`;
+    return `منذ ${mins} دقيقة`;
   };
 
   const filteredOrders = orders.filter(order =>
@@ -105,19 +105,18 @@ export default function ReturnsPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
             <RotateCcw className="text-[#D4AF37]" />
-            Ù…Ø±ØªØ¬Ø¹Ø§Øª <span className="text-[#D4AF37]">Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª</span>
+            مرتجعات <span className="text-[#D4AF37]">المبيعات</span>
           </h1>
-          <p className="text-gray-400 mt-2 font-cairo">Ø¹Ø±Ø¶ ÙÙˆØ§ØªÙŠØ± Ø§Ù„Ø¨ÙŠØ¹ Ø®Ù„Ø§Ù„ Ø¢Ø®Ø± 15 ÙŠÙˆÙ… ÙˆØ¥Ù…ÙƒØ§Ù†ÙŠØ© Ø¥Ø±Ø¬Ø§Ø¹ Ø§Ù„ÙØ§ØªÙˆØ±Ø© Ø¨Ø§Ù„ÙƒØ§Ù…Ù„.</p>
+          <p className="text-gray-400 mt-2 font-cairo">عرض فواتير البيع خلال آخر 15 يوم وإمكانية إرجاع الفاتورة بالكامل.</p>
         </div>
         <div className="glass-card px-5 py-3 flex items-center gap-3 font-cairo">
           <Calendar className="w-4 h-4 text-[#D4AF37]" />
-          <span className="text-sm text-gray-400">Ø¢Ø®Ø± 15 ÙŠÙˆÙ…</span>
+          <span className="text-sm text-gray-400">آخر 15 يوم</span>
           <span className="text-lg font-bold text-foreground">{orders.length}</span>
-          <span className="text-sm text-gray-400">ÙØ§ØªÙˆØ±Ø©</span>
+          <span className="text-sm text-gray-400">فاتورة</span>
         </div>
       </header>
 
-      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -125,8 +124,8 @@ export default function ReturnsPage() {
           className="glass-card p-5 flex items-center justify-between"
         >
           <div className="font-cairo h-auto py-1">
-            <p className="text-gray-400 text-sm">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª</p>
-            <p className="text-2xl font-bold text-[#D4AF37]" dir="ltr">{totalValue.toLocaleString('ar-EG')} Ø¬.Ù…</p>
+            <p className="text-gray-400 text-sm">إجمالي المبيعات</p>
+            <p className="text-2xl font-bold text-[#D4AF37]" dir="ltr">{totalValue.toLocaleString('ar-EG')} ج.م</p>
           </div>
           <ShoppingBag className="w-8 h-8 text-[#D4AF37]/30" />
         </motion.div>
@@ -138,7 +137,7 @@ export default function ReturnsPage() {
           className="glass-card p-5 flex items-center justify-between"
         >
           <div className="font-cairo h-auto py-1">
-            <p className="text-gray-400 text-sm">Ø¹Ø¯Ø¯ Ø§Ù„ÙÙˆØ§ØªÙŠØ±</p>
+            <p className="text-gray-400 text-sm">عدد الفواتير</p>
             <p className="text-2xl font-bold text-green-400">{totalActive}</p>
           </div>
           <Check className="w-8 h-8 text-green-400/30" />
@@ -151,36 +150,34 @@ export default function ReturnsPage() {
           className="glass-card p-5 flex items-center justify-between"
         >
           <div className="font-cairo h-auto py-1">
-            <p className="text-gray-400 text-sm">Ø¹Ø¯Ø¯ Ø§Ù„Ø£ØµÙ†Ø§Ù Ø§Ù„Ù…Ø¨Ø§Ø¹Ø©</p>
+            <p className="text-gray-400 text-sm">عدد الأصناف المباعة</p>
             <p className="text-2xl font-bold text-[#00CED1]">{orders.reduce((a, o) => a + o.order_items.length, 0)}</p>
           </div>
           <Package className="w-8 h-8 text-[#00CED1]/30" />
         </motion.div>
       </div>
 
-      {}
       <div className="glass-panel p-2 flex items-center gap-3">
         <Search className="w-5 h-5 text-gray-400 mr-3" />
         <input
           type="text"
-          placeholder="Ø¨Ø­Ø« Ø¨Ø±Ù‚Ù… Ø§Ù„ÙØ§ØªÙˆØ±Ø© Ø£Ùˆ Ø§Ø³Ù… Ø§Ù„Ù…Ù†ØªØ¬..."
+          placeholder="بحث برقم الفاتورة أو اسم المنتج..."
           className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-gray-500 py-2 font-cairo"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      {}
       <div className="space-y-3">
         {loading ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
-            <p className="font-cairo">Ø¬Ø§Ø±ÙŠ ØªØ­Ù…ÙŠÙ„ Ø§Ù„ÙÙˆØ§ØªÙŠØ±...</p>
+            <p className="font-cairo">جاري تحميل الفواتير...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
             <AlertCircle className="w-10 h-10 opacity-40" />
-            <p className="font-cairo">Ù„Ø§ ØªÙˆØ¬Ø¯ ÙÙˆØ§ØªÙŠØ± ÙÙŠ Ù‡Ø°Ù‡ Ø§Ù„ÙØªØ±Ø©.</p>
+            <p className="font-cairo">لا توجد فواتير في هذه الفترة.</p>
           </div>
         ) : (
           filteredOrders.map((order, i) => {
@@ -196,7 +193,6 @@ export default function ReturnsPage() {
                 transition={{ delay: i * 0.03 }}
                 className="glass-card overflow-hidden transition-all border-white/5"
               >
-                {}
                 <div
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
                   className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
@@ -207,31 +203,30 @@ export default function ReturnsPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-3">
-                        <h3 className="font-bold text-foreground font-cairo">ÙØ§ØªÙˆØ±Ø© #{order.id.slice(0, 8)}</h3>
+                        <h3 className="font-bold text-foreground font-cairo">فاتورة #{order.id.slice(0, 8)}</h3>
                       </div>
                       <p className="text-xs text-gray-500 font-cairo mt-1 flex items-center gap-2">
                         <Calendar className="w-3 h-3" />
                         {new Date(order.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        <span className="text-[#00CED1]">â€¢ {getTimeAgo(order.created_at)}</span>
+                        <span className="text-[#00CED1]"> • {getTimeAgo(order.created_at)}</span>
                       </p>
                     </div>
                   </div>
 
-                    <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
-                      <div className="text-left">
-                        <p className="text-[10px] text-gray-500 font-cairo mb-0.5">Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ</p>
-                        <p className="text-lg font-bold font-cairo text-[#D4AF37]" dir="ltr">
-                          {Number(order.total).toLocaleString('ar-EG')} Ø¬.Ù…
-                        </p>
-                      </div>
-                      <div className="text-gray-400">
-                        <span className="text-[10px] font-cairo">{order.order_items.length} Ø£ØµÙ†Ø§Ù</span>
-                      </div>
+                  <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
+                    <div className="text-left">
+                      <p className="text-[10px] text-gray-500 font-cairo mb-0.5">الإجمالي</p>
+                      <p className="text-lg font-bold font-cairo text-[#D4AF37]" dir="ltr">
+                        {Number(order.total).toLocaleString('ar-EG')} ج.م
+                      </p>
                     </div>
-                    {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                    <div className="text-gray-400">
+                      <span className="text-[10px] font-cairo">{order.order_items.length} أصناف</span>
+                    </div>
                   </div>
+                  {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                </div>
 
-                {}
                 <AnimatePresence>
                   {isExpanded && (
                     <motion.div
@@ -241,7 +236,6 @@ export default function ReturnsPage() {
                       className="overflow-hidden"
                     >
                       <div className="border-t border-white/5 bg-black/5">
-                        {}
                         <div className="p-5">
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {order.order_items.map((item) => (
@@ -253,19 +247,18 @@ export default function ReturnsPage() {
                                   <p className="font-bold text-foreground truncate font-cairo">{item.name}</p>
                                   <div className="flex items-center gap-3 text-xs text-gray-500 font-cairo mt-0.5">
                                     <span>{item.quantity} {item.unit}</span>
-                                    <span>Ã—</span>
-                                    <span>{item.price} Ø¬.Ù…</span>
+                                    <span>×</span>
+                                    <span>{item.price} ج.م</span>
                                   </div>
                                 </div>
                                 <p className="font-bold text-foreground font-cairo whitespace-nowrap">
-                                  {(item.quantity * item.price).toLocaleString('ar-EG')} Ø¬.Ù…
+                                  {(item.quantity * item.price).toLocaleString('ar-EG')} ج.م
                                 </p>
                               </div>
                             ))}
                           </div>
                         </div>
 
-                        {}
                         <div className="p-5 pt-0 flex justify-end">
                           <button
                             onClick={(e) => {
@@ -280,11 +273,10 @@ export default function ReturnsPage() {
                             ) : (
                               <RotateCcw className="w-5 h-5" />
                             )}
-                            {isReturning ? 'Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø§Ø±ØªØ¬Ø§Ø¹...' : 'Ø§Ø±ØªØ¬Ø§Ø¹ Ù‡Ø°Ù‡ Ø§Ù„ÙØ§ØªÙˆØ±Ø©'}
+                            {isReturning ? 'جاري الارتجاع...' : 'ارتجاع هذه الفاتورة'}
                           </button>
                         </div>
 
-                        {}
                         {justReturned && (
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
@@ -292,7 +284,7 @@ export default function ReturnsPage() {
                             className="p-4 mx-5 mb-5 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-3"
                           >
                             <Check className="w-5 h-5 text-green-400" />
-                            <p className="text-green-400 font-bold font-cairo">ØªÙ… Ø§Ø±ØªØ¬Ø§Ø¹ Ø§Ù„ÙØ§ØªÙˆØ±Ø© Ø¨Ù†Ø¬Ø§Ø­ ÙˆØ¥Ø¹Ø§Ø¯Ø© Ø§Ù„ÙƒÙ…ÙŠØ§Øª Ù„Ù„Ù…Ø®Ø²ÙˆÙ†.</p>
+                            <p className="text-green-400 font-bold font-cairo">تم ارتجاع الفاتورة بنجاح وإعادة الكميات للمخزون.</p>
                           </motion.div>
                         )}
                       </div>
@@ -313,6 +305,5 @@ export default function ReturnsPage() {
 
     </div>
   );
-}
-
-
+                      }
+      
