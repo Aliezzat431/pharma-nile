@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Phone, Search, Plus, X, History, CreditCard, Loader2, ArrowUpRight, DollarSign, AlertCircle } from 'lucide-react';
@@ -6,10 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Debtor, getDebtors, addDebtor, recordPayment, getPaymentHistory, DebtPayment } from '@/lib/api/debts';
 import { debtorSchema, debtPaymentSchema } from '@/lib/validations';
 import { z } from 'zod';
-import { cn } from '@/lib/utils';
+
 import { AddDebtorModal } from './components/AddDebtorModal';
 import { PaymentModal } from './components/PaymentModal';
 import { HistoryModal } from './components/HistoryModal';
+
 export default function DebtsPage() {
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,10 +21,10 @@ export default function DebtsPage() {
   const [selectedDebtor, setSelectedDebtor] = useState<Debtor | null>(null);
   const [paymentHistory, setPaymentHistory] = useState<DebtPayment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   type DebtorFormValues = z.infer<typeof debtorSchema>;
   type PaymentFormValues = z.infer<typeof debtPaymentSchema>;
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDebtors();
@@ -31,12 +32,13 @@ export default function DebtsPage() {
 
   const fetchDebtors = async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
-      const data = await getDebtors(); 
+      const data = await getDebtors();
       setDebtors(data || []);
     } catch (err) {
       console.error("Fetch debtors error", err);
-      setErrorMessage("Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø¬Ù„Ø¨ Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ Ø§Ù„Ù…Ø¯ÙŠÙ†ÙŠÙ†.");
+      setErrorMessage("حدث خطأ أثناء جلب قائمة المدينين");
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ export default function DebtsPage() {
       await fetchDebtors();
     } catch (err) {
       console.error("Add debtor error", err);
-      setErrorMessage("Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ø¹Ù…ÙŠÙ„. ÙŠØ±Ø¬Ù‰ Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª.");
+      setErrorMessage("حدث خطأ أثناء إضافة العميل. يرجى التحقق من البيانات");
     }
   };
 
@@ -69,7 +71,7 @@ export default function DebtsPage() {
       await fetchDebtors();
     } catch (err) {
       console.error("Payment error", err);
-      setErrorMessage("Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ ØªØ³Ø¬ÙŠÙ„ Ø¹Ù…Ù„ÙŠØ© Ø§Ù„Ø³Ø¯Ø§Ø¯.");
+      setErrorMessage("حدث خطأ أثناء تسجيل عملية السداد");
     }
   };
 
@@ -83,7 +85,7 @@ export default function DebtsPage() {
       setPaymentHistory(history || []);
     } catch (err) {
       console.error("Fetch history error", err);
-      setErrorMessage("ØªØ¹Ø°Ø± Ø¬Ù„Ø¨ Ø³Ø¬Ù„ Ø§Ù„Ø³Ø¯Ø§Ø¯ Ø§Ù„Ø®Ø§Øµ Ø¨Ù‡Ø°Ø§ Ø§Ù„Ø¹Ù…ÙŠÙ„.");
+      setErrorMessage("تعذر جلب سجل السداد");
     } finally {
       setHistoryLoading(false);
     }
@@ -94,8 +96,8 @@ export default function DebtsPage() {
     if (!searchLower) return debtors;
     
     return debtors.filter(d => 
-      (d.name && d.name.toLowerCase().includes(searchLower)) || 
-      (d.phone && d.phone.includes(searchLower))
+      (d.name?.toLowerCase().includes(searchLower)) || 
+      (d.phone?.includes(searchLower))
     );
   }, [debtors, search]);
 
@@ -104,66 +106,82 @@ export default function DebtsPage() {
   }, [debtors]);
 
   return (
-    <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12" dir="rtl">
-      {errorMessage && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-cairo flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span className="flex-1">{errorMessage}</span>
-          <button onClick={() => setErrorMessage(null)} className="hover:bg-white/5 p-1 rounded-lg">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+    <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 pb-12" dir="rtl">
+      {/* Error Message */}
+      <AnimatePresence>
+        {errorMessage && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-cairo flex items-center gap-3"
+          >
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <span>{errorMessage}</span>
+            <button 
+              onClick={() => setErrorMessage(null)} 
+              className="ml-auto hover:bg-white/10 p-1 rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            Ù†Ø¸Ø§Ù… <span className="text-[#00CED1]">Ø§Ù„Ø¯ÙŠÙˆÙ†</span>
+            نظام <span className="text-[#00CED1]">الديون</span>
           </h1>
-          <p className="text-gray-400 mt-2 text-lg font-cairo">Ø¥Ø¯Ø§Ø±Ø© Ø¯ÙŠÙˆÙ† Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ ÙˆØ§Ù„ØªØ­ØµÙŠÙ„ Ø§Ù„Ù…Ø§Ù„ÙŠ Ø¨Ø³Ù„Ø§Ø³Ø©.</p>
+          <p className="text-gray-400 mt-2 text-lg font-cairo">
+            إدارة ديون العملاء والتحصيل المالي بسلاسة
+          </p>
         </div>
+
         <button 
           onClick={() => {
             setErrorMessage(null);
             setIsAddModalOpen(true);
           }}
-          className="bg-[#00CED1] hover:bg-[#00CED1]/90 text-black px-5 py-3 rounded-xl flex items-center gap-2 font-bold font-cairo transition-all shadow-[0_0_15px_rgba(0,206,209,0.15)]"
+          className="bg-[#00CED1] hover:bg-[#00CED1]/90 text-black px-6 py-3 rounded-xl flex items-center gap-2 font-bold font-cairo transition-all shadow-lg"
         >
           <Plus className="w-5 h-5" />
-          <span>Ø¥Ø¶Ø§ÙØ© Ø¹Ù…ÙŠÙ„ Ø¯ÙŠÙˆÙ†</span>
+          إضافة عميل مدين
         </button>
       </header>
 
-      {}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass-panel p-6 border border-white/5 rounded-2xl bg-white/5">
-           <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400 font-cairo text-sm">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø¯ÙŠÙˆÙ† Ø§Ù„Ù…Ø³ØªØ­Ù‚Ø©</span>
-              <DollarSign className="text-[#00CED1] w-5 h-5" />
-           </div>
-           <p className="text-3xl font-bold text-[#00CED1] font-sans">{totalOutstanding.toLocaleString()} Ø¬.Ù…</p>
+        <div className="glass-panel p-6 rounded-2xl">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-gray-400 font-cairo text-sm">إجمالي الديون المستحقة</span>
+            <DollarSign className="text-[#00CED1] w-5 h-5" />
+          </div>
+          <p className="text-3xl font-bold text-[#00CED1]">{totalOutstanding.toLocaleString()} ج.م</p>
         </div>
-        <div className="glass-panel p-6 border border-white/5 rounded-2xl bg-white/5">
-           <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400 font-cairo text-sm">Ø¹Ø¯Ø¯ Ø§Ù„Ù…Ø¯ÙŠÙ†ÙŠÙ† Ø§Ù„Ø­Ø§Ù„ÙŠÙŠÙ†</span>
-              <Users className="text-[#D4AF37] w-5 h-5" />
-           </div>
-           <p className="text-3xl font-bold text-white font-sans">{debtors.length}</p>
+
+        <div className="glass-panel p-6 rounded-2xl">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-gray-400 font-cairo text-sm">عدد المدينين الحاليين</span>
+            <Users className="text-[#D4AF37] w-5 h-5" />
+          </div>
+          <p className="text-3xl font-bold text-white">{debtors.length}</p>
         </div>
-        <div className="glass-panel p-6 border border-[#00CED1]/10 bg-[#00CED1]/5 rounded-2xl md:col-span-1 col-span-1">
-           <p className="text-xs font-cairo text-gray-400 leading-relaxed">
-             ÙŠØ³Ø§Ø¹Ø¯Ùƒ Ù†Ø¸Ø§Ù… Ø§Ù„Ø¯ÙŠÙˆÙ† Ø¹Ù„Ù‰ ØªØªØ¨Ø¹ Ø§Ù„Ù…Ø¨Ø§Ù„Øº ØºÙŠØ± Ø§Ù„Ù…Ø­ØµÙ„Ø© Ù…Ù† Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ Ø§Ù„Ø¯Ø§Ø¦Ù…ÙŠÙ† ÙˆØªØ³Ù‡ÙŠÙ„ Ø¥Ø¬Ø±Ø§Ø¡Ø§Øª ÙˆØ¬Ø¯ÙˆÙ„Ø© Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª Ø§Ù„Ø¢Ø¬Ù„Ø© ÙˆØ¹Ù…Ù„ÙŠØ§Øª Ø§Ù„Ø³Ø¯Ø§Ø¯ Ø§Ù„Ø¬Ø²Ø¦ÙŠ Ø£Ùˆ Ø§Ù„ÙƒÙ„ÙŠ.
-           </p>
+
+        <div className="glass-panel p-6 rounded-2xl bg-[#00CED1]/5 border border-[#00CED1]/10">
+          <p className="text-sm text-gray-400 leading-relaxed font-cairo">
+            يساعدك نظام الديون على تتبع المبالغ غير المحصلة وتسهيل التحصيل
+          </p>
         </div>
       </div>
 
-      {}
-      <div className="glass-panel p-4 flex items-center gap-4 border border-white/5 rounded-xl bg-white/5">
+      {/* Search Bar */}
+      <div className="glass-panel p-4 flex items-center gap-4 rounded-xl">
         <Search className="w-5 h-5 text-gray-500" />
         <input 
           type="text" 
-          placeholder="Ø§Ø¨Ø­Ø« Ø¹Ù† Ø¹Ù…ÙŠÙ„ Ø¨Ø§Ù„Ø§Ø³Ù… Ø£Ùˆ Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ..." 
-          className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600 text-sm"
+          placeholder="ابحث عن عميل بالاسم أو رقم الهاتف..." 
+          className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-500"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -174,26 +192,27 @@ export default function DebtsPage() {
         )}
       </div>
 
+      {/* Debtors List */}
       {loading ? (
         <div className="flex justify-center items-center py-20">
-          <Loader2 className="w-10 h-10 text-[#00CED1] animate-spin" />
+          <Loader2 className="w-12 h-12 text-[#00CED1] animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDebtors.map((debtor, i) => (
             <motion.div
               key={debtor.id}
-              initial={{ opacity: 0, scale: 0.97 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: Math.min(i * 0.03, 0.3) }}
-              className="glass-panel p-6 border border-white/5 hover:border-[#00CED1]/30 transition-all group overflow-hidden relative rounded-2xl bg-white/5"
+              transition={{ delay: Math.min(i * 0.03, 0.25) }}
+              className="glass-panel p-6 rounded-2xl border border-white/5 hover:border-[#00CED1]/30 transition-all group relative"
             >
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-xl font-bold font-cairo text-white">{debtor.name}</h3>
+                  <h3 className="text-xl font-bold font-cairo">{debtor.name}</h3>
                   <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
-                    <Phone className="w-3.5 h-3.5 text-[#00CED1]/70" />
-                    <span className="font-sans">{debtor.phone || 'Ø¨Ø¯ÙˆÙ† Ù‡Ø§ØªÙ'}</span>
+                    <Phone className="w-4 h-4 text-[#00CED1]/70" />
+                    <span>{debtor.phone || 'بدون هاتف'}</span>
                   </div>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
@@ -202,9 +221,9 @@ export default function DebtsPage() {
               </div>
 
               <div className="mb-6">
-                <p className="text-xs text-gray-500 font-cairo mb-1 tracking-wider">Ø§Ù„Ø¯ÙŠÙ† Ø§Ù„Ù…Ø³ØªØ­Ù‚</p>
-                <p className={`text-4xl font-bold font-sans ${debtor.total_debt > 0 ? 'text-red-400' : 'text-gray-500'}`}>
-                  {(debtor.total_debt || 0).toLocaleString()} <span className="text-sm font-cairo font-normal text-gray-500">Ø¬.Ù…</span>
+                <p className="text-xs text-gray-500 font-cairo mb-1">الدين المستحق</p>
+                <p className={`text-4xl font-bold ${Number(debtor.total_debt) > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                  {Number(debtor.total_debt || 0).toLocaleString()} <span className="text-sm font-normal text-gray-500">ج.م</span>
                 </p>
               </div>
 
@@ -215,54 +234,45 @@ export default function DebtsPage() {
                     setSelectedDebtor(debtor);
                     setIsPaymentModalOpen(true);
                   }}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#00CED1] text-black font-bold font-cairo hover:shadow-[0_0_15px_rgba(0,206,209,0.3)] transition-all text-sm"
+                  className="py-3 rounded-xl bg-[#00CED1] text-black font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <ArrowUpRight className="w-4 h-4" />
-                  ØªØ³Ø¯ÙŠØ¯
+                  تسديد
                 </button>
                 <button 
                   onClick={() => handleViewHistory(debtor)}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-cairo hover:bg-white/10 transition-all text-sm"
+                  className="py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                 >
                   <History className="w-4 h-4" />
-                  Ø§Ù„Ø³Ø¬Ù„
+                  السجل
                 </button>
               </div>
-
-              <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-[#00CED1] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </motion.div>
           ))}
         </div>
       )}
 
-      {}
-      <AnimatePresence>
-        <AddDebtorModal 
-          isOpen={isAddModalOpen} 
-          onClose={() => setIsAddModalOpen(false)} 
-          onAddDebtor={onAddDebtor} 
-        />
-      </AnimatePresence>
+      {/* Modals */}
+      <AddDebtorModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onAddDebtor={onAddDebtor} 
+      />
 
-      <AnimatePresence>
-        <PaymentModal 
-          isOpen={isPaymentModalOpen} 
-          onClose={() => setIsPaymentModalOpen(false)} 
-          selectedDebtor={selectedDebtor} 
-          onRecordPayment={onRecordPayment} 
-        />
-      </AnimatePresence>
+      <PaymentModal 
+        isOpen={isPaymentModalOpen} 
+        onClose={() => setIsPaymentModalOpen(false)} 
+        selectedDebtor={selectedDebtor} 
+        onRecordPayment={onRecordPayment} 
+      />
 
-      <AnimatePresence>
-        <HistoryModal 
-          isOpen={isHistoryModalOpen} 
-          onClose={() => setIsHistoryModalOpen(false)} 
-          selectedDebtor={selectedDebtor} 
-          paymentHistory={paymentHistory} 
-          historyLoading={historyLoading} 
-        />
-      </AnimatePresence>
+      <HistoryModal 
+        isOpen={isHistoryModalOpen} 
+        onClose={() => setIsHistoryModalOpen(false)} 
+        selectedDebtor={selectedDebtor} 
+        paymentHistory={paymentHistory} 
+        historyLoading={historyLoading} 
+      />
     </div>
   );
-}
-
+      }
