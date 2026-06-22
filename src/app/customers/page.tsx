@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { Users, Search, Plus, X, Phone, Mail, MapPin, CreditCard, ChevronRight, Loader2, Download, Filter, Check, CheckCircle2, Wallet, DollarSign, AlertCircle } from 'lucide-react';
@@ -124,7 +124,7 @@ export default function CustomersPage() {
       setTimeout(() => setPaymentSuccess(false), 4000);
     } catch (err) {
       console.error("Payment error", err);
-      alert("Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ù…Ø¯ÙÙˆØ¹Ø§Øª. ÙŠØ±Ø¬Ù‰ Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø© Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.");
+      alert("حدث خطأ أثناء تسجيل المدفوعات. يرجى المحاولة مرة أخرى.");
     } finally {
       setProcessingPayment(false);
     }
@@ -137,25 +137,25 @@ export default function CustomersPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            Ø¥Ø¯Ø§Ø±Ø© <span className="nile-gradient-text">Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡</span>
+            إدارة <span className="nile-gradient-text">العملاء</span>
           </h1>
-          <p className="text-gray-400 mt-2 text-lg font-cairo">Ù‚Ø§Ø¹Ø¯Ø© Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ØŒ Ø§Ù„Ø¯ÙŠÙˆÙ†ØŒ ÙˆÙ†Ù‚Ø§Ø· Ø§Ù„ÙˆÙ„Ø§Ø¡.</p>
+          <p className="text-gray-400 mt-2 text-lg font-cairo">قاعدة بيانات العملاء، الديون، ونقاط الولاء.</p>
         </div>
         <div className="flex gap-3">
            <button className="glass-card px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/5 transition-colors font-cairo">
-             <Download className="w-4 h-4" /> ØªØµØ¯ÙŠØ± Ø§Ù„ØªÙ‚Ø±ÙŠØ±
+             <Download className="w-4 h-4" /> تصدير التقرير
            </button>
            <button 
              onClick={() => setIsAddModalOpen(true)}
              className="nile-button flex items-center gap-2"
            >
              <Plus className="w-5 h-5" />
-             <span className="font-cairo">Ø¥Ø¶Ø§ÙØ© Ø¹Ù…ÙŠÙ„ Ø¬Ø¯ÙŠØ¯</span>
+             <span className="font-cairo">إضافة عميل جديد</span>
            </button>
         </div>
       </header>
 
-      {}
+      {/* Selected Actions Bar */}
       <AnimatePresence>
         {selectedCustomers.length > 0 && !isPaymentMode && (
           <motion.div 
@@ -169,8 +169,8 @@ export default function CustomersPage() {
                 <CheckCircle2 className="w-5 h-5 text-[#00CED1]" />
               </div>
               <div>
-                <p className="text-foreground font-bold">ØªÙ… ØªØ­Ø¯ÙŠØ¯ {selectedCustomers.length} Ø¹Ù…ÙŠÙ„</p>
-                <p className="text-xs text-gray-500">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø¯ÙŠÙˆÙ†Ù‡Ù…: <span className="text-red-400 font-bold">{totalSelectedDebt.toLocaleString()} Ø¬.Ù…</span></p>
+                <p className="text-foreground font-bold">تم تحديد {selectedCustomers.length} عميل</p>
+                <p className="text-xs text-gray-500">إجمالي ديونهم: <span className="text-red-400 font-bold">{totalSelectedDebt.toLocaleString()} ج.م</span></p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -178,7 +178,7 @@ export default function CustomersPage() {
                 onClick={() => setSelectedIds(new Set())}
                 className="px-4 py-2.5 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10 text-sm"
               >
-                Ø¥Ù„ØºØ§Ø¡ Ø§Ù„ØªØ­Ø¯ÙŠØ¯
+                إلغاء التحديد
               </button>
               <button 
                 onClick={handleStartPayment}
@@ -186,14 +186,14 @@ export default function CustomersPage() {
                 className="px-6 py-2.5 rounded-xl font-cairo text-white bg-green-500/20 border border-green-500/50 hover:bg-green-500/40 transition-colors font-bold flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed text-sm"
               >
                 <Wallet className="w-4 h-4" />
-                ØªØ³Ø¬ÙŠÙ„ Ø¯ÙØ¹ Ù„Ù„Ù…Ø­Ø¯Ø¯ÙŠÙ†
+                تسجيل دفع للمحددين
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {}
+      {/* Success Message */}
       <AnimatePresence>
         {paymentSuccess && (
           <motion.div 
@@ -203,18 +203,18 @@ export default function CustomersPage() {
             className="glass-card p-4 flex items-center gap-3 border border-green-500/30 bg-green-500/5"
           >
             <Check className="w-6 h-6 text-green-400" />
-            <p className="text-green-400 font-bold font-cairo">ØªÙ… ØªØ³Ø¬ÙŠÙ„ Ø¬Ù…ÙŠØ¹ Ø§Ù„Ù…Ø¯ÙÙˆØ¹Ø§Øª Ø¨Ù†Ø¬Ø§Ø­ ÙˆØªØ­Ø¯ÙŠØ« Ø£Ø±ØµØ¯Ø© Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ âœ“</p>
+            <p className="text-green-400 font-bold font-cairo">تم تسجيل جميع المدفوعات بنجاح وتحديث أرصدة العملاء ✓</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {}
+      {/* Filters and Search */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 glass-panel p-2 flex items-center gap-3">
           <Search className="w-5 h-5 text-gray-500 mr-2" />
           <input 
             type="text" 
-            placeholder="Ø§Ù„Ø¨Ø­Ø« Ø¨Ø§Ù„Ø§Ø³Ù… Ø£Ùˆ Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ..." 
+            placeholder="البحث بالاسم أو رقم الهاتف..." 
             className="flex-1 bg-transparent border-none outline-none text-white font-cairo placeholder:text-gray-600 py-2 text-right"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -227,9 +227,9 @@ export default function CustomersPage() {
         </div>
         <div className="flex gap-2">
           {[
-            { key: 'all' as const, label: 'Ø§Ù„ÙƒÙ„' },
-            { key: 'debtors' as const, label: 'Ù…Ø¯ÙŠÙˆÙ†ÙˆÙ†' },
-            { key: 'clear' as const, label: 'Ø¨Ù„Ø§ Ø¯ÙŠÙˆÙ†' },
+            { key: 'all' as const, label: 'الكل' },
+            { key: 'debtors' as const, label: 'مديونون' },
+            { key: 'clear' as const, label: 'بلا ديون' },
           ].map(f => (
             <button 
               key={f.key}
@@ -245,7 +245,7 @@ export default function CustomersPage() {
           className="glass-panel px-5 flex items-center gap-2 text-gray-400 hover:text-white transition-colors font-cairo text-sm"
         >
           <CheckCircle2 className="w-4 h-4" />
-          {filteredCustomers.length > 0 && filteredCustomers.every(c => selectedIds.has(c.id)) ? 'Ø¥Ù„ØºØ§Ø¡ Ø§Ù„ÙƒÙ„' : 'ØªØ­Ø¯ÙŠØ¯ Ø§Ù„ÙƒÙ„'}
+          {filteredCustomers.length > 0 && filteredCustomers.every(c => selectedIds.has(c.id)) ? 'إلغاء الكل' : 'تحديد الكل'}
         </button>
       </div>
 
@@ -256,7 +256,7 @@ export default function CustomersPage() {
       ) : filteredCustomers.length === 0 ? (
         <div className="glass-panel p-12 text-center space-y-3 border border-white/5">
           <AlertCircle className="w-12 h-12 text-gray-500 mx-auto" />
-          <p className="text-gray-400 font-cairo text-lg">Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø£ÙŠ Ø¹Ù…Ù„Ø§Ø¡ ÙŠØ·Ø§Ø¨Ù‚ÙˆÙ† Ø®ÙŠØ§Ø±Ø§Øª Ø§Ù„Ø¨Ø­Ø« ÙˆØ§Ù„ÙÙ„ØªØ±Ø© Ø§Ù„Ø­Ø§Ù„ÙŠØ©.</p>
+          <p className="text-gray-400 font-cairo text-lg">لم يتم العثور على أي عملاء يطابقون خيارات البحث والفلترة الحالية.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -271,7 +271,7 @@ export default function CustomersPage() {
                 transition={{ delay: i * 0.05 }}
                 className={`glass-panel p-6 border transition-all group relative ${isSelected ? 'border-[#00CED1]/50 bg-[#00CED1]/5 shadow-[0_0_15px_rgba(0,206,209,0.1)]' : 'border-white/5 hover:border-[#00CED1]/30'}`}
               >
-                {}
+                {/* Selection Checkbox */}
                 <button 
                   onClick={() => toggleSelect(customer.id)}
                   className={`absolute top-4 left-4 w-7 h-7 rounded-lg flex items-center justify-center transition-all border ${isSelected ? 'bg-[#00CED1] border-[#00CED1] text-black' : 'bg-white/5 border-white/20 text-transparent hover:border-[#00CED1]/50'}`}
@@ -284,8 +284,8 @@ export default function CustomersPage() {
                      <Users className="w-6 h-6" />
                   </div>
                   <div className="text-left h-auto py-1">
-                     <p className="text-xs text-gray-500 font-cairo mb-1 uppercase">Ù†Ù‚Ø§Ø· Ø§Ù„ÙˆÙ„Ø§Ø¡</p>
-                     <p className="text-lg font-bold text-[#D4AF37] leading-tight">{customer.loyalty_points} <span className="text-[10px] font-normal">Ù†Ù‚Ø·Ø©</span></p>
+                     <p className="text-xs text-gray-500 font-cairo mb-1 uppercase">نقاط الولاء</p>
+                     <p className="text-lg font-bold text-[#D4AF37] leading-tight">{customer.loyalty_points} <span className="text-[10px] font-normal">نقطة</span></p>
                   </div>
                 </div>
 
@@ -308,9 +308,9 @@ export default function CustomersPage() {
 
                 <div className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between mb-6">
                    <div className="text-right">
-                      <p className="text-[10px] text-gray-500 font-cairo mb-1.5 uppercase">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø¯ÙŠÙ†</p>
+                      <p className="text-[10px] text-gray-500 font-cairo mb-1.5 uppercase">إجمالي الدين</p>
                       <p className={`text-xl font-bold ${customer.total_debt > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                        {customer.total_debt > 0 ? customer.total_debt.toLocaleString() : '0'} <span className="text-xs font-normal">Ø¬.Ù…</span>
+                        {customer.total_debt > 0 ? customer.total_debt.toLocaleString() : '0'} <span className="text-xs font-normal">ج.م</span>
                       </p>
                    </div>
                    <CreditCard className={`w-6 h-6 ${customer.total_debt > 0 ? 'text-red-400' : 'text-green-400'} opacity-30`} />
@@ -321,7 +321,7 @@ export default function CustomersPage() {
                     href={`/customers/${customer.id}`}
                     className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white font-cairo group/btn hover:bg-[#00CED1]/10 hover:border-[#00CED1]/30 transition-all font-medium text-sm"
                   >
-                    Ø§Ù„Ù…Ù„Ù Ø§Ù„Ø´Ø®ØµÙŠ
+                    الملف الشخصي
                     <ChevronRight className="w-4 h-4 group-hover/btn:-translate-x-1 transition-transform rotate-180" />
                   </Link>
                   {customer.total_debt > 0 && (
@@ -337,7 +337,7 @@ export default function CustomersPage() {
                       className="py-3 px-4 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center gap-2 text-green-400 font-cairo hover:bg-green-500/20 transition-all font-bold text-sm"
                     >
                       <Wallet className="w-4 h-4" />
-                      Ø¯ÙØ¹
+                      دفع
                     </button>
                   )}
                 </div>
@@ -347,7 +347,7 @@ export default function CustomersPage() {
         </div>
       )}
 
-      {}
+      {/* Modals */}
       <BulkPaymentModal
         isOpen={isPaymentMode}
         onClose={() => setIsPaymentMode(false)}
@@ -369,4 +369,3 @@ export default function CustomersPage() {
     </div>
   );
 }
-
