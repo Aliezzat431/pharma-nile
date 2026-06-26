@@ -134,7 +134,10 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
 export async function updateBatch(batchId: string, updates: Partial<Batch>) {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
-  if (!pharmacyId) throw new Error('Unauthorized');
+  if (!pharmacyId || pharmacyId === 'undefined') {
+    throw new Error('فشل التحقق من هوية الصيدلية. الرجاء إعادة تسجيل الدخول.');
+  }
+
 
   if (updates.quantity !== undefined && updates.quantity <= 0) {
     throw new Error('Validation Error: Quantity must be > 0');
@@ -152,12 +155,17 @@ export async function updateBatch(batchId: string, updates: Partial<Batch>) {
     .eq('id', batchId)
     .eq('pharmacy_id', pharmacyId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error updating batch:', error);
     throw error;
   }
+
+  if (!data) {
+    throw new Error('لم يتم العثور على التشغيلة المطلوبة، أو ليس لديك صلاحية تعديلها في هذه الصيدلية.');
+  }
+
   return data;
 }
 

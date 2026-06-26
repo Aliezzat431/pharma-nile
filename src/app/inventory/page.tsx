@@ -12,10 +12,10 @@ import {
   ChevronDown,
   ChevronUp,
   Tag,
-  Trash2,
-  Calendar,
   DollarSign,
   Barcode,
+  PlusCircle,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -24,6 +24,7 @@ import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
 import { deleteProduct, createBatch, deleteBatch, updateBatch } from '@/lib/api/products';
+import { Calendar } from 'lucide-react';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), {
   ssr: false,
@@ -413,6 +414,17 @@ export default function InventoryDashboard() {
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddSearch, setQuickAddSearch] = useState('');
+  const [quickAddResults, setQuickAddResults] = useState<InventoryItem[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
+  const [quickBatch, setQuickBatch] = useState({
+    barcode: '',
+    quantity: 1,
+    purchase_price: 0,
+    selling_price: 0,
+    expiry_date: '',
+  });
 
   // GSAP page-entry animation
   const pageRef = usePageGSAP();
@@ -500,25 +512,78 @@ export default function InventoryDashboard() {
   // Animate table rows on page / data change
   const tbodyRef = useGSAPList<HTMLTableSectionElement>([paginatedData]);
 
+  const handleQuickBatchAddBySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setQuickAddSearch(val);
+    if (!val.trim()) {
+      setQuickAddResults([]);
+      return;
+    }
+    const results = items.filter(i => 
+      i.name.toLowerCase().includes(val.toLowerCase()) || 
+      i.batches.some(b => b.barcode.includes(val))
+    ).slice(0, 5);
+    setQuickAddResults(results);
+  };
+
+  const handleSelectProductForBatch = (product: InventoryItem) => {
+    setSelectedProduct(product);
+    setQuickBatch({
+      barcode: '',
+      quantity: 1,
+      purchase_price: product.batches[0]?.purchase_price || 0,
+      selling_price: product.current_price || product.batches[0]?.selling_price || 0,
+      expiry_date: '',
+    });
+    setQuickAddSearch('');
+    setQuickAddResults([]);
+  };
+
+  const submitQuickBatch = async () => {
+    if (!selectedProduct || !quickBatch.quantity || !quickBatch.expiry_date) {
+      setInventoryError('الرجاء إكمال البيانات المطلوبة');
+      return;
+    }
+    try {
+      await createBatch({
+        product_id: selectedProduct.id,
+        ...quickBatch
+      });
+      setIsQuickAddOpen(false);
+      setSelectedProduct(null);
+      fetchInventory();
+    } catch (err: any) {
+      setInventoryError(err.message || 'خطأ في إضافة التشغيلة');
+    }
+  };
+
   const handleCameraScan = (barcode: string) => setSearch(barcode);
 
   return (
     <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4">
       {/* Header */}
       <header data-gsap="fade-up" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
+        <div className="space-y-1">
           <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo">
             <PackageOpen className="text-[#00CED1]" />
             إدارة <span className="text-[#00CED1]">المخزن</span>
           </h1>
           <p className="text-gray-400 mt-2 font-cairo">تتبع المنتجات، التشغيلات، وتواريخ الانتهاء</p>
         </div>
-        <Link
-          href="/products/create"
-          className="flex items-center justify-center w-full md:w-auto gap-2 px-5 py-2.5 rounded-xl bg-[#00CED1]/10 hover:bg-[#00CED1]/20 text-[#00CED1] font-medium transition-all border border-[#00CED1]/20 font-cairo"
-        >
-          <Plus className="w-5 h-5" /> إضافة صنف جديد
-        </Link>
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <Link
+            href="/products/create"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#00CED1]/10 hover:bg-[#00CED1]/20 text-[#00CED1] font-medium transition-all border border-[#00CED1]/20 font-cairo"
+          >
+            <Plus className="w-5 h-5" /> إضافة صنف جديد
+          </Link>
+          <button
+            onClick={() => setIsQuickAddOpen(true)}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] font-medium transition-all border border-[#D4AF37]/20 font-cairo"
+          >
+            <PlusCircle className="w-5 h-5" /> توريد تشغيلة (Batch)
+          </button>
+        </div>
       </header>
 
       {/* Stats Section */}
@@ -734,6 +799,161 @@ export default function InventoryDashboard() {
             >
               <AlertCircle className="w-5 h-5" />
               {inventoryError}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isQuickAddOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[#050505] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-1 h-full bg-[#D4AF37]"></div>
+              
+              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold font-cairo flex items-center gap-2">
+                    <PlusCircle className="w-5 h-5 text-[#D4AF37]" />
+                    توريد كمية جديدة
+                  </h3>
+                  <p className="text-xs text-gray-400 font-cairo mt-1">أضف تشغيلة جديدة لصنف موجود بالفعل في نظامك</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    setSelectedProduct(null);
+                  }}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {!selectedProduct ? (
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Barcode className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="ابحث باسم المنتج أو الباركود..."
+                        value={quickAddSearch}
+                        onChange={handleQuickBatchAddBySearch}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pr-12 pl-4 text-white focus:border-[#D4AF37] outline-none transition-all font-cairo"
+                      />
+                    </div>
+
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
+                      {quickAddResults.map(p => (
+                        <div 
+                          key={p.id}
+                          onClick={() => handleSelectProductForBatch(p)}
+                          className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/30 cursor-pointer transition-all flex items-center justify-between group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#D4AF37]/20 transition-colors">
+                              <Tag className="w-5 h-5 text-gray-400 group-hover:text-[#D4AF37]" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-white font-cairo">{p.name}</p>
+                                <p className="text-[10px] text-gray-500 font-cairo">{p.company} - {p.type}</p>
+                            </div>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-[#D4AF37]">{p.total_quantity} علبة</p>
+                            <p className="text-[10px] text-gray-500 font-cairo">الرصيد الحالي</p>
+                          </div>
+                        </div>
+                      ))}
+                      {quickAddSearch && quickAddResults.length === 0 && (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500 font-cairo">لم يتم العثور على نتائج</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="p-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                          <Tag className="w-5 h-5 text-[#D4AF37]" />
+                          <div>
+                            <p className="font-bold text-white font-cairo">{selectedProduct.name}</p>
+                            <p className="text-xs text-[#D4AF37]/80 font-cairo">{selectedProduct.company}</p>
+                          </div>
+                       </div>
+                       <button 
+                        onClick={() => setSelectedProduct(null)}
+                        className="text-xs text-gray-400 hover:text-white underline font-cairo"
+                       >
+                        تغيير المنتج
+                       </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <label className="text-xs text-gray-400 font-cairo">الباركود (اختياري)</label>
+                          <input 
+                            type="text"
+                            value={quickBatch.barcode}
+                            onChange={(e) => setQuickBatch({...quickBatch, barcode: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-xs text-gray-400 font-cairo">الكمية الموردة</label>
+                          <input 
+                            type="number"
+                            value={quickBatch.quantity}
+                            onChange={(e) => setQuickBatch({...quickBatch, quantity: Number(e.target.value)})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-xs text-gray-400 font-cairo">سعر الشراء</label>
+                          <input 
+                            type="number"
+                            step="0.01"
+                            value={quickBatch.purchase_price}
+                            onChange={(e) => setQuickBatch({...quickBatch, purchase_price: Number(e.target.value)})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-xs text-gray-400 font-cairo">سعر البيع</label>
+                          <input 
+                            type="number"
+                            step="0.01"
+                            value={quickBatch.selling_price}
+                            onChange={(e) => setQuickBatch({...quickBatch, selling_price: Number(e.target.value)})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none"
+                          />
+                       </div>
+                       <div className="col-span-2 space-y-2">
+                          <label className="text-xs text-gray-400 font-cairo">تاريخ الانتهاء</label>
+                          <input 
+                            type="date"
+                            value={quickBatch.expiry_date}
+                            onChange={(e) => setQuickBatch({...quickBatch, expiry_date: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none [color-scheme:dark]"
+                          />
+                       </div>
+                    </div>
+
+                    <button 
+                      onClick={submitQuickBatch}
+                      className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-black font-cairo rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all active:scale-[0.98]"
+                    >
+                      تسجيل الكمية في المخزن
+                    </button>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </div>
         )}
