@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { usePageGSAP } from '@/hooks/usePageGSAP';
+import { useAuth } from '@/hooks/useAuth';
 import { SalesSummaryCards } from './components/SalesSummaryCards';
 import { SalesTrendChart } from './components/SalesTrendChart';
 import { PaymentMethodsChart } from './components/PaymentMethodsChart';
@@ -38,18 +39,24 @@ export default function SalesDashboardPage() {
 
   // GSAP page-entry
   const pageRef = usePageGSAP();
+  const { user } = useAuth();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
 
   useEffect(() => {
-    fetchSalesData();
-  }, [dateRange]);
+    if (pharmacyId) {
+      fetchSalesData();
+    }
+  }, [dateRange, pharmacyId]);
 
   const fetchSalesData = async () => {
+    if (!pharmacyId) return;
     setLoading(true);
     try {
       let query = supabase
         .from('orders')
         .select("id, created_at, total, profit_total, payment_method, status, order_items ( id, name, price, quantity, order_id )")
-        .eq('status', 'completed');
+        .eq('status', 'completed')
+        .eq('pharmacy_id', pharmacyId);
 
       const now = new Date();
       let fromDate = new Date();

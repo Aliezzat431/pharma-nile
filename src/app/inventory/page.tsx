@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   PackageOpen,
   Plus,
@@ -164,6 +165,8 @@ export default function InventoryDashboard() {
 
   // GSAP page-entry animation
   const pageRef = usePageGSAP();
+  const { user } = useAuth();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
 
   // Auto-hide error
   useEffect(() => {
@@ -174,6 +177,7 @@ export default function InventoryDashboard() {
   }, [inventoryError]);
 
   useEffect(() => {
+    if (!pharmacyId) return;
     fetchInventory();
     const channel = supabase
       .channel('inventory-sync')
@@ -181,14 +185,16 @@ export default function InventoryDashboard() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchInventory)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [pharmacyId]);
 
   const fetchInventory = async () => {
+    if (!pharmacyId) return;
     setLoading(true);
     try {
       const { data: products, error } = await supabase
         .from('products')
-        .select('*, batches(*)');
+        .select('*, batches(*)')
+        .eq('pharmacy_id', pharmacyId);
       if (error) throw error;
 
       const formatted: InventoryItem[] = products.map((p: any) => {

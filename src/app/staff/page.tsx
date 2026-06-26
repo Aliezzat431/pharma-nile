@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Users as UsersIcon, 
   Plus, 
@@ -44,6 +45,9 @@ export default function StaffManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const { user } = useAuth();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+
   const pageRef = usePageGSAP();
   const listRef = useGSAPList<HTMLTableSectionElement>([]);
 
@@ -52,6 +56,7 @@ export default function StaffManagement() {
   const [addLoading, setAddLoading] = useState(false);
 
   useEffect(() => {
+    if (!pharmacyId) return;
     fetchData();
 
     const channel = supabase
@@ -63,14 +68,15 @@ export default function StaffManagement() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [pharmacyId]);
 
   const fetchData = async () => {
+    if (!pharmacyId) return;
     setLoading(true);
     try {
       const [sessionsRes, activeRes, staffData] = await Promise.all([
-        supabase.from('sessions').select('*').order('start_time', { ascending: false }).limit(10),
-        supabase.from('sessions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('sessions').select('*').eq('pharmacy_id', pharmacyId).order('start_time', { ascending: false }).limit(10),
+        supabase.from('sessions').select('*', { count: 'exact', head: true }).eq('pharmacy_id', pharmacyId).eq('status', 'active'),
         getAllStaff()
       ]);
 

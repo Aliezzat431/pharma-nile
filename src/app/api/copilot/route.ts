@@ -15,7 +15,12 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { message, chatHistory } = await req.json();
+    const { message, chatHistory, context } = await req.json();
+    const pharmacyId = context?.pharmacyId;
+
+    if (!pharmacyId) {
+      return NextResponse.json({ error: "Unauthorized: Pharmacy ID is missing" }, { status: 401 });
+    }
 
     if (!message) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -25,9 +30,9 @@ export async function POST(req: Request) {
     const todayStr = new Date().toLocaleDateString('en-CA'); 
 
     const [salesResponse, shortagesResponse, debtorsResponse] = await Promise.all([
-      supabase.from('orders').select('total').gte('created_at', todayStr),
-      supabase.from('product_inventory').select('id').lt('total_quantity', 10).limit(10),
-      supabase.from('customers').select('id, name, total_debt').order('total_debt', { ascending: false }).limit(5)
+      supabase.from('orders').select('total').eq('pharmacy_id', pharmacyId).gte('created_at', todayStr),
+      supabase.from('product_inventory').select('id').eq('pharmacy_id', pharmacyId).lt('total_quantity', 10).limit(10),
+      supabase.from('customers').select('id, name, total_debt').eq('pharmacy_id', pharmacyId).order('total_debt', { ascending: false }).limit(5)
     ]);
 
     if (salesResponse.error) console.error("Sales fetch error:", salesResponse.error.message);

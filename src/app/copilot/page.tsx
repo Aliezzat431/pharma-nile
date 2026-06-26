@@ -316,6 +316,7 @@ export default function CopilotPage() {
           chatHistory: messages.slice(-10),
           context: {
             userId: user?.id,
+            pharmacyId: user?.user_metadata?.pharmacy_id,
             timestamp: new Date().toISOString()
           }
         })
