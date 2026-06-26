@@ -203,7 +203,14 @@ DECLARE
   v_low_stock int := 0;
   v_expiring_soon int := 0;
   v_weekly_data json;
+  v_threshold int;
 BEGIN
+  -- 1. Fetch Threshold from Settings
+  SELECT COALESCE(stock_alert_threshold, 20) INTO v_threshold 
+  FROM pharmacy_settings 
+  WHERE pharmacy_id = p_pharmacy_id;
+
+  -- 2. Stats Calculation
   SELECT COALESCE(SUM(total), 0), COALESCE(SUM(profit_total), 0)
   INTO v_today_sales, v_today_profit
   FROM orders
@@ -211,9 +218,13 @@ BEGIN
 
   SELECT COUNT(*) INTO v_active_sessions FROM sessions WHERE pharmacy_id = p_pharmacy_id AND status = 'active';
   
-  SELECT COUNT(*) INTO v_low_stock FROM product_inventory WHERE pharmacy_id = p_pharmacy_id AND total_quantity < 10;
+  SELECT COUNT(*) INTO v_low_stock 
+  FROM product_inventory 
+  WHERE pharmacy_id = p_pharmacy_id AND total_quantity < v_threshold;
   
-  SELECT COUNT(*) INTO v_expiring_soon FROM batches WHERE pharmacy_id = p_pharmacy_id AND quantity > 0 AND expiry_date <= v_ninety_days;
+  SELECT COUNT(*) INTO v_expiring_soon 
+  FROM batches 
+  WHERE pharmacy_id = p_pharmacy_id AND quantity > 0 AND expiry_date <= v_ninety_days;
 
   SELECT json_agg(row_to_json(d)) INTO v_weekly_data
   FROM (
@@ -344,11 +355,11 @@ GRANT EXECUTE ON FUNCTION get_critical_alerts(uuid) TO authenticated;
 -- ─────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION fast_checkout(
   p_pharmacy_id    uuid,
-  p_user_id        uuid,
+  p_customer_id    uuid,
   p_cart           jsonb,
   p_total          numeric,
-  p_payment_method text DEFAULT 'cash',
-  p_customer_id    uuid DEFAULT NULL
+  p_payment_method text,
+  p_user_id        uuid
 )
 RETURNS json
 LANGUAGE plpgsql
@@ -365,8 +376,14 @@ DECLARE
   v_revenue_total  numeric := 0;
   v_final_total    numeric;
   v_profit_total   numeric;
+  v_method         text;
 BEGIN
-  -- Compute totals
+  -- 1. Fetch Inventory Method
+  SELECT COALESCE(inventory_method, 'FEFO') INTO v_method 
+  FROM pharmacy_settings 
+  WHERE pharmacy_id = p_pharmacy_id;
+
+  -- 2. Compute totals
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_cart) LOOP
     IF jsonb_array_length(COALESCE(v_item->'batch_distributions', '[]'::jsonb)) > 0 THEN
       FOR v_dist IN SELECT * FROM jsonb_array_elements(v_item->'batch_distributions') LOOP
@@ -382,18 +399,18 @@ BEGIN
   v_final_total  := CASE WHEN v_revenue_total > 0 THEN v_revenue_total ELSE p_total END;
   v_profit_total := v_final_total - v_cost_total;
 
-  -- Insert Order
+  -- 3. Insert Order
   INSERT INTO orders (pharmacy_id, total, cost_total, profit_total, customer_id, payment_method, status)
   VALUES (p_pharmacy_id, v_final_total, v_cost_total, v_profit_total, p_customer_id, p_payment_method, 'completed')
   RETURNING id INTO v_order_id;
 
-  -- Update Debt
+  -- 4. Update Debt
   IF p_payment_method = 'debt' AND p_customer_id IS NOT NULL THEN
     UPDATE customers SET total_debt = total_debt + v_final_total
     WHERE id = p_customer_id AND pharmacy_id = p_pharmacy_id;
   END IF;
 
-  -- Deduct Stock & Insert Items
+  -- 5. Deduct Stock & Insert Items
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_cart) LOOP
     v_remaining := (v_item->>'quantity')::int;
 
@@ -413,9 +430,25 @@ BEGIN
       END LOOP;
     END IF;
 
-    -- FEFO Fallback
+    -- Dynamic Stock Selection (FEFO/FIFO/LIFO)
     IF v_remaining > 0 THEN
-      FOR v_batch IN SELECT id, quantity FROM batches WHERE product_id = (v_item->>'product_id')::uuid AND pharmacy_id = p_pharmacy_id AND quantity > 0 ORDER BY expiry_date ASC LOOP
+      FOR v_batch IN 
+        SELECT id, quantity 
+        FROM batches 
+        WHERE product_id = (v_item->>'product_id')::uuid 
+          AND pharmacy_id = p_pharmacy_id 
+          AND quantity > 0 
+        ORDER BY 
+          CASE 
+            WHEN v_method = 'FEFO' THEN expiry_date::text
+            WHEN v_method = 'FIFO' THEN created_at::text
+            ELSE NULL 
+          END ASC,
+          CASE 
+            WHEN v_method = 'LIFO' THEN created_at::text
+            ELSE NULL 
+          END DESC
+      LOOP
         IF v_remaining <= 0 THEN EXIT; END IF;
         v_deduction := LEAST(v_batch.quantity, v_remaining);
         

@@ -22,6 +22,7 @@ import Skeleton from '@/components/ui/Skeleton';
 import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
+import { usePreferences } from '@/hooks/usePreferences';
 
 const PAGE_SIZE = 15;
 
@@ -41,6 +42,7 @@ export default function ShortagesPage() {
   const [filterCompany, setFilterCompany] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
+  const { preferences } = usePreferences();
   const pageRef = usePageGSAP();
   const listRef = useGSAPList<HTMLDivElement>([]);
 
@@ -62,18 +64,19 @@ export default function ShortagesPage() {
           .from('product_inventory')
           .select('*')
           .eq('pharmacy_id', pharmacyId)
-          .lt('total_quantity', 15)
+          .lt('total_quantity', preferences?.stockAlertThreshold || 20)
       ]);
 
       setCompanies(compRes);
 
       if (shortageRes.data) {
+        const threshold = preferences?.stockAlertThreshold || 20;
         const mapped: ShortageItem[] = shortageRes.data.map((item: any) => ({
           id: item.product_id || item.id,
           name: item.name,
           company_name: item.company || 'غير محدد',
           total_quantity: item.total_quantity,
-          priority: item.total_quantity < 5 ? 'عالي' : item.total_quantity < 10 ? 'متوسط' : 'عادي'
+          priority: item.total_quantity < (threshold / 4) ? 'عالي' : item.total_quantity < (threshold / 2) ? 'متوسط' : 'عادي'
         }));
         setItems(mapped);
       }

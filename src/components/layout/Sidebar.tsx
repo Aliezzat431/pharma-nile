@@ -31,6 +31,7 @@ import { supabase } from '@/lib/supabase';
 import { useAppDispatch } from '@/store/hooks';
 import { openIframe } from '@/store/slices/agentSlice';
 import ThemeToggle from './ThemeToggle';
+import { usePreferences } from '@/hooks/usePreferences';
 
 const menuGroups = [
   {
@@ -75,6 +76,7 @@ export default function Sidebar() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAuth();
+  const { preferences } = usePreferences();
   const [mounted, setMounted] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -147,7 +149,9 @@ export default function Sidebar() {
           </div>
           {!isCollapsed && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              <h1 className="text-xl font-bold text-white tracking-tight font-cairo">PharmaNile</h1>
+              <h1 className="text-xl font-bold text-white tracking-tight font-cairo">
+                {preferences?.pharmacyName || 'PharmaNile'}
+              </h1>
               <p className="text-[10px] text-[var(--nile-teal)] font-bold uppercase tracking-widest opacity-80">Premium OS</p>
             </div>
           )}

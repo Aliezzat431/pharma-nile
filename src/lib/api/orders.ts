@@ -145,6 +145,15 @@ async function _jsCheckoutFallback(
     }
   }
 
+  // Get inventory method from settings
+  const { data: settings } = await supabase
+    .from('pharmacy_settings')
+    .select('inventory_method')
+    .eq('pharmacy_id', pharmacyId)
+    .single();
+  
+  const method = settings?.inventory_method || 'FEFO';
+
   for (const item of cart) {
     let remainingToDeduct = item.quantity;
 
@@ -162,7 +171,17 @@ async function _jsCheckoutFallback(
     }
 
     if (remainingToDeduct > 0) {
-      const { data: batches } = await supabase.from('batches').select('*').eq('product_id', item.id).eq('pharmacy_id', pharmacyId).gt('quantity', 0).order('expiry_date', { ascending: true });
+      let query = supabase.from('batches').select('*').eq('product_id', item.id).eq('pharmacy_id', pharmacyId).gt('quantity', 0);
+      
+      if (method === 'FEFO') {
+        query = query.order('expiry_date', { ascending: true });
+      } else if (method === 'FIFO') {
+        query = query.order('created_at', { ascending: true });
+      } else if (method === 'LIFO') {
+        query = query.order('created_at', { ascending: false });
+      }
+
+      const { data: batches } = await query;
       if (batches) {
         for (const batch of batches) {
           if (remainingToDeduct <= 0) break;

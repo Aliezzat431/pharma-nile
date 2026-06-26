@@ -9,6 +9,7 @@ import { ConfirmReturnModal } from './components/ConfirmReturnModal';
 import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
+import { usePreferences } from '@/hooks/usePreferences';
 
 const PAGE_SIZE = 15;
 
@@ -37,6 +38,7 @@ export default function ReturnsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [returningId, setReturningId] = useState<string | null>(null);
   const [returnSuccess, setReturnSuccess] = useState<string | null>(null);
+  const { preferences } = usePreferences();
   const pageRef = usePageGSAP();
   const listRef = useGSAPList<HTMLDivElement>([]);
 
@@ -47,8 +49,9 @@ export default function ReturnsPage() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
+      const limit = preferences?.returnDaysLimit || 14;
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 15);
+      cutoff.setDate(cutoff.getDate() - limit);
 
       const { data, error } = await supabase
         .from('orders')
@@ -119,11 +122,11 @@ export default function ReturnsPage() {
             <RotateCcw className="text-[#D4AF37]" />
             مرتجعات <span className="text-[#D4AF37]">المبيعات</span>
           </h1>
-          <p className="text-gray-400 mt-2 font-cairo">عرض فواتير البيع خلال آخر 15 يوم وإمكانية إرجاع الفاتورة بالكامل.</p>
+          <p className="text-gray-400 mt-2 font-cairo">عرض فواتير البيع خلال آخر {preferences?.returnDaysLimit || 14} يوم وإمكانية إرجاع الفاتورة بالكامل.</p>
         </div>
         <div className="glass-card px-5 py-3 flex items-center gap-3 font-cairo">
           <Calendar className="w-4 h-4 text-[#D4AF37]" />
-          <span className="text-sm text-gray-400">آخر 15 يوم</span>
+          <span className="text-sm text-gray-400">آخر {preferences?.returnDaysLimit || 14} يوم</span>
           <span className="text-lg font-bold text-foreground">{orders.length}</span>
           <span className="text-sm text-gray-400">فاتورة</span>
         </div>
