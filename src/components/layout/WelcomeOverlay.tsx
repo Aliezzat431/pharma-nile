@@ -2,29 +2,31 @@
 
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight, ShieldCheck, Zap, BarChart3, Pill } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, ShieldCheck, Zap, BarChart3, Pill } from 'lucide-react';
 
 export default function WelcomeOverlay({ onComplete }: { onComplete: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
+    // ✅ تم الإبقاء على Cookies كما طلبت
     const hasVisited = document.cookie.includes('pharma-nile-visited=true');
+    
     if (hasVisited) {
       setIsVisible(false);
       onComplete();
       return;
     }
 
-    // Loading simulation for dramatic effect
+    // Loading simulation
     const interval = setInterval(() => {
       setLoadingProgress(prev => {
         if (prev >= 100) {
@@ -48,7 +50,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
       window.removeEventListener('mousemove', handleMouseMove);
       clearInterval(interval);
     };
-  }, []);
+  }, [onComplete]);
 
   useEffect(() => {
     if (!showContent) return;
@@ -56,7 +58,6 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
 
-      // Cinematic Reveal
       tl.to(".loading-screen", { opacity: 0, duration: 1, ease: "power4.inOut" });
       
       tl.fromTo(containerRef.current, 
@@ -92,14 +93,8 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
         '-=0.5'
       );
 
-      // Infinite floating loop
       gsap.to('.hero-pill', {
-        y: -20,
-        rotation: 15,
-        duration: 3,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut'
+        y: -20, rotation: 15, duration: 3, repeat: -1, yoyo: true, ease: 'sine.inOut'
       });
     }, containerRef);
 
@@ -107,14 +102,11 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
   }, [showContent]);
 
   const handleStart = () => {
-    document.cookie = "pharma-nile-visited=true; path=/; max-age=31536000"; // 1 year expiration
+    // ✅ حفظ الحالة في Cookie لمدة سنة
+    document.cookie = "pharma-nile-visited=true; path=/; max-age=31536000"; 
     
     gsap.to(containerRef.current, {
-      opacity: 0,
-      y: -100,
-      filter: 'blur(20px)',
-      duration: 1.2,
-      ease: 'expo.inOut',
+      opacity: 0, y: -100, filter: 'blur(20px)', duration: 1.2, ease: 'expo.inOut',
       onComplete: () => {
         setIsVisible(false);
         onComplete();
@@ -136,7 +128,6 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
       className="fixed inset-0 z-[9999] bg-[#020202] flex flex-col items-center justify-center overflow-hidden"
       dir="rtl"
     >
-      {/* Loading Phase */}
       {!showContent && (
         <div className="loading-screen fixed inset-0 z-50 bg-[#020202] flex flex-col items-center justify-center gap-8">
           <motion.div 
@@ -182,12 +173,15 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
             </div>
           </div>
 
-          {/* Epic Typography */}
+          {/* Epic Typography - ✅ تم إضافة dir="ltr" هنا لإصلاح اتجاه النص الإنجليزي */}
           <div className="text-center space-y-6">
             <div className="overflow-hidden py-2">
-              <h1 className="text-7xl md:text-9xl font-black font-cairo text-white tracking-tighter flex items-center justify-center gap-1">
+              <h1 
+                className="text-7xl md:text-9xl font-black font-cairo text-white tracking-tighter flex items-center justify-center gap-1"
+                dir="ltr" 
+              >
                 {"PharmaNile".split("").map((c, i) => (
-                  <span key={i} className={`char-reveal inline-block ${c === 'N' || c === 'i' || c === 'l' || c === 'e' ? 'text-cyan-400' : ''}`}>
+                  <span key={i} className={`char-reveal inline-block ${['N','i','l','e'].includes(c) ? 'text-cyan-400' : ''}`}>
                     {c}
                   </span>
                 ))}
