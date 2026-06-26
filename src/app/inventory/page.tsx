@@ -462,7 +462,8 @@ export default function InventoryDashboard() {
           *,
           batches(*),
           pharmacy:pharmacies(name)
-        `);
+        `)
+        .eq('pharmacy_id', pharmacyId);
       if (error) throw error;
 
       const formatted: InventoryItem[] = products.map((p: any) => {

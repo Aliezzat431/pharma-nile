@@ -39,10 +39,10 @@ export async function searchProducts(query: string, pharmacyId: string) {
         *
       ),
       pharmacy:pharmacies(name)
-    `);
+    `)
+    .eq('pharmacy_id', pharmacyId);
 
   if (words.length > 0) {
-    // Construct a broad filter: match any word in name, or the whole query
     const filter = words.map((w: string) => `name.ilike.%${w}%`).join(',');
     dbQuery = dbQuery.or(filter);
   } else {
