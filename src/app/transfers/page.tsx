@@ -14,6 +14,11 @@ import { getProducts } from '@/lib/api/products';
 import { Search, Send, CheckCircle2, Clock, XCircle, ArrowRightLeft, Package, UserPlus } from 'lucide-react';
 import { RequestTransferModal } from './components/RequestTransferModal';
 import { ReceiveTransferModal } from './components/ReceiveTransferModal';
+import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/ui/Pagination';
+
+const PAGE_SIZE = 10;
 
 export default function TransfersPage() {
   const { user } = useAuth();
@@ -39,6 +44,14 @@ export default function TransfersPage() {
   const [receivePrice, setReceivePrice] = useState('');
   const [receiveCost, setReceiveCost] = useState('');
   const [receiveExpiry, setReceiveExpiry] = useState('');
+
+  const pageRef = usePageGSAP();
+  const listRef = useGSAPList<HTMLTableSectionElement>([]);
+
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
+    transfers,
+    { pageSize: PAGE_SIZE }
+  );
 
   useEffect(() => {
     if (pharmacyId) {
@@ -156,11 +169,11 @@ export default function TransfersPage() {
   if (!pharmacyId) return <div className="p-8 text-center">جاري التحميل...</div>;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 fade-in font-cairo" dir="rtl">
-      <div>
+    <div ref={pageRef} className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 pb-12 font-cairo" dir="rtl">
+      <header data-gsap="fade-up">
         <h1 className="text-3xl font-bold font-cairo">تحويلات الفروع</h1>
         <p className="text-[var(--text-muted)] mt-2">إدارة طلبات النواقص من الفروع الأخرى</p>
-      </div>
+      </header>
 
       {error && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl">
@@ -247,7 +260,7 @@ export default function TransfersPage() {
         </div>
       )}
 
-      {}
+      {/* Transfers Table */}
       {activeTab === 'requests' && (
         <div className="space-y-4">
           <div className="overflow-x-auto rounded-3xl border border-[var(--glass-border)] bg-[var(--glass-surface)]">
@@ -263,7 +276,7 @@ export default function TransfersPage() {
                   <th className="px-4 md:px-6 py-3 md:py-4 rounded-tl-3xl text-center whitespace-nowrap">الإجراء</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--glass-border)]">
+              <tbody ref={listRef} className="divide-y divide-[var(--glass-border)]">
                 {transfers.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-[var(--text-muted)]">
@@ -271,7 +284,7 @@ export default function TransfersPage() {
                     </td>
                   </tr>
                 ) : (
-                  transfers.map((t: any) => {
+                  paginatedData.map((t: any) => {
                     const isSender = t.from_pharmacy_id === pharmacyId;
                     const isReceiver = t.to_pharmacy_id === pharmacyId;
                     
@@ -344,6 +357,15 @@ export default function TransfersPage() {
               </tbody>
             </table>
           </div>
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={PAGE_SIZE}
+              onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            />
+          )}
         </div>
       )}
 

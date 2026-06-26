@@ -19,6 +19,11 @@ import { getCompanies, Company } from '@/lib/api/companies';
 import { useAuth } from '@/hooks/useAuth';
 import GlassTable from '@/components/ui/GlassTable';
 import Skeleton from '@/components/ui/Skeleton';
+import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/ui/Pagination';
+
+const PAGE_SIZE = 15;
 
 interface ShortageItem {
   id: string;
@@ -35,8 +40,9 @@ export default function ShortagesPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filterCompany, setFilterCompany] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-
   const { user } = useAuth();
+  const pageRef = usePageGSAP();
+  const listRef = useGSAPList<HTMLDivElement>([]);
 
   useEffect(() => {
     if (user) {
@@ -102,6 +108,11 @@ export default function ShortagesPage() {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCompany && matchesSearch;
   });
+
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
+    filteredItems,
+    { pageSize: PAGE_SIZE }
+  );
 
   const handlePrint = () => {
     const selectedItems = items.filter(item => selectedIds.has(item.id));
@@ -224,8 +235,8 @@ export default function ShortagesPage() {
   ];
 
   return (
-    <div className="space-y-8 pb-20 animate-entrance">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+    <div ref={pageRef} className="space-y-8 pb-20">
+      <header data-gsap="fade-up" className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-bold font-cairo tracking-tight">إدارة <span className="nile-gradient-text">النواقص</span></h1>
           <p className="text-gray-500 font-cairo text-lg">تتبع الأصناف التي اقتربت من النفاد وقم بطلبها من الشركات.</p>
@@ -289,7 +300,7 @@ export default function ShortagesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div data-gsap="fade-up" className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: 'إجمالي النواقص', value: items.length, icon: AlertCircle, color: 'text-gray-400' },
           { label: 'أولوية عالية', value: items.filter(i => i.priority === 'عالي').length, icon: Clock, color: 'text-red-400' },
@@ -309,20 +320,31 @@ export default function ShortagesPage() {
       </div>
 
       {/* Table */}
-      <div className="relative">
-        {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-[400px] w-full" />
-          </div>
-        ) : (
-          <GlassTable 
-            columns={columns} 
-            data={filteredItems} 
-            emptyMessage="لا توجد نواقص مطابقة للبحث"
-          />
-        )}
-      </div>
+        <div ref={listRef}>
+          {loading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-[400px] w-full" />
+            </div>
+          ) : (
+            <>
+              <GlassTable 
+                columns={columns} 
+                data={paginatedData} 
+                emptyMessage="لا توجد نواقص مطابقة للبحث"
+              />
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  itemsPerPage={PAGE_SIZE}
+                  onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                />
+              )}
+            </>
+          )}
+        </div>
     </div>
   );
 }

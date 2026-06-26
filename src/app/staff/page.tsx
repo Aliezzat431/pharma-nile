@@ -21,6 +21,11 @@ import { staffCreateSchema } from '@/lib/validations';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import { AddStaffModal } from './components/AddStaffModal';
+import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/ui/Pagination';
+
+const PAGE_SIZE = 10;
 
 interface Session {
   id: string;
@@ -38,6 +43,9 @@ export default function StaffManagement() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const pageRef = usePageGSAP();
+  const listRef = useGSAPList<HTMLTableSectionElement>([]);
 
   type StaffFormValues = z.infer<typeof staffCreateSchema>;
   
@@ -102,18 +110,19 @@ export default function StaffManagement() {
     s.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
+    filteredStaff,
+    { pageSize: PAGE_SIZE }
+  );
+
   return (
-    <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
-      <header className="flex flex-col md:flex-row items-center justify-between gap-6 mb-4">
+    <div ref={pageRef} className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 pb-12">
+      <header data-gsap="fade-up" className="flex flex-col md:flex-row items-center justify-between gap-6 mb-4">
         <div>
-          <motion.h1 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-4xl font-bold flex items-center gap-3 font-cairo"
-          >
+          <h1 className="text-4xl font-bold flex items-center gap-3 font-cairo">
              <UsersIcon className="text-[#00CED1] w-10 h-10" />
              إدارة <span className="nile-gradient-text">فريق العمل</span>
-          </motion.h1>
+          </h1>
           <p className="text-gray-400 mt-2 font-cairo text-lg">إدارة صلاحيات الموظفين، تتبع النشاط، وإضافة حسابات جديدة.</p>
         </div>
         <motion.button 
@@ -191,17 +200,14 @@ export default function StaffManagement() {
                     <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-center uppercase tracking-wider text-xs">الإجراءات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody ref={listRef} className="divide-y divide-white/5">
                   {loading ? (
                     <tr><td colSpan={4} className="p-20 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-[#00CED1]" /></td></tr>
-                  ) : filteredStaff.length === 0 ? (
+                  ) : paginatedData.length === 0 ? (
                     <tr><td colSpan={4} className="p-20 text-center text-gray-500 font-cairo text-lg">لا يوجد موظفين بهذا الاسم</td></tr>
                   ) : (
-                    filteredStaff.map((staff, i) => (
-                      <motion.tr 
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 }}
+                    paginatedData.map((staff, i) => (
+                      <tr 
                         key={staff.id} 
                         className="group hover:bg-white/[0.02] transition-all cursor-default"
                       >
@@ -239,13 +245,22 @@ export default function StaffManagement() {
                              </button>
                            </div>
                         </td>
-                      </motion.tr>
+                      </tr>
                     ))
                   )}
                 </tbody>
               </table>
             </div>
           </div>
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={PAGE_SIZE}
+              onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            />
+          )}
         </div>
 
         {/* Recent Sessions */}

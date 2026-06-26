@@ -24,6 +24,7 @@ import { POSProductCard } from './components/POSProductCard';
 import { POSCartItem } from './components/POSCartItem';
 import { BatchDistributionModal } from './components/BatchDistributionModal';
 import { PillsConfirmModal } from './components/PillsConfirmModal';
+import { POSRecommendations } from './components/POSRecommendations';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
 
@@ -64,6 +65,7 @@ export default function POSTerminal() {
   const [pillsInput, setPillsInput] = useState('10');
 
   const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(new Set());
+  const [showRecommendations, setShowRecommendations] = useState(false);
 
   const toggleProductBatches = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation(); // prevent adding to cart
@@ -449,8 +451,24 @@ export default function POSTerminal() {
             placeholder="ابحث عن منتج أو امسح الباركود..."
             className="flex-1 bg-transparent border-none outline-none text-lg text-white placeholder-gray-500 py-3 font-cairo"
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              setShowRecommendations(true);
+            }}
+            onFocus={() => setShowRecommendations(true)}
+            onBlur={() => setTimeout(() => setShowRecommendations(false), 200)}
+            autoComplete="off"
             autoFocus
+          />
+
+          <POSRecommendations
+            suggestions={searchResults}
+            visible={showRecommendations && searchInput.length >= 2}
+            loading={isSearching}
+            onSelect={(p) => {
+              addProductToCart(p);
+              setShowRecommendations(false);
+            }}
           />
         </form>
 

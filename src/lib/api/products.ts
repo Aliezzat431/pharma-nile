@@ -29,8 +29,9 @@ export interface Batch {
 }
 
 export async function searchProducts(query: string, pharmacyId: string) {
-
-  const { data: products, error } = await supabase
+  // Split query into words for more fuzzy matching
+  const words = query.trim().split(/\s+/).filter((w: string) => w.length >= 2);
+  let dbQuery = supabase
     .from('products')
     .select(`
       *,
@@ -38,9 +39,17 @@ export async function searchProducts(query: string, pharmacyId: string) {
         *
       )
     `)
-    .ilike('name', `%${query}%`)
-    .eq('pharmacy_id', pharmacyId)
-    .limit(20);
+    .eq('pharmacy_id', pharmacyId);
+
+  if (words.length > 0) {
+    // Construct a broad filter: match any word in name, or the whole query
+    const filter = words.map((w: string) => `name.ilike.%${w}%`).join(',');
+    dbQuery = dbQuery.or(filter);
+  } else {
+    dbQuery = dbQuery.ilike('name', `%${query}%`);
+  }
+
+  const { data: products, error } = await dbQuery.limit(20);
 
   if (error) {
     console.error('Error fetching products:', error);
