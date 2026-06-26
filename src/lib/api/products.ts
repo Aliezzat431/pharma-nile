@@ -218,5 +218,32 @@ export async function deleteProduct(productId: string) {
     console.error('Error deleting product:', error);
     throw error;
   }
+}export async function deleteBatch(batchId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) throw new Error('Unauthorized');
+
+  // Check if batch has any sales
+  const { count, error: countErr } = await supabase
+    .from('order_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('batch_id', batchId)
+    .eq('pharmacy_id', pharmacyId);
+
+  if (countErr) throw countErr;
+  if (count && count > 0) {
+    throw new Error('لا يمكن حذف هذه التشغيلة لوجود عمليات بيع مسجلة منها. يمكنك تصفير الكمية بدلاً من الحذف.');
+  }
+
+  const { error } = await supabase
+    .from('batches')
+    .delete()
+    .eq('id', batchId)
+    .eq('pharmacy_id', pharmacyId);
+
+  if (error) {
+    console.error('Error deleting batch:', error);
+    throw error;
+  }
 }
 

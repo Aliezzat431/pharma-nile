@@ -23,7 +23,7 @@ import dynamic from 'next/dynamic';
 import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
-import { deleteProduct, createBatch } from '@/lib/api/products';
+import { deleteProduct, createBatch, deleteBatch, updateBatch } from '@/lib/api/products';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), {
   ssr: false,
@@ -104,18 +104,34 @@ function InventoryBatchPanel({
     }
   };
 
-  const handleUpdateBatch = async (batchId: string) => {
+  const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
+
+  const handleUpdateBatch = async () => {
+    if (!editingBatch) return;
     try {
-      const { error } = await supabase
-        .from('batches')
-        .update({ quantity: editQuantity })
-        .eq('id', batchId);
-      if (error) throw error;
-      setEditingBatchId(null);
+      await updateBatch(editingBatch.id, {
+        barcode: editingBatch.barcode,
+        quantity: editingBatch.quantity,
+        purchase_price: editingBatch.purchase_price,
+        selling_price: editingBatch.selling_price,
+        expiry_date: editingBatch.expiry_date
+      });
+      setEditingBatch(null);
       fetchInventory();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating batch:', error);
-      setInventoryError('حدث خطأ أثناء تحديث الكمية');
+      setInventoryError(error.message || 'حدث خطأ أثناء تحديث التشغيلة');
+    }
+  };
+
+  const handleDeleteBatch = async (batchId: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذه التشغيلة؟ سيتم مسح الكمية المرتبطة بها نهائياً.')) return;
+    try {
+      await deleteBatch(batchId);
+      fetchInventory();
+    } catch (error: any) {
+      console.error('Error deleting batch:', error);
+      setInventoryError(error.message || 'فشل حذف التشغيلة. قد تكون مرتبطة بعمليات بيع.');
     }
   };
 
@@ -250,74 +266,140 @@ function InventoryBatchPanel({
       {item.batches.length === 0 ? (
         <p className="text-gray-500 text-sm font-cairo">لا توجد تشغيلات مسجلة</p>
       ) : (
-        <div className="space-y-3">
-          {item.batches.map((batch) => (
-            <div
-              key={batch.id}
-              className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:border-[#00CED1]/30 transition-all"
-            >
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 font-cairo">الباركود</p>
-                  <p className="text-sm font-mono text-gray-300">{batch.barcode || 'غير محدد'}</p>
+        <div className="space-y-4">
+          {item.batches.map((batch) => {
+            const isEditing = editingBatch?.id === batch.id;
+            const currentBatch = isEditing ? editingBatch : batch;
+            
+            return (
+              <div
+                key={batch.id}
+                className={`p-5 rounded-2xl border transition-all ${
+                  isEditing 
+                    ? 'bg-[#00CED1]/5 border-[#00CED1]/30 shadow-lg shadow-[#00CED1]/5' 
+                    : 'bg-white/5 border-white/5 hover:border-white/20'
+                }`}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                  {/* Barcode */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">الباركود</p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={currentBatch.barcode}
+                        onChange={(e) => setEditingBatch({ ...currentBatch, barcode: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none"
+                      />
+                    ) : (
+                      <p className="text-sm font-mono text-gray-300">{batch.barcode || '---'}</p>
+                    )}
+                  </div>
+
+                  {/* Quantity */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">الكمية</p>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={currentBatch.quantity}
+                        onChange={(e) => setEditingBatch({ ...currentBatch, quantity: Number(e.target.value) })}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none"
+                      />
+                    ) : (
+                      <p className={`text-sm font-bold ${batch.quantity < 10 ? 'text-orange-400' : 'text-[#00CED1]'}`}>
+                        {batch.quantity}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Expiry */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">تاريخ الانتهاء</p>
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={currentBatch.expiry_date}
+                        onChange={(e) => setEditingBatch({ ...currentBatch, expiry_date: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none [color-scheme:dark]"
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-300">
+                        {new Date(batch.expiry_date).toLocaleDateString('ar-EG')}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Purchase Price */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">سعر الشراء</p>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={currentBatch.purchase_price}
+                        onChange={(e) => setEditingBatch({ ...currentBatch, purchase_price: Number(e.target.value) })}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none"
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-300">{batch.purchase_price} ج.م</p>
+                    )}
+                  </div>
+
+                  {/* Selling Price */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">سعر البيع</p>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={currentBatch.selling_price}
+                        onChange={(e) => setEditingBatch({ ...currentBatch, selling_price: Number(e.target.value) })}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none"
+                      />
+                    ) : (
+                      <p className="text-sm text-[#D4AF37] font-bold">{batch.selling_price} ج.م</p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-cairo">الكمية</p>
-                  {editingBatchId === batch.id ? (
-                    <input
-                      type="number"
-                      value={editQuantity}
-                      onChange={(e) => setEditQuantity(Number(e.target.value))}
-                      className="w-20 bg-black/20 border border-[#00CED1]/30 rounded px-2 py-1 text-sm text-white"
-                      autoFocus
-                    />
+
+                <div className="mt-4 pt-4 border-t border-white/5 flex justify-end gap-3">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={handleUpdateBatch}
+                        className="px-4 py-2 bg-gradient-to-r from-[#00CED1] to-[#01AFB2] text-white rounded-xl text-[10px] font-bold font-cairo transition-all hover:scale-105 active:scale-95"
+                      >
+                        حفظ التعديلات
+                      </button>
+                      <button
+                        onClick={() => setEditingBatch(null)}
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl text-[10px] font-cairo transition-all"
+                      >
+                        إلغاء
+                      </button>
+                    </>
                   ) : (
-                    <p className={`text-sm font-bold ${batch.quantity < 10 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                      {batch.quantity}
-                    </p>
+                    <>
+                      <button
+                        onClick={() => setEditingBatch({...batch})}
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl text-[10px] font-bold font-cairo transition-all"
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBatch(batch.id)}
+                        className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all"
+                        title="حذف التشغيلة"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
                   )}
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-cairo">سعر الشراء</p>
-                  <p className="text-sm text-gray-300">{batch.purchase_price} ج.م</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-cairo">تاريخ الانتهاء</p>
-                  <p className="text-sm text-gray-300">
-                    {new Date(batch.expiry_date).toLocaleDateString('ar-EG')}
-                  </p>
-                </div>
               </div>
-              <div className="flex gap-2 mr-4">
-                {editingBatchId === batch.id ? (
-                  <>
-                    <button
-                      onClick={() => handleUpdateBatch(batch.id)}
-                      className="px-3 py-1.5 bg-[#00CED1]/20 hover:bg-[#00CED1]/30 text-[#00CED1] rounded-lg text-xs font-bold transition-all"
-                    >
-                      حفظ
-                    </button>
-                    <button
-                      onClick={() => setEditingBatchId(null)}
-                      className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-400 rounded-lg text-xs transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setEditingBatchId(batch.id);
-                      setEditQuantity(batch.quantity);
-                    }}
-                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg text-xs transition-all"
-                  >
-                    تعديل
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -439,6 +521,35 @@ export default function InventoryDashboard() {
         </Link>
       </header>
 
+      {/* Stats Section */}
+      <div data-gsap="fade-up" className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { label: 'إجمالي المنتجات', value: items.length, icon: PackageOpen, color: 'text-[#00CED1]', glow: 'bg-[#00CED1]/10' },
+          { label: 'إجمالي الرصيد', value: items.reduce((acc, item) => acc + item.total_quantity, 0), icon: Tag, color: 'text-[#D4AF37]', glow: 'bg-[#D4AF37]/10' },
+          { label: 'نواقص المخزون', value: items.filter(i => i.total_quantity < 10).length, icon: AlertCircle, color: 'text-red-400', glow: 'bg-red-500/10' },
+          { 
+            label: 'قيمة المخزن (تكلفة)', 
+            value: items.reduce((acc, item) => {
+              return acc + item.batches.reduce((bAcc: number, b: Batch) => bAcc + (b.quantity * (b.purchase_price || 0)), 0);
+            }, 0).toLocaleString('ar-EG') + ' ج.م', 
+            icon: DollarSign, 
+            color: 'text-emerald-400', 
+            glow: 'bg-emerald-500/10' 
+          },
+        ].map((stat, i) => (
+          <div key={i} className="glass-card p-5 flex items-center gap-5 border-white/5 relative overflow-hidden group hover:bg-white/[0.05] transition-all">
+            <div className={`w-12 h-12 rounded-2xl ${stat.glow} ${stat.color} flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-black/20`}>
+              <stat.icon className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.1em] font-cairo mb-1">{stat.label}</p>
+              <p className="text-xl font-black font-inter tracking-tight">{stat.value}</p>
+            </div>
+            <div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full blur-[40px] opacity-10 ${stat.glow} group-hover:opacity-30 transition-opacity`} />
+          </div>
+        ))}
+      </div>
+
       {/* Search & Controls */}
       <div data-gsap="fade-up" className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 glass-panel p-2 flex items-center gap-3">
@@ -471,15 +582,13 @@ export default function InventoryDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-right border-collapse">
             <thead>
-              <tr className="border-b border-white/5 bg-white/5 font-cairo text-gray-400 text-sm">
-                <th className="p-4 font-semibold text-right">الصيدلية</th>
-                <th className="p-4 font-semibold text-right">اسم المنتج</th>
-                <th className="p-4 font-semibold text-right">التصنيف</th>
-                <th className="p-4 font-semibold text-right hidden md:table-cell">الشركة</th>
-                <th className="p-4 font-semibold text-right">النظام</th>
-                <th className="p-4 font-semibold text-right">الرصيد</th>
-                <th className="p-4 font-semibold text-left">السعر</th>
-                <th className="p-4 w-24"></th>
+              <tr className="border-b border-white/5 bg-white/5 font-cairo text-gray-400 text-[11px] uppercase tracking-wider">
+                <th className="p-5 font-bold text-right">المعلومات الأساسية</th>
+                <th className="p-5 font-bold text-right hidden lg:table-cell">الشركة المصنعة</th>
+                <th className="p-5 font-bold text-right">النظام</th>
+                <th className="p-5 font-bold text-center">الرصيد</th>
+                <th className="p-5 font-bold text-left">أحدث سعر</th>
+                <th className="p-5 w-24"></th>
               </tr>
             </thead>
             <tbody ref={tbodyRef}>
@@ -503,30 +612,48 @@ export default function InventoryDashboard() {
                   <React.Fragment key={item.id}>
                     <tr
                       onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                      className={`border-b border-white/5 hover:bg-white/5 cursor-pointer transition-all ${expandedId === item.id ? 'bg-white/5' : ''}`}
+                      className={`border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-all ${expandedId === item.id ? 'bg-white/[0.03]' : ''}`}
                     >
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold font-cairo ${item.pharmacy_id === pharmacyId ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[#D4AF37]/10 text-[#D4AF37]'}`}>
-                          {(item as any).pharmacy_name}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-[#00CED1]/10 flex items-center justify-center">
-                            <Tag className="w-4 h-4 text-[#00CED1]" />
+                      <td className="p-5">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform ${expandedId === item.id ? 'bg-[#00CED1]/20 rotate-6 shadow-[0_0_15px_rgba(0,206,209,0.2)]' : 'bg-white/5'}`}>
+                            <Tag className={`w-5 h-5 ${expandedId === item.id ? 'text-[#00CED1]' : 'text-gray-500'}`} />
                           </div>
-                          <span className="font-medium font-cairo">{item.name}</span>
+                          <div>
+                            <p className="font-bold text-white font-cairo text-base group-hover:text-[#00CED1] transition-colors">{item.name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] text-gray-500 font-cairo bg-white/5 px-2 py-0.5 rounded-md">{item.type}</span>
+                              <span className={`text-[10px] font-bold font-cairo px-2 py-0.5 rounded-md ${item.pharmacy_id === pharmacyId ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[#D4AF37]/10 text-[#D4AF37]'}`}>
+                                {item.pharmacy_name}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </td>
-                      <td className="p-4 text-gray-400 font-cairo">{item.type}</td>
-                      <td className="p-4 text-gray-400 font-cairo hidden md:table-cell">{item.company}</td>
-                      <td className="p-4 text-xs font-bold uppercase tracking-widest">{item.inventory_method}</td>
-                      <td className="p-4">
-                        <span className={`font-bold font-cairo ${item.total_quantity < 10 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                          {item.total_quantity}
+                      <td className="p-5 text-gray-400 font-cairo text-sm hidden lg:table-cell">
+                        <div className="flex items-center gap-2">
+                           <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
+                           {item.company}
+                        </div>
+                      </td>
+                      <td className="p-5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 border border-white/10 px-2.5 py-1 rounded-full bg-white/5">
+                          {item.inventory_method}
                         </span>
                       </td>
-                      <td className="p-4 text-left font-bold text-foreground">{item.current_price} ج.م</td>
+                      <td className="p-5 text-center">
+                        <div className="flex flex-col items-center">
+                          <span className={`text-lg font-bold font-inter ${item.total_quantity < 10 ? 'text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.3)]' : 'text-emerald-400'}`}>
+                            {item.total_quantity}
+                          </span>
+                          <span className="text-[8px] text-gray-600 font-bold uppercase tracking-tighter mt-0.5">قطعة متاحة</span>
+                        </div>
+                      </td>
+                      <td className="p-5 text-left font-bold text-lg text-white font-inter">
+                        <div className="flex flex-col items-start">
+                          <span>{item.current_price.toLocaleString()} <span className="text-xs text-gray-500 font-cairo">ج.م</span></span>
+                        </div>
+                      </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center gap-2">
                            {item.pharmacy_id === pharmacyId && (
