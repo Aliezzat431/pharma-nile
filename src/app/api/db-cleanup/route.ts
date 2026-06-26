@@ -14,9 +14,14 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const pharmacyId = (req.headers.get('x-pharmacy-id') || (await supabase.auth.getUser()).data.user?.user_metadata?.pharmacy_id);
+    const authHeader = req.headers.get('Authorization');
+    const headerPharmacyId = req.headers.get('x-pharmacy-id');
 
-    if (!pharmacyId) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
+    
+    const pharmacyId = headerPharmacyId || user?.user_metadata?.pharmacy_id;
+
+    if (!pharmacyId || authError) {
       return NextResponse.json({ success: false, error: 'Unauthorized: No pharmacy context' }, { status: 401 });
     }
 

@@ -337,19 +337,19 @@ export default function InventoryDashboard() {
                 <th className="p-4 font-semibold text-right">النظام</th>
                 <th className="p-4 font-semibold text-right">الرصيد</th>
                 <th className="p-4 font-semibold text-left">السعر</th>
-                <th className="p-4 w-12"></th>
+                <th className="p-4 w-24"></th>
               </tr>
             </thead>
             <tbody ref={tbodyRef}>
               {loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-gray-500">
+                  <td colSpan={8} className="p-12 text-center text-gray-500">
                     جاري تحميل المخزن...
                   </td>
                 </tr>
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-gray-500">
+                  <td colSpan={8} className="p-12 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-3">
                       <AlertCircle className="w-10 h-10 opacity-50" />
                       لا توجد منتجات مطابقة
@@ -386,14 +386,34 @@ export default function InventoryDashboard() {
                       </td>
                       <td className="p-4 text-left font-bold text-foreground">{item.current_price} ج.م</td>
                       <td className="p-4 text-center">
-                        {expandedId === item.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                        <div className="flex items-center gap-2">
+                           {item.pharmacy_id === pharmacyId && (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (!window.confirm(`هل أنت متأكد من حذف المنتج "${item.name}" نهائياً؟`)) return;
+                                try {
+                                  await deleteProduct(item.id);
+                                  fetchInventory();
+                                } catch (err) {
+                                  setInventoryError('فشل حذف المنتج. قد يكون مرتباً بعمليات بيع.');
+                                }
+                              }}
+                              className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-all"
+                              title="حذف المنتج"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          {expandedId === item.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                        </div>
                       </td>
                     </tr>
 
                     <AnimatePresence>
                       {expandedId === item.id && (
                         <tr>
-                          <td colSpan={7} className="p-0">
+                          <td colSpan={8} className="p-0">
                             <motion.div
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: 'auto', opacity: 1 }}

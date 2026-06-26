@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Database, Ghost, Shield, Moon, CloudMoon, Loader2, Download, Upload } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export function DatabaseSettings() {
+  const { session, user } = useAuth();
   const [dbUsage, setDbUsage] = useState<any>(null);
   const [isDbLoading, setIsDbLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  const token = session?.access_token;
+
   useEffect(() => {
+    if (!token || !pharmacyId) return;
+
     const fetchDb = async () => {
       setIsDbLoading(true);
       try {
-        const res = await fetch('/api/db-usage');
+        const res = await fetch('/api/db-usage', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-pharmacy-id': pharmacyId
+          }
+        });
         const data = await res.json();
         if (data.success) {
           setDbUsage(data.data);
@@ -23,7 +35,7 @@ export function DatabaseSettings() {
       setIsDbLoading(false);
     }
     fetchDb();
-  }, []);
+  }, [token, pharmacyId]);
 
   const handleCleanData = async (type: string) => {
     if (!confirm('هل أنت متأكد من رغبتك في حذف البيانات القديمة؟ لا يمكن التراجع عن هذه العملية.')) {
@@ -34,7 +46,11 @@ export function DatabaseSettings() {
       setIsDbLoading(true);
       const res = await fetch('/api/db-cleanup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'x-pharmacy-id': pharmacyId
+        },
         body: JSON.stringify({ type })
       });
       const data = await res.json();
@@ -42,7 +58,12 @@ export function DatabaseSettings() {
       if (data.success) {
         alert(data.message || 'تم تنظيف البيانات بنجاح');
 
-        const refreshRes = await fetch('/api/db-usage');
+        const refreshRes = await fetch('/api/db-usage', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-pharmacy-id': pharmacyId
+          }
+        });
         const refreshData = await refreshRes.json();
         if (refreshData.success) {
           setDbUsage(refreshData.data);
@@ -61,7 +82,13 @@ export function DatabaseSettings() {
   const handleExportBackup = async () => {
     try {
       setIsExporting(true);
-      const res = await fetch('/api/db-backup/export');
+      const res = await fetch('/api/db-backup/export', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'x-pharmacy-id': pharmacyId
+        }
+      });
+      if (!res.ok) throw new Error('فشل في تحميل النسخة الاحتياطية');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -93,6 +120,10 @@ export function DatabaseSettings() {
         const res = await fetch('/api/db-backup/import', {
           method: 'POST',
           body: formData,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-pharmacy-id': pharmacyId
+          }
         });
         const data = await res.json();
         if (data.success) alert('تم استيراد النسخة الاحتياطية بنجاح!');

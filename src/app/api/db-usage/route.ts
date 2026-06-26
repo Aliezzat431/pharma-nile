@@ -12,7 +12,7 @@ export async function GET(req: Request) {
 
     const authHeader = req.headers.get('Authorization');
     const pharmacyId = req.headers.get('x-pharmacy-id');
-    
+
     // Fallback to cookie/session auth if no header
     const { data: { user } } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
     const finalPharmacyId = pharmacyId || user?.user_metadata?.pharmacy_id;

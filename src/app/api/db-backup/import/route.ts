@@ -80,10 +80,10 @@ Return ONLY a valid JSON object matching this structure:
     );
 
     const authHeader = req.headers.get('Authorization');
-    const { data: { user } } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
     const pharmacyId = user?.user_metadata?.pharmacy_id;
 
-    if (!pharmacyId) {
+    if (!pharmacyId || authError) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
