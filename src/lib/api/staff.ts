@@ -5,6 +5,8 @@ export interface UserProfile {
   role: 'admin' | 'staff';
   full_name?: string;
   created_at: string;
+  salary?: number;
+  incentives?: number;
 }
 
 export async function getAllStaff() {

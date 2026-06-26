@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
     
-    const { email, password, full_name, role } = validationResult.data;
+    const { email, password, full_name, role, salary, incentives } = validationResult.data;
 
     const supabaseUserClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,8 +73,11 @@ export async function POST(request: Request) {
       .upsert({
         id: authData.user.id,
         full_name,
-        role: finalRole // حماية حتمية ضد الـ Privilege Escalation
+        role: finalRole,
+        salary,
+        incentives
       });
+
 
     if (profileError) throw profileError;
 

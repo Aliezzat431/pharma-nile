@@ -121,7 +121,21 @@ export default function StaffManagement() {
     { pageSize: PAGE_SIZE }
   );
 
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchProfile = async () => {
+      const { data } = await supabase.from('user_profiles').select('*').eq('id', user.id).single();
+      if (data) setCurrentUserProfile(data);
+    };
+    fetchProfile();
+  }, [user?.id]);
+
+  const isAdmin = currentUserProfile?.role === 'admin';
+
   return (
+
     <div ref={pageRef} className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 pb-12">
       <header data-gsap="fade-up" className="flex flex-col md:flex-row items-center justify-between gap-6 mb-4">
         <div>
@@ -131,53 +145,57 @@ export default function StaffManagement() {
           </h1>
           <p className="text-gray-400 mt-2 font-cairo text-lg">إدارة صلاحيات الموظفين، تتبع النشاط، وإضافة حسابات جديدة.</p>
         </div>
-        <motion.button 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsAddModalOpen(true)}
-          className="nile-button-primary flex items-center gap-3 px-8 py-4 rounded-2xl text-lg font-bold shadow-[0_0_20px_rgba(0,206,209,0.3)] font-cairo"
-        >
-          <UserPlus className="w-6 h-6" /> إضافة موظف جديد
-        </motion.button>
+        {isAdmin && (
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsAddModalOpen(true)}
+            className="nile-button-primary flex items-center gap-3 px-8 py-4 rounded-2xl text-lg font-bold shadow-[0_0_20px_rgba(0,206,209,0.3)] font-cairo"
+          >
+            <UserPlus className="w-6 h-6" /> إضافة موظف جديد
+          </motion.button>
+        )}
       </header>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-8 flex flex-col gap-4 border-white/5 relative overflow-hidden group">
-             <div className="flex justify-between items-center z-10">
-                 <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">الموظفين النشطين</h3>
-                 <div className="p-3 bg-green-500/10 rounded-xl text-green-400">
-                    <UserCheck className="w-6 h-6" />
-                 </div>
-             </div>
-             <p className="text-5xl font-bold z-10">{activeCount}</p>
-             <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-green-500/5 rounded-full blur-3xl group-hover:bg-green-500/10 transition-all" />
-          </motion.div>
+      {/* Stats Cards - Only for Admin */}
+      {isAdmin && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-8 flex flex-col gap-4 border-white/5 relative overflow-hidden group">
+               <div className="flex justify-between items-center z-10">
+                   <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">الموظفين النشطين</h3>
+                   <div className="p-3 bg-green-500/10 rounded-xl text-green-400">
+                      <UserCheck className="w-6 h-6" />
+                   </div>
+               </div>
+               <p className="text-5xl font-bold z-10">{activeCount}</p>
+               <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-green-500/5 rounded-full blur-3xl group-hover:bg-green-500/10 transition-all" />
+            </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-8 flex flex-col gap-4 border-[#00CED1]/20 neon-glow-teal relative overflow-hidden group">
-             <div className="flex justify-between items-center z-10">
-                 <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">إجمالي الفريق</h3>
-                 <div className="p-3 bg-[#00CED1]/10 rounded-xl text-[#00CED1]">
-                    <UsersIcon className="w-6 h-6" />
-                 </div>
-             </div>
-             <p className="text-5xl font-bold z-10">{staffList.length}</p>
-             <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-[#00CED1]/5 rounded-full blur-3xl group-hover:bg-[#00CED1]/10 transition-all" />
-          </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-8 flex flex-col gap-4 border-[#00CED1]/20 neon-glow-teal relative overflow-hidden group">
+               <div className="flex justify-between items-center z-10">
+                   <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">إجمالي الفريق</h3>
+                   <div className="p-3 bg-[#00CED1]/10 rounded-xl text-[#00CED1]">
+                      <UsersIcon className="w-6 h-6" />
+                   </div>
+               </div>
+               <p className="text-5xl font-bold z-10">{staffList.length}</p>
+               <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-[#00CED1]/5 rounded-full blur-3xl group-hover:bg-[#00CED1]/10 transition-all" />
+            </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card p-8 flex flex-col gap-4 border-white/5 relative overflow-hidden group">
-             <div className="flex justify-between items-center z-10">
-                 <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">آخر نشاط</h3>
-                 <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
-                    <Clock className="w-6 h-6" />
-                 </div>
-             </div>
-             <p className="text-xl font-bold z-10 font-cairo">
-                {sessions[0] ? new Date(sessions[0].start_time).toLocaleTimeString('ar-EG') : 'لا يوجد'}
-             </p>
-             <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all" />
-          </motion.div>
-      </div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card p-8 flex flex-col gap-4 border-white/5 relative overflow-hidden group">
+               <div className="flex justify-between items-center z-10">
+                   <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">آخر نشاط</h3>
+                   <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
+                      <Clock className="w-6 h-6" />
+                   </div>
+               </div>
+               <p className="text-xl font-bold z-10 font-cairo">
+                  {sessions[0] ? new Date(sessions[0].start_time).toLocaleTimeString('ar-EG') : 'لا يوجد'}
+               </p>
+               <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all" />
+            </motion.div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Staff Table Section */}
@@ -202,15 +220,16 @@ export default function StaffManagement() {
                   <tr className="border-b border-white/10 bg-white/5 font-cairo">
                     <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">الموظف</th>
                     <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">الدور</th>
-                    <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">تاريخ الانضمام</th>
+                    <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">الراتب</th>
+                    <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">الحوافز</th>
                     <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-center uppercase tracking-wider text-xs">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody ref={listRef} className="divide-y divide-white/5">
                   {loading ? (
-                    <tr><td colSpan={4} className="p-20 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-[#00CED1]" /></td></tr>
+                    <tr><td colSpan={5} className="p-20 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-[#00CED1]" /></td></tr>
                   ) : paginatedData.length === 0 ? (
-                    <tr><td colSpan={4} className="p-20 text-center text-gray-500 font-cairo text-lg">لا يوجد موظفين بهذا الاسم</td></tr>
+                    <tr><td colSpan={5} className="p-20 text-center text-gray-500 font-cairo text-lg">لا يوجد موظفين بهذا الاسم</td></tr>
                   ) : (
                     paginatedData.map((staff, i) => (
                       <tr 
@@ -238,23 +257,31 @@ export default function StaffManagement() {
                               {staff.role === 'admin' ? 'مدير نظام' : 'موظف'}
                            </span>
                         </td>
-                        <td className="p-6 text-gray-400 font-medium">
-                          {new Date(staff.created_at).toLocaleDateString('ar-EG')}
+                        <td className="p-6 text-white font-bold font-inter">
+                          {staff.salary?.toLocaleString()} ج.م
+                        </td>
+                        <td className="p-6 text-green-400 font-bold font-inter">
+                          +{staff.incentives?.toLocaleString()} ج.م
                         </td>
                         <td className="p-6 whitespace-nowrap">
                            <div className="flex items-center justify-center gap-2">
-                             <button className="p-2.5 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5" title="تعديل">
-                                <Shield className="w-4 h-4" />
-                             </button>
-                             <button className="p-2.5 rounded-xl bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all border border-red-500/10" title="حذف">
-                                <Trash2 className="w-4 h-4" />
-                             </button>
+                             {isAdmin && (
+                               <>
+                                 <button className="p-2.5 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5" title="تعديل">
+                                    <Shield className="w-4 h-4" />
+                                 </button>
+                                 <button className="p-2.5 rounded-xl bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all border border-red-500/10" title="حذف">
+                                    <Trash2 className="w-4 h-4" />
+                                 </button>
+                               </>
+                             )}
                            </div>
                         </td>
                       </tr>
                     ))
                   )}
                 </tbody>
+
               </table>
             </div>
           </div>

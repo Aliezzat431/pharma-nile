@@ -48,7 +48,7 @@ export function POSRecommendations({ suggestions, visible, onSelect, loading }: 
                   {p.name}
                 </span>
                 <span className="text-[10px] text-gray-500 font-cairo">
-                  {p.company} • {p.total_quantity} {p.unit} متوفر
+                  {p.company} • {(p as any).pharmacy_name} • {p.total_quantity} {p.unit} متوفر
                 </span>
               </div>
               <div className="flex items-center gap-3">

@@ -18,7 +18,7 @@ export function POSProductCard({ product, isExpanded, onAddToCart, onToggleBatch
         <div>
           <h3 className="font-bold text-lg text-white group-hover:text-[#00CED1] transition-colors">{product.name}</h3>
           <p className="text-sm text-gray-400 font-cairo">
-            {product.company} • السنتر: {product.total_quantity} {product.unit}
+            {(product as any).pharmacy_name} • {product.company} • السنتر: {product.total_quantity} {product.unit}
           </p>
         </div>
         <div className="flex items-center gap-4 text-right">

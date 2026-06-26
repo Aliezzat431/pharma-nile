@@ -88,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       console.log('✅ Step 2 OK - Profile:', profile);
 
+      // Optional adminKey verification (Disabled by user request)
+      /*
       if (profile?.role === 'admin') {
         console.log('⏳ Step 3: Admin role detected, checking admin key...');
         if (!adminKey) {
@@ -113,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         console.log('ℹ️ Step 3 SKIPPED - User is not admin, role:', profile?.role);
       }
+      */
+
 
       console.log('🎉 Login successful!');
     } catch (err) {

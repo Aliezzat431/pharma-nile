@@ -100,8 +100,7 @@ export default function InvoiceImportPage() {
         rawItems.map(async (item) => {
           const { data: existing } = await supabase
             .from('products')
-            .select('id, name')
-            .eq('pharmacy_id', pharmacyId)
+            .select('id, name, pharmacy:pharmacies(name)')
             .ilike('name', `%${item.product_name}%`)
             .limit(1)
             .maybeSingle();
@@ -533,7 +532,7 @@ export default function InvoiceImportPage() {
                           {item._checked && <Check className="w-4 h-4" style={{ color: item.is_new ? '#10b981' : '#3b82f6' }} />}
                         </button>
 
-                        <div className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
                           <div className="col-span-2 md:col-span-3 lg:col-span-2">
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">اسم المنتج</label>
                             <ProductAutocomplete
@@ -549,6 +548,18 @@ export default function InvoiceImportPage() {
                                   existing_product_id: prod?.id,
                                 } : it));
                               }}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] text-gray-500 font-cairo block mb-1">الباركود</label>
+                            <input
+                              type="text"
+                              value={item.barcode}
+                              disabled={item._status !== 'pending'}
+                              placeholder="باركود الصنف..."
+                              onChange={e => updateItem(idx, 'barcode', e.target.value)}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50 font-mono"
                             />
                           </div>
 

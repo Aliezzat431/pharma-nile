@@ -14,34 +14,41 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    const pharmacyId = (req.headers.get('x-pharmacy-id') || (await supabase.auth.getUser()).data.user?.user_metadata?.pharmacy_id);
+
+    if (!pharmacyId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: No pharmacy context' }, { status: 401 });
+    }
+
     let result;
 
     if (type === 'audit') {
-
       const auditThreshold = new Date();
       auditThreshold.setDate(auditThreshold.getDate() - 60);
       
       result = await supabase
         .from('audit_logs')
-        .delete({ count: 'exact' }) // تفعيل الميزة ليرجع عدد السجلات المحذوفة بدقة
+        .delete({ count: 'exact' })
+        .eq('pharmacy_id', pharmacyId)
         .lt('created_at', auditThreshold.toISOString());
 
     } else if (type === 'orders') {
-
       result = await supabase
         .from('orders')
         .delete({ count: 'exact' })
+        .eq('pharmacy_id', pharmacyId)
         .eq('status', 'cancelled');
 
     } else if (type === 'sessions') {
-
       const sessionThreshold = new Date();
       sessionThreshold.setFullYear(sessionThreshold.getFullYear() - 1);
       
       result = await supabase
         .from('sessions')
         .delete({ count: 'exact' })
+        .eq('pharmacy_id', pharmacyId)
         .lt('ended_at', sessionThreshold.toISOString());
+
 
     } else {
       return NextResponse.json({ success: false, error: 'نوع التنظيف غير مدعوم بالنظام' }, { status: 400 });

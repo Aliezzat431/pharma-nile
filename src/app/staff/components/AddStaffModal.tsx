@@ -89,33 +89,59 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, addLoading }: AddSt
               {errors.email && <p className="text-red-400 text-xs font-cairo">{errors.email.message}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo block">كلمة المرور</label>
-                <div className={cn("glass-panel p-3", errors.password && "border-red-500/50")}>
-                  <input 
-                    type="password" 
-                    {...register("password")}
-                    className="w-full bg-transparent border-none outline-none font-inter text-white text-left"
-                    placeholder="••••••••"
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo block">الراتب الأساسي</label>
+                  <div className={cn("glass-panel p-3", errors.salary && "border-red-500/50")}>
+                    <input 
+                      type="number" 
+                      {...register("salary")}
+                      className="w-full bg-transparent border-none outline-none font-inter text-white"
+                      placeholder="0.00"
+                    />
+                  </div>
                 </div>
-                {errors.password && <p className="text-red-400 text-xs font-cairo">{errors.password.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo block">الصلاحيات</label>
-                <div className="glass-panel p-3">
-                  <select 
-                    {...register("role")}
-                    className="w-full bg-transparent border-none outline-none font-cairo text-sm text-white"
-                  >
-                    <option value="staff" className="bg-[#111]">موظف صيدلية</option>
-                    <option value="admin" className="bg-[#111]">مدير نظام</option>
-                  </select>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo block">الحوافز</label>
+                  <div className={cn("glass-panel p-3", errors.incentives && "border-red-500/50")}>
+                    <input 
+                      type="number" 
+                      {...register("incentives")}
+                      className="w-full bg-transparent border-none outline-none font-inter text-white"
+                      placeholder="0.00"
+                    />
+                  </div>
                 </div>
-                {errors.role && <p className="text-red-400 text-xs font-cairo">{errors.role.message}</p>}
               </div>
-            </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo block">كلمة المرور</label>
+                  <div className={cn("glass-panel p-3", errors.password && "border-red-500/50")}>
+                    <input 
+                      type="password" 
+                      {...register("password")}
+                      className="w-full bg-transparent border-none outline-none font-inter text-white text-left"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  {errors.password && <p className="text-red-400 text-xs font-cairo">{errors.password.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo block">الصلاحيات</label>
+                  <div className="glass-panel p-3">
+                    <select 
+                      {...register("role")}
+                      className="w-full bg-transparent border-none outline-none font-cairo text-sm text-white"
+                    >
+                      <option value="staff" className="bg-[#111]">موظف صيدلية</option>
+                      <option value="admin" className="bg-[#111]">مدير نظام</option>
+                    </select>
+                  </div>
+                  {errors.role && <p className="text-red-400 text-xs font-cairo">{errors.role.message}</p>}
+                </div>
+              </div>
+
           </div>
 
           <div className="flex gap-4 pt-4">

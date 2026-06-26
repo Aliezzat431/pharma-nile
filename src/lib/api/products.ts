@@ -37,9 +37,9 @@ export async function searchProducts(query: string, pharmacyId: string) {
       *,
       batches (
         *
-      )
-    `)
-    .eq('pharmacy_id', pharmacyId);
+      ),
+      pharmacy:pharmacies(name)
+    `);
 
   if (words.length > 0) {
     // Construct a broad filter: match any word in name, or the whole query
@@ -70,6 +70,7 @@ export async function searchProducts(query: string, pharmacyId: string) {
       current_price,
       total_quantity,
       activeBatches,
+      pharmacy_name: p.pharmacy?.name || 'مجهول'
     };
   });
 }
@@ -188,5 +189,22 @@ export async function createBatch(batch: Partial<Batch>) {
     throw error;
   }
   return data;
+}
+
+export async function deleteProduct(productId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) throw new Error('Unauthorized');
+
+  const { error } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', productId)
+    .eq('pharmacy_id', pharmacyId);
+
+  if (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
 }
 

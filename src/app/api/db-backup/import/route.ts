@@ -79,7 +79,15 @@ Return ONLY a valid JSON object matching this structure:
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const executionOrder = ['pharmacies', 'companies', 'customers', 'products', 'orders'];
+    const authHeader = req.headers.get('Authorization');
+    const { data: { user } } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
+    const pharmacyId = user?.user_metadata?.pharmacy_id;
+
+    if (!pharmacyId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const executionOrder = ['companies', 'customers', 'products', 'orders'];
     const CHUNK_SIZE = 500;
 
     for (const targetTable of executionOrder) {
@@ -94,13 +102,16 @@ Return ONLY a valid JSON object matching this structure:
 
       if (Array.isArray(rawRows) && rawRows.length > 0) {
         const transformedRows = rawRows.map((row: any) => {
-          const newRow: any = {};
+          const newRow: any = { pharmacy_id: pharmacyId }; // Force current pharmacy context
           for (const oldField in row) {
             const newField = fieldMap[oldField] || oldField;
+            // Prevent importing another pharmacy_id or editing a different one
+            if (newField === 'pharmacy_id') continue;
             newRow[newField] = row[oldField];
           }
           return newRow;
         });
+
 
         for (let i = 0; i < transformedRows.length; i += CHUNK_SIZE) {
           const chunk = transformedRows.slice(i, i + CHUNK_SIZE);

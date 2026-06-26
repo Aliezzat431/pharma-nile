@@ -3,23 +3,36 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { data: statsData, error: rpcError } = await supabase.rpc('debug_system_stats');
+    const authHeader = req.headers.get('Authorization');
+    const pharmacyId = req.headers.get('x-pharmacy-id');
+    
+    // Fallback to cookie/session auth if no header
+    const { data: { user } } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
+    const finalPharmacyId = pharmacyId || user?.user_metadata?.pharmacy_id;
+
+    if (!finalPharmacyId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: statsData, error: rpcError } = await supabase.rpc('debug_system_stats', { p_pharmacy_id: finalPharmacyId });
 
     if (rpcError) {
-      throw rpcError;
+      console.warn('RPC stats failed, falling back to manual counts');
     }
 
     const ordersQueryResult = await supabase
       .from('orders')
-      .select('id', { count: 'exact', head: true }) // استخدام head: true يسرع الاستعلام لأنه لا يجلب السجلات نفسها بل العدد فقط
+      .select('id', { count: 'exact', head: true })
+      .eq('pharmacy_id', finalPharmacyId)
       .eq('status', 'cancelled');
+
 
     if (ordersQueryResult.error) {
       console.error('Error fetching cancelled orders:', ordersQueryResult.error.message);

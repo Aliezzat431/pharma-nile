@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
   Tag,
+  Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -19,6 +20,7 @@ import dynamic from 'next/dynamic';
 import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
+import { deleteProduct } from '@/lib/api/products';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), {
   ssr: false,
@@ -43,6 +45,8 @@ interface InventoryItem {
   total_quantity: number;
   current_price: number;
   batches: Batch[];
+  pharmacy_id?: string;
+  pharmacy_name?: string;
 }
 
 const PAGE_SIZE = 15;
@@ -52,10 +56,12 @@ function InventoryBatchPanel({
   item,
   fetchInventory,
   setInventoryError,
+  user,
 }: {
   item: InventoryItem;
   fetchInventory: () => void;
   setInventoryError: (error: string | null) => void;
+  user: any;
 }) {
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(0);
@@ -75,9 +81,30 @@ function InventoryBatchPanel({
     }
   };
 
+  const handleDeleteProduct = async () => {
+    if (!window.confirm(`هل أنت متأكد من حذف المنتج "${item.name}" نهائياً من النظام؟`)) return;
+    try {
+      await deleteProduct(item.id);
+      fetchInventory();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      setInventoryError('فشل حذف المنتج. قد يكون هناك مبيعات مرتبطة به.');
+    }
+  };
+
   return (
     <div className="p-6 bg-white/[0.02] border-t border-white/5">
-      <h4 className="text-sm font-bold text-gray-400 mb-4 font-cairo">التشغيلات المتاحة</h4>
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="text-sm font-bold text-gray-400 font-cairo">التشغيلات المتاحة</h4>
+        {item.pharmacy_id === user?.user_metadata?.pharmacy_id && (
+          <button
+            onClick={handleDeleteProduct}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold font-cairo transition-all"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> حذف المنتج نهائياً
+          </button>
+        )}
+      </div>
       {item.batches.length === 0 ? (
         <p className="text-gray-500 text-sm font-cairo">لا توجد تشغيلات مسجلة</p>
       ) : (
@@ -188,13 +215,15 @@ export default function InventoryDashboard() {
   }, [pharmacyId]);
 
   const fetchInventory = async () => {
-    if (!pharmacyId) return;
     setLoading(true);
     try {
       const { data: products, error } = await supabase
         .from('products')
-        .select('*, batches(*)')
-        .eq('pharmacy_id', pharmacyId);
+        .select(`
+          *,
+          batches(*),
+          pharmacy:pharmacies(name)
+        `);
       if (error) throw error;
 
       const formatted: InventoryItem[] = products.map((p: any) => {
@@ -213,6 +242,8 @@ export default function InventoryDashboard() {
           total_quantity: totalQuantity,
           current_price: currentPrice,
           batches: sortedBatches,
+          pharmacy_id: p.pharmacy_id,
+          pharmacy_name: p.pharmacy?.name || 'مجهول',
         };
       });
 
@@ -299,6 +330,7 @@ export default function InventoryDashboard() {
           <table className="w-full text-right border-collapse">
             <thead>
               <tr className="border-b border-white/5 bg-white/5 font-cairo text-gray-400 text-sm">
+                <th className="p-4 font-semibold text-right">الصيدلية</th>
                 <th className="p-4 font-semibold text-right">اسم المنتج</th>
                 <th className="p-4 font-semibold text-right">التصنيف</th>
                 <th className="p-4 font-semibold text-right hidden md:table-cell">الشركة</th>
@@ -331,6 +363,11 @@ export default function InventoryDashboard() {
                       onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                       className={`border-b border-white/5 hover:bg-white/5 cursor-pointer transition-all ${expandedId === item.id ? 'bg-white/5' : ''}`}
                     >
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded text-[10px] font-bold font-cairo ${item.pharmacy_id === pharmacyId ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[#D4AF37]/10 text-[#D4AF37]'}`}>
+                          {(item as any).pharmacy_name}
+                        </span>
+                      </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-[#00CED1]/10 flex items-center justify-center">
@@ -367,6 +404,7 @@ export default function InventoryDashboard() {
                                 item={item}
                                 fetchInventory={fetchInventory}
                                 setInventoryError={setInventoryError}
+                                user={user}
                               />
                             </motion.div>
                           </td>

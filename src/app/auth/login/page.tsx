@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Lock, Mail, ShieldAlert, UserPlus, Building2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import WelcomeOverlay from "@/components/layout/WelcomeOverlay";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
@@ -18,9 +19,16 @@ export default function LoginPage() {
   const [pharmacies, setPharmacies] = useState<{ id: string, name: string }[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
+    const hasVisited = localStorage.getItem('pharma-nile-visited');
+    if (!hasVisited) {
+      setShowWelcome(true);
+    }
+
     const loadPharmacies = async () => {
+
       try {
         const supabase = createClient();
         
@@ -87,7 +95,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] relative selection:bg-[var(--nile-teal)] selection:text-white py-12 px-4 overflow-y-auto font-cairo text-right" dir="rtl">
+      {showWelcome && <WelcomeOverlay onComplete={() => setShowWelcome(false)} />}
       {}
+
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--nile-teal)]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[var(--royal-gold)]/5 rounded-full blur-[100px] pointer-events-none" />
 

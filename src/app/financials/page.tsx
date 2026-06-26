@@ -109,12 +109,16 @@ export default function FinancialsPage() {
     }));
   }, [monthlyData]);
 
-  const currentMonth = monthlyData[0] || null;
+  const currentMonth = useMemo(() => {
+    if (!monthlyData.length) return null;
+    return monthlyData[0];
+  }, [monthlyData]);
 
   const averageInvoiceValue = useMemo(() => {
     if (!stats || !stats.totalTransactions || stats.totalTransactions === 0) return 0;
-    return stats.totalSales / stats.totalTransactions;
+    return (stats.totalSales || 0) / stats.totalTransactions;
   }, [stats]);
+
 
   return (
     <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
@@ -373,7 +377,7 @@ export default function FinancialsPage() {
                   </thead>
                   <tbody>
                     {monthlyData.map((m, i) => {
-                      const monthLabel = ARABIC_MONTHS[m.month_name?.trim()?.split(' ')[0]] || m.month_name?.split(' ')[0];
+                      const monthLabel = ARABIC_MONTHS[m.month_name?.trim()?.split(' ')[0]] || m.month_name?.split(' ')[0] || `${m.month}/${m.year}`;
                       const isCurrentMonth = i === 0;
                       return (
                         <motion.tr

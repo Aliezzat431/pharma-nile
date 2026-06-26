@@ -1,26 +1,34 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    const authHeader = req.headers.get('Authorization');
+    const { data: { user } } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
+    const pharmacyId = user?.user_metadata?.pharmacy_id;
+
+    if (!pharmacyId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: No pharmacy context' }, { status: 401 });
+    }
+
     const tablesToExport = [
-      'pharmacies',
       'companies',
       'products',
       'batches',
       'customers',
       'orders',
       'order_items',
-      'debt_payments'
+      'debt_payments',
+      'pharmacy_settings'
     ];
 
     const backupData: any = {};
-    const BATCH_SIZE = 1000; // حجم الدفعة الواحدة لتفادي سقف الـ 1000 سجل واستهلاك الذاكرة
+    const BATCH_SIZE = 1000;
 
     for (const table of tablesToExport) {
       let allRows: any[] = [];
@@ -31,11 +39,14 @@ export async function GET() {
         const from = page * BATCH_SIZE;
         const to = from + BATCH_SIZE - 1;
 
-        const { data, error } = await supabase
+        const query = supabase
           .from(table)
           .select('*')
-          .range(from, to)
-          .order('created_at', { ascending: true }); // ترتيب ثابت لضمان سلامة الـ Range الفني
+          .eq('pharmacy_id', pharmacyId)
+          .range(from, to);
+
+        const { data, error } = await query;
+
 
         if (error) {
 

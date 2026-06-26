@@ -4,12 +4,10 @@ import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { 
   Settings as SettingsIcon, 
-  Save, 
   CreditCard, 
   Bell, 
   Shield, 
   Smartphone, 
-  Loader2, 
   Palette, 
   Moon, 
   Sun, 
@@ -21,7 +19,8 @@ import {
   Coffee, 
   Sparkles, 
   Zap, 
-  CheckCircle2 
+  CheckCircle2,
+  Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -31,8 +30,9 @@ import { NotificationSettings } from './components/NotificationSettings';
 import { AppearanceSettings } from './components/AppearanceSettings';
 import { ShortcutSettings } from './components/ShortcutSettings';
 import { DatabaseSettings } from './components/DatabaseSettings';
+import { AboutSettings } from './components/AboutSettings';
 
-type Tab = 'general' | 'pos' | 'notifications' | 'appearance' | 'shortcuts' | 'database';
+type Tab = 'general' | 'pos' | 'notifications' | 'appearance' | 'shortcuts' | 'database' | 'about';
 
 const ALL_THEMES = [
   { id: "dark", label: "الوضع الليلي (الافتراضي)", icon: Moon, desc: "الوضع الكلاسيكي الفخم للنظام", color: "bg-[#050505]" },
@@ -55,7 +55,6 @@ export default function Settings() {
 
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme);
-    // يمكنك إضافة toast هنا لاحقاً
   };
 
   const tabs = [
@@ -65,6 +64,7 @@ export default function Settings() {
     { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
     { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
     { id: 'database', label: 'إدارة البيانات والتنظيف', icon: Zap },
+    { id: 'about', label: 'عن المطورين', icon: Users },
   ] as const;
 
   return (
@@ -130,6 +130,7 @@ export default function Settings() {
             )}
             {activeTab === 'shortcuts' && <ShortcutSettings key="shortcuts" />}
             {activeTab === 'database' && <DatabaseSettings key="database" />}
+            {activeTab === 'about' && <AboutSettings key="about" />}
           </AnimatePresence>
         </div>
       </div>
@@ -176,7 +177,6 @@ export default function Settings() {
                         : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    {/* Theme Preview */}
                     <div className={`w-full h-24 rounded-xl border flex flex-col gap-2 p-3 ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-gray-100 border-gray-300' : 'bg-[#050505] border-white/10'}`}>
                       <div className={`w-full h-3 rounded ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-black/20' : 'bg-white/20'}`} />
                       <div className={`w-2/3 h-3 rounded ${themeItem.color}`} />
@@ -199,4 +199,4 @@ export default function Settings() {
       </AnimatePresence>
     </div>
   );
-                    }
+}

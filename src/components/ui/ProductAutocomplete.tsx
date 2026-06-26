@@ -64,11 +64,13 @@ export default function ProductAutocomplete({
       try {
         const { data } = await supabase
           .from('products')
-          .select('id, name, type, company')
-          .eq('pharmacy_id', pharmacyId)
+          .select('id, name, type, company, pharmacy:pharmacies(name)')
           .ilike('name', `%${query}%`)
-          .limit(8);
-        setSuggestions(data || []);
+          .limit(10);
+        setSuggestions((data || []).map((p: any) => ({
+          ...p,
+          pharmacy_name: p.pharmacy?.name
+        })));
         setOpen(true);
         setActiveIdx(-1);
       } catch {
@@ -180,7 +182,7 @@ export default function ProductAutocomplete({
           <div className="px-3 py-1.5 border-b border-white/5 flex items-center gap-2">
             <Search className="w-3 h-3 text-[var(--nile-teal)]" />
             <span className="text-[10px] text-gray-500 font-cairo">
-              {suggestions.length} نتيجة مطابقة في مخزونك
+              {suggestions.length} نتيجة مطابقة في شبكة الصيدليات
             </span>
           </div>
 
@@ -201,11 +203,9 @@ export default function ProductAutocomplete({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold font-cairo truncate">{s.name}</p>
-                {(s.type || s.company) && (
-                  <p className="text-[10px] text-gray-500 truncate font-cairo">
-                    {[s.type, s.company].filter(Boolean).join(' • ')}
-                  </p>
-                )}
+                <p className="text-[10px] text-gray-500 truncate font-cairo">
+                  {[s.type, s.company, (s as any).pharmacy_name].filter(Boolean).join(' • ')}
+                </p>
               </div>
               {activeIdx === i && (
                 <span className="text-[9px] text-[var(--nile-teal)] font-bold flex-shrink-0 font-cairo">

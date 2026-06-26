@@ -116,7 +116,7 @@ BEGIN
     COUNT(CASE WHEN status = 'completed' THEN 1 END),
     COALESCE(SUM(CASE WHEN status = 'completed' AND payment_method = 'cash' THEN total ELSE 0 END), 0),
     COALESCE(SUM(CASE WHEN status = 'completed' AND payment_method = 'debt' THEN total ELSE 0 END), 0),
-    COALESCE(SUM(CASE WHEN status = 'completed' AND payment_method = 'sadqah THEN total ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN status = 'completed' AND payment_method = 'sadqah' THEN total ELSE 0 END), 0),
     COALESCE(SUM(CASE WHEN status = 'returned' THEN total ELSE 0 END), 0),
     now()
   FROM orders
@@ -469,11 +469,99 @@ BEGIN
   FROM orders
   WHERE pharmacy_id = p_pharmacy_id AND status = 'completed' AND created_at >= v_cutoff;
 
-  RETURN v_result;
+  RETURN COALESCE(v_result, json_build_object(
+    'total_sales', 0,
+    'total_cost', 0,
+    'total_profit', 0,
+    'total_transactions', 0,
+    'cash_revenue', 0,
+    'debt_revenue', 0,
+    'sadqah_revenue', 0,
+    'daily_revenue', '[]'::json
+  ));
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_monthly_report(
+  p_pharmacy_id uuid,
+  p_year        int DEFAULT NULL,
+  p_months_back int DEFAULT 12
+)
+RETURNS TABLE (
+  id              uuid,
+  pharmacy_id     uuid,
+  year            int,
+  month           int,
+  month_name      text,
+  total_revenue   numeric,
+  total_cost      numeric,
+  total_profit    numeric,
+  total_orders    int,
+  cash_revenue    numeric,
+  debt_revenue    numeric,
+  sadqah_revenue  numeric,
+  returns_total   numeric,
+  updated_at      timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    m.id, m.pharmacy_id, m.year, m.month,
+    to_char(to_date(m.month::text, 'MM'), 'Month') as month_name,
+    m.total_revenue, m.total_cost, m.total_profit, m.total_orders,
+    m.cash_revenue, m.debt_revenue, m.sadqah_revenue, m.returns_total,
+    m.updated_at
+  FROM monthly_summaries m
+  WHERE m.pharmacy_id = p_pharmacy_id
+    AND (p_year IS NULL OR m.year = p_year)
+  ORDER BY m.year DESC, m.month DESC
+  LIMIT p_months_back;
 END;
 $$;
 
 GRANT EXECUTE ON FUNCTION get_financial_stats(uuid, int) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_monthly_report(uuid, int, int) TO authenticated;
 
+-- ─────────────────────────────────────────────
+-- 11. PHARMACY SETTINGS TABLE
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS pharmacy_settings (
+  pharmacy_id             uuid PRIMARY KEY REFERENCES pharmacies(id) ON DELETE CASCADE,
+  pharmacy_name           text,
+  email                  text,
+  phone                  text,
+  address                text,
+  inventory_method       text DEFAULT 'FEFO',
+  stock_alert_threshold  int DEFAULT 20, 
+  tax_percentage         numeric DEFAULT 14,
+  printer_size           text DEFAULT '80mm',
+  return_days_limit      int DEFAULT 14,
+  email_reports          boolean DEFAULT true,
+  expiry_alerts          boolean DEFAULT false,
+  updated_at             timestamptz DEFAULT now()
+);
+
+ALTER TABLE pharmacy_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "pharmacy_settings_policy" ON pharmacy_settings;
+CREATE POLICY "pharmacy_settings_policy"
+  ON pharmacy_settings FOR ALL
+  USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid)
+  WITH CHECK (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
+
+-- Initial settings for existing pharmacies
+INSERT INTO pharmacy_settings (pharmacy_id, pharmacy_name)
+SELECT id, name FROM pharmacies
+ON CONFLICT (pharmacy_id) DO NOTHING;
+
+-- ─────────────────────────────────────────────
+-- 12. STAFF SALARIES AND INCENTIVES
+-- ─────────────────────────────────────────────
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS salary numeric DEFAULT 0;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS incentives numeric DEFAULT 0;
+
 -- Done! 🚀
+
+
