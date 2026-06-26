@@ -13,6 +13,9 @@ import {
   ChevronUp,
   Tag,
   Trash2,
+  Calendar,
+  DollarSign,
+  Barcode,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -20,7 +23,7 @@ import dynamic from 'next/dynamic';
 import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
-import { deleteProduct } from '@/lib/api/products';
+import { deleteProduct, createBatch } from '@/lib/api/products';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), {
   ssr: false,
@@ -65,6 +68,41 @@ function InventoryBatchPanel({
 }) {
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(0);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newBatch, setNewBatch] = useState({
+    barcode: '',
+    quantity: 1,
+    purchase_price: item.batches.length > 0 ? item.batches[0].purchase_price : 0,
+    selling_price: item.batches.length > 0 ? item.current_price || item.batches[0].selling_price : 0,
+    expiry_date: '',
+  });
+
+  const handleAddBatch = async () => {
+    try {
+      if (!newBatch.quantity || !newBatch.expiry_date || !newBatch.purchase_price || !newBatch.selling_price) {
+        setInventoryError('الرجاء إكمال كافة البيانات المطلوبة للتشغيلة');
+        return;
+      }
+
+      await createBatch({
+        product_id: item.id,
+        ...newBatch,
+      });
+
+      setShowAddForm(false);
+      setNewBatch({
+        barcode: '',
+        quantity: 1,
+        purchase_price: newBatch.purchase_price,
+        selling_price: newBatch.selling_price,
+        expiry_date: '',
+      });
+      fetchInventory();
+    } catch (error: any) {
+      console.error('Error adding batch:', error);
+      setInventoryError(error.message || 'حدث خطأ أثناء إضافة التشغيلة');
+    }
+  };
 
   const handleUpdateBatch = async (batchId: string) => {
     try {
@@ -86,9 +124,9 @@ function InventoryBatchPanel({
     try {
       await deleteProduct(item.id);
       fetchInventory();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting product:', error);
-      setInventoryError('فشل حذف المنتج. قد يكون هناك مبيعات مرتبطة به.');
+      setInventoryError(error.message || 'فشل حذف المنتج. قد يكون هناك مبيعات مرتبطة به.');
     }
   };
 
@@ -96,15 +134,119 @@ function InventoryBatchPanel({
     <div className="p-6 bg-white/[0.02] border-t border-white/5">
       <div className="flex justify-between items-center mb-4">
         <h4 className="text-sm font-bold text-gray-400 font-cairo">التشغيلات المتاحة</h4>
-        {item.pharmacy_id === user?.user_metadata?.pharmacy_id && (
-          <button
-            onClick={handleDeleteProduct}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold font-cairo transition-all"
-          >
-            <Trash2 className="w-3.5 h-3.5" /> حذف المنتج نهائياً
-          </button>
-        )}
+        <div className="flex gap-2">
+          {item.pharmacy_id === user?.user_metadata?.pharmacy_id && (
+            <>
+              <button
+                onClick={() => setShowAddForm(!showAddForm)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#00CED1]/10 hover:bg-[#00CED1]/20 text-[#00CED1] text-xs font-bold font-cairo transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" /> إضافة تشغيلة
+              </button>
+              <button
+                onClick={handleDeleteProduct}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold font-cairo transition-all"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> حذف المنتج نهائياً
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      <AnimatePresence>
+        {showAddForm && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="mb-8 border border-[#00CED1]/20 bg-[#00CED1]/5 rounded-2xl p-6 overflow-hidden"
+          >
+            <h5 className="text-sm font-bold text-[#00CED1] mb-4 font-cairo">إضافة تشغيلة (Batch) جديدة</h5>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-gray-400 font-cairo px-1">الباركود</label>
+                <div className="relative">
+                  <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="text"
+                    value={newBatch.barcode}
+                    onChange={(e) => setNewBatch({ ...newBatch, barcode: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                    placeholder="باركود التشغيلة..."
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-gray-400 font-cairo px-1">الكمية <span className="text-red-400">*</span></label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newBatch.quantity}
+                  onChange={(e) => setNewBatch({ ...newBatch, quantity: Number(e.target.value) })}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-gray-400 font-cairo px-1">تاريخ الانتهاء <span className="text-red-400">*</span></label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="date"
+                    value={newBatch.expiry_date}
+                    onChange={(e) => setNewBatch({ ...newBatch, expiry_date: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-gray-400 font-cairo px-1">سعر الشراء <span className="text-red-400">*</span></label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newBatch.purchase_price}
+                    onChange={(e) => setNewBatch({ ...newBatch, purchase_price: Number(e.target.value) })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-gray-400 font-cairo px-1">سعر البيع <span className="text-red-400">*</span></label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newBatch.selling_price}
+                    onChange={(e) => setNewBatch({ ...newBatch, selling_price: Number(e.target.value) })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-cairo transition-all"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleAddBatch}
+                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#01AFB2] text-white text-xs font-bold font-cairo transition-all shadow-lg shadow-[#00CED1]/20 hover:scale-[1.02] active:scale-95"
+              >
+                حفظ التشغيلة
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {item.batches.length === 0 ? (
         <p className="text-gray-500 text-sm font-cairo">لا توجد تشغيلات مسجلة</p>
       ) : (

@@ -196,6 +196,18 @@ export async function deleteProduct(productId: string) {
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error('Unauthorized');
 
+  // Check if product has any sales (order items)
+  const { count, error: countErr } = await supabase
+    .from('order_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('product_id', productId)
+    .eq('pharmacy_id', pharmacyId);
+
+  if (countErr) throw countErr;
+  if (count && count > 0) {
+    throw new Error('لا يمكن حذف المنتج لوجود عمليات بيع مسجلة له في النظام. يمكنك تعديل الكميات إلى صفر إذا كنت تريد توقفه.');
+  }
+
   const { error } = await supabase
     .from('products')
     .delete()
