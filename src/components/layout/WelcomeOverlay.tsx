@@ -14,6 +14,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const hasVisited = localStorage.getItem('pharma-nile-visited');
