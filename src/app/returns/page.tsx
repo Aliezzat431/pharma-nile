@@ -2,10 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { RotateCcw, Search, ChevronDown, ChevronUp, Calendar, ShoppingBag, AlertCircle, Loader2, Check, Package, Hash, X } from 'lucide-react';
+import { RotateCcw, Search, ChevronDown, ChevronUp, Calendar, ShoppingBag, AlertCircle, Loader2, Check, Package, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { processReturn } from '@/lib/api/orders';
 import { ConfirmReturnModal } from './components/ConfirmReturnModal';
+import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/ui/Pagination';
+
+const PAGE_SIZE = 15;
 
 interface OrderItem {
   id: string;
@@ -32,6 +37,8 @@ export default function ReturnsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [returningId, setReturningId] = useState<string | null>(null);
   const [returnSuccess, setReturnSuccess] = useState<string | null>(null);
+  const pageRef = usePageGSAP();
+  const listRef = useGSAPList<HTMLDivElement>([]);
 
   useEffect(() => {
     fetchOrders();
@@ -99,9 +106,14 @@ export default function ReturnsPage() {
   const totalActive = orders.length;
   const totalValue = orders.reduce((acc, o) => acc + Number(o.total), 0);
 
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
+    filteredOrders,
+    { pageSize: PAGE_SIZE }
+  );
+
   return (
-    <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      <header className="flex items-center justify-between mb-8">
+    <div ref={pageRef} className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-6 pb-12">
+      <header data-gsap="fade-up" className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
             <RotateCcw className="text-[#D4AF37]" />
@@ -168,7 +180,7 @@ export default function ReturnsPage() {
         />
       </div>
 
-      <div className="space-y-3">
+      <div ref={listRef} className="space-y-3">
         {loading ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
@@ -180,7 +192,7 @@ export default function ReturnsPage() {
             <p className="font-cairo">لا توجد فواتير في هذه الفترة.</p>
           </div>
         ) : (
-          filteredOrders.map((order, i) => {
+          paginatedData.map((order, i) => {
             const isExpanded = expandedId === order.id;
             const isReturning = returningId === order.id;
             const justReturned = returnSuccess === order.id;
@@ -296,6 +308,16 @@ export default function ReturnsPage() {
           })
         )}
       </div>
+
+      {!loading && totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={PAGE_SIZE}
+          onPageChange={(p) => { setExpandedId(null); setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+        />
+      )}
 
       <ConfirmReturnModal 
         order={confirmReturnModal}

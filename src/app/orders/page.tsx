@@ -7,6 +7,7 @@ import {
   DollarSign, Package, Loader2, Calendar, ShoppingBag
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { usePageGSAP } from '@/hooks/usePageGSAP';
 import { SalesSummaryCards } from './components/SalesSummaryCards';
 import { SalesTrendChart } from './components/SalesTrendChart';
 import { PaymentMethodsChart } from './components/PaymentMethodsChart';
@@ -33,8 +34,10 @@ interface Order {
 export default function SalesDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
-  
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'all'>('month');
+
+  // GSAP page-entry
+  const pageRef = usePageGSAP();
 
   useEffect(() => {
     fetchSalesData();
@@ -143,8 +146,8 @@ export default function SalesDashboardPage() {
   const paymentData = generatePaymentData();
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12 p-2 sm:p-4">
-      <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4">
+      <header data-gsap="fade-up" className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
             <TrendingUp className="text-[#00CED1]" />

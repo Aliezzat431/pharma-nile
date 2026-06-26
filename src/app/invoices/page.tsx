@@ -8,6 +8,9 @@ import {
   Wallet, Heart, TrendingUp, Eye, Clock, DollarSign, ArrowUpDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/ui/Pagination';
 
 interface OrderItem {
   id: string;
@@ -39,6 +42,8 @@ type FilterPayment = 'all' | 'cash' | 'debt' | 'sadqah';
 type SortField = 'date' | 'total' | 'items';
 type SortDir = 'asc' | 'desc';
 
+const INVOICES_PAGE_SIZE = 20;
+
 export default function InvoicesPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +58,9 @@ export default function InvoicesPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<Order | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
+
+  // GSAP page-entry
+  const pageRef = usePageGSAP();
 
   useEffect(() => {
     let isMounted = true;
@@ -154,6 +162,15 @@ export default function InvoicesPage() {
     });
   }, [orders, search, filterStatus, filterPayment, dateFrom, dateTo, sortField, sortDir]);
 
+  // Pagination
+  const { paginatedData: pagedOrders, currentPage, totalPages, totalItems: totalInvoices, setPage } = usePagination(
+    filteredAndSortedOrders,
+    { pageSize: INVOICES_PAGE_SIZE }
+  );
+
+  // GSAP list animation
+  const listRef = useGSAPList<HTMLDivElement>([pagedOrders]);
+
   const stats = useMemo(() => {
     let revenue = 0;
     let profit = 0;
@@ -240,8 +257,8 @@ export default function InvoicesPage() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12 p-2 sm:p-4">
-      <header className="flex flex-col md:flex-row items-center justify-between mb-2 gap-4">
+    <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4">
+      <header data-gsap="fade-up" className="flex flex-col md:flex-row items-center justify-between mb-2 gap-4">
         <div className="w-full text-center md:text-right">
           <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-3 font-cairo text-foreground">
             <FileText className="text-[#D4AF37]" />
@@ -412,8 +429,8 @@ export default function InvoicesPage() {
         ))}
       </div>
 
-      {}
-      <div className="space-y-3">
+      {/* Invoice list */}
+      <div ref={listRef} className="space-y-3">
         {loading ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
@@ -425,7 +442,7 @@ export default function InvoicesPage() {
             <p className="font-cairo">لا توجد فواتير مطابقة للبحث.</p>
           </div>
         ) : (
-          filteredAndSortedOrders.map((order, i) => {
+          pagedOrders.map((order, i) => {
             const isExpanded = expandedId === order.id;
             const payment = paymentLabel(order.payment_method);
             const status = statusLabel(order.status);
@@ -434,11 +451,8 @@ export default function InvoicesPage() {
             const customerName = order.customers?.[0]?.name;
 
             return (
-              <motion.div
+              <div
                 key={order.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i * 0.01, 0.2) }}
                 className={`glass-card overflow-hidden transition-all ${order.status === 'returned' ? 'opacity-60 border-red-500/20' : 'border-white/5'}`}
               >
                 {}
@@ -573,11 +587,26 @@ export default function InvoicesPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </div>
             );
           })
         )}
       </div>
+
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalInvoices}
+          itemsPerPage={INVOICES_PAGE_SIZE}
+          onPageChange={(p) => {
+            setExpandedId(null);
+            setPage(p);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      )}
 
       {}
       <AnimatePresence>

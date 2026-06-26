@@ -3,12 +3,14 @@
 import React, { useState, useRef, useCallback } from 'react';
 import {
   Upload, Sparkles, Package, Check, X, AlertCircle, Loader2,
-  FileImage, Zap, Save, RefreshCw, BadgePlus, Star, 
+  Zap, Save, BadgePlus, Star,
   PenLine, Plus, Trash2, FileUp, Edit3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageGSAP } from '@/hooks/usePageGSAP';
+import ProductAutocomplete from '@/components/ui/ProductAutocomplete';
 
 interface ExtractedItem {
   product_name: string;
@@ -247,10 +249,12 @@ export default function InvoiceImportPage() {
   const checkedCount = items.filter(it => it._checked && it._status === 'pending').length;
   const newCount = items.filter(it => it.is_new).length;
 
+  const pageRef = usePageGSAP();
+
   return (
-    <div className="w-full max-w-7xl mx-auto pb-12 animate-in fade-in duration-500">
+    <div ref={pageRef} className="w-full max-w-7xl mx-auto pb-12">
       {}
-      <header className="mb-8">
+      <header data-gsap="fade-up" className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
                style={{ background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))' }}>
@@ -320,9 +324,11 @@ export default function InvoiceImportPage() {
               savedCount={savedCount}
               checkedCount={checkedCount}
               newCount={newCount}
+              pharmacyId={pharmacyId}
               onToggleCheck={toggleCheck}
               onToggleAll={toggleAll}
               onUpdateItem={updateItem}
+              onSetItems={setItems}
               onSaveAll={handleSaveAll}
               onReset={resetAll}
               onRemoveItem={removeItem}
@@ -529,20 +535,20 @@ export default function InvoiceImportPage() {
 
                         <div className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                           <div className="col-span-2 md:col-span-3 lg:col-span-2">
-                            <label className="text-[10px] text-gray-500 font-cairo block mb-1">
-                              اسم المنتج
-                              {item.is_new
-                                ? <span className="mr-2 text-emerald-400">● جديد</span>
-                                : <span className="mr-2 text-blue-400">● موجود</span>
-                              }
-                            </label>
-                            <input
+                            <label className="text-[10px] text-gray-500 font-cairo block mb-1">اسم المنتج</label>
+                            <ProductAutocomplete
                               value={item.product_name}
                               disabled={item._status !== 'pending'}
-                              onChange={e => updateItem(idx, 'product_name', e.target.value)}
-                              onBlur={e => lookupProduct(idx, e.target.value)}
-                              placeholder="اسم الدواء أو المستلزم..."
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50 font-cairo"
+                              pharmacyId={pharmacyId}
+                              onChange={(v) => updateItem(idx, 'product_name', v)}
+                              onSelect={(prod) => {
+                                updateItem(idx, 'product_name', prod ? prod.name : item.product_name);
+                                setItems(prev => prev.map((it, i) => i === idx ? {
+                                  ...it,
+                                  is_new: !prod,
+                                  existing_product_id: prod?.id,
+                                } : it));
+                              }}
                             />
                           </div>
 
@@ -675,9 +681,11 @@ interface ItemsPanelProps {
   savedCount: number;
   checkedCount: number;
   newCount: number;
+  pharmacyId: string | undefined;
   onToggleCheck: (idx: number) => void;
   onToggleAll: (val: boolean) => void;
   onUpdateItem: (idx: number, field: keyof ExtractedItem, value: any) => void;
+  onSetItems: (updater: (prev: ExtractedItem[]) => ExtractedItem[]) => void;
   onSaveAll: () => Promise<void>;
   onReset: () => void;
   onRemoveItem: (idx: number) => void;
@@ -685,7 +693,8 @@ interface ItemsPanelProps {
 
 function ItemsPanel({
   items, scanning, phase, saving, savedCount, checkedCount, newCount,
-  onToggleCheck, onToggleAll, onUpdateItem, onSaveAll, onReset, onRemoveItem
+  pharmacyId,
+  onToggleCheck, onToggleAll, onUpdateItem, onSetItems, onSaveAll, onReset, onRemoveItem
 }: ItemsPanelProps) {
   
   if (phase === 'upload' && !scanning) {
@@ -802,10 +811,20 @@ function ItemsPanel({
 
                 <div className="flex-1 min-w-0">
                   {item._editMode ? (
-                    <input
+                    <ProductAutocomplete
                       value={item.product_name}
-                      onChange={e => onUpdateItem(idx, 'product_name', e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white outline-none font-cairo mb-2"
+                      pharmacyId={pharmacyId}
+                      disabled={item._status === 'saved' || item._status === 'saving'}
+                      onChange={(v) => onUpdateItem(idx, 'product_name', v)}
+                      onSelect={(prod) => {
+                        onSetItems(prev => prev.map((it, i) => i === idx ? {
+                          ...it,
+                          product_name: prod ? prod.name : it.product_name,
+                          is_new: !prod,
+                          existing_product_id: prod?.id,
+                        } : it));
+                      }}
+                      className="mb-2"
                     />
                   ) : (
                     <h4 className="text-sm font-bold text-white font-cairo truncate flex items-center gap-2">

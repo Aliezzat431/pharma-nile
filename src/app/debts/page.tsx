@@ -6,10 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Debtor, getDebtors, addDebtor, recordPayment, getPaymentHistory, DebtPayment } from '@/lib/api/debts';
 import { debtorSchema, debtPaymentSchema } from '@/lib/validations';
 import { z } from 'zod';
-
 import { AddDebtorModal } from './components/AddDebtorModal';
 import { PaymentModal } from './components/PaymentModal';
 import { HistoryModal } from './components/HistoryModal';
+import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/ui/Pagination';
+
+const PAGE_SIZE = 12;
 
 export default function DebtsPage() {
   const [debtors, setDebtors] = useState<Debtor[]>([]);
@@ -22,6 +26,9 @@ export default function DebtsPage() {
   const [paymentHistory, setPaymentHistory] = useState<DebtPayment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const pageRef = usePageGSAP();
+  const gridRef = useGSAPList<HTMLDivElement>([]);
 
   type DebtorFormValues = z.infer<typeof debtorSchema>;
   type PaymentFormValues = z.infer<typeof debtPaymentSchema>;
@@ -105,8 +112,13 @@ export default function DebtsPage() {
     return debtors.reduce((acc, d) => acc + (Number(d.total_debt) || 0), 0);
   }, [debtors]);
 
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
+    filteredDebtors,
+    { pageSize: PAGE_SIZE }
+  );
+
   return (
-    <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 pb-12" dir="rtl">
+    <div ref={pageRef} className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 pb-12" dir="rtl">
       {/* Error Message */}
       <AnimatePresence>
         {errorMessage && (
@@ -128,7 +140,7 @@ export default function DebtsPage() {
         )}
       </AnimatePresence>
 
-      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <header data-gsap="fade-up" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
             نظام <span className="text-[#00CED1]">الديون</span>
@@ -198,8 +210,9 @@ export default function DebtsPage() {
           <Loader2 className="w-12 h-12 text-[#00CED1] animate-spin" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDebtors.map((debtor, i) => (
+        <>
+          <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedData.map((debtor, i) => (
             <motion.div
               key={debtor.id}
               initial={{ opacity: 0, scale: 0.95 }}
@@ -248,8 +261,18 @@ export default function DebtsPage() {
                 </button>
               </div>
             </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={PAGE_SIZE}
+              onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            />
+          )}
+        </>
       )}
 
       {/* Modals */}
