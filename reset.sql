@@ -4,7 +4,12 @@
 -- ============================================================
 
 -- 1. DROP TRIGGERS
-DROP TRIGGER IF EXISTS trg_orders_monthly_summary ON orders;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'orders') THEN
+    DROP TRIGGER IF EXISTS trg_orders_monthly_summary ON orders;
+  END IF;
+END $$;
 
 -- 2. DROP FUNCTIONS / RPCS
 DROP FUNCTION IF EXISTS upsert_monthly_summary(uuid, int, int);
@@ -39,6 +44,6 @@ DROP TABLE IF EXISTS pharmacies CASCADE;
 
 -- ============================================================
 -- NOTE: AFTER RUNNING THIS, YOU MUST RUN:
--- 1. master_database_setup.sql (to recreate core tables)
+-- 1. core_schema.sql (to recreate core tables)
 -- 2. database_optimization.sql (to add analytics, indexes and RPCs)
 -- ============================================================
