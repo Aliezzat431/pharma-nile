@@ -54,6 +54,13 @@ export async function middleware(request: NextRequest) {
   }
 
   const { data: { user } } = await supabase.auth.getUser();
+  const visited = request.cookies.get('pharma-nile-visited');
+
+  if (!visited && !request.nextUrl.pathname.startsWith('/welcome')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/welcome';
+    return NextResponse.redirect(url);
+  }
 
   if (!user && 
       !request.nextUrl.pathname.startsWith('/auth/login') && 

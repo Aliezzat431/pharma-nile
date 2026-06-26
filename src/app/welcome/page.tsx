@@ -101,7 +101,7 @@ export default function WelcomePage() {
   }, [showContent]);
 
   const handleStart = () => {
-    localStorage.setItem('pharma-nile-visited', 'true');
+    document.cookie = "pharma-nile-visited=true; path=/; max-age=31536000"; // 1 year expiration
     
     gsap.to(containerRef.current, {
       opacity: 0,

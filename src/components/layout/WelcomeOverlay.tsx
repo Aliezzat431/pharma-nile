@@ -17,7 +17,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const hasVisited = localStorage.getItem('pharma-nile-visited');
+    const hasVisited = document.cookie.includes('pharma-nile-visited=true');
     if (hasVisited) {
       setIsVisible(false);
       onComplete();
@@ -107,7 +107,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
   }, [showContent]);
 
   const handleStart = () => {
-    localStorage.setItem('pharma-nile-visited', 'true');
+    document.cookie = "pharma-nile-visited=true; path=/; max-age=31536000"; // 1 year expiration
     
     gsap.to(containerRef.current, {
       opacity: 0,
