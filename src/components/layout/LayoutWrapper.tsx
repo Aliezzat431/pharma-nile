@@ -16,7 +16,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
-  const isAuthPage = pathname?.startsWith('/auth') || pathname?.startsWith('/login');
+  const isAuthPage = pathname?.startsWith('/auth') || pathname?.startsWith('/login') || pathname?.startsWith('/welcome');
   const isMinimal = searchParams.get('minimal') === 'true';
   const isCopilot = searchParams.get('copilot') === 'true';
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
