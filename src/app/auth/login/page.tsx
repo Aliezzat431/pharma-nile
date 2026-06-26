@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Lock, Mail, ShieldAlert, UserPlus, Building2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import WelcomeOverlay from "@/components/layout/WelcomeOverlay";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
@@ -19,19 +18,12 @@ export default function LoginPage() {
   const [pharmacies, setPharmacies] = useState<{ id: string, name: string }[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
-
   useEffect(() => {
-    const hasVisited = localStorage.getItem('pharma-nile-visited');
-    if (!hasVisited) {
-      setShowWelcome(true);
-    }
-
     const loadPharmacies = async () => {
 
       try {
         const supabase = createClient();
-        
+
         const { data, error: fetchError } = await supabase
           .from('pharmacies')
           .select('id, name')
@@ -54,7 +46,7 @@ export default function LoginPage() {
         setError("حدث خطأ غير متوقع أثناء تحميل الفروع.");
       }
     };
-    
+
     loadPharmacies();
   }, []);
 
@@ -85,7 +77,7 @@ export default function LoginPage() {
       }
 
       router.push("/");
-      router.refresh(); 
+      router.refresh();
     } catch (err: any) {
       setError(err?.message || "فشل تسجيل الدخول. يرجى التحقق من بياناتك.");
     } finally {
@@ -95,13 +87,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] relative selection:bg-[var(--nile-teal)] selection:text-white py-12 px-4 overflow-y-auto font-cairo text-right" dir="rtl">
-      {showWelcome && <WelcomeOverlay onComplete={() => setShowWelcome(false)} />}
-      {}
+      { }
 
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--nile-teal)]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[var(--royal-gold)]/5 rounded-full blur-[100px] pointer-events-none" />
 
-      {}
+      { }
       <div className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 border border-white/5 bg-background/50 animate-in fade-in zoom-in duration-700">
         <div className="text-center mb-8">
           <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--nile-teal)]/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,206,209,0.2)] border border-[var(--nile-teal)]/20">
@@ -121,7 +112,7 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {}
+          { }
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-400 mr-1 block">
               البريد الإلكتروني
@@ -143,7 +134,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {}
+          { }
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-400 mr-1 block">
               كلمة المرور
@@ -165,7 +156,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {}
+          { }
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-400 mr-1 block">
               اختر الفرع / الصيدلية
@@ -197,7 +188,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {}
+          { }
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--royal-gold)]/80 mr-1 block">
               كود المدير (اختياري للموظف)
@@ -218,7 +209,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {}
+          { }
           <button
             type="submit"
             disabled={isLoading || pharmacies.length === 0}
