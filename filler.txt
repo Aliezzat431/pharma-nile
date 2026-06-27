@@ -1,20 +1,8 @@
-قطرات عين
-الاسم,الباركود,تاريخ الانتهاء,السعر,الشركة
-Olhistine,06221032331601,01/08/2028,22.80,Eipico 
-Olhistine Forte,06221032335104,01/04/2028,29,Eipico 
-Optidex-T,0000004237188,01/05/2027,48,Jamjoom Pharma 
-Optipred,0000006305104,01/02/2028,54,Jamjoom Pharma 
-Orchatears Plus,6224000219185,17/11/2026,8.5,Orchidia 
-Polyfresh Advanced,6223005442369,17/07/2028,160,Orchidia 
-Polyfresh,6224000219369,17/08/2028,75,Orchidia 
-Privacond,6223005630025,01/08/2027,42,segma tech
-Patadoline,6225000352063,01/11/2026,38,GAP
-Solofresh,6224000219956,17/08/2027,67,Orchidia 
-Prisoline,6221068503133,01/11/2028,23,Cairo Pharma 
-Tobrin,06221032331250,01/12/2027,23,Eipico 
-Trillerg,06224000219284,17/04/2028,24,Orchidia 
-Tears Guard,6223005440082,01/04/2028,39,Orchidia 
-Tobradex,07613421008314,01/07/2027,76,Alcon
-Vigamox,07613421008215,01/01/2028,128,Alcon
-Xolamol,0000006776638,01/10/2027,109,Jamjoom Pharma 
-Tymer,06285128002509,01/02/2027,66,Jamjoom Pharma
+نقط أذن
+الاسم,الباركود,تاريخ الانتهاء,سعر الشراء,الشركة
+Remowax,6224001050381,12/2028,24,HI Pharma
+Otocort,6224001050350,03/2029,26,Hi pharma
+Cipro,6221043010908,10/2026,15,CID
+Peopo-Otic,0000000000000,08/2027,38,Delta Grand
+Dropiflox,6223005630346,03/2028,39,10 Ramadan
+Otal,6221025013743,02/2028,19,Amon

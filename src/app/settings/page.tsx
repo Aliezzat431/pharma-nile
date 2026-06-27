@@ -25,7 +25,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { GeneralSettings } from './components/GeneralSettings';
-import { POSSettings } from './components/POSSettings';
 import { NotificationSettings } from './components/NotificationSettings';
 import { AppearanceSettings } from './components/AppearanceSettings';
 import { ShortcutSettings } from './components/ShortcutSettings';
@@ -33,7 +32,7 @@ import { DatabaseSettings } from './components/DatabaseSettings';
 import { AboutSettings } from './components/AboutSettings';
 import { usePreferences } from '@/hooks/usePreferences';
 
-type Tab = 'general' | 'pos' | 'notifications' | 'appearance' | 'shortcuts' | 'database' | 'about';
+type Tab = 'general' | 'notifications' | 'appearance' | 'shortcuts' | 'database' | 'about';
 
 const ALL_THEMES = [
   { id: "dark", label: "الوضع الليلي (الافتراضي)", icon: Moon, desc: "الوضع الكلاسيكي الفخم للنظام", color: "bg-[#050505]" },
@@ -61,7 +60,6 @@ export default function Settings() {
 
   const tabs = [
     { id: 'general', label: 'الإعدادات العامة', icon: Shield },
-    { id: 'pos', label: 'الفواتير ونقاط البيع', icon: CreditCard },
     { id: 'notifications', label: 'التنبيهات والإشعارات', icon: Bell },
     { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
     { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
@@ -146,7 +144,6 @@ export default function Settings() {
         <div className="md:col-span-9 relative min-h-[500px]">
           <AnimatePresence mode="wait">
             {activeTab === 'general' && <GeneralSettings key="general" />}
-            {activeTab === 'pos' && <POSSettings key="pos" />}
             {activeTab === 'notifications' && <NotificationSettings key="notifications" />}
             {activeTab === 'appearance' && (
               <AppearanceSettings 
