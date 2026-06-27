@@ -171,7 +171,7 @@ export async function receiveTransfer(
       barcode: 'TRANS-' + Date.now(),
       quantity: transfer.quantity,
       purchase_price: receiveDetails.cost || 0,
-      selling_price: receiveDetails.price || 0,
+      sale_price: receiveDetails.price || 0,
       expiry_date: receiveDetails.expiryDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
     }]);
   }

@@ -59,7 +59,7 @@ function autoDistribute(
       unit,
       customPills || 10,
     );
-    const unitPrice = Number((Number(batch.selling_price) / multi).toFixed(2));
+    const unitPrice = Number((Number(batch.sale_price) / multi).toFixed(2));
     const unitCost = Number((Number(batch.purchase_price) / multi).toFixed(2));
 
     distributions.push({

@@ -62,7 +62,7 @@ export function SaleTerminal() {
     setResults([]);
   };
 
-  const total = cart.reduce((acc, item) => acc + (item.selling_price * item.cartQuantity), 0);
+  const total = cart.reduce((acc, item) => acc + (item.sale_price * item.cartQuantity), 0);
 
   const completeSale = async () => {
     if (cart.length === 0) return;
@@ -122,7 +122,7 @@ export function SaleTerminal() {
                   onClick={() => addToCart(item)}
                   className="w-full p-4 flex justify-between items-center rounded-xl hover:bg-nile-teal/10 transition-colors group text-right"
                 >
-                  <span className="font-bold text-lg text-nile-teal">{item.selling_price} ج.م</span>
+                  <span className="font-bold text-lg text-nile-teal">{item.sale_price} ج.م</span>
                   <div>
                     <h5 className="font-bold">{item.products.name}</h5>
                     <p className="text-xs text-foreground/40">المتاح: {item.quantity} | {item.barcode}</p>
@@ -160,7 +160,7 @@ export function SaleTerminal() {
                     </div>
                     <div className="flex flex-col gap-1 w-full">
                       <span className="font-bold text-sm text-foreground font-cairo truncate">{item.products?.name}</span>
-                      <span className="text-xs text-nile-teal font-inter font-bold">{item.selling_price} ج.م</span>
+                      <span className="text-xs text-nile-teal font-inter font-bold">{item.sale_price} ج.م</span>
                       <span className="text-[10px] text-gray-500 font-cairo truncate">المتاح: {item.quantity}</span>
                     </div>
                   </button>
@@ -191,8 +191,8 @@ export function SaleTerminal() {
                   <Trash2 className="w-5 h-5" />
                 </button>
                 <div className="text-center">
-                  <p className="font-bold text-nile-teal">{item.selling_price * item.cartQuantity} ج.م</p>
-                  <p className="text-xs text-foreground/40">{item.cartQuantity} × {item.selling_price}</p>
+                  <p className="font-bold text-nile-teal">{item.sale_price * item.cartQuantity} ج.م</p>
+                  <p className="text-xs text-foreground/40">{item.cartQuantity} × {item.sale_price}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-bold">{item.products.name}</p>

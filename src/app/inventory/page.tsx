@@ -40,7 +40,7 @@ interface Batch {
   barcode: string;
   quantity: number;
   purchase_price: number;
-  selling_price: number;
+  sale_price: number;
   expiry_date: string;
 }
 
@@ -78,13 +78,13 @@ function InventoryBatchPanel({
     barcode: '',
     quantity: 1,
     purchase_price: item.batches.length > 0 ? item.batches[0].purchase_price : 0,
-    selling_price: item.batches.length > 0 ? item.current_price || item.batches[0].selling_price : 0,
+    sale_price: item.batches.length > 0 ? item.current_price || item.batches[0].sale_price : 0,
     expiry_date: '',
   });
 
   const handleAddBatch = async () => {
     try {
-      if (!newBatch.quantity || !newBatch.expiry_date || !newBatch.purchase_price || !newBatch.selling_price) {
+      if (!newBatch.quantity || !newBatch.expiry_date || !newBatch.purchase_price || !newBatch.sale_price) {
         setInventoryError('الرجاء إكمال كافة البيانات المطلوبة للتشغيلة');
         return;
       }
@@ -99,7 +99,7 @@ function InventoryBatchPanel({
         barcode: '',
         quantity: 1,
         purchase_price: newBatch.purchase_price,
-        selling_price: newBatch.selling_price,
+        sale_price: newBatch.sale_price,
         expiry_date: '',
       });
       fetchInventory();
@@ -118,7 +118,7 @@ function InventoryBatchPanel({
         barcode: editingBatch.barcode,
         quantity: editingBatch.quantity,
         purchase_price: editingBatch.purchase_price,
-        selling_price: editingBatch.selling_price,
+        sale_price: editingBatch.sale_price,
         expiry_date: editingBatch.expiry_date
       });
       setEditingBatch(null);
@@ -244,8 +244,8 @@ function InventoryBatchPanel({
                   <input
                     type="number"
                     step="0.01"
-                    value={newBatch.selling_price}
-                    onChange={(e) => setNewBatch({ ...newBatch, selling_price: Number(e.target.value) })}
+                    value={newBatch.sale_price}
+                    onChange={(e) => setNewBatch({ ...newBatch, sale_price: Number(e.target.value) })}
                     className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
                   />
                 </div>
@@ -358,12 +358,12 @@ function InventoryBatchPanel({
                       <input
                         type="number"
                         step="0.01"
-                        value={currentBatch.selling_price}
-                        onChange={(e) => setEditingBatch({ ...currentBatch, selling_price: Number(e.target.value) })}
+                        value={currentBatch.sale_price}
+                        onChange={(e) => setEditingBatch({ ...currentBatch, sale_price: Number(e.target.value) })}
                         className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none"
                       />
                     ) : (
-                      <p className="text-sm text-[#D4AF37] font-bold">{batch.selling_price} ج.م</p>
+                      <p className="text-sm text-[#D4AF37] font-bold">{batch.sale_price} ج.م</p>
                     )}
                   </div>
                 </div>
@@ -426,7 +426,7 @@ export default function InventoryDashboard() {
     barcode: '',
     quantity: 1,
     purchase_price: 0,
-    selling_price: 0,
+    sale_price: 0,
     expiry_date: '',
   });
 
@@ -473,13 +473,13 @@ export default function InventoryDashboard() {
           (a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime()
         );
         const totalQuantity = sortedBatches.reduce((acc: number, b: Batch) => acc + (b.quantity || 0), 0);
-        const activeBatch = sortedBatches.find((b: Batch) => b.quantity > 0) || sortedBatches[0];
-        const currentPrice = activeBatch?.selling_price || 0;
+        const activeBatch = sortedBatches.find((b: any) => b.quantity > 0) || sortedBatches[0];
+        const currentPrice = activeBatch?.sale_price || 0;
         return {
           id: p.id,
           name: p.name,
           type: p.type,
-          company: p.company || 'غير محدد',
+          company: p.company_name || 'غير محدد',
           inventory_method: p.inventory_method,
           total_quantity: totalQuantity,
           current_price: currentPrice,
@@ -538,7 +538,7 @@ export default function InventoryDashboard() {
       barcode: '',
       quantity: 1,
       purchase_price: product.batches[0]?.purchase_price || 0,
-      selling_price: product.current_price || product.batches[0]?.selling_price || 0,
+      sale_price: product.current_price || product.batches[0]?.sale_price || 0,
       expiry_date: '',
     });
     setQuickAddSearch('');
@@ -941,8 +941,8 @@ export default function InventoryDashboard() {
                           <input 
                             type="number"
                             step="0.01"
-                            value={quickBatch.selling_price}
-                            onChange={(e) => setQuickBatch({...quickBatch, selling_price: Number(e.target.value)})}
+                            value={quickBatch.sale_price}
+                            onChange={(e) => setQuickBatch({...quickBatch, sale_price: Number(e.target.value)})}
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none"
                           />
                        </div>

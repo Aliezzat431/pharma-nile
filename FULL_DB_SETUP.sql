@@ -379,10 +379,6 @@ BEGIN
   RETURN json_build_object('order_id', v_order_id, 'total', v_final_total);
 END; $$;
 
--- ─────────────────────────────────────────────────────────────
--- 7. TRIGGERS
--- ─────────────────────────────────────────────────────────────
-
 CREATE OR REPLACE FUNCTION trigger_refresh_monthly_summary()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
@@ -401,50 +397,91 @@ CREATE TRIGGER trg_orders_monthly_summary
 -- 8. ROW LEVEL SECURITY (RLS) POLICIES
 -- ─────────────────────────────────────────────────────────────
 
--- Enabled RLS on all tables
+-- HELPERS
+CREATE OR REPLACE FUNCTION get_my_pharmacy_id() RETURNS uuid AS $$
+DECLARE
+  v_pharmacy_id uuid;
+BEGIN
+  -- 1. Try to get from JWT metadata (fastest)
+  v_pharmacy_id := (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid;
+  
+  -- 2. Fallback: Look up in user_pharmacy_access table if JWT is empty/stale
+  IF v_pharmacy_id IS NULL THEN
+    SELECT pharmacy_id INTO v_pharmacy_id 
+    FROM user_pharmacy_access 
+    WHERE user_id = auth.uid() 
+    LIMIT 1;
+  END IF;
+  
+  RETURN v_pharmacy_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Enable RLS on all tables
 ALTER TABLE pharmacies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_pharmacy_access ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE batches ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pharmacy_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE financial_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE debt_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_pharmacy_access ENABLE ROW LEVEL SECURITY;
+
+-- PHARMACIES
+CREATE POLICY "pharmacies_select_public" ON pharmacies FOR SELECT TO anon, authenticated USING (is_active = true);
+CREATE POLICY "pharmacies_insert_anon" ON pharmacies FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "pharmacies_update_owner" ON pharmacies FOR UPDATE TO authenticated USING (id = get_my_pharmacy_id());
+
+-- PRODUCTS
+CREATE POLICY "products_select" ON products FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "products_insert" ON products FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "products_update" ON products FOR UPDATE TO authenticated USING (pharmacy_id = get_my_pharmacy_id()) WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "products_delete" ON products FOR DELETE TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+
+-- BATCHES
+CREATE POLICY "batches_select" ON batches FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "batches_insert" ON batches FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "batches_update" ON batches FOR UPDATE TO authenticated USING (pharmacy_id = get_my_pharmacy_id()) WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "batches_delete" ON batches FOR DELETE TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+
+-- ORDERS
+CREATE POLICY "orders_select" ON orders FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "orders_insert" ON orders FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "orders_update" ON orders FOR UPDATE TO authenticated USING (pharmacy_id = get_my_pharmacy_id()) WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+
+-- ORDER ITEMS
+CREATE POLICY "items_select" ON order_items FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "items_insert" ON order_items FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+
+-- CUSTOMERS
+CREATE POLICY "customers_select" ON customers FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "customers_insert" ON customers FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "customers_update" ON customers FOR UPDATE TO authenticated USING (pharmacy_id = get_my_pharmacy_id()) WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+
+-- FINANCIALS
+CREATE POLICY "finance_select" ON financial_transactions FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "finance_insert" ON financial_transactions FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+
+-- SUMMARIES & LOGS
 ALTER TABLE monthly_summaries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "summaries_select" ON monthly_summaries FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "audit_select" ON audit_logs FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+
 ALTER TABLE inventory_snapshots ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "snapshots_select" ON inventory_snapshots FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
 
--- PHARMACIES POLICIES
-CREATE POLICY "Allow public read for active pharmacies" ON pharmacies FOR SELECT TO anon, authenticated USING (is_active = true);
-CREATE POLICY "Allow anon to create pharmacy" ON pharmacies FOR INSERT TO anon, authenticated WITH CHECK (true);
-CREATE POLICY "Allow pharmacy owners to update their record" ON pharmacies FOR UPDATE TO authenticated USING (id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-
--- USER PROFILES POLICIES
-CREATE POLICY "Allow user to insert their own profile" ON user_profiles FOR INSERT TO authenticated, anon WITH CHECK (true);
-CREATE POLICY "Allow users to view their own profile" ON user_profiles FOR SELECT TO authenticated USING (id = auth.uid());
-
--- USER PHARMACY ACCESS POLICIES
-CREATE POLICY "Allow user to insert their own access" ON user_pharmacy_access FOR INSERT TO authenticated, anon WITH CHECK (true);
-CREATE POLICY "Allow user to view their own access" ON user_pharmacy_access FOR SELECT TO authenticated USING (user_id = auth.uid());
-
--- GENERAL MULTI-TENANT POLICIES (Scoped by pharmacy_id in JWT)
--- Applied to all inventory and sales tables
-CREATE POLICY "tenant_isolation" ON products FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON batches FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON customers FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON orders FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON order_items FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON pharmacy_settings FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON audit_logs FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON financial_transactions FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON debt_payments FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON sessions FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON monthly_summaries FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
-CREATE POLICY "tenant_isolation" ON inventory_snapshots FOR ALL TO authenticated USING (pharmacy_id = (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid);
+-- PROFILES & ACCESS
+CREATE POLICY "profiles_select_own" ON user_profiles FOR SELECT TO authenticated USING (id = auth.uid());
+CREATE POLICY "profiles_insert_own" ON user_profiles FOR INSERT TO authenticated, anon WITH CHECK (true);
+CREATE POLICY "access_select_own" ON user_pharmacy_access FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "access_insert_own" ON user_pharmacy_access FOR INSERT TO authenticated, anon WITH CHECK (true);
 
 -- ─────────────────────────────────────────────────────────────
 -- 9. PERMISSIONS (GRANTS)

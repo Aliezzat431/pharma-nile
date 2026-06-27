@@ -11,7 +11,7 @@ export interface CreateProductInput {
   barcode: string;
   quantity: number;
   purchase_price: number;
-  selling_price: number;
+  sale_price: number;
   expiry_date: string;
   pharmacy_id?: string;
 }
@@ -56,7 +56,7 @@ export async function createProductWithBatch(input: CreateProductInput) {
     return { success: false, error: new Error('Validation Error: Invalid characters detected.') };
   }
 
-  if (input.quantity < 0 || input.purchase_price < 0 || input.selling_price < 0 || input.unit_conversion <= 0) {
+  if (input.quantity < 0 || input.purchase_price < 0 || input.sale_price < 0 || input.unit_conversion <= 0) {
     return { success: false, error: new Error('Validation Error: Quantity and prices cannot be negative, unit conversion must be positive.') };
   }
 
@@ -91,7 +91,7 @@ export async function createProductWithBatch(input: CreateProductInput) {
         barcode: input.barcode,
         quantity: input.quantity,
         purchase_price: input.purchase_price,
-        selling_price: input.selling_price,
+        sale_price: input.sale_price,
         expiry_date: input.expiry_date,
         pharmacy_id: pharmacyId
       },

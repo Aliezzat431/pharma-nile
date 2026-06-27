@@ -54,7 +54,7 @@ export function BatchDistributionModal({
                   <div key={b.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
                     <div>
                       <p className="text-gray-300 font-cairo font-bold">انتهاء: {new Date(b.expiry_date).toLocaleDateString('ar-EG')}</p>
-                      <p className="text-sm text-gray-500 font-cairo mt-1">الكمية المتاحة: {b.quantity} | السعر: {b.selling_price} ج.م</p>
+                      <p className="text-sm text-gray-500 font-cairo mt-1">الكمية المتاحة: {b.quantity} | السعر: {b.sale_price} ج.م</p>
                     </div>
                     <input
                       type="number"
@@ -68,7 +68,7 @@ export function BatchDistributionModal({
                         if (val > b.quantity) val = b.quantity;
                         const otherDists = batchDistributions.filter(d => d.batchId !== b.id);
                         if (val > 0) {
-                          setBatchDistributions([...otherDists, { batchId: b.id, quantity: val, price: b.selling_price, purchasePrice: b.purchase_price, expiry: b.expiry_date }]);
+                          setBatchDistributions([...otherDists, { batchId: b.id, quantity: val, price: b.sale_price, purchasePrice: b.purchase_price, expiry: b.expiry_date }]);
                         } else {
                           setBatchDistributions(otherDists);
                         }

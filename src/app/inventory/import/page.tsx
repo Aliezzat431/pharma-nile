@@ -127,7 +127,9 @@ export default function ImportInventoryPage() {
                     barcode: item.barcode,
                     company_name: item.company,
                     price: item.sale_price,
-                    category: category
+                    category: category,
+                    type: 'pack', // Sold as Box/Pack
+                    unit_conversion: 1 // No subdivision
                 }, { onConflict: 'pharmacy_id,barcode' })
                 .select();
 

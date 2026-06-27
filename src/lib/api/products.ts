@@ -23,7 +23,7 @@ export interface Batch {
   barcode: string;
   quantity: number;
   purchase_price: number;
-  selling_price: number;
+  sale_price: number;
   expiry_date: string;
   pharmacy_id?: string;
 }
@@ -65,7 +65,7 @@ export async function searchProducts(query: string, pharmacyId: string) {
       .filter((b: Batch) => b.quantity > 0)
       .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
 
-    const current_price = activeBatches.length > 0 ? activeBatches[0].selling_price : 0;
+    const current_price = activeBatches.length > 0 ? activeBatches[0].sale_price : 0;
     const total_quantity = activeBatches.reduce((acc: number, b: Batch) => acc + b.quantity, 0);
 
     return {
@@ -120,7 +120,7 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
     .filter((b: Batch) => b.quantity > 0)
     .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
 
-  const current_price = activeBatches.length > 0 ? activeBatches[0].selling_price : 0;
+  const current_price = activeBatches.length > 0 ? activeBatches[0].sale_price : 0;
   const total_quantity = activeBatches.reduce((acc: number, b: Batch) => acc + b.quantity, 0);
 
   return {
@@ -143,7 +143,7 @@ export async function updateBatch(batchId: string, updates: Partial<Batch>) {
   // Validations
   if (updates.quantity !== undefined && updates.quantity <= 0) throw new Error('Validation Error: Quantity must be > 0');
   if (updates.purchase_price !== undefined && updates.purchase_price <= 0) throw new Error('Validation Error: Purchase price must be > 0');
-  if (updates.selling_price !== undefined && updates.selling_price <= 0) throw new Error('Validation Error: Selling price must be > 0');
+  if (updates.sale_price !== undefined && updates.sale_price <= 0) throw new Error('Validation Error: Selling price must be > 0');
 
   // Security Check
   const { data: existingBatch, error: findError } = await supabase
@@ -177,7 +177,7 @@ export async function createBatch(batch: Partial<Batch>) {
 
   if (batch.quantity !== undefined && batch.quantity <= 0) throw new Error('Validation Error: Quantity must be > 0');
   if (batch.purchase_price !== undefined && batch.purchase_price <= 0) throw new Error('Validation Error: Purchase price must be > 0');
-  if (batch.selling_price !== undefined && batch.selling_price <= 0) throw new Error('Validation Error: Selling price must be > 0');
+  if (batch.sale_price !== undefined && batch.sale_price <= 0) throw new Error('Validation Error: Selling price must be > 0');
 
   const payload = { ...batch, pharmacy_id: pharmacyId };
 

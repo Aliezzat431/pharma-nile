@@ -7,7 +7,7 @@ interface Batch {
   barcode: string;
   quantity: number;
   purchase_price: number;
-  selling_price: number;
+  sale_price: number;
   expiry_date: string;
 }
 
@@ -26,7 +26,7 @@ interface BatchFormInput {
   barcode: string;
   quantity: string;
   purchase_price: string;
-  selling_price: string;
+  sale_price: string;
   expiry_date: string;
 }
 
@@ -34,7 +34,7 @@ const initialFormState: BatchFormInput = {
   barcode: '',
   quantity: '0',
   purchase_price: '0',
-  selling_price: '0',
+  sale_price: '0',
   expiry_date: ''
 };
 
@@ -56,7 +56,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
   const validateForm = (form: BatchFormInput, checkExpiry = false): boolean => {
     const q = Number(form.quantity);
     const p = Number(form.purchase_price);
-    const s = Number(form.selling_price);
+    const s = Number(form.sale_price);
 
     if (!form.barcode.trim()) {
       setInventoryError("خطأ: الباركود لا يمكن أن يكون فارغاً.");
@@ -79,7 +79,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
       barcode: batch.barcode,
       quantity: String(batch.quantity),
       purchase_price: String(batch.purchase_price),
-      selling_price: String(batch.selling_price),
+      sale_price: String(batch.sale_price),
       expiry_date: batch.expiry_date,
     });
   };
@@ -97,7 +97,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
       await updateBatch(batchId, {
         quantity: Number(editForm.quantity),
         purchase_price: Number(editForm.purchase_price),
-        selling_price: Number(editForm.selling_price),
+        sale_price: Number(editForm.sale_price),
         barcode: editForm.barcode.trim(),
       });
       setEditingBatchId(null);
@@ -124,7 +124,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
         barcode: newBatchForm.barcode.trim(),
         quantity: Number(newBatchForm.quantity),
         purchase_price: Number(newBatchForm.purchase_price),
-        selling_price: Number(newBatchForm.selling_price),
+        sale_price: Number(newBatchForm.sale_price),
         expiry_date: newBatchForm.expiry_date,
       });
       setIsAddingMode(false);
@@ -179,8 +179,8 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                   <input 
                     type="number"
                     className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
-                    value={newBatchForm.selling_price}
-                    onChange={(e) => setNewBatchForm({...newBatchForm, selling_price: e.target.value})}
+                    value={newBatchForm.sale_price}
+                    onChange={(e) => setNewBatchForm({...newBatchForm, sale_price: e.target.value})}
                   />
                 </div>
               </div>
@@ -258,8 +258,8 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                     <input 
                       type="number"
                       className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
-                      value={editForm.selling_price}
-                      onChange={(e) => setEditForm({...editForm, selling_price: e.target.value})}
+                      value={editForm.sale_price}
+                      onChange={(e) => setEditForm({...editForm, sale_price: e.target.value})}
                     />
                   </div>
                 </div>
@@ -315,7 +315,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-[10px] text-gray-500 font-cairo">سعر البيع</p>
-                      <p className="font-bold text-[#D4AF37] font-cairo text-sm" dir="ltr">{batch.selling_price} ج.م</p>
+                      <p className="font-bold text-[#D4AF37] font-cairo text-sm" dir="ltr">{batch.sale_price} ج.م</p>
                     </div>
                   </div>
                 </div>

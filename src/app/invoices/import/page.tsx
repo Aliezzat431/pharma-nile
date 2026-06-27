@@ -217,7 +217,7 @@ export default function InvoiceImportPage() {
             barcode: item.barcode || `INV-${Date.now()}-${i}`,
             quantity: finalQuantity,
             purchase_price: finalPurchasePrice,
-            selling_price: finalPublicPrice,
+            sale_price: finalPublicPrice,
             expiry_date: finalExpiry,
           }]);
 

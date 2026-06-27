@@ -69,7 +69,7 @@ export function POSProductCard({ product, isExpanded, onAddToCart, onToggleBatch
                           {isClosest && <span className="ml-2 text-[10px] bg-[#00CED1] text-black px-1.5 py-0.5 rounded-sm">الأقرب انتهاءً</span>}
                         </td>
                         <td className="px-3 py-2">{b.quantity}</td>
-                        <td className="px-3 py-2">{b.selling_price} ج.م</td>
+                        <td className="px-3 py-2">{b.sale_price} ج.م</td>
                       </tr>
                     );
                   })}

@@ -31,7 +31,7 @@ export default function CreateProduct() {
       barcode: '',
       quantity: 0,
       purchase_price: 0,
-      selling_price: 0,
+      sale_price: 0,
       expiry_date: '',
     }
   });
@@ -97,7 +97,7 @@ export default function CreateProduct() {
         unit: 'علبة',
         quantity: data.quantity,
         purchase_price: data.purchase_price,
-        selling_price: data.selling_price,
+        sale_price: data.sale_price,
         unit_conversion: showUnitConversion ? data.unit_conversion : 1,
         pharmacy_id: localStorage.getItem('selected_pharmacy_id') || undefined,
       });
@@ -358,13 +358,13 @@ export default function CreateProduct() {
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register('selling_price')}
+                  {...register('sale_price')}
                   className={cn(
                     "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
-                    errors.selling_price ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    errors.sale_price ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
                   )}
                 />
-                {errors.selling_price && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.selling_price.message}</p>}
+                {errors.sale_price && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.sale_price.message}</p>}
               </div>
 
            </div>
