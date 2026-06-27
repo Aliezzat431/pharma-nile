@@ -93,7 +93,7 @@ export default function RegisterPage() {
             {
               name: newPharmacyName.trim(),
               address: newPharmacyAddress.trim() || null,
-              contact_phone: newPharmacyPhone.trim() || null,
+              phone: newPharmacyPhone.trim() || null,
               is_active: true
             }
           ])
