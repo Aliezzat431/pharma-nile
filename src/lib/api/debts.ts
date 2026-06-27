@@ -5,6 +5,8 @@ export interface Debtor {
   pharmacy_id: string;
   name: string;
   phone?: string;
+  email?: string;
+  address?: string;
   total_debt: number;
   created_at: string;
 }
@@ -19,14 +21,14 @@ export interface DebtPayment {
   note?: string;
 }
 
-
 export async function getDebtors(): Promise<Debtor[]> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) return [];
 
+  // Query customers table instead of hypothetical debtors table
   const { data, error } = await supabase
-    .from('debtors')
+    .from('customers')
     .select('*')
     .eq('pharmacy_id', pharmacyId)
     .order('name', { ascending: true });
@@ -36,9 +38,8 @@ export async function getDebtors(): Promise<Debtor[]> {
     throw error;
   }
 
-  return data || [];
+  return (data || []) as Debtor[];
 }
-
 
 export async function addDebtor(debtorData: Omit<Debtor, 'id' | 'total_debt' | 'created_at' | 'pharmacy_id'>): Promise<Debtor> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -52,14 +53,16 @@ export async function addDebtor(debtorData: Omit<Debtor, 'id' | 'total_debt' | '
     throw new Error('Validation Error: Malicious characters detected.');
   }
 
+  // Insert into customers table instead of hypothetical debtors table
+  // Do not include loyalty_points (non-existent db column)
   const { data, error } = await supabase
-    .from('debtors')
+    .from('customers')
     .insert([
       {
         name: trimmedName,
         phone: debtorData.phone?.trim(),
         pharmacy_id: pharmacyId,
-        total_debt: 0, // يبدأ الحساب بصفر حتى تتم عملية بيع آجل
+        total_debt: 0, // Starts at 0
       },
     ])
     .select()
@@ -70,9 +73,8 @@ export async function addDebtor(debtorData: Omit<Debtor, 'id' | 'total_debt' | '
     throw error;
   }
 
-  return data;
+  return data as Debtor;
 }
-
 
 export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_date' | 'pharmacy_id'>): Promise<DebtPayment> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -105,30 +107,25 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
     throw paymentError;
   }
 
-  const { error: debtorError } = await supabase.rpc('update_debtor_balance', {
-    target_debtor_id: payment.debtor_id,
-    payment_amount: payment.amount,
-  });
+  // Directly update the customer's outstanding balance in customers table (avoiding non-existent update_debtor_balance RPC)
+  const { data: debtor } = await supabase
+    .from('customers')
+    .select('total_debt')
+    .eq('id', payment.debtor_id)
+    .eq('pharmacy_id', pharmacyId)
+    .single();
 
-  if (debtorError) {
-    const { data: debtor } = await supabase
-      .from('debtors')
-      .select('total_debt')
+  if (debtor) {
+    const newDebt = Math.max(0, debtor.total_debt - payment.amount);
+    
+    await supabase
+      .from('customers')
+      .update({ total_debt: newDebt })
       .eq('id', payment.debtor_id)
-      .eq('pharmacy_id', pharmacyId)
-      .single();
-
-    if (debtor) {
-      const newDebt = Math.max(0, debtor.total_debt - payment.amount);
-      
-      await supabase
-        .from('debtors')
-        .update({ total_debt: newDebt })
-        .eq('id', payment.debtor_id)
-        .eq('pharmacy_id', pharmacyId);
-    }
+      .eq('pharmacy_id', pharmacyId);
   }
 
+  // Record a pharmacy financial transaction for bookkeeping
   await supabase
     .from('financial_transactions')
     .insert([
@@ -144,7 +141,6 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
   return paymentData as DebtPayment;
 }
 
-
 export async function getPaymentHistory(debtorId: string): Promise<DebtPayment[]> {
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -154,7 +150,7 @@ export async function getPaymentHistory(debtorId: string): Promise<DebtPayment[]
     .from('debt_payments')
     .select('*')
     .eq('debtor_id', debtorId)
-    .eq('pharmacy_id', pharmacyId) // طبقة حماية إضافية لمنع القراءة المتقاطعة
+    .eq('pharmacy_id', pharmacyId)
     .order('payment_date', { ascending: false });
 
   if (error) {
@@ -170,8 +166,9 @@ export async function getDebtorDetails(id: string) {
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) return null;
 
+  // Fetch from customers table instead of hypothetical debtors table
   const { data, error } = await supabase
-    .from('debtors')
+    .from('customers')
     .select('*, debt_payments(*)')
     .eq('id', id)
     .eq('pharmacy_id', pharmacyId)
@@ -183,4 +180,3 @@ export async function getDebtorDetails(id: string) {
   }
   return data;
 }
-

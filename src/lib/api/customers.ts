@@ -51,9 +51,10 @@ export async function addCustomer(customer: Omit<Customer, 'id' | 'total_debt' |
     throw new Error('Validation Error: Malicious characters detected.');
   }
 
+  // Remove loyalty_points: 0 since the column does not exist in database
   const { data, error } = await supabase
     .from('customers')
-    .insert([{ ...customer, name: trimmedName, phone: customer.phone?.trim(), total_debt: 0, loyalty_points: 0, pharmacy_id: pharmacyId }])
+    .insert([{ ...customer, name: trimmedName, phone: customer.phone?.trim(), total_debt: 0, pharmacy_id: pharmacyId }])
     .select()
     .single();
 
@@ -69,9 +70,12 @@ export async function updateCustomer(id: string, updates: Partial<Customer>) {
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error("Unauthorized Tenant");
 
+  // Protect against non-existent loyalty_points database column
+  const { loyalty_points, ...cleanUpdates } = updates;
+
   const { data, error } = await supabase
     .from('customers')
-    .update(updates)
+    .update(cleanUpdates)
     .eq('id', id)
     .eq('pharmacy_id', pharmacyId)
     .select()
@@ -115,9 +119,16 @@ export async function recordCustomerPayment(payment: Omit<CustomerPayment, 'id' 
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error("Unauthorized Tenant");
 
+  // Map customer_id to debtor_id because database has debtor_id column
   const { data: paymentData, error: paymentError } = await supabase
     .from('debt_payments')
-    .insert([{ ...payment, pharmacy_id: pharmacyId }])
+    .insert([{ 
+      pharmacy_id: pharmacyId,
+      debtor_id: payment.customer_id,
+      amount: payment.amount,
+      payment_type: payment.payment_type,
+      note: payment.note
+    }])
     .select()
     .single();
 
@@ -141,6 +152,13 @@ export async function recordCustomerPayment(payment: Omit<CustomerPayment, 'id' 
       .eq('pharmacy_id', pharmacyId);
   }
 
-  return paymentData as CustomerPayment;
+  return {
+    id: paymentData.id,
+    customer_id: paymentData.debtor_id,
+    amount: paymentData.amount,
+    payment_date: paymentData.payment_date || paymentData.created_at,
+    payment_type: paymentData.payment_type,
+    note: paymentData.note
+  } as CustomerPayment;
 }
 

@@ -31,21 +31,105 @@ import { ShortcutSettings } from './components/ShortcutSettings';
 import { DatabaseSettings } from './components/DatabaseSettings';
 import { AboutSettings } from './components/AboutSettings';
 import { usePreferences } from '@/hooks/usePreferences';
+import { Star } from 'lucide-react';
+import { Sunset } from 'lucide-react';
 
 type Tab = 'general' | 'notifications' | 'appearance' | 'shortcuts' | 'database' | 'about';
 
 const ALL_THEMES = [
-  { id: "dark", label: "الوضع الليلي (الافتراضي)", icon: Moon, desc: "الوضع الكلاسيكي الفخم للنظام", color: "bg-[#050505]" },
-  { id: "light", label: "الوضع النهاري", icon: Sun, desc: "وضوح عالي للعمل تحت الإضاءة القوية", color: "bg-[#f8fafc]" },
-  { id: "midnight", label: "منتصف الليل", icon: Waves, desc: "أزرق عميق يجمع بين الهدوء والأناقة", color: "bg-[#020612]" },
-  { id: "ocean", label: "أعماق المحيط", icon: Waves, desc: "سيان مشرق وطاقة لا تنتهي", color: "bg-[#010b14]" },
-  { id: "forest", label: "الغابة العميقة", icon: Trees, desc: "أخضر طبيعي مريح جدًا للعين", color: "bg-[#040d0a]" },
-  { id: "coffee", label: "وضع القهوة", icon: Coffee, desc: "ألوان ترابية دافئة تركز على التفاصيل", color: "bg-[#140d0b]" },
-  { id: "amethyst", label: "الجمشت الملكي", icon: Sparkles, desc: "بنفسجي فاخر يعكس هوية بريميوم", color: "bg-[#0d0b1a]" },
-  { id: "sunset", label: "وقت الغروب", icon: Zap, desc: "مزيج دافئ من البرتقالي والأحمر", color: "bg-[#140806]" },
-  { id: "cyberpunk", label: "سايبر بانك", icon: Zap, desc: "تباين عالي وألوان نيون مستقبلية", color: "bg-[#000000]" },
-  { id: "dracula", label: "دراكولا", icon: Ghost, desc: "ألوان ناعمة ومريحة لساعات العمل الطويلة", color: "bg-[#1e1f29]" },
-  { id: "snowy", label: "وضوح الثلج", icon: CloudSnow, desc: "أبيض ناصع مع لمسات جليدية نقية", color: "bg-[#f8fafc]" },
+  // ── الأساسية ──────────────────────────────
+  { 
+    id: "dark", 
+    label: "الوضع الليلي", 
+    icon: Moon, 
+    desc: "الوضع الافتراضي المريح للعين", 
+    color: "bg-[#050505]",
+    category: "basic"
+  },
+  { 
+    id: "light", 
+    label: "الوضع النهاري", 
+    icon: Sun, 
+    desc: "وضوح عالي للإضاءة القوية", 
+    color: "bg-[#f8fafc]",
+    category: "basic"
+  },
+
+  // ─── الهادئة للعمل الطويل ──────────────────
+  { 
+    id: "midnight", 
+    label: "منتصف الليل", 
+    icon: Star, 
+    desc: "أزرق عميق يجمع بين الهدوء والأناقة", 
+    color: "bg-[#020612]",
+    category: "calm"
+  },
+  { 
+    id: "forest", 
+    label: "الغابة العميقة", 
+    icon: Trees, 
+    desc: "أخضر طبيعي مريح جداً للعين", 
+    color: "bg-[#040d0a]",
+    category: "calm"
+  },
+  { 
+    id: "coffee", 
+    label: "وضع القهوة", 
+    icon: Coffee, 
+    desc: "ألوان ترابية دافئة للتركيز", 
+    color: "bg-[#140d0b]",
+    category: "calm"
+  },
+  { 
+    id: "dracula", 
+    label: "دراكولا", 
+    icon: Ghost, 
+    desc: "ناعم ومريح لساعات العمل الطويلة", 
+    color: "bg-[#1e1f29]",
+    category: "calm"
+  },
+
+  // ─── المميزة والطاقة ───────────────────────
+  { 
+    id: "ocean", 
+    label: "أعماق المحيط", 
+    icon: Waves, 
+    desc: "سيان مشرق وطاقة لا تنتهي", 
+    color: "bg-[#010b14]",
+    category: "vibrant"
+  },
+  { 
+    id: "amethyst", 
+    label: "الجمشت الملكي", 
+    icon: Sparkles, 
+    desc: "بنفسجي فاخر يعكس هوية بريميوم", 
+    color: "bg-[#0d0b1a]",
+    category: "vibrant"
+  },
+  { 
+    id: "sunset", 
+    label: "وقت الغروب", 
+    icon: Sunset, 
+    desc: "مزيج دافئ من البرتقالي والأحمر", 
+    color: "bg-[#140806]",
+    category: "vibrant"
+  },
+  { 
+    id: "cyberpunk", 
+    label: "سايبر بانك", 
+    icon: Zap, 
+    desc: "تباين عالي وألوان نيون مستقبلية", 
+    color: "bg-[#000000]",
+    category: "vibrant"
+  },
+  { 
+    id: "snowy", 
+    label: "وضوح الثلج", 
+    icon: CloudSnow, 
+    desc: "أبيض ناصع مع لمسات جليدية نقية", 
+    color: "bg-[#f8fafc]",
+    category: "vibrant"
+  },
 ];
 
 export default function Settings() {

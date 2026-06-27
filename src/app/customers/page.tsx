@@ -299,7 +299,7 @@ export default function CustomersPage() {
                     <div className="text-left h-auto py-1">
                       <p className="text-xs text-gray-500 font-cairo mb-1 uppercase">نقاط الولاء</p>
                       <p className="text-lg font-bold text-[#D4AF37] leading-tight">
-                        {customer.loyalty_points} <span className="text-[10px] font-normal">نقطة</span>
+                        {customer.loyalty_points || 0} <span className="text-[10px] font-normal">نقطة</span>
                       </p>
                     </div>
                   </div>
