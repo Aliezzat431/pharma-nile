@@ -49,6 +49,7 @@ const ALL_THEMES = [
 ];
 
 export default function Settings() {
+  const { preferences, updateMultiplePreferences, isLoaded, refresh } = usePreferences();
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -82,22 +83,27 @@ export default function Settings() {
         
         <div className="flex items-center gap-3">
           <button
-            onClick={() => {
-              // The changes are already sync'd via updatePreference, 
-              // but we show a success feedback to wOW the user.
+            onClick={async () => {
               const btn = document.getElementById('save-settings-btn');
               if (btn) {
                 btn.innerHTML = '<svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري الحفظ...';
-                setTimeout(() => {
-                  btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> تم الحفظ بنجاح';
+                
+                try {
+                  // Force a re-fetch to confirm it's actually in the DB
+                  await refresh();
+                  
+                  btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> تم الحفظ والتحقق';
                   btn.classList.remove('bg-[#00CED1]/20', 'text-[#00CED1]');
                   btn.classList.add('bg-green-500/20', 'text-green-400');
+                  
                   setTimeout(() => {
                     btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> حفظ كافة التغييرات';
                     btn.classList.remove('bg-green-500/20', 'text-green-400');
                     btn.classList.add('bg-[#00CED1]/20', 'text-[#00CED1]');
                   }, 2000);
-                }, 800);
+                } catch (err) {
+                  btn.innerHTML = 'خطأ في الحفظ';
+                }
               }
             }}
             id="save-settings-btn"

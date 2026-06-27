@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -30,19 +30,29 @@ export const defaultPreferences: SystemPreferences = {
   expiryAlerts: false
 };
 
-const mapDbToPrefs = (data: any): SystemPreferences => ({
-  pharmacyName: data.pharmacy_name ?? defaultPreferences.pharmacyName,
-  email: data.email ?? defaultPreferences.email,
-  phone: data.phone ?? defaultPreferences.phone,
-  address: data.address ?? defaultPreferences.address,
-  inventoryMethod: (data.inventory_method as any) ?? defaultPreferences.inventoryMethod,
-  stockAlertThreshold: data.stock_alert_threshold ?? defaultPreferences.stockAlertThreshold,
-  taxPercentage: data.tax_percentage ?? defaultPreferences.taxPercentage,
-  printerSize: (data.printer_size as any) ?? defaultPreferences.printerSize,
-  returnDaysLimit: data.return_days_limit ?? defaultPreferences.returnDaysLimit,
-  emailReports: data.email_reports ?? defaultPreferences.emailReports,
-  expiryAlerts: data.expiry_alerts ?? defaultPreferences.expiryAlerts,
-});
+const mapDbToPrefs = (data: any): SystemPreferences => {
+  // CRITICAL: Numeric values from Postgres can arrive as strings. 
+  // We MUST parse them to numbers, ensuring 0 is treated correctly.
+  return {
+    pharmacyName: data.pharmacy_name ?? defaultPreferences.pharmacyName,
+    email: data.email ?? defaultPreferences.email,
+    phone: data.phone ?? defaultPreferences.phone,
+    address: data.address ?? defaultPreferences.address,
+    inventoryMethod: (data.inventory_method as any) ?? defaultPreferences.inventoryMethod,
+    stockAlertThreshold: data.stock_alert_threshold !== null && data.stock_alert_threshold !== undefined 
+      ? Number(data.stock_alert_threshold) 
+      : defaultPreferences.stockAlertThreshold,
+    taxPercentage: data.tax_percentage !== null && data.tax_percentage !== undefined 
+      ? Number(data.tax_percentage) 
+      : defaultPreferences.taxPercentage,
+    printerSize: (data.printer_size as any) ?? defaultPreferences.printerSize,
+    returnDaysLimit: data.return_days_limit !== null && data.return_days_limit !== undefined 
+      ? Number(data.return_days_limit) 
+      : defaultPreferences.returnDaysLimit,
+    emailReports: data.email_reports ?? defaultPreferences.emailReports,
+    expiryAlerts: data.expiry_alerts ?? defaultPreferences.expiryAlerts,
+  };
+};
 
 const mapPrefsToDb = (prefs: Partial<SystemPreferences>) => {
   const db: any = {};
@@ -66,58 +76,85 @@ export function usePreferences() {
   const [preferences, setPreferences] = useState<SystemPreferences>(defaultPreferences);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const fetchPrefs = useCallback(async () => {
+    if (!pharmacyId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('pharmacy_settings')
+        .select('*')
+        .eq('pharmacy_id', pharmacyId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        const mapped = mapDbToPrefs(data);
+        console.log('[Preferences] Loaded from DB:', mapped);
+        setPreferences(mapped);
+      } else {
+        // No settings found, initialize them
+        console.log('[Preferences] No settings found, initializing...');
+        const initialData = { 
+          pharmacy_id: pharmacyId, 
+          pharmacy_name: user?.user_metadata?.pharmacy_name || defaultPreferences.pharmacyName 
+        };
+        const { data: newData, error: insertError } = await supabase
+          .from('pharmacy_settings')
+          .insert([initialData])
+          .select()
+          .single();
+        
+        if (!insertError && newData) {
+          setPreferences(mapDbToPrefs(newData));
+        }
+      }
+    } catch (e) {
+      console.error('[Preferences] Error fetching:', e);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, [pharmacyId, user]);
+
   useEffect(() => {
     if (!pharmacyId) {
-      // If not logged in, try local storage fallback or just use defaults
       const stored = localStorage.getItem('pharma-preferences');
       if (stored) {
-        setPreferences({ ...defaultPreferences, ...JSON.parse(stored) });
+        try {
+          const parsed = JSON.parse(stored);
+          setPreferences(prev => ({ ...prev, ...parsed }));
+        } catch (e) {
+          console.error('[Preferences] Local storage parse error');
+        }
       }
-      setIsLoaded(true);
-      return;
+      // If auth is taking too long, we still mark as loaded so the UI doesn't hang
+      const timeout = setTimeout(() => setIsLoaded(true), 1500);
+      return () => clearTimeout(timeout);
     }
 
-    const fetchPrefs = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('pharmacy_settings')
-          .select('*')
-          .eq('pharmacy_id', pharmacyId)
-          .maybeSingle();
-
-        if (data) {
-          setPreferences(mapDbToPrefs(data));
-        } else if (!error) {
-          // If no settings exist yet for this pharmacy, create them
-          await supabase.from('pharmacy_settings').insert([{ pharmacy_id: pharmacyId, pharmacy_name: user?.user_metadata?.pharmacy_name || 'صيدليتي' }]);
-        }
-      } catch (e) {
-        console.error('Failed to load preferences from DB', e);
-      } finally {
-        setIsLoaded(true);
-      }
-    };
-
     fetchPrefs();
-  }, [pharmacyId]);
+  }, [pharmacyId, fetchPrefs]);
 
   const updatePreference = async <K extends keyof SystemPreferences>(key: K, value: SystemPreferences[K]) => {
-    // Update local state immediately
+    // Update local state immediately for snappy UI
     setPreferences(prev => {
       const updated = { ...prev, [key]: value };
       localStorage.setItem('pharma-preferences', JSON.stringify(updated));
       return updated;
     });
 
-    // Sync to DB if available
     if (pharmacyId) {
       try {
         const dbUpdate = mapPrefsToDb({ [key]: value });
-        await supabase
+        console.log(`[Preferences] Syncing ${key} = ${value} to DB...`);
+        const { error } = await supabase
           .from('pharmacy_settings')
           .upsert({ pharmacy_id: pharmacyId, ...dbUpdate });
+        
+        if (error) throw error;
+        console.log(`[Preferences] ${key} synced successfully.`);
       } catch (e) {
-        console.error('Failed to update preference in DB', e);
+        console.error(`[Preferences] Failed to sync ${key}:`, e);
       }
     }
   };
@@ -132,14 +169,16 @@ export function usePreferences() {
     if (pharmacyId) {
       try {
         const dbUpdate = mapPrefsToDb(newPrefsPartial);
-        await supabase
+        const { error } = await supabase
           .from('pharmacy_settings')
           .upsert({ pharmacy_id: pharmacyId, ...dbUpdate });
+        
+        if (error) throw error;
       } catch (e) {
-        console.error('Failed to update multiple preferences in DB', e);
+        console.error('[Preferences] Bulk sync failed:', e);
       }
     }
   };
 
-  return { preferences, updatePreference, updateMultiplePreferences, isLoaded };
+  return { preferences, updatePreference, updateMultiplePreferences, isLoaded, refresh: fetchPrefs };
 }
