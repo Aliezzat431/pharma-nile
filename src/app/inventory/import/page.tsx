@@ -32,6 +32,7 @@ interface ParsedItem {
 
 export default function ImportInventoryPage() {
   const [items, setItems] = useState<ParsedItem[]>([]);
+  const [category, setCategory] = useState('مستحضرات');
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -42,27 +43,36 @@ export default function ImportInventoryPage() {
   const parseFile = async (file: File) => {
     setIsParsing(true);
     const text = await file.text();
-    const lines = text.split('\n');
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 3) {
+      setItems([]);
+      setIsParsing(false);
+      return;
+    }
+
+    const categoryName = lines[0]; // Line 1: e.g., "مستحضرات"
+    setCategory(categoryName);
     const parsed: ParsedItem[] = [];
 
-    // Skip first two header lines based on user format
-    // Line 0: مستحضرات
-    // Line 1: الاسم،الباركود،التاريخ،السعر
+    // Start from line 3 (index 2)
     for (let i = 2; i < lines.length; i++) {
-      let line = lines[i].trim();
-      if (!line) continue;
+      let line = lines[i];
+      // Remove leading/trailing commas or dots often found in such exports
+      line = line.replace(/^[،,]+|[،,]+$/g, '');
 
-      if (line.startsWith(',')) line = line.substring(1);
-
-      const parts = line.split(',').map(p => p.trim());
+      // Split by Arabic comma (،) or English comma (,)
+      const parts = line.split(/[،,]/).map(p => p.trim());
+      
       if (parts.length >= 4) {
         const salePrice = parseFloat(parts[3]);
+        if (isNaN(salePrice)) continue;
+
         parsed.push({
           name: parts[0],
           barcode: parts[1],
           expiry: parts[2],
           sale_price: salePrice,
-          purchase_price: Number((salePrice * 0.8).toFixed(2)), // 20% margin as requested
+          purchase_price: Number((salePrice * 0.8).toFixed(2)),
           company: parts[4] || 'غير محدد',
           status: 'pending'
         });
@@ -109,7 +119,7 @@ export default function ImportInventoryPage() {
         const item = items[i];
         try {
             // 1. Upsert Product
-            const { data: product, error: pError } = await supabase
+            const { data: products, error: pError } = await supabase
                 .from('products')
                 .upsert({
                     pharmacy_id: pharmacyId,
@@ -117,22 +127,27 @@ export default function ImportInventoryPage() {
                     barcode: item.barcode,
                     company_name: item.company,
                     price: item.sale_price,
-                    category: 'مستحضرات'
-                }, { onConflict: 'pharmacy_id,barcode' }) // Assumes barcode uniqueness per pharmacy
-                .select()
-                .single();
+                    category: category
+                }, { onConflict: 'pharmacy_id,barcode' })
+                .select();
 
-            if (pError) throw pError;
+            if (pError) throw new Error(`Product error: ${pError.message}`);
+            if (!products || products.length === 0) throw new Error('Failed to upsert product');
+            
+            const product = products[0];
 
             // 2. Add Batch
-            // Convert expiry from DD/MM/YYYY or MM/YYYY to YYYY-MM-DD
             let formattedExpiry = item.expiry;
-            const dateParts = item.expiry.split('/');
+            const dateParts = item.expiry.split(/[\/\-.]/); // Support /, -, .
             if (dateParts.length === 3) {
-                formattedExpiry = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                const day = dateParts[0].padStart(2, '0');
+                const month = dateParts[1].padStart(2, '0');
+                const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
+                formattedExpiry = `${year}-${month}-${day}`;
             } else if (dateParts.length === 2) {
+                const month = dateParts[0].padStart(2, '0');
                 const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
-                formattedExpiry = `${year}-${dateParts[0].padStart(2, '0')}-01`;
+                formattedExpiry = `${year}-${month}-01`;
             }
 
             const { error: bError } = await supabase
@@ -141,14 +156,14 @@ export default function ImportInventoryPage() {
                     product_id: product.id,
                     pharmacy_id: pharmacyId,
                     barcode: item.barcode,
-                    batch_number: `IMP-${Date.now().toString().slice(-4)}`,
-                    quantity: 2, // As requested
+                    batch_number: `IMP-${Math.random().toString(36).substring(7).toUpperCase()}`,
+                    quantity: 2,
                     expiry_date: formattedExpiry,
                     purchase_price: item.purchase_price,
                     sale_price: item.sale_price
                 });
 
-            if (bError) throw bError;
+            if (bError) throw new Error(`Batch error: ${bError.message}`);
 
             setItems(prev => prev.map((it, idx) => idx === i ? { ...it, status: 'success' } : it));
         } catch (err: any) {
@@ -170,9 +185,12 @@ export default function ImportInventoryPage() {
     { 
       header: 'الحالة', 
       accessor: (it: ParsedItem) => (
-        <span className={it.status === 'success' ? 'text-green-400' : it.status === 'error' ? 'text-red-400' : 'text-gray-400'}>
-          {it.status === 'success' ? 'تم' : it.status === 'error' ? 'خطأ' : 'منتظر'}
-        </span>
+        <div className="flex flex-col">
+          <span className={it.status === 'success' ? 'text-green-400' : it.status === 'error' ? 'text-red-400' : 'text-gray-400'}>
+            {it.status === 'success' ? 'تم بنجاح' : it.status === 'error' ? 'خطأ في الإدخال' : 'بانتظار البدء'}
+          </span>
+          {it.error && <span className="text-[10px] text-red-500/80 max-w-[150px] truncate">{it.error}</span>}
+        </div>
       ) 
     }
   ];

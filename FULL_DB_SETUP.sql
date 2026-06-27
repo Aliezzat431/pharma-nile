@@ -105,7 +105,8 @@ CREATE TABLE products (
   company_name text,
   category text,
   price numeric DEFAULT 0,
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(pharmacy_id, barcode)
 );
 
 -- Batches
@@ -286,7 +287,6 @@ CREATE INDEX idx_order_items_pharmacy_product ON order_items (pharmacy_id, produ
 CREATE INDEX idx_batches_product_pharmacy_qty ON batches (product_id, pharmacy_id, quantity DESC);
 CREATE INDEX idx_batches_pharmacy_expiry ON batches (pharmacy_id, expiry_date ASC) WHERE quantity > 0;
 CREATE INDEX idx_products_pharmacy_name ON products (pharmacy_id, name);
-CREATE UNIQUE INDEX idx_products_pharmacy_barcode ON products (pharmacy_id, barcode);
 CREATE INDEX idx_products_name_trgm ON products USING gin (name gin_trgm_ops);
 CREATE INDEX idx_monthly_summaries_pharmacy_year_month ON monthly_summaries (pharmacy_id, year DESC, month DESC);
 CREATE INDEX idx_snapshots_pharmacy_product_date ON inventory_snapshots (pharmacy_id, product_id, snapshot_date DESC);
