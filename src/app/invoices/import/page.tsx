@@ -173,6 +173,23 @@ export default function InvoiceImportPage() {
     setSaving(true);
     let saved = 0;
 
+    const parseDate = (input: string) => {
+      if (!input) return '';
+      const parts = input.split(/[\/\-.]/).map(p => p.trim());
+      if (parts.length === 3) {
+        const d = parts[0].padStart(2, '0');
+        const m = parts[1].padStart(2, '0');
+        const y = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+        return `${y}-${m}-${d}`;
+      }
+      if (parts.length === 2) {
+        const m = parts[0].padStart(2, '0');
+        const y = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
+        return `${y}-${m}-15`;
+      }
+      return input;
+    };
+
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (!item._checked || item._status !== 'pending') continue;
@@ -186,7 +203,7 @@ export default function InvoiceImportPage() {
         const finalPublicPrice = Number(item.public_price) || 0;
         const finalPurchasePrice = Number(item.purchase_price) || 0;
 
-        let finalExpiry = item.expiry_date;
+        let finalExpiry = parseDate(item.expiry_date);
         if (!finalExpiry || finalExpiry === 'Unknown' || isNaN(Date.parse(finalExpiry))) {
           finalExpiry = new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString().split('T')[0];
         }
@@ -599,11 +616,12 @@ export default function InvoiceImportPage() {
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">تاريخ الانتهاء</label>
                             <input
-                              type="date"
+                              type="text"
                               value={item.expiry_date}
                               disabled={item._status !== 'pending'}
                               onChange={e => updateItem(idx, 'expiry_date', e.target.value)}
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
+                              placeholder="MM/YYYY"
                             />
                           </div>
                         </div>
@@ -881,11 +899,12 @@ function ItemsPanel({
                     <div>
                       <span className="text-[9px] text-gray-500 font-cairo block">الصلاحية</span>
                       <input
-                        type="date"
+                        type="text"
                         value={item.expiry_date}
                         onChange={e => onUpdateItem(idx, 'expiry_date', e.target.value)}
                         disabled={item._status === 'saved'}
                         className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-[11px] text-white"
+                        placeholder="MM/YYYY"
                       />
                     </div>
                   </div>

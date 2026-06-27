@@ -82,6 +82,23 @@ function InventoryBatchPanel({
     expiry_date: '',
   });
 
+  const parseDate = (input: string) => {
+    if (!input) return '';
+    const parts = input.split(/[\/\-.]/).map(p => p.trim());
+    if (parts.length === 3) {
+      const d = parts[0].padStart(2, '0');
+      const m = parts[1].padStart(2, '0');
+      const y = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+      return `${y}-${m}-${d}`;
+    }
+    if (parts.length === 2) {
+      const m = parts[0].padStart(2, '0');
+      const y = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
+      return `${y}-${m}-15`;
+    }
+    return input; // Fallback
+  };
+
   const handleAddBatch = async () => {
     try {
       if (!newBatch.quantity || !newBatch.expiry_date || !newBatch.purchase_price || !newBatch.sale_price) {
@@ -92,6 +109,7 @@ function InventoryBatchPanel({
       await createBatch({
         product_id: item.id,
         ...newBatch,
+        expiry_date: parseDate(newBatch.expiry_date),
       });
 
       setShowAddForm(false);
@@ -119,7 +137,7 @@ function InventoryBatchPanel({
         quantity: editingBatch.quantity,
         purchase_price: editingBatch.purchase_price,
         sale_price: editingBatch.sale_price,
-        expiry_date: editingBatch.expiry_date
+        expiry_date: parseDate(editingBatch.expiry_date)
       });
       setEditingBatch(null);
       fetchInventory();
@@ -215,10 +233,11 @@ function InventoryBatchPanel({
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input
-                    type="date"
+                    type="text"
                     value={newBatch.expiry_date}
                     onChange={(e) => setNewBatch({ ...newBatch, expiry_date: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all [color-scheme:dark]"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                    placeholder="DD/MM/YYYY أو MM/YYYY"
                   />
                 </div>
               </div>

@@ -53,6 +53,23 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
   const [newBatchForm, setNewBatchForm] = useState<BatchFormInput>(initialFormState);
   const [isAddingMode, setIsAddingMode] = useState(false);
 
+  const parseDate = (input: string) => {
+    if (!input) return '';
+    const parts = input.split(/[\/\-.]/).map(p => p.trim());
+    if (parts.length === 3) {
+      const d = parts[0].padStart(2, '0');
+      const m = parts[1].padStart(2, '0');
+      const y = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+      return `${y}-${m}-${d}`;
+    }
+    if (parts.length === 2) {
+      const m = parts[0].padStart(2, '0');
+      const y = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
+      return `${y}-${m}-15`;
+    }
+    return input;
+  };
+
   const validateForm = (form: BatchFormInput, checkExpiry = false): boolean => {
     const q = Number(form.quantity);
     const p = Number(form.purchase_price);
@@ -99,6 +116,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
         purchase_price: Number(editForm.purchase_price),
         sale_price: Number(editForm.sale_price),
         barcode: editForm.barcode.trim(),
+        expiry_date: parseDate(editForm.expiry_date)
       });
       setEditingBatchId(null);
       await fetchInventory();
@@ -125,7 +143,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
         quantity: Number(newBatchForm.quantity),
         purchase_price: Number(newBatchForm.purchase_price),
         sale_price: Number(newBatchForm.sale_price),
-        expiry_date: newBatchForm.expiry_date,
+        expiry_date: parseDate(newBatchForm.expiry_date),
       });
       setIsAddingMode(false);
       await fetchInventory();
@@ -187,10 +205,11 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
               <div>
                 <label className="text-[10px] text-gray-400 block mb-1 font-cairo">تاريخ الانتهاء</label>
                 <input 
-                  type="date"
-                  className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1] [color-scheme:dark]"
+                  type="text"
+                  className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
                   value={newBatchForm.expiry_date}
                   onChange={(e) => setNewBatchForm({...newBatchForm, expiry_date: e.target.value})}
+                  placeholder="MM/YYYY أو DD/MM/YYYY"
                 />
               </div>
               <div className="flex gap-2 justify-end pt-2">
@@ -263,6 +282,16 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                     />
                   </div>
                 </div>
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-500 block mb-1 font-cairo">تاريخ الانتهاء</label>
+                  <input 
+                    type="text"
+                    className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                    value={editForm.expiry_date}
+                    onChange={(e) => setEditForm({...editForm, expiry_date: e.target.value})}
+                    placeholder="MM/YYYY"
+                  />
+                </div>
                 <div className="flex gap-2 justify-end pt-2">
                   <button 
                     onClick={cancelEditing}
@@ -305,7 +334,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                     <div className="flex items-center gap-2 text-xs text-gray-500 font-cairo">
                       <Calendar className="w-3 h-3" />
                       <span>انتهاء:</span>
-                      <span dir="ltr">{new Date(batch.expiry_date).toLocaleDateString('ar-EG')}</span>
+                      <span dir="ltr">{new Date(batch.expiry_date).toLocaleDateString('ar-EG', { month: '2-digit', year: 'numeric' })}</span>
                     </div>
                   </div>
                   <div className="text-left flex gap-6">

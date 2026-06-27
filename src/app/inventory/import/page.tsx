@@ -119,16 +119,20 @@ export default function ImportInventoryPage() {
         // Format dates for Postgres
         const formattedItems = items.map(item => {
             let formattedExpiry = item.expiry;
-            const dateParts = item.expiry.split(/[\/\-.]/);
+            // Support /, -, . as separators
+            const dateParts = item.expiry.split(/[\/\-.]/).map(p => p.trim());
+            
             if (dateParts.length === 3) {
+                // Day, Month, Year (Standard)
                 const day = dateParts[0].padStart(2, '0');
                 const month = dateParts[1].padStart(2, '0');
                 const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
                 formattedExpiry = `${year}-${month}-${day}`;
             } else if (dateParts.length === 2) {
+                // Month, Year (Implicit Day 15 as requested)
                 const month = dateParts[0].padStart(2, '0');
                 const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
-                formattedExpiry = `${year}-${month}-01`;
+                formattedExpiry = `${year}-${month}-15`;
             }
             return {
                 ...item,

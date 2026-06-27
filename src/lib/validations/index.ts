@@ -45,7 +45,7 @@ export const productSchema = z.object({
   quantity: z.coerce.number().int().nonnegative("Quantity cannot be negative"),
   purchase_price: z.coerce.number().positive("Purchase price must be > 0"),
   sale_price: z.coerce.number().positive("Selling price must be > 0"),
-  expiry_date: z.string().min(1, "Expiry date is required"),
+  expiry_date: z.string().min(1, "التاريخ مطلوب (مثل 05/2027)"),
 });
 
 /**

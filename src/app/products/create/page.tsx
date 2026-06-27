@@ -84,6 +84,23 @@ export default function CreateProduct() {
     }
   };
 
+  const parseDate = (input: string) => {
+    if (!input) return '';
+    const parts = input.split(/[\/\-.]/).map(p => p.trim());
+    if (parts.length === 3) {
+      const d = parts[0].padStart(2, '0');
+      const m = parts[1].padStart(2, '0');
+      const y = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+      return `${y}-${m}-${d}`;
+    }
+    if (parts.length === 2) {
+      const m = parts[0].padStart(2, '0');
+      const y = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
+      return `${y}-${m}-15`;
+    }
+    return input;
+  };
+
   const onSubmit = async (data: ProductFormValues) => {
     setLoading(true);
     try {
@@ -93,7 +110,7 @@ export default function CreateProduct() {
         company: data.company || '',
         inventory_method: 'FEFO',
         barcode: data.barcode,
-        expiry_date: data.expiry_date,
+        expiry_date: parseDate(data.expiry_date),
         unit: 'علبة',
         quantity: data.quantity,
         purchase_price: data.purchase_price,
@@ -309,12 +326,13 @@ export default function CreateProduct() {
                   <Calendar className="w-4 h-4" /> تاريخ الانتهاء <span className="text-red-400">*</span>
                 </label>
                 <input 
-                  type="date"
+                  type="text"
                   {...register('expiry_date')}
                   className={cn(
-                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors [color-scheme:dark] font-cairo",
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
                     errors.expiry_date ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
                   )}
+                  placeholder="مثال: 05/2027 أو 15/05/2027"
                 />
                 {errors.expiry_date && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.expiry_date.message}</p>}
               </div>
