@@ -25,7 +25,7 @@ import { POSCartItem } from './components/POSCartItem';
 import { BatchDistributionModal } from './components/BatchDistributionModal';
 import { PillsConfirmModal } from './components/PillsConfirmModal';
 import { POSRecommendations } from './components/POSRecommendations';
-import { usePreferences } from '@/hooks/usePreferences';
+
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
 
@@ -35,7 +35,7 @@ export default function POSTerminal() {
 
   const dispatch = useAppDispatch();
   const { cart, total } = useAppSelector((state) => state.pos);
-  const { preferences } = usePreferences();
+
 
   const [searchInput, setSearchInput] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -742,29 +742,15 @@ export default function POSTerminal() {
               )}
             </AnimatePresence>
 
-            <div className="mb-4 space-y-2 border-b border-white/5 pb-4 font-cairo">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">المجموع الفرعي</span>
-                <span className="text-white">{total.toFixed(2)} ج.م</span>
-              </div>
-              {preferences?.taxPercentage > 0 && (
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500">الضريبة ({preferences?.taxPercentage}%)</span>
-                  <span className="text-white">{((total * preferences.taxPercentage) / 100).toFixed(2)} ج.م</span>
-                </div>
-              )}
-            </div>
-
             <div className="flex justify-between items-center mb-6 font-cairo">
               <span className="text-gray-400 text-lg">الإجمالي النهائي</span>
               <span className={`text-4xl font-bold ${paymentMethod === 'sadqah' ? 'text-[#FF69B4]' : 'text-[#D4AF37]'}`}>
-                {(total + (total * (preferences?.taxPercentage || 0)) / 100).toFixed(2)} ج.م
+                {total.toFixed(2)} ج.م
               </span>
             </div>
             <button
               onClick={() => {
-                const finalTotal = total + (total * (preferences?.taxPercentage || 0)) / 100;
-                handleCheckoutWithTotal(finalTotal);
+                handleCheckoutWithTotal(total);
               }}
               disabled={cart.length === 0 || isProcessing}
               className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 font-cairo

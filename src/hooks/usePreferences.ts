@@ -9,7 +9,6 @@ export interface SystemPreferences {
   address: string;
   inventoryMethod: 'FEFO' | 'FIFO' | 'LIFO';
   stockAlertThreshold: number;
-  taxPercentage: number;
   printerSize: '80mm' | '58mm' | 'A4';
   returnDaysLimit: number;
   emailReports: boolean;
@@ -23,7 +22,6 @@ export const defaultPreferences: SystemPreferences = {
   address: "القاهرة، مصر - شارع النيل، مبنى رقم ٤٥",
   inventoryMethod: 'FEFO',
   stockAlertThreshold: 20,
-  taxPercentage: 14,
   printerSize: '80mm',
   returnDaysLimit: 14,
   emailReports: true,
@@ -42,9 +40,6 @@ const mapDbToPrefs = (data: any): SystemPreferences => {
     stockAlertThreshold: data.stock_alert_threshold !== null && data.stock_alert_threshold !== undefined 
       ? Number(data.stock_alert_threshold) 
       : defaultPreferences.stockAlertThreshold,
-    taxPercentage: data.tax_percentage !== null && data.tax_percentage !== undefined 
-      ? Number(data.tax_percentage) 
-      : defaultPreferences.taxPercentage,
     printerSize: (data.printer_size as any) ?? defaultPreferences.printerSize,
     returnDaysLimit: data.return_days_limit !== null && data.return_days_limit !== undefined 
       ? Number(data.return_days_limit) 
@@ -62,7 +57,7 @@ const mapPrefsToDb = (prefs: Partial<SystemPreferences>) => {
   if (prefs.address !== undefined) db.address = prefs.address;
   if (prefs.inventoryMethod !== undefined) db.inventory_method = prefs.inventoryMethod;
   if (prefs.stockAlertThreshold !== undefined) db.stock_alert_threshold = prefs.stockAlertThreshold;
-  if (prefs.taxPercentage !== undefined) db.tax_percentage = prefs.taxPercentage;
+
   if (prefs.printerSize !== undefined) db.printer_size = prefs.printerSize;
   if (prefs.returnDaysLimit !== undefined) db.return_days_limit = prefs.returnDaysLimit;
   if (prefs.emailReports !== undefined) db.email_reports = prefs.emailReports;

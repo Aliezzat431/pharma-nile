@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { CreditCard, Percent, Printer } from 'lucide-react';
+import { CreditCard, Printer } from 'lucide-react';
 import { usePreferences } from '@/hooks/usePreferences';
 
 export function POSSettings() {
@@ -21,24 +21,6 @@ export function POSSettings() {
         </h2>
 
         <div className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors gap-4">
-            <div>
-              <h3 className="text-white font-medium font-cairo flex items-center gap-2"><Percent className="w-4 h-4 text-gray-400" /> نسبة ضريبة القيمة المضافة</h3>
-              <p className="text-sm text-gray-400 font-cairo mt-1">القيمة المئوية للضريبة ليتم احتسابها تلقائياً بالطباعة.</p>
-            </div>
-            <div className="relative w-full md:w-32">
-              <input 
-                type="number" 
-                value={preferences.taxPercentage} 
-                onChange={e => {
-                  const val = parseFloat(e.target.value);
-                  updatePreference('taxPercentage', isNaN(val) ? 0 : val);
-                }}
-                className="w-full bg-black/80 border border-white/10 rounded-lg pl-8 pr-4 py-2.5 text-white outline-none focus:border-[#00CED1] transition-colors" 
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
-            </div>
-          </div>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors gap-4">
             <div>
