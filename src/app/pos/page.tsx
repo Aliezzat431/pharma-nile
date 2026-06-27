@@ -367,6 +367,8 @@ export default function POSTerminal() {
       dispatch(clearCart());
       setPaymentMethod('cash');
       setSelectedCustomerId('');
+      setSearchInput('');
+      setSearchResults([]);
       setTimeout(() => setCheckoutSuccess(false), 3000);
     } catch (e) {
       console.error(e);
@@ -745,10 +747,12 @@ export default function POSTerminal() {
                 <span className="text-gray-500">المجموع الفرعي</span>
                 <span className="text-white">{total.toFixed(2)} ج.م</span>
               </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">الضريبة ({preferences?.taxPercentage || 0}%)</span>
-                <span className="text-white">{((total * (preferences?.taxPercentage || 0)) / 100).toFixed(2)} ج.م</span>
-              </div>
+              {preferences?.taxPercentage > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-500">الضريبة ({preferences?.taxPercentage}%)</span>
+                  <span className="text-white">{((total * preferences.taxPercentage) / 100).toFixed(2)} ج.م</span>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between items-center mb-6 font-cairo">
