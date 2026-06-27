@@ -115,8 +115,7 @@ export function usePreferences() {
         const dbUpdate = mapPrefsToDb({ [key]: value });
         await supabase
           .from('pharmacy_settings')
-          .update(dbUpdate)
-          .eq('pharmacy_id', pharmacyId);
+          .upsert({ pharmacy_id: pharmacyId, ...dbUpdate });
       } catch (e) {
         console.error('Failed to update preference in DB', e);
       }
@@ -135,8 +134,7 @@ export function usePreferences() {
         const dbUpdate = mapPrefsToDb(newPrefsPartial);
         await supabase
           .from('pharmacy_settings')
-          .update(dbUpdate)
-          .eq('pharmacy_id', pharmacyId);
+          .upsert({ pharmacy_id: pharmacyId, ...dbUpdate });
       } catch (e) {
         console.error('Failed to update multiple preferences in DB', e);
       }

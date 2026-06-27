@@ -64,7 +64,10 @@ export function POSSettings() {
             <input 
               type="number" 
               value={preferences.returnDaysLimit}
-              onChange={e => updatePreference('returnDaysLimit', parseInt(e.target.value) || 0)}
+              onChange={e => {
+                const val = parseInt(e.target.value);
+                updatePreference('returnDaysLimit', isNaN(val) ? 0 : val);
+              }}
               className="w-full md:w-32 bg-black/80 border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#00CED1] transition-colors" 
             />
           </div>
