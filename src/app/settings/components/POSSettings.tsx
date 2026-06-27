@@ -30,7 +30,10 @@ export function POSSettings() {
               <input 
                 type="number" 
                 value={preferences.taxPercentage} 
-                onChange={e => updatePreference('taxPercentage', parseFloat(e.target.value) || 0)}
+                onChange={e => {
+                  const val = parseFloat(e.target.value);
+                  updatePreference('taxPercentage', isNaN(val) ? 0 : val);
+                }}
                 className="w-full bg-black/80 border border-white/10 rounded-lg pl-8 pr-4 py-2.5 text-white outline-none focus:border-[#00CED1] transition-colors" 
               />
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>

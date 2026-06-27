@@ -31,14 +31,14 @@ export const defaultPreferences: SystemPreferences = {
 };
 
 const mapDbToPrefs = (data: any): SystemPreferences => ({
-  pharmacyName: data.pharmacy_name || defaultPreferences.pharmacyName,
-  email: data.email || defaultPreferences.email,
-  phone: data.phone || defaultPreferences.phone,
-  address: data.address || defaultPreferences.address,
-  inventoryMethod: (data.inventory_method as any) || defaultPreferences.inventoryMethod,
+  pharmacyName: data.pharmacy_name ?? defaultPreferences.pharmacyName,
+  email: data.email ?? defaultPreferences.email,
+  phone: data.phone ?? defaultPreferences.phone,
+  address: data.address ?? defaultPreferences.address,
+  inventoryMethod: (data.inventory_method as any) ?? defaultPreferences.inventoryMethod,
   stockAlertThreshold: data.stock_alert_threshold ?? defaultPreferences.stockAlertThreshold,
   taxPercentage: data.tax_percentage ?? defaultPreferences.taxPercentage,
-  printerSize: (data.printer_size as any) || defaultPreferences.printerSize,
+  printerSize: (data.printer_size as any) ?? defaultPreferences.printerSize,
   returnDaysLimit: data.return_days_limit ?? defaultPreferences.returnDaysLimit,
   emailReports: data.email_reports ?? defaultPreferences.emailReports,
   expiryAlerts: data.expiry_alerts ?? defaultPreferences.expiryAlerts,
@@ -103,8 +103,11 @@ export function usePreferences() {
 
   const updatePreference = async <K extends keyof SystemPreferences>(key: K, value: SystemPreferences[K]) => {
     // Update local state immediately
-    setPreferences(prev => ({ ...prev, [key]: value }));
-    localStorage.setItem('pharma-preferences', JSON.stringify({ ...preferences, [key]: value }));
+    setPreferences(prev => {
+      const updated = { ...prev, [key]: value };
+      localStorage.setItem('pharma-preferences', JSON.stringify(updated));
+      return updated;
+    });
 
     // Sync to DB if available
     if (pharmacyId) {
@@ -121,8 +124,11 @@ export function usePreferences() {
   };
   
   const updateMultiplePreferences = async (newPrefsPartial: Partial<SystemPreferences>) => {
-    setPreferences(prev => ({ ...prev, ...newPrefsPartial }));
-    localStorage.setItem('pharma-preferences', JSON.stringify({ ...preferences, ...newPrefsPartial }));
+    setPreferences(prev => {
+      const updated = { ...prev, ...newPrefsPartial };
+      localStorage.setItem('pharma-preferences', JSON.stringify(updated));
+      return updated;
+    });
 
     if (pharmacyId) {
       try {
