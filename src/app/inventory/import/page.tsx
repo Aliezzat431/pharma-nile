@@ -115,32 +115,11 @@ export default function ImportInventoryPage() {
 
     const pharmacyId = user.user_metadata.pharmacy_id;
 
-    for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        try {
-            // 1. Upsert Product
-            const { data: products, error: pError } = await supabase
-                .from('products')
-                .upsert({
-                    pharmacy_id: pharmacyId,
-                    name: item.name,
-                    barcode: item.barcode,
-                    company_name: item.company,
-                    price: item.sale_price,
-                    category: category,
-                    type: 'pack', // Sold as Box/Pack
-                    unit_conversion: 1 // No subdivision
-                }, { onConflict: 'pharmacy_id,barcode' })
-                .select();
-
-            if (pError) throw new Error(`Product error: ${pError.message}`);
-            if (!products || products.length === 0) throw new Error('Failed to upsert product');
-            
-            const product = products[0];
-
-            // 2. Add Batch
+    try {
+        // Format dates for Postgres
+        const formattedItems = items.map(item => {
             let formattedExpiry = item.expiry;
-            const dateParts = item.expiry.split(/[\/\-.]/); // Support /, -, .
+            const dateParts = item.expiry.split(/[\/\-.]/);
             if (dateParts.length === 3) {
                 const day = dateParts[0].padStart(2, '0');
                 const month = dateParts[1].padStart(2, '0');
@@ -151,31 +130,34 @@ export default function ImportInventoryPage() {
                 const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
                 formattedExpiry = `${year}-${month}-01`;
             }
+            return {
+                ...item,
+                expiry_date: formattedExpiry
+            };
+        });
 
-            const { error: bError } = await supabase
-                .from('batches')
-                .insert({
-                    product_id: product.id,
-                    pharmacy_id: pharmacyId,
-                    barcode: item.barcode,
-                    batch_number: `IMP-${Math.random().toString(36).substring(7).toUpperCase()}`,
-                    quantity: 2,
-                    expiry_date: formattedExpiry,
-                    purchase_price: item.purchase_price,
-                    sale_price: item.sale_price
-                });
+        // Call Atomic RPC
+        const { data, error } = await supabase.rpc('bulk_import_inventory', {
+            p_pharmacy_id: pharmacyId,
+            p_category: category,
+            p_items: formattedItems
+        });
 
-            if (bError) throw new Error(`Batch error: ${bError.message}`);
+        if (error) throw error;
 
-            setItems(prev => prev.map((it, idx) => idx === i ? { ...it, status: 'success' } : it));
-        } catch (err: any) {
-            console.error(err);
-            setItems(prev => prev.map((it, idx) => idx === i ? { ...it, status: 'error', error: err.message } : it));
-        }
-        setImportProgress(Math.round(((i + 1) / items.length) * 100));
+        // All succeeded
+        setItems(prev => prev.map(it => ({ ...it, status: 'success' })));
+        setImportProgress(100);
+        setTimeout(() => {
+            router.push('/inventory');
+        }, 1500);
+
+    } catch (err: any) {
+        console.error(err);
+        setItems(prev => prev.map(it => ({ ...it, status: 'error', error: err.message })));
+    } finally {
+        setIsImporting(false);
     }
-
-    setIsImporting(false);
   };
 
   const columns: any[] = [

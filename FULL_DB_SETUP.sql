@@ -512,4 +512,81 @@ GRANT EXECUTE ON FUNCTION smart_search TO authenticated;
 GRANT EXECUTE ON FUNCTION fast_checkout TO authenticated;
 GRANT EXECUTE ON FUNCTION get_dashboard_stats TO authenticated;
 
+-- Bulk Import Inventory (Atomic Transaction)
+CREATE OR REPLACE FUNCTION bulk_import_inventory(
+  p_pharmacy_id uuid,
+  p_category text,
+  p_items jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_item jsonb;
+  v_product_id uuid;
+  v_count int := 0;
+BEGIN
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+    -- 1. Upsert Product
+    INSERT INTO products (
+      pharmacy_id, 
+      name, 
+      barcode, 
+      company_name, 
+      price, 
+      category, 
+      type, 
+      unit_conversion
+    )
+    VALUES (
+      p_pharmacy_id,
+      v_item->>'name',
+      v_item->>'barcode',
+      v_item->>'company',
+      (v_item->>'sale_price')::numeric,
+      p_category,
+      'pack',
+      1
+    )
+    ON CONFLICT (pharmacy_id, barcode) DO UPDATE SET
+      name = EXCLUDED.name,
+      company_name = EXCLUDED.company_name,
+      price = EXCLUDED.price,
+      category = EXCLUDED.category
+    RETURNING id INTO v_product_id;
+
+    -- 2. Insert Batch
+    INSERT INTO batches (
+      product_id,
+      pharmacy_id,
+      barcode,
+      batch_number,
+      quantity,
+      expiry_date,
+      purchase_price,
+      sale_price
+    )
+    VALUES (
+      v_product_id,
+      p_pharmacy_id,
+      v_item->>'barcode',
+      'IMP-' || upper(substring(md5(random()::text), 1, 8)),
+      2,
+      (v_item->>'expiry_date')::date,
+      (v_item->>'purchase_price')::numeric,
+      (v_item->>'sale_price')::numeric
+    );
+
+    v_count := v_count + 1;
+  END LOOP;
+
+  RETURN jsonb_build_object('success', true, 'count', v_count);
+EXCEPTION WHEN OTHERS THEN
+  RAISE EXCEPTION 'Import failed: %', SQLERRM;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION bulk_import_inventory TO authenticated;
+
 -- DONE! 🚀
