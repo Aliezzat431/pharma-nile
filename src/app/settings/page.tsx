@@ -31,6 +31,7 @@ import { AppearanceSettings } from './components/AppearanceSettings';
 import { ShortcutSettings } from './components/ShortcutSettings';
 import { DatabaseSettings } from './components/DatabaseSettings';
 import { AboutSettings } from './components/AboutSettings';
+import { usePreferences } from '@/hooks/usePreferences';
 
 type Tab = 'general' | 'pos' | 'notifications' | 'appearance' | 'shortcuts' | 'database' | 'about';
 
