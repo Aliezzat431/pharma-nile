@@ -130,29 +130,31 @@ export default function ImportInventoryPage() {
 
     try {
         // تنسيق التواريخ وإعداد البيانات للإرسال
-        const formattedItems = items.map(item => {
-            let formattedExpiry = item.expiry;
-            const dateParts = item.expiry.split(/[\/\-.]/).map(p => p.trim());
-            
-            if (dateParts.length === 3) {
-                const day = dateParts[0].padStart(2, '0');
-                const month = dateParts[1].padStart(2, '0');
-                const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
-                formattedExpiry = `${year}-${month}-${day}`;
-            } else if (dateParts.length === 2) {
-                const month = dateParts[0].padStart(2, '0');
-                const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
-                formattedExpiry = `${year}-${month}-15`;
-            }
+   const formattedItems = items.map(item => {
+    let formattedExpiry = item.expiry;
+    const dateParts = item.expiry.split(/[\/\-.]/).map(p => p.trim());
+    
+    if (dateParts.length === 3) {
+        const day = dateParts[0].padStart(2, '0');
+        const month = dateParts[1].padStart(2, '0');
+        const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
+        formattedExpiry = `${year}-${month}-${day}`;
+    } else if (dateParts.length === 2) {
+        const month = dateParts[0].padStart(2, '0');
+        const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
+        formattedExpiry = `${year}-${month}-15`;
+    }
 
-            return {
-                ...item,
-                expiry_date: formattedExpiry,
-                // التأكد من إرسال النوع والكمية للدالة
-                type: item.type || 'tablet',
-                unit_quantity: item.unit_quantity || 1
-            };
-        });
+    return {
+        ...item,
+        expiry_date: formattedExpiry,
+        // تأكد من إرسال هذه الحقول بالتحديد
+        type: item.type || 'tablet',
+        unit_quantity: item.unit_quantity || 1,
+        // تأكد أن المفتاح هنا هو sale_price ليتوافق مع الدالة
+        sale_price: item.sale_price 
+    };
+});
 
         // استدعاء دالة الاستيراد الذكي
         const { data, error } = await supabase.rpc('bulk_import_inventory', {
