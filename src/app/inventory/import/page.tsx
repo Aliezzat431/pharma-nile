@@ -2,17 +2,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { 
-  FileUp, 
-  FileText, 
-  Upload, 
-  CheckCircle2, 
-  AlertCircle, 
-  ChevronLeft,
-  X,
-  Plus,
-  Loader2,
-  Table as TableIcon,
-  Package
+  FileUp, Upload, CheckCircle2, AlertCircle, ChevronLeft,
+  X, Plus, Loader2, Table as TableIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -43,19 +34,20 @@ export default function ImportInventoryPage() {
   const { user } = useAuth();
   const router = useRouter();
 
+  console.log('🚀 ImportInventoryPage Component Loaded!');
+
   const parseFile = async (file: File) => {
     console.group('📂 [File Parsing]');
-    console.log('Starting to parse file:', file.name);
+    console.log('File:', file.name, 'Size:', file.size);
     setIsParsing(true);
     
     try {
       const text = await file.text();
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      
-      console.log(`Total lines found: ${lines.length}`);
+      console.log(`Lines found: ${lines.length}`);
       
       if (lines.length < 2) {
-        console.warn('File has less than 2 lines, aborting.');
+        console.warn('File too short, aborting.');
         setItems([]);
         setIsParsing(false);
         console.groupEnd();
@@ -64,15 +56,15 @@ export default function ImportInventoryPage() {
 
       const categoryName = lines[0]; 
       setCategory(categoryName);
-      console.log('Detected Category:', categoryName);
-
-      const parsed: ParsedItem[] = [];
+      console.log('Category:', categoryName);
 
       let defaultType = 'tablet';
       if (categoryName.includes('لبوس')) defaultType = 'suppository';
       else if (categoryName.includes('نقط')) defaultType = 'drops';
       else if (categoryName.includes('حقن')) defaultType = 'injection';
-      console.log('Default Type determined:', defaultType);
+      console.log('Default Type:', defaultType);
+
+      const parsed: ParsedItem[] = [];
 
       for (let i = 1; i < lines.length; i++) {
         let line = lines[i];
@@ -82,11 +74,11 @@ export default function ImportInventoryPage() {
         if (parts.length >= 4) {
           const salePrice = parseFloat(parts[3]);
           if (isNaN(salePrice)) {
-            console.warn(`Skipping line ${i + 1}: Invalid price "${parts[3]}"`);
+            console.warn(`Line ${i + 1}: Invalid price "${parts[3]}"`);
             continue;
           }
 
-          const item: ParsedItem = {
+          parsed.push({
             name: parts[0],
             barcode: parts[1],
             expiry: parts[2],
@@ -96,18 +88,15 @@ export default function ImportInventoryPage() {
             unit_quantity: parseInt(parts[5]) || 1, 
             type: defaultType,
             status: 'pending'
-          };
-          
-          parsed.push(item);
-          // Log first item only to avoid spamming console
-          if (i === 1) console.log('Sample Parsed Item:', item);
+          });
         }
       }
 
-      console.log(`Successfully parsed ${parsed.length} items.`);
+      console.log(`✅ Parsed ${parsed.length} items successfully`);
+      if (parsed.length > 0) console.log('Sample item:', parsed[0]);
       setItems(parsed);
     } catch (err) {
-      console.error('Error during parsing:', err);
+      console.error('❌ Parse error:', err);
     } finally {
       setIsParsing(false);
       console.groupEnd();
@@ -117,32 +106,29 @@ export default function ImportInventoryPage() {
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      parseFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) parseFile(e.dataTransfer.files[0]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      parseFile(e.target.files[0]);
-    }
+    if (e.target.files && e.target.files[0]) parseFile(e.target.files[0]);
   };
 
   const startImport = async () => {
     console.group('🚀 [Start Import]');
+    console.log('User:', user?.email);
+    console.log('Pharmacy ID:', user?.user_metadata?.pharmacy_id);
+    
     if (!user?.user_metadata?.pharmacy_id) {
-      console.error('User Pharmacy ID is missing from metadata!');
+      console.error('❌ No pharmacy_id in user metadata!');
+      alert('خطأ: لا يوجد معرف للصيدلية في بيانات المستخدم!');
       console.groupEnd();
       return;
     }
@@ -150,41 +136,42 @@ export default function ImportInventoryPage() {
     setIsImporting(true);
     setImportProgress(0);
     const pharmacyId = user.user_metadata.pharmacy_id;
-    console.log('Target Pharmacy ID:', pharmacyId);
 
     try {
-      console.log('Formatting dates and preparing payload...');
       const formattedItems = items.map(item => {
         let formattedExpiry = item.expiry;
         const dateParts = item.expiry.split(/[\/\-.]/).map(p => p.trim());
         
         if (dateParts.length === 3) {
-            const day = dateParts[0].padStart(2, '0');
-            const month = dateParts[1].padStart(2, '0');
-            const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
-            formattedExpiry = `${year}-${month}-${day}`;
+          const day = dateParts[0].padStart(2, '0');
+          const month = dateParts[1].padStart(2, '0');
+          const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
+          formattedExpiry = `${year}-${month}-${day}`;
         } else if (dateParts.length === 2) {
-            const month = dateParts[0].padStart(2, '0');
-            const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
-            formattedExpiry = `${year}-${month}-15`;
+          const month = dateParts[0].padStart(2, '0');
+          const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
+          formattedExpiry = `${year}-${month}-15`;
         }
 
         return {
-            ...item,
-            expiry_date: formattedExpiry,
-            type: item.type || 'tablet',
-            unit_quantity: item.unit_quantity || 1,
-            sale_price: item.sale_price 
+          name: item.name,
+          barcode: item.barcode,
+          expiry_date: formattedExpiry,
+          sale_price: item.sale_price,
+          purchase_price: item.purchase_price,
+          company: item.company,
+          type: item.type || 'tablet',
+          unit_quantity: item.unit_quantity || 1
         };
       });
 
-      console.log('Payload Sample (First Item):', formattedItems[0]);
-      console.log(`Sending ${formattedItems.length} items to RPC...`);
+      console.log(`📦 Sending ${formattedItems.length} items to RPC`);
+      console.log('Payload sample:', formattedItems[0]);
 
       const { data, error } = await supabase.rpc('bulk_import_inventory', {
-          p_pharmacy_id: pharmacyId,
-          p_category: category,
-          p_items: formattedItems
+        p_pharmacy_id: pharmacyId,
+        p_category: category,
+        p_items: formattedItems
       });
 
       if (error) {
@@ -194,25 +181,24 @@ export default function ImportInventoryPage() {
 
       console.log('✅ RPC Response:', data);
       
-      // Check for internal errors returned by the function
       if (data?.errors && data.errors.length > 0) {
-          console.warn('⚠️ Some items failed to import:', data.errors);
+        console.warn('⚠️ Partial failures:', data.errors);
       }
 
       setItems(prev => prev.map(it => ({ ...it, status: 'success' })));
       setImportProgress(100);
       
       setTimeout(() => {
-          console.log('Redirecting to inventory...');
-          router.push('/inventory');
+        console.log('Redirecting to /inventory...');
+        router.push('/inventory');
       }, 1500);
 
     } catch (err: any) {
-        console.error('❌ Import Failed:', err);
-        setItems(prev => prev.map(it => ({ ...it, status: 'error', error: err.message })));
+      console.error('❌ Import Failed:', err);
+      setItems(prev => prev.map(it => ({ ...it, status: 'error', error: err.message })));
     } finally {
-        setIsImporting(false);
-        console.groupEnd();
+      setIsImporting(false);
+      console.groupEnd();
     }
   };
 
@@ -275,13 +261,7 @@ export default function ImportInventoryPage() {
           onDrop={handleDrop}
           onClick={() => document.getElementById('file-upload')?.click()}
         >
-          <input 
-            type="file" 
-            id="file-upload" 
-            className="hidden" 
-            accept=".txt"
-            onChange={handleFileChange}
-          />
+          <input type="file" id="file-upload" className="hidden" accept=".txt" onChange={handleFileChange} />
           <div className="p-6 rounded-full bg-[#00CED1]/10 text-[#00CED1]">
             <Upload className="w-12 h-12" />
           </div>
@@ -314,11 +294,7 @@ export default function ImportInventoryPage() {
           )}
 
           <div className="glass-panel p-2">
-            <GlassTable 
-              columns={columns}
-              data={items}
-              emptyMessage="لا توجد بيانات للمعالجة"
-            />
+            <GlassTable columns={columns} data={items} emptyMessage="لا توجد بيانات للمعالجة" />
           </div>
 
           <div className="flex justify-center">
