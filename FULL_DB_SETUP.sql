@@ -519,6 +519,8 @@ GRANT EXECUTE ON FUNCTION fast_checkout TO authenticated;
 GRANT EXECUTE ON FUNCTION get_dashboard_stats TO authenticated;
 
 -- Bulk Import Inventory (Robust - Per-Item Error Handling)
+DROP FUNCTION IF EXISTS bulk_import_inventory(uuid, text, jsonb);
+
 CREATE OR REPLACE FUNCTION bulk_import_inventory(
   p_pharmacy_id uuid,
   p_category text,
@@ -567,7 +569,7 @@ BEGIN
         unit_conversion = EXCLUDED.unit_conversion
       RETURNING id INTO v_product_id;
 
-      -- 2. Insert Batch (handles both sale_price and selling_price field names)
+      -- 2. Insert Batch (represented with 0 initial quantity since file has no stock quantity info)
       INSERT INTO batches (
         product_id,
         pharmacy_id,
@@ -583,7 +585,7 @@ BEGIN
         p_pharmacy_id,
         trim(v_item->>'barcode'),
         'IMP-' || upper(substring(md5(random()::text), 1, 8)),
-        2,
+        0, -- Set initial quantity to 0 (conversion maps to unit_conversion, not quantity)
         NULLIF(trim(COALESCE(v_item->>'expiry_date', '')), '')::date,
         COALESCE((v_item->>'purchase_price')::numeric, 0),
         COALESCE((v_item->>'sale_price')::numeric, (v_item->>'selling_price')::numeric, 0)

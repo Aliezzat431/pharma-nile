@@ -179,19 +179,33 @@ export default function ImportInventoryPage() {
         throw error;
       }
 
-      console.log('✅ RPC Response:', data);
-      
       if (data?.errors && data.errors.length > 0) {
         console.warn('⚠️ Partial failures:', data.errors);
-      }
+        const errorMap = new Map();
+        data.errors.forEach((err: any) => {
+          errorMap.set(err.barcode, err.error);
+        });
 
-      setItems(prev => prev.map(it => ({ ...it, status: 'success' })));
-      setImportProgress(100);
-      
-      setTimeout(() => {
-        console.log('Redirecting to /inventory...');
-        router.push('/inventory');
-      }, 1500);
+        setItems(prev => prev.map(it => {
+          const errMsg = errorMap.get(it.barcode);
+          if (errMsg) {
+            return { ...it, status: 'error', error: errMsg };
+          }
+          return { ...it, status: 'success' };
+        }));
+
+        setImportProgress(100);
+        // Do not redirect if there are errors, let user see the status
+        alert('حدثت بعض الأخطاء أثناء استيراد الأصناف. يرجى مراجعة الجدول.');
+      } else {
+        setItems(prev => prev.map(it => ({ ...it, status: 'success' })));
+        setImportProgress(100);
+        
+        setTimeout(() => {
+          console.log('Redirecting to /inventory...');
+          router.push('/inventory');
+        }, 1500);
+      }
 
     } catch (err: any) {
       console.error('❌ Import Failed:', err);
