@@ -167,7 +167,28 @@ export default function CustomerProfile() {
                 <div className="space-y-4">
                    <div className="flex justify-between items-center mb-6">
                       <h3 className="text-xl font-bold font-cairo text-white">سجل المشتريات</h3>
-                      <button className="text-sm text-[#00CED1] font-cairo flex items-center gap-2 hover:underline">
+                      <button
+                        onClick={() => {
+                          if (!customer.orders?.length) { alert('لا توجد فواتير لتصديرها'); return; }
+                          const headers = ['رقم الفاتورة', 'التاريخ', 'الإجمالي (ج.م)', 'طريقة الدفع'];
+                          const rows = customer.orders.map((o: any) => [
+                            `"${o.id.slice(0, 8)}"`,
+                            `"${new Date(o.created_at).toLocaleDateString('ar-EG')}"`,
+                            o.total ?? 0,
+                            `"${o.payment_method || ''}"`,
+                          ].join(','));
+                          const csv = [headers.join(','), ...rows].join('\n');
+                          const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+                          const link = document.createElement('a');
+                          link.href = URL.createObjectURL(blob);
+                          link.download = `invoices_${customer.name}_${new Date().toISOString().split('T')[0]}.csv`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          URL.revokeObjectURL(link.href);
+                        }}
+                        className="text-sm text-[#00CED1] font-cairo flex items-center gap-2 hover:underline"
+                      >
                         <Download className="w-4 h-4" /> تحميل كشف فواتير
                       </button>
                    </div>

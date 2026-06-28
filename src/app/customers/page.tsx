@@ -33,6 +33,7 @@ export default function CustomersPage() {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [filterDebt, setFilterDebt] = useState<'all' | 'debtors' | 'clear'>('all');
+  const [isExporting, setIsExporting] = useState(false);
 
   // GSAP page-entry
   const pageRef = usePageGSAP();
@@ -129,6 +130,35 @@ export default function CustomersPage() {
     }
   };
 
+  const handleExportReport = () => {
+    if (filteredCustomers.length === 0) {
+      alert('لا يوجد بيانات لتصديرها');
+      return;
+    }
+    setIsExporting(true);
+    try {
+      const headers = ['الاسم', 'رقم الهاتف', 'العنوان', 'إجمالي الدين (ج.م)', 'نقاط الولاء'];
+      const rows = filteredCustomers.map(c => [
+        `"${c.name}"`,
+        `"${c.phone || ''}"`,
+        `"${c.address || ''}"`,
+        c.total_debt ?? 0,
+        c.loyalty_points ?? 0,
+      ].join(','));
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `customers_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Pagination
   const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
     filteredCustomers,
@@ -153,8 +183,13 @@ export default function CustomersPage() {
           <p className="text-gray-400 mt-2 text-lg font-cairo">قاعدة بيانات العملاء، الديون، ونقاط الولاء.</p>
         </div>
         <div className="flex gap-3">
-          <button className="glass-card px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/5 transition-colors font-cairo">
-            <Download className="w-4 h-4" /> تصدير التقرير
+          <button
+            onClick={handleExportReport}
+            disabled={isExporting}
+            className="glass-card px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/5 transition-colors font-cairo disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {isExporting ? 'جاري التصدير...' : 'تصدير التقرير'}
           </button>
           <button
             onClick={() => setIsAddModalOpen(true)}
