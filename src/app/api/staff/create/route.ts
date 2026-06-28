@@ -4,7 +4,6 @@ import { createClient as createSupabaseClient } from '@/lib/supabase/server';
 import { staffCreateSchema } from '@/lib/validations';
 
 // ✅ إنشاء Supabase Admin Client باستخدام service_role key
-// هذا ضروري لإنشاء مستخدمين جدد في auth.users
 const getSupabaseAdmin = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -65,12 +64,9 @@ export async function POST(request: NextRequest) {
 
     // 3. قراءة وتحليل البيانات المرسلة
     const body = await request.json();
-    
-    // ✅ التحقق من صحة البيانات باستخدام Zod
     const validation = staffCreateSchema.safeParse(body);
     
     if (!validation.success) {
-      // ✅ الإصلاح: استخدام .issues بدلاً من .errors
       return NextResponse.json(
         { 
           error: 'بيانات غير صحيحة', 
@@ -88,7 +84,7 @@ export async function POST(request: NextRequest) {
     const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // تأكيد البريد تلقائياً
+      email_confirm: true,
       user_metadata: {
         full_name,
         pharmacy_id: pharmacyId,
@@ -99,7 +95,6 @@ export async function POST(request: NextRequest) {
     if (createUserError || !newUser.user) {
       console.error('Create user error:', createUserError);
       
-      // معالجة الأخطاء الشائعة
       if (createUserError?.message?.includes('already been registered')) {
         return NextResponse.json(
           { error: 'البريد الإلكتروني مسجل مسبقاً' },
@@ -129,8 +124,6 @@ export async function POST(request: NextRequest) {
 
     if (insertProfileError) {
       console.error('Insert profile error:', insertProfileError);
-      
-      // محاولة حذف المستخدم من auth.users في حالة فشل إنشاء الملف
       await supabaseAdmin.auth.admin.deleteUser(newUserId);
       
       return NextResponse.json(
@@ -139,7 +132,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. إضافة صلاحية الوصول للصيدلية في user_pharmacy_access
+    // 6. إضافة صلاحية الوصول للصيدلية
     const { error: accessError } = await supabase
       .from('user_pharmacy_access')
       .insert({
@@ -151,7 +144,6 @@ export async function POST(request: NextRequest) {
 
     if (accessError) {
       console.error('Access error:', accessError);
-      // لا نرجع خطأ هنا لأن الحساب تم إنشاؤه بنجاح
     }
 
     // 7. تسجيل العملية في audit_logs
@@ -190,10 +182,6 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(
       { error: error.message || 'حدث خطأ داخلي في الخادم' },
-      { status: 500 }
-    );
-  }
-}      { error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }
