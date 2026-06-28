@@ -127,7 +127,7 @@ export function AboutSettings() {
             </a>
             
             <a 
-              href="https://www.facebook.com/nay.collective" 
+              href="https://www.facebook.com/profile.php?id=61591036786773" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-3 text-zinc-500 hover:text-white transition-colors text-sm font-bold group"
