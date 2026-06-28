@@ -29,6 +29,18 @@ interface ExtractedItem {
 const TEAL = 'var(--nile-teal)';
 const GOLD = 'var(--royal-gold)';
 
+// ✅ دالة مساعدة للتحقق من الإدخال الرقمي
+const isValidNumberInput = (val: string): boolean => {
+  return val === '' || val === '.' || /^\d*\.?\d*$/.test(val);
+};
+
+// ✅ دالة مساعدة لتحليل الأرقام
+const parseNumeric = (val: string): number => {
+  if (!val || val.trim() === '' || val === '.') return 0;
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 const emptyItem = (): ExtractedItem => ({
   product_name: '',
   quantity: 1,
@@ -79,75 +91,72 @@ export default function InvoiceImportPage() {
     if (file) handleFile(file);
   }, [handleFile]);
 
- const handleScan = async () => {
-  if (!selectedFile || !pharmacyId) return;
-  setScanning(true);
-  setScanError(null);
-  setItems([]);
+  const handleScan = async () => {
+    if (!selectedFile || !pharmacyId) return;
+    setScanning(true);
+    setScanError(null);
+    setItems([]);
 
-  try {
-    const fd = new FormData();
-    fd.append('invoice', selectedFile);
+    try {
+      const fd = new FormData();
+      fd.append('invoice', selectedFile);
 
-    const res = await fetch('/api/invoice-scan', { method: 'POST', body: fd });
-    const data = await res.json();
+      const res = await fetch('/api/invoice-scan', { method: 'POST', body: fd });
+      const data = await res.json();
 
-    if (!res.ok) throw new Error(data.error || 'فشل تحليل الفاتورة');
+      if (!res.ok) throw new Error(data.error || 'فشل تحليل الفاتورة');
 
-    const rawItems: any[] = data.items || [];
+      const rawItems: any[] = data.items || [];
 
-    // تحسين التحقق من المنتجات الموجودة
-    const enriched: ExtractedItem[] = await Promise.all(
-      rawItems.map(async (item) => {
-        let existing = null;
+      const enriched: ExtractedItem[] = await Promise.all(
+        rawItems.map(async (item) => {
+          let existing = null;
 
-        // 1. البحث بالباركود أولاً (الأدق)
-        if (item.barcode && item.barcode.length > 5) {
-          const { data: byBarcode } = await supabase
-            .from('products')
-            .select('id, name, barcode')
-            .eq('pharmacy_id', pharmacyId)
-            .eq('barcode', item.barcode.trim())
-            .maybeSingle();
-          
-          if (byBarcode) existing = byBarcode;
-        }
+          if (item.barcode && item.barcode.length > 5) {
+            const { data: byBarcode } = await supabase
+              .from('products')
+              .select('id, name, barcode')
+              .eq('pharmacy_id', pharmacyId)
+              .eq('barcode', item.barcode.trim())
+              .maybeSingle();
+            
+            if (byBarcode) existing = byBarcode;
+          }
 
-        // 2. لو مفيش باركود أو مش موجود، ابحث بالاسم
-        if (!existing && item.product_name && item.product_name.trim().length > 2) {
-          const { data: byName } = await supabase
-            .from('products')
-            .select('id, name, barcode')
-            .eq('pharmacy_id', pharmacyId)
-            .ilike('name', `%${item.product_name.trim()}%`)
-            .limit(1)
-            .maybeSingle();
-          
-          if (byName) existing = byName;
-        }
+          if (!existing && item.product_name && item.product_name.trim().length > 2) {
+            const { data: byName } = await supabase
+              .from('products')
+              .select('id, name, barcode')
+              .eq('pharmacy_id', pharmacyId)
+              .ilike('name', `%${item.product_name.trim()}%`)
+              .limit(1)
+              .maybeSingle();
+            
+            if (byName) existing = byName;
+          }
 
-        return {
-          ...item,
-          is_new: !existing,
-          existing_product_id: existing?.id,
-          product_name: existing?.name || item.product_name, // تحديث الاسم بالاسم المسجل فعلاً
-          public_price: item.public_price ?? 0,
-          purchase_price: item.purchase_price ?? 0,
-          _status: 'pending' as const,
-          _checked: true,
-          _editMode: false,
-        };
-      })
-    );
+          return {
+            ...item,
+            is_new: !existing,
+            existing_product_id: existing?.id,
+            product_name: existing?.name || item.product_name,
+            public_price: item.public_price ?? 0,
+            purchase_price: item.purchase_price ?? 0,
+            _status: 'pending' as const,
+            _checked: true,
+            _editMode: false,
+          };
+        })
+      );
 
-    setItems(enriched);
-    setPhase('review');
-  } catch (err: any) {
-    setScanError(err.message || 'حدث خطأ أثناء تحليل الفاتورة');
-  } finally {
-    setScanning(false);
-  }
-};
+      setItems(enriched);
+      setPhase('review');
+    } catch (err: any) {
+      setScanError(err.message || 'حدث خطأ أثناء تحليل الفاتورة');
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const addManualRow = () => {
     setItems(prev => [...prev, emptyItem()]);
@@ -291,7 +300,6 @@ export default function InvoiceImportPage() {
 
   return (
     <div ref={pageRef} className="w-full max-w-7xl mx-auto pb-12">
-      {}
       <header data-gsap="fade-up" className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
@@ -308,7 +316,6 @@ export default function InvoiceImportPage() {
           </div>
         </div>
 
-        {}
         <div className="flex gap-2 mt-5">
           <button
             onClick={() => { setMode('ai'); resetAll(); }}
@@ -343,7 +350,6 @@ export default function InvoiceImportPage() {
         </div>
       </header>
 
-      {}
       <AnimatePresence mode="wait">
         {mode === 'ai' ? (
           <motion.div
@@ -353,7 +359,6 @@ export default function InvoiceImportPage() {
             exit={{ opacity: 0, y: -10 }}
             className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[70vh]"
           >
-            {}
             <ItemsPanel
               items={items}
               scanning={scanning}
@@ -372,7 +377,6 @@ export default function InvoiceImportPage() {
               onRemoveItem={removeItem}
             />
 
-            {}
             <div className="flex flex-col gap-5 order-1 lg:order-2">
               <div
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
@@ -440,7 +444,6 @@ export default function InvoiceImportPage() {
                 )}
               </AnimatePresence>
 
-              {}
               <button
                 onClick={handleScan}
                 disabled={!selectedFile || scanning || phase === 'done'}
@@ -462,7 +465,6 @@ export default function InvoiceImportPage() {
                 )}
               </button>
 
-              {}
               <div className="glass-panel p-5">
                 <h3 className="font-bold font-cairo text-sm mb-4 text-gray-300 flex items-center gap-2">
                   <Sparkles className="w-4 h-4" style={{ color: GOLD }} />
@@ -485,7 +487,6 @@ export default function InvoiceImportPage() {
             </div>
           </motion.div>
         ) : (
-          
           <motion.div
             key="manual"
             initial={{ opacity: 0, y: 10 }}
@@ -602,35 +603,59 @@ export default function InvoiceImportPage() {
                             />
                           </div>
 
+                          {/* ✅ حقل الكمية - مُصحّح */}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">الكمية</label>
                             <input
-                              type="number" min="1"
-                              value={item.quantity}
+                              type="text"
+                              inputMode="numeric"
+                              value={item.quantity || ''}
                               disabled={item._status !== 'pending'}
-                              onChange={e => updateItem(idx, 'quantity', Number(e.target.value))}
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (val === '' || /^\d+$/.test(val)) {
+                                  updateItem(idx, 'quantity', val === '' ? 0 : parseInt(val, 10));
+                                }
+                              }}
+                              placeholder="1"
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
                             />
                           </div>
 
+                          {/* ✅ حقل سعر الشراء - مُصحّح */}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">سعر الشراء</label>
                             <input
-                              type="number" step="0.01" min="0"
-                              value={item.purchase_price}
+                              type="text"
+                              inputMode="decimal"
+                              value={item.purchase_price || ''}
                               disabled={item._status !== 'pending'}
-                              onChange={e => updateItem(idx, 'purchase_price', Number(e.target.value))}
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (isValidNumberInput(val)) {
+                                  updateItem(idx, 'purchase_price', parseNumeric(val));
+                                }
+                              }}
+                              placeholder="0.00"
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
                             />
                           </div>
 
+                          {/* ✅ حقل سعر البيع - مُصحّح */}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">سعر البيع</label>
                             <input
-                              type="number" step="0.01" min="0"
-                              value={item.public_price}
+                              type="text"
+                              inputMode="decimal"
+                              value={item.public_price || ''}
                               disabled={item._status !== 'pending'}
-                              onChange={e => updateItem(idx, 'public_price', Number(e.target.value))}
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (isValidNumberInput(val)) {
+                                  updateItem(idx, 'public_price', parseNumeric(val));
+                                }
+                              }}
+                              placeholder="0.00"
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
                             />
                           </div>
@@ -802,7 +827,6 @@ function ItemsPanel({
 
   return (
     <div className="glass-panel p-5 flex flex-col gap-4 order-2 lg:order-1 min-h-[500px]">
-      {}
       <div className="flex justify-between items-center border-b border-white/5 pb-3 flex-wrap gap-2">
         <div>
           <h2 className="font-bold font-cairo text-white text-base">الأصناف المستخرجة ({items.length})</h2>
@@ -815,7 +839,6 @@ function ItemsPanel({
         </div>
       </div>
 
-      {}
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
           <span className="block text-emerald-400 text-sm font-bold font-mono">{newCount}</span>
@@ -831,7 +854,6 @@ function ItemsPanel({
         </div>
       </div>
 
-      {}
       <div className="flex-1 overflow-y-auto max-h-[55vh] space-y-3 pr-1 custom-scrollbar">
         <AnimatePresence initial={false}>
           {items.map((item, idx) => (
@@ -846,7 +868,6 @@ function ItemsPanel({
                 ${item._status === 'error' ? 'border-red-500/30 bg-red-500/[0.02]' : ''}
               `}
             >
-              {}
               <div className="flex items-start gap-2.5">
                 <button
                   onClick={() => onToggleCheck(idx)}
@@ -886,38 +907,64 @@ function ItemsPanel({
                     </h4>
                   )}
 
-                  {}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                    {/* ✅ حقل الكمية - مُصحّح */}
                     <div>
                       <span className="text-[9px] text-gray-500 font-cairo block">الكمية</span>
                       <input
-                        type="number"
-                        value={item.quantity}
-                        onChange={e => onUpdateItem(idx, 'quantity', Number(e.target.value))}
+                        type="text"
+                        inputMode="numeric"
+                        value={item.quantity || ''}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === '' || /^\d+$/.test(val)) {
+                            onUpdateItem(idx, 'quantity', val === '' ? 0 : parseInt(val, 10));
+                          }
+                        }}
                         disabled={item._status === 'saved'}
                         className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                        placeholder="1"
                       />
                     </div>
+
+                    {/* ✅ حقل سعر الشراء - مُصحّح */}
                     <div>
                       <span className="text-[9px] text-gray-500 font-cairo block">سعر الشراء</span>
                       <input
-                        type="number" step="0.01"
-                        value={item.purchase_price}
-                        onChange={e => onUpdateItem(idx, 'purchase_price', Number(e.target.value))}
+                        type="text"
+                        inputMode="decimal"
+                        value={item.purchase_price || ''}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (isValidNumberInput(val)) {
+                            onUpdateItem(idx, 'purchase_price', parseNumeric(val));
+                          }
+                        }}
                         disabled={item._status === 'saved'}
                         className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                        placeholder="0.00"
                       />
                     </div>
+
+                    {/* ✅ حقل سعر البيع - مُصحّح */}
                     <div>
                       <span className="text-[9px] text-gray-500 font-cairo block">سعر البيع</span>
                       <input
-                        type="number" step="0.01"
-                        value={item.public_price}
-                        onChange={e => onUpdateItem(idx, 'public_price', Number(e.target.value))}
+                        type="text"
+                        inputMode="decimal"
+                        value={item.public_price || ''}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (isValidNumberInput(val)) {
+                            onUpdateItem(idx, 'public_price', parseNumeric(val));
+                          }
+                        }}
                         disabled={item._status === 'saved'}
                         className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                        placeholder="0.00"
                       />
                     </div>
+
                     <div>
                       <span className="text-[9px] text-gray-500 font-cairo block">الصلاحية</span>
                       <input
@@ -932,7 +979,6 @@ function ItemsPanel({
                   </div>
                 </div>
 
-                {}
                 <div className="flex flex-col items-center justify-between gap-2 self-stretch flex-shrink-0 pl-1">
                   {item._status === 'pending' && (
                     <div className="flex flex-col gap-1">
@@ -961,7 +1007,6 @@ function ItemsPanel({
         </AnimatePresence>
       </div>
 
-      {}
       {checkedCount > 0 && (
         <button
           onClick={onSaveAll}
