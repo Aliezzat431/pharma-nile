@@ -119,10 +119,10 @@ export function AboutSettings() {
           
           <div className="flex flex-col items-center gap-6">
             <a 
-              href="mailto:team@nay.digital" 
+              href="https://nay-two.vercel.app/" 
               className="inline-flex items-center gap-4 px-10 py-4 bg-white text-black font-black rounded-full text-lg hover:scale-105 active:scale-95 transition-all duration-300 group shadow-2xl font-cairo"
             >
-              تواصل معنا
+             موفعنا الشخصي
               <ArrowUpRight className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
             </a>
             
