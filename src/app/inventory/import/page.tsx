@@ -11,7 +11,8 @@ import {
   X,
   Plus,
   Loader2,
-  Table as TableIcon
+  Table as TableIcon,
+  Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -19,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import GlassTable from '@/components/ui/GlassTable';
 
+// تحديث الـ Interface لاستقبال النوع والكمية الداخلية
 interface ParsedItem {
   name: string;
   barcode: string;
@@ -26,6 +28,8 @@ interface ParsedItem {
   sale_price: number;
   purchase_price: number;
   company: string;
+  type?: string;       // جديد: نوع المنتج (أقراص، لبوس، نقط...)
+  unit_quantity?: number; // جديد: عدد الشرائط أو الوحدات داخل العلبة
   status: 'pending' | 'success' | 'error';
   error?: string;
 }
@@ -44,25 +48,31 @@ export default function ImportInventoryPage() {
     setIsParsing(true);
     const text = await file.text();
     const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-    if (lines.length < 3) {
+    
+    if (lines.length < 2) {
       setItems([]);
       setIsParsing(false);
       return;
     }
 
-    const categoryName = lines[0]; // Line 1: e.g., "مستحضرات"
+    const categoryName = lines[0]; 
     setCategory(categoryName);
     const parsed: ParsedItem[] = [];
 
-    // Start from line 3 (index 2)
-    for (let i = 2; i < lines.length; i++) {
+    // تحديد النوع الافتراضي بناءً على اسم الفئة
+    let defaultType = 'tablet';
+    if (categoryName.includes('لبوس')) defaultType = 'suppository';
+    else if (categoryName.includes('نقط')) defaultType = 'drops';
+    else if (categoryName.includes('حقن')) defaultType = 'injection';
+
+    // Start from line 2 (index 1) assuming line 1 is category
+    for (let i = 1; i < lines.length; i++) {
       let line = lines[i];
-      // Remove leading/trailing commas or dots often found in such exports
       line = line.replace(/^[،,]+|[،,]+$/g, '');
 
-      // Split by Arabic comma (،) or English comma (,)
       const parts = line.split(/[،,]/).map(p => p.trim());
       
+      // نتوقع 5 أعمدة كحد أدنى، وعمود سادس اختياري للكمية الداخلية
       if (parts.length >= 4) {
         const salePrice = parseFloat(parts[3]);
         if (isNaN(salePrice)) continue;
@@ -72,8 +82,11 @@ export default function ImportInventoryPage() {
           barcode: parts[1],
           expiry: parts[2],
           sale_price: salePrice,
-          purchase_price: Number((salePrice * 0.8).toFixed(2)),
+          purchase_price: Number((salePrice * 0.75).toFixed(2)), // نسبة تقريبية لسعر الشراء
           company: parts[4] || 'غير محدد',
+          // التعامل مع العمود السادس (عدد الشرائط)
+          unit_quantity: parseInt(parts[5]) || 1, 
+          type: defaultType,
           status: 'pending'
         });
       }
@@ -116,31 +129,32 @@ export default function ImportInventoryPage() {
     const pharmacyId = user.user_metadata.pharmacy_id;
 
     try {
-        // Format dates for Postgres
+        // تنسيق التواريخ وإعداد البيانات للإرسال
         const formattedItems = items.map(item => {
             let formattedExpiry = item.expiry;
-            // Support /, -, . as separators
             const dateParts = item.expiry.split(/[\/\-.]/).map(p => p.trim());
             
             if (dateParts.length === 3) {
-                // Day, Month, Year (Standard)
                 const day = dateParts[0].padStart(2, '0');
                 const month = dateParts[1].padStart(2, '0');
                 const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
                 formattedExpiry = `${year}-${month}-${day}`;
             } else if (dateParts.length === 2) {
-                // Month, Year (Implicit Day 15 as requested)
                 const month = dateParts[0].padStart(2, '0');
                 const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
                 formattedExpiry = `${year}-${month}-15`;
             }
+
             return {
                 ...item,
-                expiry_date: formattedExpiry
+                expiry_date: formattedExpiry,
+                // التأكد من إرسال النوع والكمية للدالة
+                type: item.type || 'tablet',
+                unit_quantity: item.unit_quantity || 1
             };
         });
 
-        // Call Atomic RPC
+        // استدعاء دالة الاستيراد الذكي
         const { data, error } = await supabase.rpc('bulk_import_inventory', {
             p_pharmacy_id: pharmacyId,
             p_category: category,
@@ -149,9 +163,10 @@ export default function ImportInventoryPage() {
 
         if (error) throw error;
 
-        // All succeeded
+        // تحديث الحالة إلى نجاح
         setItems(prev => prev.map(it => ({ ...it, status: 'success' })));
         setImportProgress(100);
+        
         setTimeout(() => {
             router.push('/inventory');
         }, 1500);
@@ -164,12 +179,14 @@ export default function ImportInventoryPage() {
     }
   };
 
+  // تحديث الأعمدة لعرض النوع والكمية الداخلية
   const columns: any[] = [
     { header: 'الصنف', accessor: (it: ParsedItem) => it.name },
+    { header: 'النوع', accessor: (it: ParsedItem) => it.type === 'suppository' ? 'لبوس' : it.type === 'drops' ? 'نقط' : 'أقراص' },
     { header: 'الباركود', accessor: (it: ParsedItem) => it.barcode },
     { header: 'تاريخ الصلاحية', accessor: (it: ParsedItem) => it.expiry },
+    { header: 'الوحدة/علبة', accessor: (it: ParsedItem) => it.unit_quantity },
     { header: 'سعر البيع', accessor: (it: ParsedItem) => `${it.sale_price} ج.م` },
-    { header: 'سعر الشراء', accessor: (it: ParsedItem) => `${it.purchase_price} ج.م` },
     { 
       header: 'الحالة', 
       accessor: (it: ParsedItem) => (
@@ -236,16 +253,6 @@ export default function ImportInventoryPage() {
             <h3 className="text-2xl font-bold font-cairo">اسحب الملف هنا</h3>
             <p className="text-gray-500 font-cairo">أو اضغط لاختيار ملف من جهازك</p>
           </div>
-          <div className="flex gap-4 items-center mt-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400">
-               <FileText className="w-3.5 h-3.5" />
-               <span>تنسيق .txt</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400">
-               <TableIcon className="w-3.5 h-3.5" />
-               <span>CSV متوافق</span>
-            </div>
-          </div>
         </motion.div>
       ) : (
         <div className="space-y-6">
@@ -299,9 +306,9 @@ export default function ImportInventoryPage() {
                     التنسيق المطلوب للملف
                 </h4>
                 <div className="space-y-2 text-sm text-gray-500 font-mono bg-black/20 p-4 rounded-xl border border-white/5">
-                    <p>مستحضرات</p>
-                    <p>الاسم،الباركود،التاريخ،السعر</p>
-                    <p>Panadol,6221032...,10/2026,45.00,GSK</p>
+                    <p>الفئة (مثلاً: اللبوس)</p>
+                    <p>الاسم،الباركود،التاريخ،السعر،الشركة،عدد_الشرائط</p>
+                    <p>Panadol,6221032...,10/2026,45.00,GSK,10</p>
                 </div>
             </div>
             <div className="glass-card p-6 border-white/5">
@@ -310,9 +317,9 @@ export default function ImportInventoryPage() {
                     ملاحظات هامة
                 </h4>
                 <ul className="space-y-2 text-sm text-gray-500 font-cairo list-disc list-inside">
-                    <li>يتم إدراج الكمية الافتتاحية 2 وحدة لكل صنف.</li>
-                    <li>يتم حساب سعر الشراء تلقائياً بنسبة تقريبية.</li>
-                    <li>تأكد من أن التواريخ بصيغة يوم/شهر/سنة أو شهر/سنة.</li>
+                    <li>يتم تحديد نوع المنتج تلقائياً بناءً على اسم الفئة.</li>
+                    <li>إذا لم يتم تحديد عدد الشرائط، سيتم اعتباره 1.</li>
+                    <li>يتم حساب سعر الشراء تلقائياً بنسبة 75% من سعر البيع.</li>
                 </ul>
             </div>
          </div>

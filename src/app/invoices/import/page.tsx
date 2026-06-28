@@ -79,53 +79,75 @@ export default function InvoiceImportPage() {
     if (file) handleFile(file);
   }, [handleFile]);
 
-  const handleScan = async () => {
-    if (!selectedFile || !pharmacyId) return;
-    setScanning(true);
-    setScanError(null);
-    setItems([]);
+ const handleScan = async () => {
+  if (!selectedFile || !pharmacyId) return;
+  setScanning(true);
+  setScanError(null);
+  setItems([]);
 
-    try {
-      const fd = new FormData();
-      fd.append('invoice', selectedFile);
+  try {
+    const fd = new FormData();
+    fd.append('invoice', selectedFile);
 
-      const res = await fetch('/api/invoice-scan', { method: 'POST', body: fd });
-      const data = await res.json();
+    const res = await fetch('/api/invoice-scan', { method: 'POST', body: fd });
+    const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'فشل تحليل الفاتورة');
+    if (!res.ok) throw new Error(data.error || 'فشل تحليل الفاتورة');
 
-      const rawItems: any[] = data.items || [];
+    const rawItems: any[] = data.items || [];
 
-      const enriched: ExtractedItem[] = await Promise.all(
-        rawItems.map(async (item) => {
-          const { data: existing } = await supabase
+    // تحسين التحقق من المنتجات الموجودة
+    const enriched: ExtractedItem[] = await Promise.all(
+      rawItems.map(async (item) => {
+        let existing = null;
+
+        // 1. البحث بالباركود أولاً (الأدق)
+        if (item.barcode && item.barcode.length > 5) {
+          const { data: byBarcode } = await supabase
             .from('products')
-            .select('id, name, pharmacy:pharmacies(name)')
-            .ilike('name', `%${item.product_name}%`)
+            .select('id, name, barcode')
+            .eq('pharmacy_id', pharmacyId)
+            .eq('barcode', item.barcode.trim())
+            .maybeSingle();
+          
+          if (byBarcode) existing = byBarcode;
+        }
+
+        // 2. لو مفيش باركود أو مش موجود، ابحث بالاسم
+        if (!existing && item.product_name && item.product_name.trim().length > 2) {
+          const { data: byName } = await supabase
+            .from('products')
+            .select('id, name, barcode')
+            .eq('pharmacy_id', pharmacyId)
+            .ilike('name', `%${item.product_name.trim()}%`)
             .limit(1)
             .maybeSingle();
+          
+          if (byName) existing = byName;
+        }
 
-          return {
-            ...item,
-            is_new: !existing,
-            existing_product_id: existing?.id,
-            public_price: item.public_price ?? 0,
-            purchase_price: item.purchase_price ?? 0,
-            _status: 'pending' as const,
-            _checked: true,
-            _editMode: false,
-          };
-        })
-      );
+        return {
+          ...item,
+          is_new: !existing,
+          existing_product_id: existing?.id,
+          product_name: existing?.name || item.product_name, // تحديث الاسم بالاسم المسجل فعلاً
+          public_price: item.public_price ?? 0,
+          purchase_price: item.purchase_price ?? 0,
+          _status: 'pending' as const,
+          _checked: true,
+          _editMode: false,
+        };
+      })
+    );
 
-      setItems(enriched);
-      setPhase('review');
-    } catch (err: any) {
-      setScanError(err.message || 'حدث خطأ أثناء تحليل الفاتورة');
-    } finally {
-      setScanning(false);
-    }
-  };
+    setItems(enriched);
+    setPhase('review');
+  } catch (err: any) {
+    setScanError(err.message || 'حدث خطأ أثناء تحليل الفاتورة');
+  } finally {
+    setScanning(false);
+  }
+};
 
   const addManualRow = () => {
     setItems(prev => [...prev, emptyItem()]);
