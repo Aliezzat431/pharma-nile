@@ -1,141 +1,199 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@/lib/supabase/server';
 import { staffCreateSchema } from '@/lib/validations';
 
-// استخدام service role لتجاوز RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, // مهم جداً!
-  {
+// ✅ إنشاء Supabase Admin Client باستخدام service_role key
+// هذا ضروري لإنشاء مستخدمين جدد في auth.users
+const getSupabaseAdmin = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+  
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-);
+  });
+};
 
 export async function POST(request: NextRequest) {
   try {
-    // التحقق من المصادقة
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
+    // 1. التحقق من جلسة المستخدم الحالي
+    const supabase = await createSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'غير مصرح - يرجى تسجيل الدخول' },
         { status: 401 }
       );
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: { headers: { Authorization: authHeader } }
-      }
-    );
-
-    // التحقق من أن المستخدم هو مدير
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const { data: profile } = await supabase
+    // 2. جلب بيانات المستخدم الحالي والتحقق من أنه مدير
+    const { data: currentUserProfile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('role, pharmacy_id')
+      .select('pharmacy_id, role')
       .eq('id', user.id)
       .single();
 
-    if (!profile || profile.role !== 'admin') {
+    if (profileError || !currentUserProfile) {
       return NextResponse.json(
-        { error: 'Forbidden: Only admins can create staff' },
+        { error: 'لم يتم العثور على ملف المستخدم' },
+        { status: 404 }
+      );
+    }
+
+    if (currentUserProfile.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'غير مصرح - يجب أن تكون مديراً لإضافة موظفين' },
         { status: 403 }
       );
     }
 
-    // التحقق من البيانات
+    const pharmacyId = currentUserProfile.pharmacy_id;
+    if (!pharmacyId) {
+      return NextResponse.json(
+        { error: 'لم يتم العثور على معرف الصيدلية' },
+        { status: 400 }
+      );
+    }
+
+    // 3. قراءة وتحليل البيانات المرسلة
     const body = await request.json();
+    
+    // ✅ التحقق من صحة البيانات باستخدام Zod
     const validation = staffCreateSchema.safeParse(body);
     
     if (!validation.success) {
+      // ✅ الإصلاح: استخدام .issues بدلاً من .errors
       return NextResponse.json(
-        { error: 'Invalid data', details: validation.error.errors },
+        { 
+          error: 'بيانات غير صحيحة', 
+          details: validation.error.flatten().fieldErrors 
+        },
         { status: 400 }
       );
     }
 
     const { email, password, full_name, role, salary, incentives } = validation.data;
 
-    // 1. إنشاء مستخدم جديد في auth.users (باستخدام service role)
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // 4. إنشاء المستخدم الجديد في auth.users باستخدام service_role
+    const supabaseAdmin = getSupabaseAdmin();
+    
+    const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: true, // تأكيد البريد تلقائياً
       user_metadata: {
         full_name,
-        pharmacy_id: profile.pharmacy_id
+        pharmacy_id: pharmacyId,
+        role
       }
     });
 
-    if (authError) {
-      console.error('Auth error:', authError);
+    if (createUserError || !newUser.user) {
+      console.error('Create user error:', createUserError);
+      
+      // معالجة الأخطاء الشائعة
+      if (createUserError?.message?.includes('already been registered')) {
+        return NextResponse.json(
+          { error: 'البريد الإلكتروني مسجل مسبقاً' },
+          { status: 409 }
+        );
+      }
+      
       return NextResponse.json(
-        { error: authError.message || 'Failed to create user' },
-        { status: 400 }
-      );
-    }
-
-    const newUserId = authData.user.id;
-
-    // 2. إنشاء profile في user_profiles (باستخدام service role)
-    const { error: profileError } = await supabaseAdmin
-      .from('user_profiles')
-      .insert({
-        id: newUserId,
-        pharmacy_id: profile.pharmacy_id,
-        full_name,
-        role: role || 'staff',
-        salary: salary || 0,
-        incentives: incentives || 0
-      });
-
-    if (profileError) {
-      console.error('Profile error:', profileError);
-      // حذف المستخدم من auth إذا فشل إنشاء profile
-      await supabaseAdmin.auth.admin.deleteUser(newUserId);
-      return NextResponse.json(
-        { error: 'Failed to create profile' },
+        { error: createUserError?.message || 'فشل إنشاء حساب المستخدم' },
         { status: 500 }
       );
     }
 
-    // 3. إنشاء access في user_pharmacy_access
-    const { error: accessError } = await supabaseAdmin
+    const newUserId = newUser.user.id;
+
+    // 5. إنشاء ملف المستخدم في user_profiles
+    const { error: insertProfileError } = await supabase
+      .from('user_profiles')
+      .insert({
+        id: newUserId,
+        pharmacy_id: pharmacyId,
+        full_name,
+        role,
+        salary: salary || 0,
+        incentives: incentives || 0
+      });
+
+    if (insertProfileError) {
+      console.error('Insert profile error:', insertProfileError);
+      
+      // محاولة حذف المستخدم من auth.users في حالة فشل إنشاء الملف
+      await supabaseAdmin.auth.admin.deleteUser(newUserId);
+      
+      return NextResponse.json(
+        { error: 'فشل إنشاء ملف الموظف' },
+        { status: 500 }
+      );
+    }
+
+    // 6. إضافة صلاحية الوصول للصيدلية في user_pharmacy_access
+    const { error: accessError } = await supabase
       .from('user_pharmacy_access')
       .insert({
         user_id: newUserId,
-        pharmacy_id: profile.pharmacy_id,
-        role: role || 'staff',
+        pharmacy_id: pharmacyId,
+        role,
         is_primary: false
       });
 
     if (accessError) {
       console.error('Access error:', accessError);
-      // لا نحذف المستخدم هنا، يمكن إصلاحه لاحقاً
+      // لا نرجع خطأ هنا لأن الحساب تم إنشاؤه بنجاح
     }
 
-    return NextResponse.json({
-      success: true,
-      user_id: newUserId,
-      message: 'Staff member created successfully'
+    // 7. تسجيل العملية في audit_logs
+    await supabase.from('audit_logs').insert({
+      pharmacy_id: pharmacyId,
+      user_id: user.id,
+      action: 'staff_created',
+      entity_type: 'user',
+      entity_id: newUserId,
+      new_data: {
+        email,
+        full_name,
+        role,
+        salary,
+        incentives
+      }
     });
 
-  } catch (error: any) {
-    console.error('Create staff error:', error);
+    // 8. إرجاع الاستجابة الناجحة
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { 
+        success: true, 
+        message: 'تم إضافة الموظف بنجاح',
+        user: {
+          id: newUserId,
+          email,
+          full_name,
+          role
+        }
+      },
+      { status: 201 }
+    );
+
+  } catch (error: any) {
+    console.error('Staff creation error:', error);
+    
+    return NextResponse.json(
+      { error: error.message || 'حدث خطأ داخلي في الخادم' },
+      { status: 500 }
+    );
+  }
+}      { error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }
