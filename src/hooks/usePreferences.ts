@@ -144,7 +144,7 @@ export function usePreferences() {
         console.log(`[Preferences] Syncing ${key} = ${value} to DB...`);
         const { error } = await supabase
           .from('pharmacy_settings')
-          .upsert({ pharmacy_id: pharmacyId, ...dbUpdate });
+          .upsert({ pharmacy_id: pharmacyId, ...dbUpdate }, { onConflict: 'pharmacy_id' });
         
         if (error) throw error;
         console.log(`[Preferences] ${key} synced successfully.`);
@@ -166,7 +166,7 @@ export function usePreferences() {
         const dbUpdate = mapPrefsToDb(newPrefsPartial);
         const { error } = await supabase
           .from('pharmacy_settings')
-          .upsert({ pharmacy_id: pharmacyId, ...dbUpdate });
+          .upsert({ pharmacy_id: pharmacyId, ...dbUpdate }, { onConflict: 'pharmacy_id' });
         
         if (error) throw error;
       } catch (e) {

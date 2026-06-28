@@ -145,13 +145,12 @@ export default function ImportInventoryPage() {
         formattedExpiry = `${year}-${month}-15`;
     }
 
-    return {
+  return {
         ...item,
         expiry_date: formattedExpiry,
-        // تأكد من إرسال هذه الحقول بالتحديد
         type: item.type || 'tablet',
         unit_quantity: item.unit_quantity || 1,
-        // تأكد أن المفتاح هنا هو sale_price ليتوافق مع الدالة
+        // هام جداً: تأكد أن المفتاح هنا هو sale_price
         sale_price: item.sale_price 
     };
 });

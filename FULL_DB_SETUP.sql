@@ -425,6 +425,12 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pharmacy_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "settings_select" ON pharmacy_settings;
+DROP POLICY IF EXISTS "settings_insert" ON pharmacy_settings;
+DROP POLICY IF EXISTS "settings_update" ON pharmacy_settings;
+CREATE POLICY "settings_select" ON pharmacy_settings FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "settings_insert" ON pharmacy_settings FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "settings_update" ON pharmacy_settings FOR UPDATE TO authenticated USING (pharmacy_id = get_my_pharmacy_id()) WITH CHECK (pharmacy_id = get_my_pharmacy_id());
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE financial_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE debt_payments ENABLE ROW LEVEL SECURITY;
@@ -512,7 +518,7 @@ GRANT EXECUTE ON FUNCTION smart_search TO authenticated;
 GRANT EXECUTE ON FUNCTION fast_checkout TO authenticated;
 GRANT EXECUTE ON FUNCTION get_dashboard_stats TO authenticated;
 
--- Bulk Import Inventory (Atomic Transaction)
+-- Bulk Import Inventory (Robust - Per-Item Error Handling)
 CREATE OR REPLACE FUNCTION bulk_import_inventory(
   p_pharmacy_id uuid,
   p_category text,
@@ -526,67 +532,79 @@ DECLARE
   v_item jsonb;
   v_product_id uuid;
   v_count int := 0;
+  v_errors jsonb := '[]'::jsonb;
 BEGIN
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
-    -- 1. Upsert Product
-    INSERT INTO products (
-      pharmacy_id, 
-      name, 
-      barcode, 
-      company_name, 
-      price, 
-      category, 
-      type, 
-      unit_conversion
-    )
-    VALUES (
-      p_pharmacy_id,
-      v_item->>'name',
-      v_item->>'barcode',
-      v_item->>'company',
-      (v_item->>'sale_price')::numeric,
-      p_category,
-      'pack',
-      1
-    )
-    ON CONFLICT (pharmacy_id, barcode) DO UPDATE SET
-      name = EXCLUDED.name,
-      company_name = EXCLUDED.company_name,
-      price = EXCLUDED.price,
-      category = EXCLUDED.category
-    RETURNING id INTO v_product_id;
+    BEGIN
+      -- 1. Upsert Product with dynamic Type and Unit Conversion
+      -- NOTE: products table has no updated_at column, so we don't set it here
+      INSERT INTO products (
+        pharmacy_id, 
+        name, 
+        barcode, 
+        company_name, 
+        price, 
+        category, 
+        type, 
+        unit_conversion
+      )
+      VALUES (
+        p_pharmacy_id,
+        trim(v_item->>'name'),
+        trim(v_item->>'barcode'),
+        trim(COALESCE(v_item->>'company', 'غير محدد')),
+        COALESCE((v_item->>'sale_price')::numeric, (v_item->>'selling_price')::numeric, 0),
+        p_category,
+        COALESCE(v_item->>'type', 'tablet'),
+        COALESCE((v_item->>'unit_quantity')::int, 1)
+      )
+      ON CONFLICT (pharmacy_id, barcode) DO UPDATE SET
+        name          = EXCLUDED.name,
+        company_name  = EXCLUDED.company_name,
+        price         = EXCLUDED.price,
+        category      = EXCLUDED.category,
+        type          = EXCLUDED.type,
+        unit_conversion = EXCLUDED.unit_conversion
+      RETURNING id INTO v_product_id;
 
-    -- 2. Insert Batch
-    INSERT INTO batches (
-      product_id,
-      pharmacy_id,
-      barcode,
-      batch_number,
-      quantity,
-      expiry_date,
-      purchase_price,
-      sale_price
-    )
-    VALUES (
-      v_product_id,
-      p_pharmacy_id,
-      v_item->>'barcode',
-      'IMP-' || upper(substring(md5(random()::text), 1, 8)),
-      2,
-      (v_item->>'expiry_date')::date,
-      (v_item->>'purchase_price')::numeric,
-      (v_item->>'sale_price')::numeric
-    );
+      -- 2. Insert Batch (handles both sale_price and selling_price field names)
+      INSERT INTO batches (
+        product_id,
+        pharmacy_id,
+        barcode,
+        batch_number,
+        quantity,
+        expiry_date,
+        purchase_price,
+        sale_price
+      )
+      VALUES (
+        v_product_id,
+        p_pharmacy_id,
+        trim(v_item->>'barcode'),
+        'IMP-' || upper(substring(md5(random()::text), 1, 8)),
+        2,
+        NULLIF(trim(COALESCE(v_item->>'expiry_date', '')), '')::date,
+        COALESCE((v_item->>'purchase_price')::numeric, 0),
+        COALESCE((v_item->>'sale_price')::numeric, (v_item->>'selling_price')::numeric, 0)
+      );
 
-    v_count := v_count + 1;
+      v_count := v_count + 1;
+
+    EXCEPTION WHEN OTHERS THEN
+      -- Log the error but continue processing remaining items
+      v_errors := v_errors || jsonb_build_object(
+        'item', COALESCE(v_item->>'name', 'unknown'),
+        'barcode', COALESCE(v_item->>'barcode', 'unknown'),
+        'error', SQLERRM
+      );
+    END;
   END LOOP;
 
-  RETURN jsonb_build_object('success', true, 'count', v_count);
-EXCEPTION WHEN OTHERS THEN
-  RAISE EXCEPTION 'Import failed: %', SQLERRM;
+  RETURN jsonb_build_object('success', true, 'count', v_count, 'errors', v_errors);
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION bulk_import_inventory TO authenticated;
+GRANT EXECUTE ON FUNCTION bulk_import_inventory(uuid, text, jsonb) TO authenticated;
 
 -- DONE! 🚀

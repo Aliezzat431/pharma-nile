@@ -25,7 +25,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { GeneralSettings } from './components/GeneralSettings';
-import { NotificationSettings } from './components/NotificationSettings';
 import { AppearanceSettings } from './components/AppearanceSettings';
 import { ShortcutSettings } from './components/ShortcutSettings';
 import { DatabaseSettings } from './components/DatabaseSettings';
@@ -144,7 +143,6 @@ export default function Settings() {
 
   const tabs = [
     { id: 'general', label: 'الإعدادات العامة', icon: Shield },
-    { id: 'notifications', label: 'التنبيهات والإشعارات', icon: Bell },
     { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
     { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
     { id: 'database', label: 'إدارة البيانات والتنظيف', icon: Zap },
@@ -228,7 +226,6 @@ export default function Settings() {
         <div className="md:col-span-9 relative min-h-[500px]">
           <AnimatePresence mode="wait">
             {activeTab === 'general' && <GeneralSettings key="general" />}
-            {activeTab === 'notifications' && <NotificationSettings key="notifications" />}
             {activeTab === 'appearance' && (
               <AppearanceSettings 
                 key="appearance" 
