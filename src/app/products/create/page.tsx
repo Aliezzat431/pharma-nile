@@ -1,291 +1,406 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  ShoppingCart, 
-  Package, 
-  Users, 
-  Settings, 
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  TrendingUp,
-  FileText,
-  CreditCard,
-  History,
-  Sparkles,
-  Maximize2,
-  Box,
-  BadgeDollarSign,
-  HeartHandshake,
-  AlertCircle,
-  FileUp,
-  PanelLeftOpen // أيقونة التوسيع
-} from 'lucide-react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { PackageOpen, Save, ArrowLeft, Loader2, Barcode as BarcodeIcon, Tag, Calendar, DollarSign, ListOrdered, Factory, Sparkles, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { treatmentTypes } from '@/lib/unitOptions';
+import { createProductWithBatch } from '@/lib/api/createProduct';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { productSchema } from '@/lib/validations';
+import { z } from 'zod';
+import { cn } from '@/lib/utils';
 
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
-import { useAppDispatch } from '@/store/hooks';
-import { openIframe } from '@/store/slices/agentSlice';
-import ThemeToggle from './ThemeToggle';
-import { usePreferences } from '@/hooks/usePreferences';
+type ProductFormValues = z.infer<typeof productSchema>;
 
-const menuGroups = [
-  {
-    title: 'العمليات اليومية',
-    items: [
-      { icon: LayoutDashboard, label: 'لوحة التحكم', href: '/' },
-      { icon: ShoppingCart, label: 'نقطة البيع', href: '/pos' },
-      { icon: Sparkles, label: 'محسن الذكي', href: '/copilot' },
-    ]
-  },
-  {
-    title: 'المخزن والعملاء',
-    items: [
-      { icon: Package, label: 'المخزون', href: '/inventory' },
-      { icon: Box, label: 'التحويلات', href: '/transfers' },
-      { icon: AlertCircle, label: 'النواقص', href: '/shortages' },
-      { icon: Users, label: 'العملاء', href: '/customers' },
-      { icon: History, label: 'المرتجعات', href: '/returns' },
-    ]
-  },
-  {
-    title: 'الماليات والتقارير',
-    items: [
-      { icon: TrendingUp, label: 'المبيعات', href: '/orders' },
-      { icon: FileText, label: 'الفواتير', href: '/invoices' },
-      { icon: FileUp, label: 'استيراد فاتورة', href: '/invoices/import' },
-      { icon: BadgeDollarSign, label: 'الماليات', href: '/financials' },
-      { icon: HeartHandshake, label: 'صدقة جارية', href: '/sadqah' },
-    ]
-  },
-  {
-    title: 'النظام',
-    items: [
-      { icon: Users, label: 'الموظفين', href: '/staff' },
-      { icon: Settings, label: 'الإعدادات', href: '/settings' },
-    ]
-  }
-];
-
-export default function Sidebar() {
-  const pathname = usePathname();
+export default function CreateProduct() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { user } = useAuth();
-  const { preferences } = usePreferences();
-  const [mounted, setMounted] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [aiChoices, setAiChoices] = useState<any[]>([]);
+  const [showChoices, setShowChoices] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem('sidebar-collapsed');
-    
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (mobile) {
-        setIsCollapsed(true);
-      } else if (saved) {
-        setIsCollapsed(saved === 'true');
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ProductFormValues>({
+    resolver: zodResolver(productSchema) as any,
+    defaultValues: {
+      name: '',
+      type: treatmentTypes[0].name,
+      company: '',
+      unit_conversion: 1,
+      barcode: '',
+      quantity: 0,
+      purchase_price: 0,
+      sale_price: 0,
+      expiry_date: '',
+    }
+  });
+
+  const watchType = watch('type');
+  const watchName = watch('name');
+  
+  const selectedTreatmentType = treatmentTypes.find(t => t.name === watchType);
+  const showUnitConversion = selectedTreatmentType?.hasConversion;
+
+  const showError = (msg: string) => {
+    setFormError(msg);
+    setTimeout(() => setFormError(null), 3000);
+  };
+
+  const handleAiAutofill = async () => {
+    if (!watchName) {
+      showError("الرجاء إدخال اسم المنتج أولاً لاستخدام الإكمال الذكي");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/ai-autofill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productName: watchName })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Failed");
+
+      if (data.choices && data.choices.length > 0) {
+        if (data.choices.length === 1) {
+          const choice = data.choices[0];
+          if (choice.name) setValue('name', choice.name);
+          if (choice.company) setValue('company', choice.company);
+          if (choice.type) setValue('type', choice.type);
+          if (choice.unit_conversion) setValue('unit_conversion', choice.unit_conversion);
+        } else {
+          setAiChoices(data.choices);
+          setShowChoices(true);
+        }
+      } else {
+        showError("لم يتم العثور على نتائج للإكمال الذكي");
       }
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const toggleSidebar = () => {
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-    if (!isMobile) {
-      localStorage.setItem('sidebar-collapsed', String(newState));
+    } catch (err: any) {
+      showError("خطأ الإكمال الذكي: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/auth/login');
+  const parseDate = (input: string) => {
+    if (!input) return '';
+    const parts = input.split(/[\/\-.]/).map(p => p.trim());
+    if (parts.length === 3) {
+      const d = parts[0].padStart(2, '0');
+      const m = parts[1].padStart(2, '0');
+      const y = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+      return `${y}-${m}-${d}`;
+    }
+    if (parts.length === 2) {
+      const m = parts[0].padStart(2, '0');
+      const y = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
+      return `${y}-${m}-15`;
+    }
+    return input;
   };
 
-  if (!mounted) return null;
+  const onSubmit = async (data: ProductFormValues) => {
+    setLoading(true);
+    try {
+      const { success, error } = await createProductWithBatch({
+        name: data.name,
+        type: data.type,
+        company: data.company || '',
+        inventory_method: 'FEFO',
+        barcode: data.barcode,
+        expiry_date: parseDate(data.expiry_date),
+        unit: 'علبة',
+        quantity: data.quantity,
+        purchase_price: data.purchase_price,
+        sale_price: data.sale_price,
+        unit_conversion: showUnitConversion ? data.unit_conversion : 1,
+        pharmacy_id: localStorage.getItem('selected_pharmacy_id') || undefined,
+      });
+
+      if (success) {
+        router.push('/inventory');
+      } else {
+        showError('فشل في إضافة المنتج: ' + error?.message);
+      }
+    } catch (err: any) {
+      showError('خطأ غير متوقع: ' + err?.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      {/* Mobile Overlay */}
-      {isMobile && !isCollapsed && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] md:hidden"
-          onClick={() => setIsCollapsed(true)}
-        />
-      )}
-
-      <motion.aside 
-        initial={false}
-        animate={{ 
-          width: isMobile ? 288 : (isCollapsed ? 96 : 288),
-          x: isMobile ? (isCollapsed ? 288 : 0) : 0
-        }}
-        className={`bg-[var(--panel-bg)] backdrop-blur-xl border-l border-[var(--glass-border)] h-screen fixed right-0 top-0 flex flex-col z-[100] transition-all duration-500 ease-in-out`}
-      >
-        {/* Header Section */}
-        <div className={`p-6 pb-2 mb-4 transition-all duration-500 ${isCollapsed ? 'px-4' : 'p-8'}`}>
-          <div className={`flex items-center gap-3 bg-gradient-to-l bg-[var(--nile-teal)]/10 to-transparent p-3 rounded-2xl border-r-4 border-[var(--nile-teal)] relative group overflow-hidden`}>
-            <div className="w-10 h-10 min-w-[40px] rounded-xl bg-[var(--nile-teal)] flex items-center justify-center neon-glow-teal z-10 transition-transform group-hover:rotate-12">
-              <Sparkles className="w-6 h-6 text-black" />
-            </div>
-            {!isCollapsed && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <h1 className="text-xl font-bold text-white tracking-tight font-cairo">
-                  {preferences?.pharmacyName || 'PharmaNile'}
-                </h1>
-                <p className="text-[10px] text-[var(--nile-teal)] font-bold uppercase tracking-widest opacity-80">Premium OS</p>
-              </div>
-            )}
-            
-            {/* Internal Collapse Button (Visible when expanded) */}
-            {!isCollapsed && (
-              <button 
-                onClick={toggleSidebar}
-                className="absolute left-2 p-1.5 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] rounded-lg text-[var(--sidebar-text-inactive)] hover:text-[var(--foreground)] transition-all"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            )}
+    <div className="w-full max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12 relative">
+      <AnimatePresence>
+        {formError && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50">
+            <motion.div 
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9, y: -20 }}
+              className="bg-red-500/20 text-red-500 border border-red-500/30 px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 backdrop-blur-md font-cairo"
+            >
+              <AlertCircle className="w-5 h-5" />
+              {formError}
+            </motion.div>
           </div>
-        </div>
+        )}
 
-        {/* Navigation Menu */}
-        <nav className="flex-1 px-3 space-y-6 overflow-y-auto custom-scrollbar scroll-smooth py-4">
-          {menuGroups.map((group) => (
-            <div key={group.title} className="space-y-1">
-              {!isCollapsed && (
-                <h3 className="px-5 text-[10px] font-bold text-[var(--sidebar-text-inactive)] uppercase tracking-[0.2em] mb-2 font-cairo animate-in fade-in duration-700">
-                  {group.title}
-                </h3>
-              )}
-              <div className="space-y-1">
-                {group.items.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <div key={item.href} className="group relative flex items-center">
-                      <Link
-                        href={item.href}
-                        onClick={() => {
-                          if (isMobile) setIsCollapsed(true);
-                        }}
-                        className={`flex-1 flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ${
-                          isActive 
-                          ? 'bg-[var(--nile-teal-glow)] text-[var(--nile-teal)] border-r-2 border-[var(--nile-teal)] shadow-lg' 
-                          : 'text-[var(--sidebar-text-inactive)] hover:bg-[var(--glass-surface)] hover:text-[var(--foreground)]'
-                        } ${isCollapsed ? 'justify-center' : ''}`}
-                      >
-                        <item.icon className={`w-5 h-5 min-w-[20px] transition-transform group-hover:scale-110 ${isActive ? 'text-[var(--nile-teal)]' : ''}`} />
-                        {!isCollapsed && (
-                          <span className="font-cairo font-bold text-sm tracking-wide whitespace-nowrap animate-in fade-in slide-in-from-right-2 duration-300">
-                            {item.label}
-                          </span>
-                        )}
-                        {(isActive && !isCollapsed) && <div className="mr-auto w-1.5 h-1.5 rounded-full bg-[var(--nile-teal)] neon-glow-teal" />}
-                      </Link>
-                      
-                      {/* Tooltip for Collapsed State */}
-                      {isCollapsed && (
-                        <div className="absolute left-full ml-4 px-3 py-2 bg-[var(--background)] border border-[var(--glass-border)] rounded-lg text-[var(--foreground)] text-xs font-bold font-cairo opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[200] whitespace-nowrap shadow-2xl">
-                          {item.label}
-                        </div>
-                      )}
-                      
-                      {/* Expand Window Button (Only in Expanded Mode) */}
-                      {!isCollapsed && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            dispatch(openIframe({
-                              url: item.href,
-                              title: item.label,
-                              width: 1000,
-                              height: 750
-                            }));
-                          }}
-                          className="absolute left-4 opacity-0 group-hover:opacity-100 p-2 hover:bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] rounded-xl transition-all z-10"
-                          title="فتح في نافذة مستقلة"
-                        >
-                          <Maximize2 className="w-3.5 h-3.5" />
-                        </button>
+        {showChoices && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[#050505] border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative"
+            >
+              <h3 className="text-xl font-bold font-cairo mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#00CED1]" />
+                اختر المنتج المناسب
+              </h3>
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
+                {aiChoices.map((choice, idx) => (
+                  <div 
+                    key={idx}
+                    onClick={() => {
+                      if (choice.name) setValue('name', choice.name);
+                      if (choice.company) setValue('company', choice.company);
+                      if (choice.type) setValue('type', choice.type);
+                      if (choice.unit_conversion) setValue('unit_conversion', choice.unit_conversion);
+                      setShowChoices(false);
+                    }}
+                    className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-[#00CED1]/10 hover:border-[#00CED1]/30 cursor-pointer transition-all text-right group"
+                  >
+                    <div className="font-bold text-lg font-cairo text-white group-hover:text-[#00CED1] transition-colors">{choice.name}</div>
+                    <div className="text-sm text-gray-400 font-cairo mt-1">الشركة: {choice.company || 'غير محدد'}</div>
+                    <div className="flex gap-2 mt-2">
+                      <span className="text-xs px-2 py-1 bg-white/10 rounded-md text-gray-300 font-cairo">{choice.type}</span>
+                      {choice.unit_conversion > 1 && (
+                        <span className="text-xs px-2 py-1 bg-white/10 rounded-md text-gray-300 font-cairo">تحويل: {choice.unit_conversion}</span>
                       )}
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-        </nav>
-
-        {/* Footer Section */}
-        <div className="p-4 border-t border-[var(--glass-border)] space-y-3">
-          <div className={`flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${isCollapsed ? 'justify-center' : 'bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)]'}`}>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--nile-teal)] to-[var(--royal-gold)] p-[2px]">
-              <div className="w-full h-full rounded-full bg-[var(--background)] flex items-center justify-center text-xs font-bold text-[var(--foreground)] overflow-hidden">
-                {user?.user_metadata?.full_name?.substring(0, 2) || 'PH'}
+              <div className="mt-6 flex justify-end">
+                <button 
+                  type="button"
+                  onClick={() => setShowChoices(false)}
+                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-cairo transition-colors"
+                >
+                  إلغاء
+                </button>
               </div>
-            </div>
-            {!isCollapsed && (
-              <div className="flex-1 overflow-hidden">
-                <p className="text-xs font-bold text-[var(--foreground)] truncate font-cairo">
-                  {user?.user_metadata?.full_name || 'Pharma Nile'}
-                </p>
-                <p className="text-[10px] text-[var(--sidebar-text-inactive)] font-bold font-inter truncate">Admin Level</p>
-              </div>
-            )}
+            </motion.div>
           </div>
-
-          <div className="flex px-1 gap-2">
-             <ThemeToggle align="sidebar" />
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className={`w-full flex items-center gap-4 px-4 py-3 text-red-400 hover:bg-red-500/10 transition-all group overflow-hidden ${
-              isCollapsed ? "justify-center rounded-2xl" : "rounded-2xl"
-            }`}
+        )}
+      </AnimatePresence>
+      <header className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.back()}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-colors"
           >
-            <LogOut className="w-5 h-5 flex-shrink-0 group-hover:rotate-12 transition-transform" />
-            {!isCollapsed && (
-              <span className="text-sm font-bold font-cairo whitespace-nowrap">
-                تسجيل الخروج
-              </span>
-            )}
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo">
+              إضافة <span className="text-[#D4AF37]">صنف جديد</span>
+            </h1>
+            <p className="text-gray-400 mt-1 font-cairo">سجل منتجاً جديداً وحدد رصيد أول المدة (التشغيلة الأولى).</p>
+          </div>
+        </div>
+      </header>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        
+        <div className="glass-panel p-8 space-y-6 relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-1 h-full bg-[#00CED1]"></div>
+           <h2 className="text-xl font-bold mb-4 flex items-center gap-2 font-cairo">
+              <Tag className="w-5 h-5 text-gray-400" />
+              البيانات الأساسية للصنف
+           </h2>
+           
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2 flex items-end gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">اسم المنتج <span className="text-red-400">*</span></label>
+                  <input 
+                    {...register('name')}
+                    className={cn(
+                      "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo text-right",
+                      errors.name ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    )}
+                    placeholder="مثال: بانادول إكسترا 500 مجم"
+                  />
+                  {errors.name && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.name.message}</p>}
+                </div>
+                <button 
+                  type="button" 
+                  disabled={loading}
+                  onClick={handleAiAutofill}
+                  className="px-4 py-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors flex items-center gap-2 font-cairo disabled:opacity-50 h-[50px] whitespace-nowrap"
+                >
+                  <Sparkles className={`w-4 h-4 ${loading ? 'animate-pulse' : ''}`} />
+                  إكمال بالذكاء الاصطناعي
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2 font-cairo">
+                  <Factory className="w-4 h-4" /> الشركة المصنعة <span className="text-gray-500 text-xs">(اختياري)</span>
+                </label>
+                <input 
+                  {...register('company')}
+                  className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors font-cairo text-right"
+                  placeholder="مثال: فاركو أو GSK"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">التصنيف (النوع) <span className="text-red-400">*</span></label>
+                <select 
+                  {...register('type')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors appearance-none font-cairo",
+                    errors.type ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
+                >
+                  {treatmentTypes.map(t => (
+                    <option key={t.id} value={t.name}>{t.name}</option>
+                  ))}
+                </select>
+                {errors.type && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.type.message}</p>}
+              </div>
+
+              {showUnitConversion ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">
+                    معامل التحويل (عدد الأشرطة/الأمبولات بالعلبة) <span className="text-red-400">*</span>
+                  </label>
+                  <input 
+                    type="number"
+                    min="1"
+                    {...register('unit_conversion')}
+                    className={cn(
+                      "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                      errors.unit_conversion ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    )}
+                  />
+                  {errors.unit_conversion && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.unit_conversion.message}</p>}
+                </div>
+              ) : (
+                <div></div>
+              )}
+           </div>
+        </div>
+
+        <div className="glass-panel p-8 space-y-6 relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-1 h-full bg-[#D4AF37]"></div>
+           <h2 className="text-xl font-bold mb-4 flex items-center gap-2 font-cairo">
+              <ListOrdered className="w-5 h-5 text-gray-400" />
+              بيانات أول تشغيلة (Initial Batch)
+           </h2>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2 font-cairo">
+                  <BarcodeIcon className="w-4 h-4" /> الباركود <span className="text-red-400">*</span>
+                </label>
+                <input 
+                  {...register('barcode')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                    errors.barcode ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
+                  placeholder="امسح أو اكتب الباركود..."
+                />
+                {errors.barcode && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.barcode.message}</p>}
+              </div>
+
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2 font-cairo">
+                  <Calendar className="w-4 h-4" /> تاريخ الانتهاء <span className="text-red-400">*</span>
+                </label>
+                <input 
+                  type="text"
+                  {...register('expiry_date')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                    errors.expiry_date ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
+                  placeholder="مثال: 05/2027 أو 15/05/2027"
+                />
+                {errors.expiry_date && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.expiry_date.message}</p>}
+              </div>
+
+              <div className="lg:col-span-1">
+                <label className="block text-sm font-medium text-gray-400 mb-2 font-cairo">الكمية (بالعلب) <span className="text-red-400">*</span></label>
+                <input 
+                  type="number"
+                  min="0"
+                  {...register('quantity')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                    errors.quantity ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
+                />
+                {errors.quantity && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.quantity.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2 font-cairo">
+                  <DollarSign className="w-4 h-4 text-red-400" /> سعر الشراء (ج.م) <span className="text-red-400">*</span>
+                </label>
+                <input 
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register('purchase_price')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                    errors.purchase_price ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
+                />
+                {errors.purchase_price && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.purchase_price.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2 font-cairo">
+                  <DollarSign className="w-4 h-4 text-green-400" /> سعر البيع (ج.م) <span className="text-red-400">*</span>
+                </label>
+                <input 
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register('sale_price')}
+                  className={cn(
+                    "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
+                    errors.sale_price ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                  )}
+                />
+                {errors.sale_price && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.sale_price.message}</p>}
+              </div>
+
+           </div>
+        </div>
+
+        <div className="flex justify-end pt-4">
+          <button 
+            disabled={loading}
+            type="submit" 
+            className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-white font-bold hover:shadow-[0_0_15px_rgba(0,206,209,0.4)] transition-all disabled:opacity-50 font-cairo"
+          >
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            {loading ? 'جاري الحفظ...' : 'تسجيل الصنف والتشغيلة'}
           </button>
         </div>
 
-        {/* ✅ Integrated Expand Button (Inside Nav, on the left edge) */}
-        {isCollapsed && !isMobile && (
-          <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 z-[101]">
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              onClick={toggleSidebar}
-              className="p-2 bg-[var(--panel-bg)] border border-[var(--glass-border)] rounded-l-xl rounded-r-none text-[var(--nile-teal)] hover:bg-[var(--glass-surface)] hover:text-[var(--foreground)] transition-all shadow-lg backdrop-blur-md"
-              title="توسيع القائمة"
-            >
-              <PanelLeftOpen className="w-4 h-4" />
-            </motion.button>
-          </div>
-        )}
-
-        {/* Background Glow Effect */}
-        {!isCollapsed && (
-          <div className="absolute top-[20%] -left-20 w-40 h-40 bg-[var(--nile-teal)]/5 rounded-full blur-[80px] -z-10" />
-        )}
-      </motion.aside>
-    </>
+      </form>
+    </div>
   );
 }
+

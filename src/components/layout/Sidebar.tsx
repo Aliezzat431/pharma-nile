@@ -23,7 +23,7 @@ import {
   HeartHandshake,
   AlertCircle,
   FileUp,
-  PanelLeftOpen // أيقونة جديدة للتوسيع
+  PanelLeftOpen // أيقونة التوسيع
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -90,7 +90,7 @@ export default function Sidebar() {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
       if (mobile) {
-        setIsCollapsed(true); // Default hidden on mobile
+        setIsCollapsed(true);
       } else if (saved) {
         setIsCollapsed(saved === 'true');
       }
@@ -98,16 +98,7 @@ export default function Sidebar() {
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
-
-    const handleToggle = () => {
-      setIsCollapsed(prev => !prev);
-    };
-    window.addEventListener('sidebar-toggle', handleToggle);
-
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      window.removeEventListener('sidebar-toggle', handleToggle);
-    };
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const toggleSidebar = () => {
@@ -134,7 +125,7 @@ export default function Sidebar() {
           onClick={() => setIsCollapsed(true)}
         />
       )}
-      
+
       <motion.aside 
         initial={false}
         animate={{ 
@@ -158,7 +149,7 @@ export default function Sidebar() {
               </div>
             )}
             
-            {/* Internal Toggle Button (Visible when expanded) */}
+            {/* Internal Collapse Button (Visible when expanded) */}
             {!isCollapsed && (
               <button 
                 onClick={toggleSidebar}
@@ -172,7 +163,7 @@ export default function Sidebar() {
 
         {/* Navigation Menu */}
         <nav className="flex-1 px-3 space-y-6 overflow-y-auto custom-scrollbar scroll-smooth py-4">
-          {menuGroups.map((group, gIdx) => (
+          {menuGroups.map((group) => (
             <div key={group.title} className="space-y-1">
               {!isCollapsed && (
                 <h3 className="px-5 text-[10px] font-bold text-[var(--sidebar-text-inactive)] uppercase tracking-[0.2em] mb-2 font-cairo animate-in fade-in duration-700">
@@ -274,27 +265,27 @@ export default function Sidebar() {
           </button>
         </div>
 
+        {/* ✅ Integrated Expand Button (Inside Nav, on the left edge) */}
+        {isCollapsed && !isMobile && (
+          <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 z-[101]">
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={toggleSidebar}
+              className="p-2 bg-[var(--panel-bg)] border border-[var(--glass-border)] rounded-l-xl rounded-r-none text-[var(--nile-teal)] hover:bg-[var(--glass-surface)] hover:text-[var(--foreground)] transition-all shadow-lg backdrop-blur-md"
+              title="توسيع القائمة"
+            >
+              <PanelLeftOpen className="w-4 h-4" />
+            </motion.button>
+          </div>
+        )}
+
         {/* Background Glow Effect */}
         {!isCollapsed && (
           <div className="absolute top-[20%] -left-20 w-40 h-40 bg-[var(--nile-teal)]/5 rounded-full blur-[80px] -z-10" />
         )}
       </motion.aside>
-
-      {/* ✅ External Expand Button (Visible only when Collapsed & Not Mobile) */}
-      <AnimatePresence>
-        {!isMobile && isCollapsed && (
-          <motion.button
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            onClick={toggleSidebar}
-            className="fixed top-6 right-[104px] z-[95] p-3 bg-[var(--panel-bg)] border border-[var(--glass-border)] rounded-xl text-[var(--nile-teal)] hover:bg-[var(--glass-surface)] hover:scale-110 transition-all shadow-xl backdrop-blur-md group"
-            title="توسيع القائمة"
-          >
-            <PanelLeftOpen className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
-          </motion.button>
-        )}
-      </AnimatePresence>
     </>
   );
 }
