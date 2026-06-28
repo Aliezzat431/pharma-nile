@@ -28,11 +28,22 @@ export const treatmentTypes = [
 ];
 
 export const typesWithUnits = treatmentTypes.reduce((acc: Record<string, string[]>, type) => {
-  acc[type.name] = (type.hasConversion && type.units)
+  const units = (type.hasConversion && type.units)
     ? type.units
     : [type.baseUnit];
+  
+  // Register by both Arabic name and English ID
+  acc[type.name] = units;
+  acc[type.id] = units;
   return acc;
 }, {});
+
+// Aliases and fallbacks for imported types from files
+typesWithUnits['tablet'] = ["علبة", "شريط", "قرص"];
+typesWithUnits['drops'] = ["علبة"];
+typesWithUnits['suppository'] = ["علبة", "شريط", "لبوسة"];
+typesWithUnits['injection'] = ["علبة", "أمبول"];
+
 
 export const getMultiplier = (prod: any, selectedUnit: string, customPills = 10) => {
     const conv = Number(prod.unit_conversion || prod.unitConversion || 1);
