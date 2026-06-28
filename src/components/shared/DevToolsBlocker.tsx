@@ -7,9 +7,9 @@ export default function DevToolsBlocker() {
     const blockDevTools = (e: KeyboardEvent) => {
 
       if (e.key === 'F12') {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
+        // e.preventDefault();
+        // e.stopPropagation();
+        // return false;
       }
 
       if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
