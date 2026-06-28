@@ -20,7 +20,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import GlassTable from '@/components/ui/GlassTable';
 
-// تحديث الـ Interface لاستقبال النوع والكمية الداخلية
 interface ParsedItem {
   name: string;
   barcode: string;
@@ -28,8 +27,8 @@ interface ParsedItem {
   sale_price: number;
   purchase_price: number;
   company: string;
-  type?: string;       // جديد: نوع المنتج (أقراص، لبوس، نقط...)
-  unit_quantity?: number; // جديد: عدد الشرائط أو الوحدات داخل العلبة
+  type?: string;
+  unit_quantity?: number;
   status: 'pending' | 'success' | 'error';
   error?: string;
 }
@@ -45,55 +44,74 @@ export default function ImportInventoryPage() {
   const router = useRouter();
 
   const parseFile = async (file: File) => {
+    console.group('📂 [File Parsing]');
+    console.log('Starting to parse file:', file.name);
     setIsParsing(true);
-    const text = await file.text();
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
     
-    if (lines.length < 2) {
-      setItems([]);
-      setIsParsing(false);
-      return;
-    }
-
-    const categoryName = lines[0]; 
-    setCategory(categoryName);
-    const parsed: ParsedItem[] = [];
-
-    // تحديد النوع الافتراضي بناءً على اسم الفئة
-    let defaultType = 'tablet';
-    if (categoryName.includes('لبوس')) defaultType = 'suppository';
-    else if (categoryName.includes('نقط')) defaultType = 'drops';
-    else if (categoryName.includes('حقن')) defaultType = 'injection';
-
-    // Start from line 2 (index 1) assuming line 1 is category
-    for (let i = 1; i < lines.length; i++) {
-      let line = lines[i];
-      line = line.replace(/^[،,]+|[،,]+$/g, '');
-
-      const parts = line.split(/[،,]/).map(p => p.trim());
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
       
-      // نتوقع 5 أعمدة كحد أدنى، وعمود سادس اختياري للكمية الداخلية
-      if (parts.length >= 4) {
-        const salePrice = parseFloat(parts[3]);
-        if (isNaN(salePrice)) continue;
-
-        parsed.push({
-          name: parts[0],
-          barcode: parts[1],
-          expiry: parts[2],
-          sale_price: salePrice,
-          purchase_price: Number((salePrice * 0.75).toFixed(2)), // نسبة تقريبية لسعر الشراء
-          company: parts[4] || 'غير محدد',
-          // التعامل مع العمود السادس (عدد الشرائط)
-          unit_quantity: parseInt(parts[5]) || 1, 
-          type: defaultType,
-          status: 'pending'
-        });
+      console.log(`Total lines found: ${lines.length}`);
+      
+      if (lines.length < 2) {
+        console.warn('File has less than 2 lines, aborting.');
+        setItems([]);
+        setIsParsing(false);
+        console.groupEnd();
+        return;
       }
-    }
 
-    setItems(parsed);
-    setIsParsing(false);
+      const categoryName = lines[0]; 
+      setCategory(categoryName);
+      console.log('Detected Category:', categoryName);
+
+      const parsed: ParsedItem[] = [];
+
+      let defaultType = 'tablet';
+      if (categoryName.includes('لبوس')) defaultType = 'suppository';
+      else if (categoryName.includes('نقط')) defaultType = 'drops';
+      else if (categoryName.includes('حقن')) defaultType = 'injection';
+      console.log('Default Type determined:', defaultType);
+
+      for (let i = 1; i < lines.length; i++) {
+        let line = lines[i];
+        line = line.replace(/^[،,]+|[،,]+$/g, '');
+        const parts = line.split(/[،,]/).map(p => p.trim());
+        
+        if (parts.length >= 4) {
+          const salePrice = parseFloat(parts[3]);
+          if (isNaN(salePrice)) {
+            console.warn(`Skipping line ${i + 1}: Invalid price "${parts[3]}"`);
+            continue;
+          }
+
+          const item: ParsedItem = {
+            name: parts[0],
+            barcode: parts[1],
+            expiry: parts[2],
+            sale_price: salePrice,
+            purchase_price: Number((salePrice * 0.75).toFixed(2)),
+            company: parts[4] || 'غير محدد',
+            unit_quantity: parseInt(parts[5]) || 1, 
+            type: defaultType,
+            status: 'pending'
+          };
+          
+          parsed.push(item);
+          // Log first item only to avoid spamming console
+          if (i === 1) console.log('Sample Parsed Item:', item);
+        }
+      }
+
+      console.log(`Successfully parsed ${parsed.length} items.`);
+      setItems(parsed);
+    } catch (err) {
+      console.error('Error during parsing:', err);
+    } finally {
+      setIsParsing(false);
+      console.groupEnd();
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -122,65 +140,82 @@ export default function ImportInventoryPage() {
   };
 
   const startImport = async () => {
-    if (!user?.user_metadata?.pharmacy_id) return;
+    console.group('🚀 [Start Import]');
+    if (!user?.user_metadata?.pharmacy_id) {
+      console.error('User Pharmacy ID is missing from metadata!');
+      console.groupEnd();
+      return;
+    }
+    
     setIsImporting(true);
     setImportProgress(0);
-
     const pharmacyId = user.user_metadata.pharmacy_id;
+    console.log('Target Pharmacy ID:', pharmacyId);
 
     try {
-        // تنسيق التواريخ وإعداد البيانات للإرسال
-   const formattedItems = items.map(item => {
-    let formattedExpiry = item.expiry;
-    const dateParts = item.expiry.split(/[\/\-.]/).map(p => p.trim());
-    
-    if (dateParts.length === 3) {
-        const day = dateParts[0].padStart(2, '0');
-        const month = dateParts[1].padStart(2, '0');
-        const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
-        formattedExpiry = `${year}-${month}-${day}`;
-    } else if (dateParts.length === 2) {
-        const month = dateParts[0].padStart(2, '0');
-        const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
-        formattedExpiry = `${year}-${month}-15`;
-    }
-
-  return {
-        ...item,
-        expiry_date: formattedExpiry,
-        type: item.type || 'tablet',
-        unit_quantity: item.unit_quantity || 1,
-        // هام جداً: تأكد أن المفتاح هنا هو sale_price
-        sale_price: item.sale_price 
-    };
-});
-
-        // استدعاء دالة الاستيراد الذكي
-        const { data, error } = await supabase.rpc('bulk_import_inventory', {
-            p_pharmacy_id: pharmacyId,
-            p_category: category,
-            p_items: formattedItems
-        });
-
-        if (error) throw error;
-
-        // تحديث الحالة إلى نجاح
-        setItems(prev => prev.map(it => ({ ...it, status: 'success' })));
-        setImportProgress(100);
+      console.log('Formatting dates and preparing payload...');
+      const formattedItems = items.map(item => {
+        let formattedExpiry = item.expiry;
+        const dateParts = item.expiry.split(/[\/\-.]/).map(p => p.trim());
         
-        setTimeout(() => {
-            router.push('/inventory');
-        }, 1500);
+        if (dateParts.length === 3) {
+            const day = dateParts[0].padStart(2, '0');
+            const month = dateParts[1].padStart(2, '0');
+            const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
+            formattedExpiry = `${year}-${month}-${day}`;
+        } else if (dateParts.length === 2) {
+            const month = dateParts[0].padStart(2, '0');
+            const year = dateParts[1].length === 2 ? `20${dateParts[1]}` : dateParts[1];
+            formattedExpiry = `${year}-${month}-15`;
+        }
+
+        return {
+            ...item,
+            expiry_date: formattedExpiry,
+            type: item.type || 'tablet',
+            unit_quantity: item.unit_quantity || 1,
+            sale_price: item.sale_price 
+        };
+      });
+
+      console.log('Payload Sample (First Item):', formattedItems[0]);
+      console.log(`Sending ${formattedItems.length} items to RPC...`);
+
+      const { data, error } = await supabase.rpc('bulk_import_inventory', {
+          p_pharmacy_id: pharmacyId,
+          p_category: category,
+          p_items: formattedItems
+      });
+
+      if (error) {
+        console.error('❌ RPC Error:', error);
+        throw error;
+      }
+
+      console.log('✅ RPC Response:', data);
+      
+      // Check for internal errors returned by the function
+      if (data?.errors && data.errors.length > 0) {
+          console.warn('⚠️ Some items failed to import:', data.errors);
+      }
+
+      setItems(prev => prev.map(it => ({ ...it, status: 'success' })));
+      setImportProgress(100);
+      
+      setTimeout(() => {
+          console.log('Redirecting to inventory...');
+          router.push('/inventory');
+      }, 1500);
 
     } catch (err: any) {
-        console.error(err);
+        console.error('❌ Import Failed:', err);
         setItems(prev => prev.map(it => ({ ...it, status: 'error', error: err.message })));
     } finally {
         setIsImporting(false);
+        console.groupEnd();
     }
   };
 
-  // تحديث الأعمدة لعرض النوع والكمية الداخلية
   const columns: any[] = [
     { header: 'الصنف', accessor: (it: ParsedItem) => it.name },
     { header: 'النوع', accessor: (it: ParsedItem) => it.type === 'suppository' ? 'لبوس' : it.type === 'drops' ? 'نقط' : 'أقراص' },
@@ -298,7 +333,6 @@ export default function ImportInventoryPage() {
         </div>
       )}
 
-      {/* Instructions */}
       {!items.length && (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
             <div className="glass-card p-6 border-white/5">
