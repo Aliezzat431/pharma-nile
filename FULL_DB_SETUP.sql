@@ -20,6 +20,7 @@ END $$;
 
 -- Drop Triggers
 DROP TRIGGER IF EXISTS trg_orders_monthly_summary ON orders;
+DROP TRIGGER IF EXISTS trg_stock_transfer_updated_at ON stock_transfers;
 
 -- Drop Functions
 DROP FUNCTION IF EXISTS upsert_monthly_summary(uuid, int, int) CASCADE;
@@ -31,6 +32,9 @@ DROP FUNCTION IF EXISTS fast_checkout(uuid, uuid, jsonb, numeric, text, uuid) CA
 DROP FUNCTION IF EXISTS get_financial_stats(uuid, int) CASCADE;
 DROP FUNCTION IF EXISTS get_monthly_report(uuid, int, int) CASCADE;
 DROP FUNCTION IF EXISTS debug_system_stats(uuid) CASCADE;
+DROP FUNCTION IF EXISTS bulk_import_inventory(uuid, text, jsonb) CASCADE;
+DROP FUNCTION IF EXISTS complete_stock_transfer(uuid, uuid) CASCADE;
+DROP FUNCTION IF EXISTS update_stock_transfer_timestamp() CASCADE;
 
 -- Drop Views
 DROP VIEW IF EXISTS product_inventory CASCADE;
@@ -40,6 +44,7 @@ DROP TABLE IF EXISTS inventory_snapshots CASCADE;
 DROP TABLE IF EXISTS monthly_summaries CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS stock_transfers CASCADE;
 DROP TABLE IF EXISTS batches CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS debt_payments CASCADE;
@@ -157,12 +162,31 @@ CREATE TABLE order_items (
   order_id uuid REFERENCES orders(id) ON DELETE CASCADE,
   product_id uuid REFERENCES products(id) ON DELETE SET NULL,
   batch_id uuid REFERENCES batches(id) ON DELETE SET NULL,
-  name text, -- Captured snapshot
+  name text,
   quantity int NOT NULL,
   price numeric NOT NULL,
   cost_price numeric DEFAULT 0,
   unit text,
   created_at timestamptz DEFAULT now()
+);
+
+-- Stock Transfers (التحويل بين الصيدليات)
+CREATE TABLE stock_transfers (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  from_pharmacy_id  uuid NOT NULL REFERENCES pharmacies(id) ON DELETE CASCADE,
+  to_pharmacy_id    uuid NOT NULL REFERENCES pharmacies(id) ON DELETE CASCADE,
+  product_id        uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  batch_id          uuid REFERENCES batches(id) ON DELETE SET NULL,
+  quantity          int NOT NULL CHECK (quantity > 0),
+  status            text NOT NULL DEFAULT 'pending' 
+                    CHECK (status IN ('pending', 'approved', 'rejected', 'completed', 'cancelled')),
+  notes             text,
+  requested_by      uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  approved_by       uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  completed_at      timestamptz,
+  created_at        timestamptz DEFAULT now(),
+  updated_at        timestamptz DEFAULT now(),
+  CONSTRAINT chk_different_pharmacies CHECK (from_pharmacy_id <> to_pharmacy_id)
 );
 
 -- Pharmacy Settings
@@ -199,7 +223,7 @@ CREATE TABLE audit_logs (
 CREATE TABLE financial_transactions (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   pharmacy_id uuid REFERENCES pharmacies(id) ON DELETE CASCADE,
-  type text NOT NULL, -- 'income', 'expense'
+  type text NOT NULL,
   amount numeric NOT NULL,
   category text,
   description text,
@@ -290,6 +314,14 @@ CREATE INDEX idx_products_pharmacy_name ON products (pharmacy_id, name);
 CREATE INDEX idx_products_name_trgm ON products USING gin (name gin_trgm_ops);
 CREATE INDEX idx_monthly_summaries_pharmacy_year_month ON monthly_summaries (pharmacy_id, year DESC, month DESC);
 CREATE INDEX idx_snapshots_pharmacy_product_date ON inventory_snapshots (pharmacy_id, product_id, snapshot_date DESC);
+
+-- Stock Transfers Indexes
+CREATE INDEX idx_stock_transfers_from ON stock_transfers(from_pharmacy_id);
+CREATE INDEX idx_stock_transfers_to ON stock_transfers(to_pharmacy_id);
+CREATE INDEX idx_stock_transfers_product ON stock_transfers(product_id);
+CREATE INDEX idx_stock_transfers_status ON stock_transfers(status);
+CREATE INDEX idx_stock_transfers_created_at ON stock_transfers(created_at DESC);
+CREATE INDEX idx_stock_transfers_pharmacy_status ON stock_transfers(from_pharmacy_id, status);
 
 -- ─────────────────────────────────────────────────────────────
 -- 6. FUNCTIONS & RPCs
@@ -393,8 +425,137 @@ CREATE TRIGGER trg_orders_monthly_summary
   AFTER INSERT OR UPDATE OF status, total, cost_total, profit_total, payment_method
   ON orders FOR EACH ROW EXECUTE FUNCTION trigger_refresh_monthly_summary();
 
+-- Complete Stock Transfer Function
+CREATE OR REPLACE FUNCTION complete_stock_transfer(p_transfer_id uuid, p_user_id uuid)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_transfer RECORD;
+  v_batch_id uuid;
+  v_available_qty int;
+  v_from_pharmacy uuid;
+  v_to_pharmacy uuid;
+BEGIN
+  SELECT * INTO v_transfer 
+  FROM stock_transfers 
+  WHERE id = p_transfer_id AND status = 'approved';
+  
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Transfer not found or not approved';
+  END IF;
+  
+  v_from_pharmacy := v_transfer.from_pharmacy_id;
+  v_to_pharmacy := v_transfer.to_pharmacy_id;
+  
+  IF v_transfer.batch_id IS NOT NULL THEN
+    SELECT quantity INTO v_available_qty 
+    FROM batches 
+    WHERE id = v_transfer.batch_id AND pharmacy_id = v_from_pharmacy;
+    
+    IF COALESCE(v_available_qty, 0) < v_transfer.quantity THEN
+      RAISE EXCEPTION 'Insufficient stock in specified batch. Available: %, Requested: %', 
+        COALESCE(v_available_qty, 0), v_transfer.quantity;
+    END IF;
+    
+    UPDATE batches 
+    SET quantity = quantity - v_transfer.quantity 
+    WHERE id = v_transfer.batch_id;
+    
+    INSERT INTO batches (product_id, pharmacy_id, barcode, batch_number, quantity, expiry_date, purchase_price, sale_price)
+    SELECT product_id, v_to_pharmacy, barcode, batch_number, v_transfer.quantity, expiry_date, purchase_price, sale_price
+    FROM batches WHERE id = v_transfer.batch_id;
+    
+    v_batch_id := v_transfer.batch_id;
+  ELSE
+    SELECT COALESCE(SUM(quantity), 0) INTO v_available_qty
+    FROM batches 
+    WHERE product_id = v_transfer.product_id 
+      AND pharmacy_id = v_from_pharmacy 
+      AND quantity > 0;
+    
+    IF v_available_qty < v_transfer.quantity THEN
+      RAISE EXCEPTION 'Insufficient stock. Available: %, Requested: %', 
+        v_available_qty, v_transfer.quantity;
+    END IF;
+    
+    DECLARE
+      v_remaining int := v_transfer.quantity;
+      v_batch RECORD;
+    BEGIN
+      FOR v_batch IN 
+        SELECT id, quantity 
+        FROM batches 
+        WHERE product_id = v_transfer.product_id 
+          AND pharmacy_id = v_from_pharmacy 
+          AND quantity > 0
+        ORDER BY expiry_date ASC NULLS LAST, created_at ASC
+      LOOP
+        IF v_remaining <= 0 THEN EXIT; END IF;
+        
+        DECLARE
+          v_deduction int := LEAST(v_batch.quantity, v_remaining);
+        BEGIN
+          UPDATE batches SET quantity = quantity - v_deduction WHERE id = v_batch.id;
+          v_remaining := v_remaining - v_deduction;
+        END;
+      END LOOP;
+      
+      INSERT INTO batches (product_id, pharmacy_id, quantity, purchase_price, sale_price)
+      SELECT id, v_to_pharmacy, v_transfer.quantity, price, price
+      FROM products WHERE id = v_transfer.product_id
+      RETURNING id INTO v_batch_id;
+    END;
+  END IF;
+  
+  UPDATE stock_transfers 
+  SET status = 'completed', 
+      completed_at = now(), 
+      approved_by = p_user_id,
+      updated_at = now()
+  WHERE id = p_transfer_id;
+  
+  INSERT INTO audit_logs (pharmacy_id, user_id, action, entity_type, entity_id, new_data)
+  VALUES (
+    v_from_pharmacy, 
+    p_user_id, 
+    'stock_transfer_completed', 
+    'stock_transfer', 
+    p_transfer_id::text,
+    jsonb_build_object(
+      'to_pharmacy_id', v_to_pharmacy,
+      'product_id', v_transfer.product_id,
+      'quantity', v_transfer.quantity
+    )
+  );
+  
+  RETURN json_build_object(
+    'success', true, 
+    'transfer_id', p_transfer_id,
+    'status', 'completed'
+  );
+END;
+$$;
+
+-- Update Stock Transfer Timestamp Trigger
+CREATE OR REPLACE FUNCTION update_stock_transfer_timestamp()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_stock_transfer_updated_at
+  BEFORE UPDATE ON stock_transfers
+  FOR EACH ROW
+  EXECUTE FUNCTION update_stock_transfer_timestamp();
+
 -- ─────────────────────────────────────────────────────────────
--- 8. ROW LEVEL SECURITY (RLS) POLICIES
+-- 7. ROW LEVEL SECURITY (RLS) POLICIES
 -- ─────────────────────────────────────────────────────────────
 
 -- HELPERS
@@ -402,10 +563,8 @@ CREATE OR REPLACE FUNCTION get_my_pharmacy_id() RETURNS uuid AS $$
 DECLARE
   v_pharmacy_id uuid;
 BEGIN
-  -- 1. Try to get from JWT metadata (fastest)
   v_pharmacy_id := (auth.jwt()->'user_metadata'->>'pharmacy_id')::uuid;
   
-  -- 2. Fallback: Look up in user_pharmacy_access table if JWT is empty/stale
   IF v_pharmacy_id IS NULL THEN
     SELECT pharmacy_id INTO v_pharmacy_id 
     FROM user_pharmacy_access 
@@ -425,18 +584,15 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pharmacy_settings ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "settings_select" ON pharmacy_settings;
-DROP POLICY IF EXISTS "settings_insert" ON pharmacy_settings;
-DROP POLICY IF EXISTS "settings_update" ON pharmacy_settings;
-CREATE POLICY "settings_select" ON pharmacy_settings FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
-CREATE POLICY "settings_insert" ON pharmacy_settings FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
-CREATE POLICY "settings_update" ON pharmacy_settings FOR UPDATE TO authenticated USING (pharmacy_id = get_my_pharmacy_id()) WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+ALTER TABLE stock_transfers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE financial_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE debt_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_pharmacy_access ENABLE ROW LEVEL SECURITY;
+ALTER TABLE monthly_summaries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inventory_snapshots ENABLE ROW LEVEL SECURITY;
 
 -- PHARMACIES
 CREATE POLICY "pharmacies_select_public" ON pharmacies FOR SELECT TO anon, authenticated USING (is_active = true);
@@ -464,23 +620,52 @@ CREATE POLICY "orders_update" ON orders FOR UPDATE TO authenticated USING (pharm
 CREATE POLICY "items_select" ON order_items FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
 CREATE POLICY "items_insert" ON order_items FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
 
+-- STOCK TRANSFERS
+CREATE POLICY "stock_transfers_select" ON stock_transfers 
+  FOR SELECT TO authenticated 
+  USING (
+    from_pharmacy_id = get_my_pharmacy_id() 
+    OR to_pharmacy_id = get_my_pharmacy_id()
+  );
+
+CREATE POLICY "stock_transfers_insert" ON stock_transfers 
+  FOR INSERT TO authenticated 
+  WITH CHECK (
+    from_pharmacy_id = get_my_pharmacy_id() 
+    AND requested_by = auth.uid()
+  );
+
+CREATE POLICY "stock_transfers_update" ON stock_transfers 
+  FOR UPDATE TO authenticated 
+  USING (
+    from_pharmacy_id = get_my_pharmacy_id() 
+    OR to_pharmacy_id = get_my_pharmacy_id()
+  )
+  WITH CHECK (
+    from_pharmacy_id = get_my_pharmacy_id() 
+    OR to_pharmacy_id = get_my_pharmacy_id()
+  );
+
 -- CUSTOMERS
 CREATE POLICY "customers_select" ON customers FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
 CREATE POLICY "customers_insert" ON customers FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
 CREATE POLICY "customers_update" ON customers FOR UPDATE TO authenticated USING (pharmacy_id = get_my_pharmacy_id()) WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+
+-- PHARMACY SETTINGS
+DROP POLICY IF EXISTS "settings_select" ON pharmacy_settings;
+DROP POLICY IF EXISTS "settings_insert" ON pharmacy_settings;
+DROP POLICY IF EXISTS "settings_update" ON pharmacy_settings;
+CREATE POLICY "settings_select" ON pharmacy_settings FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "settings_insert" ON pharmacy_settings FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "settings_update" ON pharmacy_settings FOR UPDATE TO authenticated USING (pharmacy_id = get_my_pharmacy_id()) WITH CHECK (pharmacy_id = get_my_pharmacy_id());
 
 -- FINANCIALS
 CREATE POLICY "finance_select" ON financial_transactions FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
 CREATE POLICY "finance_insert" ON financial_transactions FOR INSERT TO authenticated WITH CHECK (pharmacy_id = get_my_pharmacy_id());
 
 -- SUMMARIES & LOGS
-ALTER TABLE monthly_summaries ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "summaries_select" ON monthly_summaries FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
-
-ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "audit_select" ON audit_logs FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
-
-ALTER TABLE inventory_snapshots ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "snapshots_select" ON inventory_snapshots FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
 
 -- PROFILES & ACCESS
@@ -490,15 +675,13 @@ CREATE POLICY "access_select_own" ON user_pharmacy_access FOR SELECT TO authenti
 CREATE POLICY "access_insert_own" ON user_pharmacy_access FOR INSERT TO authenticated, anon WITH CHECK (true);
 
 -- ─────────────────────────────────────────────────────────────
--- 9. PERMISSIONS (GRANTS)
+-- 8. PERMISSIONS (GRANTS)
 -- ─────────────────────────────────────────────────────────────
 
--- Core access for anonymous/authenticated users (Registration/Login)
 GRANT SELECT, INSERT ON TABLE pharmacies TO anon, authenticated;
 GRANT SELECT, INSERT ON TABLE user_profiles TO anon, authenticated;
 GRANT SELECT, INSERT ON TABLE user_pharmacy_access TO anon, authenticated;
 
--- Operational access for authenticated users
 GRANT ALL ON TABLE products TO authenticated;
 GRANT ALL ON TABLE batches TO authenticated;
 GRANT ALL ON TABLE orders TO authenticated;
@@ -511,14 +694,15 @@ GRANT ALL ON TABLE debt_payments TO authenticated;
 GRANT ALL ON TABLE sessions TO authenticated;
 GRANT ALL ON TABLE monthly_summaries TO authenticated;
 GRANT ALL ON TABLE inventory_snapshots TO authenticated;
+GRANT ALL ON TABLE stock_transfers TO authenticated;
 
--- Views and Functions
 GRANT SELECT ON TABLE product_inventory TO authenticated;
 GRANT EXECUTE ON FUNCTION smart_search TO authenticated;
 GRANT EXECUTE ON FUNCTION fast_checkout TO authenticated;
 GRANT EXECUTE ON FUNCTION get_dashboard_stats TO authenticated;
+GRANT EXECUTE ON FUNCTION complete_stock_transfer TO authenticated;
 
--- Bulk Import Inventory (Robust - Per-Item Error Handling)
+-- Bulk Import Inventory
 DROP FUNCTION IF EXISTS bulk_import_inventory(uuid, text, jsonb);
 
 CREATE OR REPLACE FUNCTION bulk_import_inventory(
@@ -538,8 +722,6 @@ DECLARE
 BEGIN
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
     BEGIN
-      -- 1. Upsert Product with dynamic Type and Unit Conversion
-      -- NOTE: products table has no updated_at column, so we don't set it here
       INSERT INTO products (
         pharmacy_id, 
         name, 
@@ -569,7 +751,6 @@ BEGIN
         unit_conversion = EXCLUDED.unit_conversion
       RETURNING id INTO v_product_id;
 
-      -- 2. Insert Batch (represented with 0 initial quantity since file has no stock quantity info)
       INSERT INTO batches (
         product_id,
         pharmacy_id,
@@ -585,7 +766,7 @@ BEGIN
         p_pharmacy_id,
         trim(v_item->>'barcode'),
         'IMP-' || upper(substring(md5(random()::text), 1, 8)),
-        0, -- Set initial quantity to 0 (conversion maps to unit_conversion, not quantity)
+        0,
         NULLIF(trim(COALESCE(v_item->>'expiry_date', '')), '')::date,
         COALESCE((v_item->>'purchase_price')::numeric, 0),
         COALESCE((v_item->>'sale_price')::numeric, (v_item->>'selling_price')::numeric, 0)
@@ -594,7 +775,6 @@ BEGIN
       v_count := v_count + 1;
 
     EXCEPTION WHEN OTHERS THEN
-      -- Log the error but continue processing remaining items
       v_errors := v_errors || jsonb_build_object(
         'item', COALESCE(v_item->>'name', 'unknown'),
         'barcode', COALESCE(v_item->>'barcode', 'unknown'),
