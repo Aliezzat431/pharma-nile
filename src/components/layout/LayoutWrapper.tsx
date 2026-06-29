@@ -39,8 +39,14 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           if (count > 0) {
             showToast({ variant: 'info', message: `🔄 تم رفع ${count} مرتجع مؤجل إلى السحابة بنجاح.`, duration: 5000 });
           }
+          
+          const swResp = await fetch('/api/__trigger_sync');
+          const swData = await swResp.json();
+          if (swData.synced > 0) {
+            showToast({ variant: 'info', message: `✅ تمت مزامنة ${swData.synced} عملية تعديل/إضافة سحابياً.`, duration: 5000 });
+          }
         } catch (err) {
-          console.error('[LayoutWrapper] Failed to sync offline returns:', err);
+          console.error('[LayoutWrapper] Failed to sync offline operations:', err);
         }
       };
       const handleOffline = () => {
@@ -141,7 +147,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   }
 
   const isPos = pathname?.startsWith('/pos');
-  const showBlocker = !isOnline && !isPos;
+  const showBlocker = false;
 
   if (showBlocker) {
     return (
