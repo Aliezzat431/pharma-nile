@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addToCart, removeFromCart, clearCart, updateUnit, updateQuantity, updateBatchDistribution } from '@/store/slices/posSlice';
 import { Package } from 'lucide-react';
-import { searchProducts, getProductByBarcode, Product } from '@/lib/api/products';
+import { searchProducts, getProductByBarcode, syncProductCatalogToCache, Product } from '@/lib/api/products';
 import { processCheckout } from '@/lib/api/orders';
 import { typesWithUnits } from '@/lib/unitOptions';
 import { analyzeProduct } from '@/lib/api/ai'; // Import the new AI helper
@@ -25,6 +25,9 @@ import { POSCartItem } from './components/POSCartItem';
 import { BatchDistributionModal } from './components/BatchDistributionModal';
 import { PillsConfirmModal } from './components/PillsConfirmModal';
 import { POSRecommendations } from './components/POSRecommendations';
+import { VirtualReceipt } from './components/VirtualReceipt';
+import { queueOfflineOrder, syncOfflineTransactions } from '@/lib/supabase/offline-orders';
+import { showToast } from '@/components/ui/SyncToastProvider';
 
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
@@ -43,10 +46,18 @@ export default function POSTerminal() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const [batchModal, setBatchModal] = useState<{ isOpen: boolean; item: any | null }>({ isOpen: false, item: null });
   const [batchDistributions, setBatchDistributions] = useState<any[]>([]);
 
   const [agentWindows, setAgentWindows] = useState<{ id: string; url: string; title: string; x?: number; y?: number }[]>([]);
+  const [activeReceipt, setActiveReceipt] = useState<{
+    orderId: string;
+    items: any[];
+    total: number;
+    paymentMethod: 'cash' | 'debt' | 'sadqah';
+    customerName?: string;
+  } | null>(null);
 
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -248,6 +259,62 @@ export default function POSTerminal() {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
+  // Listen to network status change events and trigger catalog backup sync
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(window.navigator.onLine);
+
+      const handleOnline = async () => {
+        setIsOnline(true);
+        if (pharmacyId) {
+          syncProductCatalogToCache(pharmacyId);
+          
+          // Re-sync transactions recorded offline
+          try {
+            const syncedCount = await syncOfflineTransactions(processCheckout);
+            if (syncedCount > 0) {
+              showToast({
+                variant: 'success',
+                message: `✅ تم رفع ${syncedCount} مبيعة مؤجلة إلى السحابة بنجاح!`,
+                duration: 6000,
+              });
+            }
+          } catch (err) {
+            console.error('Failed to auto-sync transactions:', err);
+          }
+        }
+      };
+
+      const handleOffline = () => {
+        setIsOnline(false);
+      };
+
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+
+      // Perform initial sync if online
+      if (window.navigator.onLine && pharmacyId) {
+        syncProductCatalogToCache(pharmacyId);
+        
+        // Check for prior unsynced transactions on page load
+        syncOfflineTransactions(processCheckout).then(syncedCount => {
+          if (syncedCount > 0) {
+            showToast({
+              variant: 'info',
+              message: `☁️ تم استئناف ${syncedCount} مبيعة مؤجلة من الجلسة السابقة.`,
+              duration: 6000,
+            });
+          }
+        }).catch(console.error);
+      }
+
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, [pharmacyId]);
+
   const addProductToCart = (product: Product, clearSearch = true) => {
     if (product.current_price === undefined || product.current_price === 0) {
       alert("منتج بدون سعر أو رصيد مخزني.");
@@ -338,6 +405,46 @@ export default function POSTerminal() {
 
     setIsProcessing(true);
     try {
+      if (!isOnline) {
+        const offlineId = await queueOfflineOrder({
+          cart: cartToProcess,
+          total: totalToProcess,
+          paymentMethod,
+          customerId: paymentMethod === 'debt' ? selectedCustomerId : undefined
+        });
+
+        let customerName = undefined;
+        if (paymentMethod === 'debt' && selectedCustomerId) {
+          const selected = customers.find(c => c.id === selectedCustomerId);
+          if (selected) customerName = selected.name;
+        }
+
+        setCheckoutSuccess(true);
+        setActiveReceipt({
+          orderId: offlineId,
+          items: cartToProcess.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            unit: item.unit,
+            unitConversion: item.unitConversion,
+            activeBatches: item.activeBatches
+          })),
+          total: totalToProcess,
+          paymentMethod: paymentMethod,
+          customerName
+        });
+
+        dispatch(clearCart());
+        setPaymentMethod('cash');
+        setSelectedCustomerId('');
+        setSearchInput('');
+        setSearchResults([]);
+        setTimeout(() => setCheckoutSuccess(false), 3000);
+        setIsProcessing(false);
+        return;
+      }
 
       const itemsWithCost = cartToProcess.map(item => ({
         ...item,
@@ -363,7 +470,29 @@ export default function POSTerminal() {
         });
       }
 
+      let customerName = undefined;
+      if (paymentMethod === 'debt' && selectedCustomerId) {
+        const selected = customers.find(c => c.id === selectedCustomerId);
+        if (selected) customerName = selected.name;
+      }
+
       setCheckoutSuccess(true);
+      setActiveReceipt({
+        orderId: result?.id || Math.random().toString(36).substr(2, 9),
+        items: cartToProcess.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          unit: item.unit,
+          unitConversion: item.unitConversion,
+          activeBatches: item.activeBatches
+        })),
+        total: totalToProcess,
+        paymentMethod: paymentMethod,
+        customerName
+      });
+
       dispatch(clearCart());
       setPaymentMethod('cash');
       setSelectedCustomerId('');
@@ -443,7 +572,7 @@ export default function POSTerminal() {
 
       {/* 1. اللوحة اليسرى: البحث، الماسح، والنتائج */}
       <div className="flex-1 min-h-[50vh] lg:min-h-0 flex flex-col gap-6">
-        <POSHeader />
+        <POSHeader isOnline={isOnline} />
 
         {/* شريط البحث */}
         <form onSubmit={handleBarcodeSubmit} className="glass-panel p-2 flex items-center gap-3 relative">
@@ -763,7 +892,13 @@ export default function POSTerminal() {
               `}
             >
               {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <CreditCard className="w-6 h-6" />}
-              {isProcessing ? 'جاري المعالجة...' : paymentMethod === 'sadqah' ? 'إتمام عملية الصدقة' : 'إتمام عملية البيع'}
+              {isProcessing 
+                ? 'جاري المعالجة...' 
+                : !isOnline 
+                  ? 'إتمام عملية البيع (تسجيل أوفلاين/محلي)' 
+                  : paymentMethod === 'sadqah' 
+                    ? 'إتمام عملية الصدقة' 
+                    : 'إتمام عملية البيع'}
               {!isProcessing && <ChevronRight className="w-5 h-5 mr-auto" />}
             </button>
           </div>
@@ -788,6 +923,16 @@ export default function POSTerminal() {
         setPillsInput={setPillsInput}
         onClose={() => setPillsModal({ ...pillsModal, isOpen: false })}
         onConfirm={handlePillsConfirm}
+      />
+
+      <VirtualReceipt
+        isOpen={activeReceipt !== null}
+        orderId={activeReceipt?.orderId || ''}
+        items={activeReceipt?.items || []}
+        total={activeReceipt?.total || 0}
+        paymentMethod={activeReceipt?.paymentMethod || 'cash'}
+        customerName={activeReceipt?.customerName}
+        onClose={() => setActiveReceipt(null)}
       />
 
 

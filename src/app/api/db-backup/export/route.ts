@@ -56,6 +56,7 @@ export async function GET(req: Request) {
             const { data: fallbackData, error: fallbackError } = await supabase
               .from(table)
               .select('*')
+              .eq('pharmacy_id', pharmacyId)
               .range(from, to);
 
             if (fallbackError) throw fallbackError;

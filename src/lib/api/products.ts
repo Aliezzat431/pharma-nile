@@ -1,4 +1,9 @@
 import { supabase } from '../supabase';
+import {
+  saveProductsToCache,
+  searchLocalCache,
+  getLocalProductByBarcode
+} from '../supabase/product-cache';
 
 export interface Product {
   id: string;
@@ -28,54 +33,70 @@ export interface Batch {
   pharmacy_id?: string;
 }
 
-// ✅ تم إصلاح القوس المفقود وتحسين منطق البحث
+// ✅ تم إصلاح القوس المفقود وتحسين منطق البحث مع دعم البحث الفوري المحلي عند انقطاع الاتصال
 export async function searchProducts(query: string, pharmacyId: string) {
-  const words = query.trim().split(/\s+/).filter((w) => w.length >= 2);
-  
-  let dbQuery = supabase
-    .from('products')
-    .select(`
-      *,
-      batches (
-        *
-      ),
-      pharmacy:pharmacies(name)
-    `) // ✅ تم إغلاق القوس هنا
-    .eq('pharmacy_id', pharmacyId)
-    .eq('batches.pharmacy_id', pharmacyId);
-
-  if (words.length > 0) {
-    // بناء فلتر OR للكلمات المتعددة
-    const filter = words.map((w) => `name.ilike.%${w}%`).join(',');
-    dbQuery = dbQuery.or(filter);
-  } else {
-    dbQuery = dbQuery.ilike('name', `%${query}%`);
+  if (typeof window !== 'undefined' && !window.navigator.onLine) {
+    console.log('[Offline Cache] Searching catalog offline...');
+    return searchLocalCache(query, pharmacyId);
   }
 
-  const { data: products, error } = await dbQuery.limit(20);
+  try {
+    const words = query.trim().split(/\s+/).filter((w) => w.length >= 2);
+    
+    let dbQuery = supabase
+      .from('products')
+      .select(`
+        *,
+        batches (
+          *
+        ),
+        pharmacy:pharmacies(name)
+      `) // ✅ تم إغلاق القوس هنا
+      .eq('pharmacy_id', pharmacyId)
+      .eq('batches.pharmacy_id', pharmacyId);
 
-  if (error) {
-    console.error('Error fetching products:', error);
-    return [];
+    if (words.length > 0) {
+      // بناء فلتر OR للكلمات المتعددة
+      const filter = words.map((w) => `name.ilike.%${w}%`).join(',');
+      dbQuery = dbQuery.or(filter);
+    } else {
+      dbQuery = dbQuery.ilike('name', `%${query}%`);
+    }
+
+    const { data: products, error } = await dbQuery.limit(20);
+
+    if (error) {
+      throw error;
+    }
+
+    // معالجة البيانات وإضافة الخصائص المحسوبة
+    const mapped = products.map((p: any) => {
+      const activeBatches = (p.batches || [])
+        .filter((b: Batch) => b.quantity > 0)
+        .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
+
+      const current_price = activeBatches.length > 0 ? activeBatches[0].sale_price : 0;
+      const total_quantity = activeBatches.reduce((acc: number, b: Batch) => acc + b.quantity, 0);
+
+      return {
+        ...p,
+        current_price,
+        total_quantity,
+        activeBatches,
+        pharmacy_name: p.pharmacy?.name || 'مجهول'
+      };
+    });
+
+    // حفظ النتائج في الكاش في الخلفية لتكون متاحة أوفلاين
+    if (mapped.length > 0) {
+      saveProductsToCache(pharmacyId, mapped as any);
+    }
+
+    return mapped;
+  } catch (err) {
+    console.warn('[Cache Fallback] Search failed, pulling from offline copy:', err);
+    return searchLocalCache(query, pharmacyId);
   }
-
-  // معالجة البيانات وإضافة الخصائص المحسوبة
-  return products.map((p: any) => {
-    const activeBatches = (p.batches || [])
-      .filter((b: Batch) => b.quantity > 0)
-      .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
-
-    const current_price = activeBatches.length > 0 ? activeBatches[0].sale_price : 0;
-    const total_quantity = activeBatches.reduce((acc: number, b: Batch) => acc + b.quantity, 0);
-
-    return {
-      ...p,
-      current_price,
-      total_quantity,
-      activeBatches,
-      pharmacy_name: p.pharmacy?.name || 'مجهول'
-    };
-  });
 }
 
 export async function getProducts(pharmacyId: string) {
@@ -92,44 +113,104 @@ export async function getProducts(pharmacyId: string) {
 }
 
 export async function getProductByBarcode(barcode: string, pharmacyId: string) {
-  const { data: batch, error: batchError } = await supabase
-    .from('batches')
-    .select('id, product_id')
-    .eq('barcode', barcode)
-    .eq('pharmacy_id', pharmacyId)
-    .gt('quantity', 0)
-    .maybeSingle(); // ✅ استخدام maybeSingle بدلاً من single لتجنب الخطأ لو مفيش نتائج
+  if (typeof window !== 'undefined' && !window.navigator.onLine) {
+    console.log('[Offline Cache] Looking up barcode offline...');
+    return getLocalProductByBarcode(barcode, pharmacyId);
+  }
 
-  if (batchError || !batch) return null;
+  try {
+    const { data: batch, error: batchError } = await supabase
+      .from('batches')
+      .select('id, product_id')
+      .eq('barcode', barcode)
+      .eq('pharmacy_id', pharmacyId)
+      .gt('quantity', 0)
+      .maybeSingle(); // ✅ استخدام maybeSingle بدلاً من single لتجنب الخطأ لو مفيش نتائج
 
-  const { data: products, error } = await supabase
-    .from('products')
-    .select(`
-      *,
-      batches (*)
-    `)
-    .eq('id', batch.product_id)
-    .eq('pharmacy_id', pharmacyId)
-    .limit(1)
-    .single();
+    if (batchError || !batch) return null;
 
-  if (error || !products) return null;
+    const { data: products, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        batches (*)
+      `)
+      .eq('id', batch.product_id)
+      .eq('pharmacy_id', pharmacyId)
+      .limit(1)
+      .single();
 
-  const p = products as any;
-  const activeBatches = (p.batches || [])
-    .filter((b: Batch) => b.quantity > 0)
-    .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
+    if (error || !products) return null;
 
-  const current_price = activeBatches.length > 0 ? activeBatches[0].sale_price : 0;
-  const total_quantity = activeBatches.reduce((acc: number, b: Batch) => acc + b.quantity, 0);
+    const p = products as any;
+    const activeBatches = (p.batches || [])
+      .filter((b: Batch) => b.quantity > 0)
+      .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
 
-  return {
-    ...p,
-    current_price,
-    total_quantity,
-    activeBatches,
-    scanned_batch_id: batch.id,
-  };
+    const current_price = activeBatches.length > 0 ? activeBatches[0].sale_price : 0;
+    const total_quantity = activeBatches.reduce((acc: number, b: Batch) => acc + b.quantity, 0);
+
+    const result = {
+      ...p,
+      current_price,
+      total_quantity,
+      activeBatches,
+      scanned_batch_id: batch.id,
+    };
+
+    // Save lookup result to cache
+    saveProductsToCache(pharmacyId, [result]);
+
+    return result;
+  } catch (err) {
+    console.warn('[Cache Fallback] Barcode lookup failed, using local copy:', err);
+    return getLocalProductByBarcode(barcode, pharmacyId);
+  }
+}
+
+/**
+ * Syncs the entire pharmacy product catalog to IndexedDB for offline read operation.
+ */
+export async function syncProductCatalogToCache(pharmacyId: string): Promise<void> {
+  try {
+    const { data: products, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        batches (
+          *
+        ),
+        pharmacy:pharmacies(name)
+      `)
+      .eq('pharmacy_id', pharmacyId)
+      .eq('batches.pharmacy_id', pharmacyId);
+
+    if (error) throw error;
+
+    if (products) {
+      const mapped = products.map((p: any) => {
+        const activeBatches = (p.batches || [])
+          .filter((b: Batch) => b.quantity > 0)
+          .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
+
+        const current_price = activeBatches.length > 0 ? activeBatches[0].sale_price : 0;
+        const total_quantity = activeBatches.reduce((acc: number, b: Batch) => acc + b.quantity, 0);
+
+        return {
+          ...p,
+          current_price,
+          total_quantity,
+          activeBatches,
+          pharmacy_name: p.pharmacy?.name || 'مجهول'
+        };
+      });
+
+      await saveProductsToCache(pharmacyId, mapped as any);
+      console.log(`[Cache Sync] Cached ${mapped.length} catalog products locally.`);
+    }
+  } catch (err) {
+    console.error('[Cache Sync] Sync failed:', err);
+  }
 }
 
 export async function updateBatch(batchId: string, updates: Partial<Batch>) {

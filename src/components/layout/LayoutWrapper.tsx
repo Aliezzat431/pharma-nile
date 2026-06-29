@@ -7,8 +7,11 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import { useAuth } from '@/hooks/useAuth';
 import { useDispatch } from 'react-redux';
 import { openIframe } from '@/store/slices/agentSlice';
-import { Maximize2, Search, AlertCircle, Loader2 } from 'lucide-react';
+import { Maximize2, Search, AlertCircle, Loader2, WifiOff } from 'lucide-react';
 import CommandPalette from '@/components/layout/CommandPalette';
+import { syncOfflineReturns } from '@/lib/supabase/offline-orders';
+import { processReturn } from '@/lib/api/orders';
+import { showToast } from '@/components/ui/SyncToastProvider';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -21,6 +24,39 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isCopilot = searchParams.get('copilot') === 'true';
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isCmdOpen, setIsCmdOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(window.navigator.onLine);
+
+      const handleOnline = async () => {
+        setIsOnline(true);
+        showToast({ variant: 'online', message: '✅ تم استعادة الاتصال بالإنترنت — جاري مزامنة البيانات...', duration: 4000 });
+        // Best-effort sync of queued offline returns globally
+        try {
+          const count = await syncOfflineReturns(processReturn);
+          if (count > 0) {
+            showToast({ variant: 'info', message: `🔄 تم رفع ${count} مرتجع مؤجل إلى السحابة بنجاح.`, duration: 5000 });
+          }
+        } catch (err) {
+          console.error('[LayoutWrapper] Failed to sync offline returns:', err);
+        }
+      };
+      const handleOffline = () => {
+        setIsOnline(false);
+        showToast({ variant: 'offline', message: '📡 انقطع الاتصال. يعمل النظام في وضع عدم الاتصال.', duration: 5000 });
+      };
+
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
 
   useEffect(() => {
     const handleLayout = () => {
@@ -104,8 +140,58 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     );
   }
 
+  const isPos = pathname?.startsWith('/pos');
+  const showBlocker = !isOnline && !isPos;
+
+  if (showBlocker) {
+    return (
+      <div className="flex h-screen w-full relative">
+        {(!isMinimal && !isCopilot) && <Sidebar />}
+        <main className={`flex-1 h-screen flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 text-center transition-all duration-500 ease-in-out ${
+          isSidebarCollapsed ? 'mr-0 md:mr-24' : 'mr-0 md:mr-72'
+        }`}>
+          <div className="glass-panel w-full max-w-md p-8 border border-amber-500/20 shadow-[0_0_50px_rgba(212,175,55,0.08)] flex flex-col items-center gap-6 animate-in zoom-in duration-300">
+            <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/30 animate-pulse">
+              <WifiOff className="w-8 h-8 text-[#D4AF37]" />
+            </div>
+            
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold font-cairo text-white">انقطع الاتصال بالإنترنت (وضع الطوارئ)</h2>
+              <p className="text-[10px] text-[#D4AF37] font-bold tracking-wider uppercase font-sans">Cairo Local Mode Active</p>
+            </div>
+
+            <p className="text-[12px] text-gray-400 font-cairo leading-relaxed">
+              تعذر الاتصال بقاعدة البيانات السحابية لـ PharmaNile. لحفظ سلامة الحسابات ومزامنة الجرد والتقارير المالية، تم تعليق شاشات الإدارة والإعدادات مؤقتاً لحين استعادة الشبكة.
+            </p>
+
+            <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-emerald-400 text-xs text-right leading-relaxed w-full font-cairo">
+              💡 <span className="font-bold underline text-white">ملاحظة هامة:</span> نقطة البيع (POS) تعمل بالكامل دون اتصال! يمكنك إتمام المبيعات ومسح الباركود، وسيتم مزامنتها سحابياً فور عودة الشبكة.
+            </div>
+
+            <button
+              onClick={() => router.push('/pos')}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#f2cd56] text-black font-bold font-cairo hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all hover:scale-[1.02] active:scale-95 text-sm"
+            >
+              الانتقال لنقطة البيع البديلة (POS Terminal)
+            </button>
+          </div>
+        </main>
+        <CommandPalette isOpen={isCmdOpen} onClose={() => setIsCmdOpen(false)} />
+        <ChatWidget />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-screen w-full relative">
+    <div className="flex h-screen w-full relative flex-col">
+      {!isOnline && (
+        <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-[11px] py-1.5 px-4 text-center font-semibold font-cairo flex items-center justify-center gap-2 border-b border-amber-500/25 animate-in slide-in-from-top duration-300 z-50">
+          <WifiOff className="w-3.5 h-3.5 animate-pulse" />
+          <span>أنت تعمل حالياً في وضع عدم الاتصال بالشبكة (Cairo Local Mode). يتم حفظ المبيعات محلياً ومزامنتها فور الإتاحة.</span>
+        </div>
+      )}
+      
+      <div className="flex flex-1 h-full w-full relative">
       {(!isMinimal && !isCopilot) && <Sidebar />}
       
       {}
@@ -164,10 +250,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-[var(--nile-teal)]/5 blur-[120px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
       <div className="fixed bottom-[-10%] right-[20%] w-[50vw] h-[50vw] rounded-full bg-[var(--royal-gold)]/3 blur-[150px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
       
+      </div>
       <CommandPalette isOpen={isCmdOpen} onClose={() => setIsCmdOpen(false)} />
       <ChatWidget />
     </div>
   );
 }
-
-

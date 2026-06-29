@@ -120,25 +120,8 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError;
 
-      if (data?.user) {
-        await supabaseClient.from("user_profiles").insert([
-          {
-            id: data.user.id,
-            full_name: name.trim(),
-            role: "admin",
-            pharmacy_id: targetPharmacyId
-          }
-        ]);
-
-        await supabaseClient.from("user_pharmacy_access").insert([
-          {
-            user_id: data.user.id,
-            pharmacy_id: targetPharmacyId,
-            role: "admin",
-            is_primary: true
-          }
-        ]);
-      }
+      // The user profile and access mappings are created automatically by the database trigger
+      // bound to auth.users (handle_new_user_registration). No manual inserters are required client-side.
 
       setSuccess(true);
       setTimeout(() => {

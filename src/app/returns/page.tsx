@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { RotateCcw, Search, ChevronDown, ChevronUp, Calendar, ShoppingBag, AlertCircle, Loader2, Check, Package, X } from 'lucide-react';
+import { RotateCcw, Search, ChevronDown, ChevronUp, Calendar, ShoppingBag, AlertCircle, Loader2, Check, Package, WifiOff, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { processReturn } from '@/lib/api/orders';
 import { ConfirmReturnModal } from './components/ConfirmReturnModal';
@@ -10,6 +10,13 @@ import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
 import { usePreferences } from '@/hooks/usePreferences';
+import {
+  saveOrdersToCache,
+  getCachedOrdersList,
+  queueOfflineReturn,
+  syncOfflineReturns,
+  getQueuedReturns,
+} from '@/lib/supabase/offline-orders';
 
 const PAGE_SIZE = 15;
 
@@ -38,9 +45,51 @@ export default function ReturnsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [returningId, setReturningId] = useState<string | null>(null);
   const [returnSuccess, setReturnSuccess] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingReturnIds, setPendingReturnIds] = useState<string[]>([]);
+  const [offlineSyncing, setOfflineSyncing] = useState(false);
   const { preferences } = usePreferences();
   const pageRef = usePageGSAP();
   const listRef = useGSAPList<HTMLDivElement>([]);
+
+  // Monitor network status
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsOnline(window.navigator.onLine);
+
+    const onOnline = async () => {
+      setIsOnline(true);
+      // Auto-sync any queued returns
+      setOfflineSyncing(true);
+      try {
+        const count = await syncOfflineReturns(processReturn);
+        if (count > 0) {
+          alert(`✅ تم رفع ${count} مرتجع(ات) مؤجلة إلى السحابة بنجاح!`);
+          setPendingReturnIds([]);
+          fetchOrders(); // Refresh from server
+        }
+      } catch (err) {
+        console.error('Failed to sync offline returns:', err);
+      } finally {
+        setOfflineSyncing(false);
+      }
+    };
+    const onOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  // Load pending return IDs from IndexedDB on mount
+  useEffect(() => {
+    getQueuedReturns().then(list => {
+      setPendingReturnIds(list.map(r => r.id));
+    }).catch(console.error);
+  }, []);
 
   useEffect(() => {
     fetchOrders();
@@ -53,6 +102,18 @@ export default function ReturnsPage() {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - limit);
 
+      if (!navigator.onLine) {
+        // Offline: load from IndexedDB cache
+        const cached = await getCachedOrdersList();
+        const filtered = cached.filter(o =>
+          o.status !== 'returned' && o.status !== 'cancelled' &&
+          new Date(o.created_at) >= cutoff
+        );
+        setOrders(filtered);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('orders')
         .select('*, order_items(*)')
@@ -62,9 +123,19 @@ export default function ReturnsPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      const fetched = data || [];
+      setOrders(fetched);
+
+      // Cache for offline use (background, non-blocking)
+      saveOrdersToCache(fetched).catch(console.error);
     } catch (error) {
-      console.error("Error fetching orders", error);
+      console.error('Error fetching orders, trying cache...', error);
+      try {
+        const cached = await getCachedOrdersList();
+        setOrders(cached.filter(o => o.status !== 'returned' && o.status !== 'cancelled'));
+      } catch {
+        setOrders([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -76,9 +147,17 @@ export default function ReturnsPage() {
     setConfirmReturnModal(null);
     setReturningId(order.id);
     try {
+      if (!isOnline) {
+        // Queue offline — will sync on reconnect
+        await queueOfflineReturn(order.id);
+        setPendingReturnIds(prev => [...prev, order.id]);
+        setReturnSuccess(order.id);
+        setTimeout(() => setReturnSuccess(null), 4000);
+        return;
+      }
+
       await processReturn(order.id);
       setReturnSuccess(order.id);
-
       setOrders(prev => prev.filter(o => o.id !== order.id));
       setExpandedId(null);
       setTimeout(() => setReturnSuccess(null), 3000);
@@ -116,6 +195,30 @@ export default function ReturnsPage() {
 
   return (
     <div ref={pageRef} className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-6 pb-12">
+
+      {/* Offline Banner */}
+      <AnimatePresence>
+        {!isOnline && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="flex items-center gap-3 px-5 py-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 text-sm font-cairo"
+          >
+            <WifiOff className="w-4 h-4 shrink-0 animate-pulse" />
+            <span className="flex-1">
+              وضع الطوارئ — تعرض الفواتير من الذاكرة المحلية. يمكنك تسجيل المرتجعات وستُرسل تلقائياً عند عودة الشبكة.
+            </span>
+            {pendingReturnIds.length > 0 && (
+              <span className="bg-amber-500/20 text-amber-300 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-500/30">
+                {pendingReturnIds.length} مؤجل
+              </span>
+            )}
+            {offlineSyncing && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <header data-gsap="fade-up" className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
@@ -275,31 +378,57 @@ export default function ReturnsPage() {
                         </div>
 
                         <div className="p-5 pt-0 flex justify-end">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setConfirmReturnModal(order);
-                            }}
-                            disabled={isReturning}
-                            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 font-bold hover:bg-red-500/20 transition-all disabled:opacity-50 font-cairo"
-                          >
-                            {isReturning ? (
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                              <RotateCcw className="w-5 h-5" />
-                            )}
-                            {isReturning ? 'جاري الارتجاع...' : 'ارتجاع هذه الفاتورة'}
-                          </button>
+                          {pendingReturnIds.includes(order.id) ? (
+                            <div className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold font-cairo">
+                              <Clock className="w-5 h-5" />
+                              مرتجع مؤجل — في انتظار الشبكة
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmReturnModal(order);
+                              }}
+                              disabled={isReturning}
+                              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 font-bold hover:bg-red-500/20 transition-all disabled:opacity-50 font-cairo"
+                            >
+                              {isReturning ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                              ) : (
+                                <RotateCcw className="w-5 h-5" />
+                              )}
+                              {isReturning
+                                ? 'جاري الارتجاع...'
+                                : !isOnline
+                                  ? 'تسجيل مرتجع (أوفلاين)'
+                                  : 'ارتجاع هذه الفاتورة'
+                              }
+                            </button>
+                          )}
                         </div>
 
                         {justReturned && (
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="p-4 mx-5 mb-5 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-3"
+                            className={`p-4 mx-5 mb-5 rounded-xl flex items-center gap-3 ${
+                              isOnline
+                                ? 'bg-green-500/10 border border-green-500/20'
+                                : 'bg-amber-500/10 border border-amber-500/20'
+                            }`}
                           >
-                            <Check className="w-5 h-5 text-green-400" />
-                            <p className="text-green-400 font-bold font-cairo">تم ارتجاع الفاتورة بنجاح وإعادة الكميات للمخزون.</p>
+                            {isOnline ? (
+                              <Check className="w-5 h-5 text-green-400 shrink-0" />
+                            ) : (
+                              <Clock className="w-5 h-5 text-amber-400 shrink-0" />
+                            )}
+                            <p className={`font-bold font-cairo text-sm ${
+                              isOnline ? 'text-green-400' : 'text-amber-400'
+                            }`}>
+                              {isOnline
+                                ? 'تم ارتجاع الفاتورة بنجاح وإعادة الكميات للمخزون.'
+                                : 'تم تسجيل المرتجع محلياً — سيُرسل تلقائياً عند عودة الإنترنت.'}
+                            </p>
                           </motion.div>
                         )}
                       </div>

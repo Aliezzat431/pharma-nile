@@ -5,6 +5,8 @@ import StoreProvider from '@/store/StoreProvider';
 import { AuthProvider } from '@/hooks/useAuth';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import UndoToast from '@/components/ui/UndoToast';
+import SyncToastProvider from '@/components/ui/SyncToastProvider';
+import ServiceWorkerRegistrar from '@/components/shared/ServiceWorkerRegistrar';
 import AgentCopilot from '@/components/agent/AgentCopilot';
 import WorkspaceManager from '@/components/agent/WorkspaceManager';
 import DevToolsBlocker from '@/components/shared/DevToolsBlocker';
@@ -15,7 +17,14 @@ const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' });
 
 export const metadata: Metadata = {
   title: 'PharmaNile - Pharmacy Stock Management System',
-  description: 'Premium glassmorphism pharmacy OS for the Egyptian market',
+  description: 'نظام إدارة صيدلية متكامل مع نقطة بيع تعمل بدون إنترنت',
+  manifest: '/manifest.json',
+  themeColor: '#00CED1',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'PharmaNile',
+  },
 };
 
 import { Suspense } from 'react';
@@ -29,6 +38,7 @@ export default function RootLayout({
     <html lang="ar" dir="rtl" className={`${inter.variable} ${cairo.variable}`} suppressHydrationWarning>
       <body className="antialiased bg-[var(--background)] text-[var(--text-primary)] font-cairo">
         <DevToolsBlocker />
+        <ServiceWorkerRegistrar />
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
           <StoreProvider>
             <AuthProvider>
@@ -38,6 +48,7 @@ export default function RootLayout({
                 </LayoutWrapper>
               </Suspense>
               <UndoToast />
+              <SyncToastProvider />
               <AgentCopilot />
               <WorkspaceManager />
             </AuthProvider>
