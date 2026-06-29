@@ -54,13 +54,15 @@ export async function processCheckout(
     .eq('pharmacy_id', pharmacyId)
     .in('product_id', productIds);
 
+  let hasShortage = false;
   for (const item of cart) {
     const available = (allBatches || [])
       .filter(b => b.product_id === item.id)
       .reduce((sum, b) => sum + Number(b.quantity), 0);
     
     if (item.quantity > available) {
-      throw new Error(`Validation Error: Requested quantity for '${item.name}' exceeds available stock (${available}).`);
+      hasShortage = true;
+      // We allow the checkout but it will be flagged as negative stock / out of stock sale (backdoor)
     }
   }
 
@@ -190,6 +192,23 @@ async function _jsCheckoutFallback(
           await supabase.from('batches').update({ quantity: batch.quantity - deduction }).eq('id', batch.id).eq('pharmacy_id', pharmacyId);
           remainingToDeduct -= deduction;
         }
+      }
+      
+      if (remainingToDeduct > 0) {
+        // Backdoor sale (out of stock tracking)
+        await supabase.from('order_items').insert([{ 
+          order_id: order.id, 
+          product_id: item.id, 
+          batch_id: null, 
+          name: item.name + ' (بيع عجز صفري)', 
+          price: item.price, 
+          quantity: remainingToDeduct, 
+          unit: item.unit, 
+          pharmacy_id: pharmacyId 
+        }]);
+        
+        // Mark the order as having a shortage issue for admin tracking
+        await supabase.from('orders').update({ notes: 'يحتوي على بيع من العجز' }).eq('id', order.id).eq('pharmacy_id', pharmacyId);
       }
     }
   }

@@ -5,7 +5,6 @@
 
 const CACHE_NAME = 'pharmanile-v1';
 
-// App-shell assets to pre-cache on install
 const PRECACHE_URLS = [
   '/',
   '/pos',
@@ -14,6 +13,14 @@ const PRECACHE_URLS = [
   '/customers',
   '/settings',
   '/financials',
+  '/returns',
+  '/debts',
+  '/orders',
+  '/companies',
+  '/sadqah',
+  '/transfers',
+  '/staff',
+  '/invoices',
   '/manifest.json',
 ];
 

@@ -99,7 +99,11 @@ export default function POSTerminal() {
       setAiSuggestions(data.choices || []);
     } catch (error: any) {
       console.error(error);
-      alert(error.message || "فشل الاتصال بالمساعد الذكي");
+      showToast({
+        variant: 'error',
+        message: error.message || "فشل الاتصال بالمساعد الذكي",
+        duration: 5000
+      });
     } finally {
       setIsAiLoading(false);
     }
@@ -317,7 +321,11 @@ export default function POSTerminal() {
 
   const addProductToCart = (product: Product, clearSearch = true) => {
     if (product.current_price === undefined || product.current_price === 0) {
-      alert("منتج بدون سعر أو رصيد مخزني.");
+      showToast({
+        variant: 'error',
+        message: "منتج بدون سعر أو رصيد مخزني.",
+        duration: 5000
+      });
       return;
     }
 
@@ -374,7 +382,11 @@ export default function POSTerminal() {
       resetCustomer();
     } catch (e) {
       console.error(e);
-      alert('فشل إضافة عميل جديد');
+      showToast({
+        variant: 'error',
+        message: 'فشل إضافة عميل جديد',
+        duration: 5000
+      });
     } finally {
       setIsSavingCustomer(false);
     }
@@ -383,23 +395,25 @@ export default function POSTerminal() {
   const executeCheckoutProcess = async (cartToProcess: any[], totalToProcess: number) => {
 
     if (totalToProcess < 0) {
-      alert("خطأ: الإجمالي لا يمكن أن يكون قيمة سالبة.");
+      showToast({ variant: 'error', message: "خطأ: الإجمالي لا يمكن أن يكون قيمة سالبة." });
       return;
     }
     for (const item of cartToProcess) {
       if (item.quantity <= 0) {
-        alert(`خطأ: الكمية للمنتج ${item.name} يجب أن تكون أكبر من صفر.`);
+        showToast({ variant: 'error', message: `خطأ: الكمية للمنتج ${item.name} يجب أن تكون أكبر من صفر.` });
         return;
       }
       if (item.price < 0 || item.basePrice <= 0) {
-        alert(`خطأ: السعر للمنتج ${item.name} غير صالح.`);
+        showToast({ variant: 'error', message: `خطأ: السعر للمنتج ${item.name} غير صالح.` });
         return;
       }
 
       const stockAvailable = item.activeBatches?.reduce((sum: number, b: any) => sum + Number(b.quantity), 0) || 0;
       if (item.quantity > stockAvailable) {
-        alert(`خطأ: الكمية المطلوبة من ${item.name} (${item.quantity}) تتجاوز المخزون المتاح (${stockAvailable}).`);
-        return;
+        if (!window.confirm(`تنبيه (منفذ الإدارة): الرصيد المسجل للمنتج ${item.name} هو (${stockAvailable}) فقط، وأنت تحاول بيع (${item.quantity}). هل تريد الاستمرار وتسجيل بيع بالسالب (عجز) ليتم مراجعته لاحقاً؟`)) {
+          setIsProcessing(false);
+          return;
+        }
       }
     }
 
@@ -499,9 +513,13 @@ export default function POSTerminal() {
       setSearchInput('');
       setSearchResults([]);
       setTimeout(() => setCheckoutSuccess(false), 3000);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Checkout failed. See console.");
+      showToast({
+        variant: 'error',
+        message: e.message || "فشلت عملية الدفع. يرجى المحاولة مرة أخرى.",
+        duration: 5000
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -510,7 +528,7 @@ export default function POSTerminal() {
   const handleCheckoutWithTotal = async (totalToProcess: number) => {
     if (cart.length === 0) return;
     if (paymentMethod === 'debt' && !selectedCustomerId) {
-      alert("يرجى اختيار العميل لتسجيل عملية الدين.");
+      showToast({ variant: 'error', message: "يرجى اختيار العميل لتسجيل عملية الدين." });
       return;
     }
 
