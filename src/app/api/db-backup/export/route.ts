@@ -8,138 +8,104 @@ export async function GET(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // 1. Authentication & Context
     const authHeader = req.headers.get('Authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    
-    if (!token) {
-      return NextResponse.json({ success: false, error: 'Missing Authorization Header' }, { status: 401 });
-    }
+    const headerPharmacyId = req.headers.get('x-pharmacy-id');
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    // 1. Get User Info
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
     
     if (authError || !user) {
-      return NextResponse.json({ success: false, error: 'Invalid Token' }, { status: 401 });
+        return NextResponse.json({ success: false, error: 'Invalid Token' }, { status: 401 });
     }
 
-    // Get Pharmacy ID from Header or User Metadata
-    let pharmacyId = req.headers.get('x-pharmacy-id') || user?.user_metadata?.pharmacy_id;
+    // 2. Resolve Pharmacy ID (The most critical part)
+    let pharmacyId = headerPharmacyId || user?.user_metadata?.pharmacy_id;
 
     if (!pharmacyId) {
-      // Fallback: Try to fetch primary pharmacy from user_pharmacy_access if not in metadata
-      const { data: accessData } = await supabase
-        .from('user_pharmacy_access')
-        .select('pharmacy_id')
-        .eq('user_id', user.id)
-        .eq('is_primary', true)
-        .single();
-      
-      if (accessData?.pharmacy_id) {
-        pharmacyId = accessData.pharmacy_id;
-      }
+        console.log("Pharmacy ID not in header/metadata, checking user_pharmacy_access...");
+        const { data: accessData, error: accessError } = await supabase
+            .from('user_pharmacy_access')
+            .select('pharmacy_id')
+            .eq('user_id', user.id)
+            .eq('is_primary', true)
+            .single();
+        
+        if (accessData?.pharmacy_id) {
+            pharmacyId = accessData.pharmacy_id;
+        } else {
+             // Try any pharmacy if no primary is set
+             const { data: anyAccess } = await supabase
+                .from('user_pharmacy_access')
+                .select('pharmacy_id')
+                .eq('user_id', user.id)
+                .limit(1)
+                .single();
+             if (anyAccess) pharmacyId = anyAccess.pharmacy_id;
+        }
     }
+
+    console.log("Final Pharmacy ID for Export:", pharmacyId);
 
     if (!pharmacyId) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: No pharmacy context found' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Could not determine Pharmacy ID' }, { status: 401 });
     }
 
-    // 2. Define Tables based on the provided SQL Schema
-    // All these tables have a direct 'pharmacy_id' column in your schema
+    // 3. Define Tables
     const tablesToExport = [
-      'products',
-      'batches',
-      'customers',
-      'orders',
-      'order_items', // Now has pharmacy_id in your schema
-      'stock_transfers',
-      'pharmacy_settings',
-      'financial_transactions',
-      'debt_payments', // Now has pharmacy_id in your schema
-      'audit_logs',
-      'sessions',
-      'monthly_summaries',
-      'inventory_snapshots',
-      'user_profiles', // Filtered by user_id usually, but we'll include if needed or skip if sensitive
-      'user_pharmacy_access' // Filtered by user_id
+      'products', 'batches', 'customers', 'orders', 'order_items', 
+      'stock_transfers', 'pharmacy_settings', 'financial_transactions', 
+      'debt_payments', 'audit_logs', 'sessions', 'monthly_summaries', 
+      'inventory_snapshots'
     ];
 
     const backupData: Record<string, any[]> = {};
-    const BATCH_SIZE = 1000;
+    let totalRecords = 0;
 
-    // 3. Export Data
+    // 4. Fetch Data
     for (const table of tablesToExport) {
-      let allRows: any[] = [];
-      let page = 0;
-      let hasMore = true;
+      // Use Service Role client which bypasses RLS, but we manually filter by pharmacy_id
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .eq('pharmacy_id', pharmacyId);
 
-      // Special handling for user-specific tables to ensure privacy even with Service Role
-      let query = supabase.from(table).select('*');
-
-      if (table === 'user_profiles' || table === 'user_pharmacy_access') {
-        // For these tables, filter by user_id instead of pharmacy_id primarily, 
-        // or both if you want only users linked to this pharmacy.
-        // Let's filter by pharmacy_id as per your RLS logic context
-        query = query.eq('pharmacy_id', pharmacyId);
+      if (error) {
+        console.error(`Error fetching ${table}:`, error.message);
+        backupData[table] = [];
       } else {
-        // Standard tables filtered by pharmacy_id
-        query = query.eq('pharmacy_id', pharmacyId);
+        backupData[table] = data || [];
+        totalRecords += (data || []).length;
       }
-
-      while (hasMore) {
-        const from = page * BATCH_SIZE;
-        const to = from + BATCH_SIZE - 1;
-
-        const { data, error } = await query.range(from, to);
-
-        if (error) {
-          console.error(`Error exporting table ${table}:`, error.message);
-          // Don't break, just mark this table as empty/failed and continue
-          backupData[table] = []; 
-          hasMore = false;
-          break;
-        }
-
-        if (data && data.length > 0) {
-          allRows = [...allRows, ...data];
-          hasMore = data.length === BATCH_SIZE;
-          page++;
-        } else {
-          hasMore = false;
-        }
-      }
-
-      backupData[table] = allRows;
     }
 
-    // 4. Prepare Response
+    // Handle user-specific tables separately
+    const { data: profiles } = await supabase.from('user_profiles').select('*').eq('id', user.id);
+    backupData['user_profiles'] = profiles || [];
+    totalRecords += (profiles || []).length;
+
+    const { data: accesses } = await supabase.from('user_pharmacy_access').select('*').eq('user_id', user.id);
+    backupData['user_pharmacy_access'] = accesses || [];
+    totalRecords += (accesses || []).length;
+
     const meta = {
       exported_at: new Date().toISOString(),
       pharmacy_id: pharmacyId,
       user_id: user.id,
-      version: '2.1', // Updated version
+      version: '2.2',
       tables_count: Object.keys(backupData).length,
-      total_records: Object.values(backupData).reduce((acc, curr) => acc + curr.length, 0)
+      total_records: totalRecords
     };
 
-    const output = { meta, data: backupData }; // Wrapped in 'data' key for cleaner structure
-    const jsonString = JSON.stringify(output, null, 2);
-
-    const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-
-    return new NextResponse(jsonString, {
+    return new NextResponse(JSON.stringify({ meta, data: backupData }, null, 2), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename="pharma_nile_backup_${todayStr}.json"`,
-        'Cache-Control': 'no-store, max-age=0',
+        'Content-Disposition': `attachment; filename="backup_${pharmacyId.slice(0,8)}.json"`,
       },
     });
 
   } catch (error: any) {
     console.error('Export Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to generate database backup' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
