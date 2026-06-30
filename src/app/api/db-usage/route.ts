@@ -1,96 +1,105 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const dynamic = 'force-dynamic';
-
-export async function GET(req: Request) {
+export async function POST(req: Request) {
   try {
+    const { type } = await req.json();
+    
+    if (!type) {
+      return NextResponse.json({ success: false, error: 'نوع التنظيف غير محدد' }, { status: 400 });
+    }
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    // 1. Authentication & Context
     const authHeader = req.headers.get('Authorization');
-    const pharmacyId = req.headers.get('x-pharmacy-id');
+    const headerPharmacyId = req.headers.get('x-pharmacy-id');
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
+    
+    let pharmacyId = headerPharmacyId || user?.user_metadata?.pharmacy_id;
+    if (!pharmacyId && user?.id) {
+        const { data: accessData } = await supabase
+            .from('user_pharmacy_access')
+            .select('pharmacy_id')
+            .eq('user_id', user.id)
+            .eq('is_primary', true)
+            .single();
+        if (accessData) pharmacyId = accessData.pharmacy_id;
+    }
 
-    // Fallback to cookie/session auth if no header
-    const { data: { user } } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
-    const finalPharmacyId = pharmacyId || user?.user_metadata?.pharmacy_id;
-
-    if (!finalPharmacyId) {
+    if (!pharmacyId || authError) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: statsData, error: rpcError } = await supabase.rpc('debug_system_stats', { p_pharmacy_id: finalPharmacyId });
+    let deletedCount = 0;
+    const now = new Date();
 
-    if (rpcError) {
-      console.warn('RPC stats failed, falling back to manual counts');
+    // 2. Cleanup Logic (Safe Only)
+    if (type === 'audit') {
+      // مسح سجلات التدقيق أقدم من 60 يوم
+      const threshold = new Date(now);
+      threshold.setDate(threshold.getDate() - 60);
+      
+      const { count } = await supabase
+        .from('audit_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('pharmacy_id', pharmacyId)
+        .lt('created_at', threshold.toISOString());
+
+      if (count && count > 0) {
+          await supabase.from('audit_logs').delete().eq('pharmacy_id', pharmacyId).lt('created_at', threshold.toISOString());
+          deletedCount = count;
+      }
+
+    } else if (type === 'sessions') {
+      // مسح الجلسات المنتهية أقدم من سنة
+      const threshold = new Date(now);
+      threshold.setFullYear(threshold.getFullYear() - 1);
+      
+      const { count } = await supabase
+        .from('sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('pharmacy_id', pharmacyId)
+        .not('logout_time', 'is', null)
+        .lt('logout_time', threshold.toISOString());
+
+      if (count && count > 0) {
+          await supabase.from('sessions').delete().eq('pharmacy_id', pharmacyId).not('logout_time', 'is', null).lt('logout_time', threshold.toISOString());
+          deletedCount = count;
+      }
+
+    } else if (type === 'cancelled_orders') {
+      // مسح الطلبات الملغاة فقط (آمن تماماً)
+      const { count } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('pharmacy_id', pharmacyId)
+        .eq('status', 'cancelled');
+
+      if (count && count > 0) {
+          await supabase.from('orders').delete().eq('pharmacy_id', pharmacyId).eq('status', 'cancelled');
+          deletedCount = count;
+      }
+
+    } else {
+      return NextResponse.json({ success: false, error: 'نوع التنظيف غير مدعوم أو غير آمن' }, { status: 400 });
     }
 
-    const ordersQueryResult = await supabase
-      .from('orders')
-      .select('id', { count: 'exact', head: true })
-      .eq('pharmacy_id', finalPharmacyId)
-      .eq('status', 'cancelled');
-
-
-    if (ordersQueryResult.error) {
-      console.error('Error fetching cancelled orders:', ordersQueryResult.error.message);
-    }
-
-    const cancelledCount = ordersQueryResult.count ?? 0;
-
-    const totalRecords = Number(statsData?.total_records || 0);
-    const ordersCount = Number(statsData?.orders || 0);
-    const totalBytes = Number(statsData?.database_size_bytes || 0);
-
-    const limitMB = Number(process.env.DATABASE_LIMIT_MB || 500);
-
-    const mbUsedRaw = totalBytes / 1024 / 1024;
-    const mbUsed = mbUsedRaw.toFixed(2);
-
-    const sizePercentage = Math.min(100, Math.max(0, (mbUsedRaw / limitMB) * 100)).toFixed(1);
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        totalRecords,
-        extractedInvoices: ordersCount,
-        pendingDeleted: cancelledCount,
-        health: 100, // مؤشر افتراضي لسلامة النظام
-
-        database: {
-          bytes: totalBytes,
-          mbUsed: Number(mbUsed),
-          limitMB,
-          sizePercentage: Number(sizePercentage)
-        },
-
-        tables: statsData || {},
-
-        storageDetails: {
-          label: 'قاعدة بيانات الصيدلية',
-          percentage: Number(sizePercentage),
-          mb: Number(mbUsed)
-        }
-      }
-    }, {
-      headers: {
-        'Cache-Control': 'no-store, max-age=0, must-revalidate' // حماية إضافية على مستوى المتصفح لمنع الكاش
-      }
+    return NextResponse.json({ 
+      success: true, 
+      message: `تم تنظيف بيانات ${type} بنجاح.`,
+      count: deletedCount 
     });
 
   } catch (error: any) {
-    console.error('DB Usage Route Error:', error);
-
+    console.error('DB Cleanup Error:', error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message || 'Unknown error occurred while fetching stats'
-      },
-      {
-        status: 500
-      }
+      { success: false, error: error.message || 'حدث خطأ أثناء التنظيف' }, 
+      { status: 500 }
     );
   }
 }

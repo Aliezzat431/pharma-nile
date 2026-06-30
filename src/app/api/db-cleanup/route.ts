@@ -19,52 +19,101 @@ export async function POST(req: Request) {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
     
-    const pharmacyId = headerPharmacyId || user?.user_metadata?.pharmacy_id;
+    // Get Pharmacy ID securely
+    let pharmacyId = headerPharmacyId || user?.user_metadata?.pharmacy_id;
+    
+    // Fallback to primary pharmacy if not in metadata
+    if (!pharmacyId && user?.id) {
+        const { data: accessData } = await supabase
+            .from('user_pharmacy_access')
+            .select('pharmacy_id')
+            .eq('user_id', user.id)
+            .eq('is_primary', true)
+            .single();
+        if (accessData) pharmacyId = accessData.pharmacy_id;
+    }
 
     if (!pharmacyId || authError) {
       return NextResponse.json({ success: false, error: 'Unauthorized: No pharmacy context' }, { status: 401 });
     }
 
-    let result;
+    let deletedCount = 0;
 
     if (type === 'audit') {
+      // Delete audit logs older than 60 days
       const auditThreshold = new Date();
       auditThreshold.setDate(auditThreshold.getDate() - 60);
       
-      result = await supabase
+      // Get count first
+      const { count } = await supabase
         .from('audit_logs')
-        .delete({ count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('pharmacy_id', pharmacyId)
         .lt('created_at', auditThreshold.toISOString());
 
+      if (count && count > 0) {
+          const { error } = await supabase
+            .from('audit_logs')
+            .delete()
+            .eq('pharmacy_id', pharmacyId)
+            .lt('created_at', auditThreshold.toISOString());
+          
+          if (error) throw error;
+          deletedCount = count;
+      }
+
     } else if (type === 'orders') {
-      result = await supabase
+      // Delete cancelled orders
+      const { count } = await supabase
         .from('orders')
-        .delete({ count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('pharmacy_id', pharmacyId)
         .eq('status', 'cancelled');
 
+      if (count && count > 0) {
+          const { error } = await supabase
+            .from('orders')
+            .delete()
+            .eq('pharmacy_id', pharmacyId)
+            .eq('status', 'cancelled');
+          
+          if (error) throw error;
+          deletedCount = count;
+      }
+
     } else if (type === 'sessions') {
+      // Delete old sessions (older than 1 year)
       const sessionThreshold = new Date();
       sessionThreshold.setFullYear(sessionThreshold.getFullYear() - 1);
       
-      result = await supabase
+      // Note: Column name is 'logout_time' in our schema, not 'ended_at'
+      const { count } = await supabase
         .from('sessions')
-        .delete({ count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('pharmacy_id', pharmacyId)
-        .lt('ended_at', sessionThreshold.toISOString());
+        .not('logout_time', 'is', null) // Only delete sessions that have an end time
+        .lt('logout_time', sessionThreshold.toISOString());
 
+      if (count && count > 0) {
+          const { error } = await supabase
+            .from('sessions')
+            .delete()
+            .eq('pharmacy_id', pharmacyId)
+            .not('logout_time', 'is', null)
+            .lt('logout_time', sessionThreshold.toISOString());
+          
+          if (error) throw error;
+          deletedCount = count;
+      }
 
     } else {
       return NextResponse.json({ success: false, error: 'نوع التنظيف غير مدعوم بالنظام' }, { status: 400 });
     }
 
-    if (result.error) throw result.error;
-
     return NextResponse.json({ 
       success: true, 
-      message: `تم تنظيف بيانات ${type} بنجاح من قاعدة البيانات.`,
-      count: result.count ?? 0 // سيعود الآن بالرقم الحقيقي للأسطر المحذوفة
+      message: `تم تنظيف بيانات ${type} بنجاح.`,
+      count: deletedCount
     });
 
   } catch (error: any) {

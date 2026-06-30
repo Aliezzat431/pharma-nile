@@ -13,6 +13,7 @@
     "@reduxjs/toolkit": "^2.12.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
+    "@types/uuid": "^10.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "groq-sdk": "^1.2.1",
@@ -30,6 +31,7 @@
     "recharts": "^3.8.1",
     "remark-gfm": "^4.0.0",
     "tailwind-merge": "^3.6.0",
+    "uuid": "^14.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
