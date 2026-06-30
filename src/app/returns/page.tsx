@@ -219,60 +219,65 @@ export default function ReturnsPage() {
         )}
       </AnimatePresence>
 
-      <header data-gsap="fade-up" className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
-            <RotateCcw className="text-[#D4AF37]" />
-            مرتجعات <span className="text-[#D4AF37]">المبيعات</span>
-          </h1>
-          <p className="text-gray-400 mt-2 font-cairo">عرض فواتير البيع خلال آخر {preferences?.returnDaysLimit || 14} يوم وإمكانية إرجاع الفاتورة بالكامل.</p>
+      <header data-gsap="fade-up" className="flex items-start justify-between mb-6 gap-4 flex-col md:flex-row md:items-center">
+        <div className="space-y-1">
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-4xl font-black flex items-center gap-4 font-cairo tracking-tight"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--royal-gold)] to-orange-500 flex items-center justify-center shadow-[0_0_20px_var(--royal-gold-glow)] relative"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-white/20 blur-md" />
+              <RotateCcw className="text-black w-6 h-6 z-10" />
+            </motion.div>
+            <span className="nile-gradient-text">مرتجعات المبيعات</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-[var(--text-secondary)] font-cairo text-sm font-bold uppercase tracking-widest"
+          >
+            Sales Returns · Last {preferences?.returnDaysLimit || 14} Days
+          </motion.p>
         </div>
-        <div className="glass-card px-5 py-3 flex items-center gap-3 font-cairo">
-          <Calendar className="w-4 h-4 text-[#D4AF37]" />
-          <span className="text-sm text-gray-400">آخر {preferences?.returnDaysLimit || 14} يوم</span>
-          <span className="text-lg font-bold text-foreground">{orders.length}</span>
-          <span className="text-sm text-gray-400">فاتورة</span>
+        <div className="glass-card px-5 py-3 flex items-center gap-3 font-cairo border border-white/10 hover:border-white/20 transition-all">
+          <Calendar className="w-4 h-4 text-[var(--royal-gold)]" />
+          <span className="text-sm text-[var(--text-secondary)]">آخر {preferences?.returnDaysLimit || 14} يوم</span>
+          <span className="text-xl font-black text-white">{orders.length}</span>
+          <span className="text-sm text-[var(--text-secondary)]">فاتورة</span>
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card p-5 flex items-center justify-between"
-        >
-          <div className="font-cairo h-auto py-1">
-            <p className="text-gray-400 text-sm">إجمالي المبيعات</p>
-            <p className="text-2xl font-bold text-[#D4AF37]" dir="ltr">{totalValue.toLocaleString('ar-EG')} ج.م</p>
-          </div>
-          <ShoppingBag className="w-8 h-8 text-[#D4AF37]/30" />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="glass-card p-5 flex items-center justify-between"
-        >
-          <div className="font-cairo h-auto py-1">
-            <p className="text-gray-400 text-sm">عدد الفواتير</p>
-            <p className="text-2xl font-bold text-green-400">{totalActive}</p>
-          </div>
-          <Check className="w-8 h-8 text-green-400/30" />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="glass-card p-5 flex items-center justify-between"
-        >
-          <div className="font-cairo h-auto py-1">
-            <p className="text-gray-400 text-sm">عدد الأصناف المباعة</p>
-            <p className="text-2xl font-bold text-[#00CED1]">{orders.reduce((a, o) => a + o.order_items.length, 0)}</p>
-          </div>
-          <Package className="w-8 h-8 text-[#00CED1]/30" />
-        </motion.div>
+        {[
+          { label: 'إجمالي المبيعات', value: `${totalValue.toLocaleString('ar-EG')} ج.م`, icon: ShoppingBag, color: 'text-[var(--royal-gold)]', glow: 'bg-[var(--royal-gold)]/10', delay: 0 },
+          { label: 'عدد الفواتير', value: totalActive, icon: Check, color: 'text-emerald-400', glow: 'bg-emerald-500/10', delay: 0.1 },
+          { label: 'عدد الأصناف المباعة', value: orders.reduce((a, o) => a + o.order_items.length, 0), icon: Package, color: 'text-[var(--nile-teal)]', glow: 'bg-[var(--nile-teal)]/10', delay: 0.2 },
+        ].map((stat, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: stat.delay }}
+            whileHover={{ y: -6, scale: 1.02 }}
+            className="glass-card p-6 flex items-center gap-5 relative overflow-hidden group border border-white/10 hover:border-white/20 transition-all hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className={`w-14 h-14 rounded-2xl ${stat.glow} ${stat.color} flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-6 shadow-xl relative z-10`}>
+              <stat.icon className="w-7 h-7 drop-shadow-[0_0_8px_currentColor]" />
+            </div>
+            <div className="relative z-10">
+              <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase font-cairo group-hover:text-white transition-colors">{stat.label}</p>
+              <p className={`text-3xl font-black font-inter ${stat.color}`}>{stat.value}</p>
+            </div>
+            <div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full blur-[40px] opacity-10 ${stat.glow} group-hover:opacity-40 transition-all duration-700`} />
+          </motion.div>
+        ))}
       </div>
 
       <div className="glass-panel p-2 flex items-center gap-3">

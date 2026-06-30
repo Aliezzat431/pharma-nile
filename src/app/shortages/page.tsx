@@ -239,25 +239,48 @@ export default function ShortagesPage() {
 
   return (
     <div ref={pageRef} className="space-y-8 pb-20">
-      <header data-gsap="fade-up" className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+      <header data-gsap="fade-up" className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold font-cairo tracking-tight">إدارة <span className="nile-gradient-text">النواقص</span></h1>
-          <p className="text-gray-500 font-cairo text-lg">تتبع الأصناف التي اقتربت من النفاد وقم بطلبها من الشركات.</p>
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-4xl font-black flex items-center gap-4 font-cairo tracking-tight"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-500 to-[var(--royal-gold)] flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.3)] relative"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-white/20 blur-md" />
+              <AlertCircle className="text-black w-6 h-6 z-10" />
+            </motion.div>
+            <span className="nile-gradient-text">إدارة النواقص</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-[var(--text-secondary)] font-cairo text-sm font-bold uppercase tracking-widest"
+          >
+            Stock Shortages · Order Requests
+          </motion.p>
         </div>
 
         <div className="flex items-center gap-4">
-          <button 
+          <motion.button
+            whileHover={selectedIds.size > 0 ? { scale: 1.03 } : {}}
+            whileTap={selectedIds.size > 0 ? { scale: 0.97 } : {}}
             onClick={handlePrint}
             disabled={selectedIds.size === 0}
             className={`px-6 py-3 rounded-2xl flex items-center gap-3 font-bold font-cairo transition-all shadow-xl
-              ${selectedIds.size > 0 
-                ? 'bg-[#00CED1] text-black hover:scale-[1.02] active:scale-95' 
+              ${selectedIds.size > 0
+                ? 'bg-gradient-to-r from-[var(--nile-teal)] to-[var(--royal-gold)] text-black shadow-[0_0_20px_var(--nile-teal-glow)]'
                 : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5'}
             `}
           >
             <Printer className="w-5 h-5" />
             <span>طباعة طلب توريد ({selectedIds.size})</span>
-          </button>
+          </motion.button>
         </div>
       </header>
 
@@ -302,23 +325,29 @@ export default function ShortagesPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div data-gsap="fade-up" className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'إجمالي النواقص', value: items.length, icon: AlertCircle, color: 'text-gray-400' },
-          { label: 'أولوية عالية', value: items.filter(i => i.priority === 'عالي').length, icon: Clock, color: 'text-red-400' },
-          { label: 'شركات متأثرة', value: new Set(items.map(i => i.company_name)).size, icon: Building2, color: 'text-[#D4AF37]' },
-          { label: 'مختار للطلب', value: selectedIds.size, icon: CheckCircle2, color: 'text-[#00CED1]' },
+          { label: 'إجمالي النواقص', value: items.length, icon: AlertCircle, color: 'text-gray-400', glow: 'bg-white/5' },
+          { label: 'أولوية عالية', value: items.filter(i => i.priority === 'عالي').length, icon: Clock, color: 'text-red-400', glow: 'bg-red-500/10' },
+          { label: 'شركات متأثرة', value: new Set(items.map(i => i.company_name)).size, icon: Building2, color: 'text-[var(--royal-gold)]', glow: 'bg-[var(--royal-gold)]/10' },
+          { label: 'مختار للطلب', value: selectedIds.size, icon: CheckCircle2, color: 'text-[var(--nile-teal)]', glow: 'bg-[var(--nile-teal)]/10' },
         ].map((stat, i) => (
-          <div key={i} className="glass-card p-4 h-auto flex items-center gap-4 border-white/5">
-            <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
-              <stat.icon className="w-5 h-5" />
+          <motion.div
+            key={i}
+            whileHover={{ y: -6, scale: 1.02 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="glass-card p-5 flex items-center gap-5 relative overflow-hidden group border border-white/10 hover:border-white/20 transition-all"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className={`w-12 h-12 rounded-xl ${stat.glow} ${stat.color} flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-6 relative z-10`}>
+              <stat.icon className="w-5 h-5 drop-shadow-[0_0_6px_currentColor]" />
             </div>
-            <div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase font-cairo">{stat.label}</p>
-              <p className="text-lg font-bold font-inter">{stat.value}</p>
+            <div className="relative z-10">
+              <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase font-cairo group-hover:text-white transition-colors">{stat.label}</p>
+              <p className="text-2xl font-black font-inter">{stat.value}</p>
             </div>
-          </div>
+            <div className={`absolute -bottom-4 -right-4 w-16 h-16 rounded-full blur-[20px] opacity-10 ${stat.glow} group-hover:opacity-40 transition-all duration-700`} />
+          </motion.div>
         ))}
       </div>
 

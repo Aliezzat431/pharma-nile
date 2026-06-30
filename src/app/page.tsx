@@ -149,21 +149,23 @@ export default function Dashboard() {
           const Content = (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="glass-card p-6 flex items-start gap-5 relative overflow-hidden group border-white/5 cursor-pointer"
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ delay: i * 0.1, type: "spring", stiffness: 300, damping: 20 }}
+              className="glass-card p-6 flex items-start gap-5 relative overflow-hidden group border border-white/10 hover:border-[var(--nile-teal)]/30 cursor-pointer hover:shadow-[0_20px_40px_-15px_var(--nile-teal-glow)] z-10"
             >
-              <div className={`w-14 h-14 rounded-2xl ${stat.glow} flex items-center justify-center transition-transform group-hover:scale-110 duration-500 shadow-xl`}>
-                <stat.icon className={`w-7 h-7 ${stat.color}`} />
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className={`w-14 h-14 rounded-2xl ${stat.glow} flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-xl relative z-10`}>
+                <stat.icon className={`w-7 h-7 ${stat.color} drop-shadow-[0_0_8px_currentColor]`} />
               </div>
-              <div className="flex-1">
-                <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1 font-cairo">{stat.label}</h3>
-                <div className="text-2xl font-bold font-inter tracking-tight">
+              <div className="flex-1 relative z-10">
+                <h3 className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mb-1 font-cairo transition-colors group-hover:text-[var(--text-primary)]">{stat.label}</h3>
+                <div className="text-3xl font-black font-inter tracking-tight nile-gradient-text">
                   {loading ? <Skeleton className="h-8 w-24" /> : stat.value}
                 </div>
               </div>
-              <div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full blur-[40px] opacity-20 ${stat.glow}`} />
+              <div className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-[40px] opacity-20 ${stat.glow} transition-all duration-700 group-hover:opacity-50 group-hover:scale-150`} />
             </motion.div>
           );
 
@@ -229,13 +231,16 @@ export default function Dashboard() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 + i * 0.05 }}
-                className={`p-4 rounded-2xl flex items-center gap-4 cursor-pointer transition-all hover:scale-[1.02] border ${action.color} group shadow-lg`}
+                whileHover={{ y: -5, scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ delay: 0.4 + i * 0.05, type: "spring", stiffness: 400, damping: 17 }}
+                className={`p-4 rounded-2xl flex items-center justify-center gap-4 cursor-pointer transition-all border ${action.color} group shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] relative overflow-hidden`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${action.href === '/pos' || action.href === '/invoices/import' ? 'bg-white/20' : 'bg-[#00CED1]/10'} group-hover:rotate-6 transition-transform`}>
-                  <action.icon className={`w-5 h-5 ${action.href === '/pos' || action.href === '/invoices/import' ? 'text-white' : 'text-[#00CED1]'}`} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${action.href === '/pos' || action.href === '/invoices/import' ? 'bg-white/20 backdrop-blur-sm' : 'bg-white/5'} transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-inner`}>
+                  <action.icon className={`w-6 h-6 ${action.href === '/pos' || action.href === '/invoices/import' ? 'text-white' : 'text-[var(--nile-teal)]'}`} />
                 </div>
-                <span className={`font-cairo font-bold text-sm ${action.href === '/pos' || action.href === '/invoices/import' ? 'text-white' : 'text-gray-300'}`}>{action.label}</span>
+                <span className={`font-cairo font-black text-base tracking-wide z-10 ${action.href === '/pos' || action.href === '/invoices/import' ? 'text-white' : 'text-gray-200'}`}>{action.label}</span>
               </motion.div>
             </Link>
           ))}

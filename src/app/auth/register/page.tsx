@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Lock, Mail, ShieldAlert, UserPlus, User, Building2, MapPin, Phone } from "lucide-react";
+import { Loader2, Lock, Mail, ShieldAlert, UserPlus, User, Building2, MapPin, Phone, Eye, EyeOff } from "lucide-react";
 
 interface PharmacyOption {
   id: string;
@@ -27,6 +27,7 @@ export default function RegisterPage() {
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -327,16 +328,24 @@ export default function RegisterPage() {
                 <Lock className="h-4 w-4 text-gray-500" />
               </div>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 disabled={isLoading}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
                 dir="ltr"
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white focus:outline-none focus:border-[#00CED1]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-10 pl-11 text-white focus:outline-none focus:border-[#00CED1]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
                 placeholder="••••••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 hover:text-[#00CED1] transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 

@@ -152,35 +152,50 @@ export default function Settings() {
   return (
     <div className="px-4 md:px-8 w-full max-w-6xl mx-auto space-y-8 pb-12">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo">
-            <SettingsIcon className="text-[#00CED1] w-8 h-8" />
-            إعدادات <span className="text-[#D4AF37]">النظام</span>
-          </h1>
-          <p className="text-gray-400 mt-2 font-cairo text-sm">
-            تكوين التفضيلات العامة للصيدلية والتكاملات البرمجية والتحكم الكامل بالنظام.
-          </p>
+        <div className="space-y-1">
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-4xl font-black flex items-center gap-4 font-cairo tracking-tight"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--nile-teal)] to-purple-500 flex items-center justify-center shadow-[0_0_20px_var(--nile-teal-glow)] relative"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-white/20 blur-md" />
+              <SettingsIcon className="text-black w-6 h-6 z-10" />
+            </motion.div>
+            <span className="nile-gradient-text">إعدادات النظام</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-[var(--text-secondary)] font-cairo text-sm font-bold uppercase tracking-widest"
+          >
+            System Configuration · Preferences
+          </motion.p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <button
             onClick={async () => {
               const btn = document.getElementById('save-settings-btn');
               if (btn) {
                 btn.innerHTML = '<svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري الحفظ...';
-                
+
                 try {
-                  // Force a re-fetch to confirm it's actually in the DB
                   await refresh();
-                  
+
                   btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> تم الحفظ والتحقق';
-                  btn.classList.remove('bg-[#00CED1]/20', 'text-[#00CED1]');
-                  btn.classList.add('bg-green-500/20', 'text-green-400');
-                  
+                  btn.classList.remove('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
+                  btn.classList.add('bg-green-500/20', 'text-green-400', 'border-green-500/30');
+
                   setTimeout(() => {
                     btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> حفظ كافة التغييرات';
-                    btn.classList.remove('bg-green-500/20', 'text-green-400');
-                    btn.classList.add('bg-[#00CED1]/20', 'text-[#00CED1]');
+                    btn.classList.remove('bg-green-500/20', 'text-green-400', 'border-green-500/30');
+                    btn.classList.add('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
                   }, 2000);
                 } catch (err) {
                   btn.innerHTML = 'خطأ في الحفظ';
@@ -188,9 +203,9 @@ export default function Settings() {
               }
             }}
             id="save-settings-btn"
-            className="flex items-center gap-2 bg-[#00CED1]/20 border border-[#00CED1]/30 hover:bg-[#00CED1]/30 px-6 py-2.5 rounded-xl text-[#00CED1] font-cairo font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#00CED1]/5"
+            className="flex items-center gap-2 bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/30 hover:bg-[var(--nile-teal)]/30 px-6 py-3 rounded-xl text-[color:var(--nile-teal)] font-cairo font-bold transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_var(--nile-teal-glow)] hover:shadow-[0_0_30px_var(--nile-teal-glow)] group"
           >
-            <SettingsIcon className="w-5 h-5" />
+            <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
             حفظ كافة التغييرات
           </button>
         </div>

@@ -175,28 +175,47 @@ export default function CustomersPage() {
       dir="rtl"
     >
       {/* Header */}
-      <header data-gsap="fade-up" className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            إدارة <span className="nile-gradient-text">العملاء</span>
-          </h1>
-          <p className="text-gray-400 mt-2 text-lg font-cairo">قاعدة بيانات العملاء، الديون، ونقاط الولاء.</p>
+      <header data-gsap="fade-up" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <motion.h1 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-4xl font-black flex items-center gap-4 font-cairo tracking-tight"
+          >
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--royal-gold)] flex items-center justify-center shadow-[0_0_20px_var(--nile-teal-glow)] relative"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-white/20 blur-md" />
+              <Users className="text-black w-6 h-6 z-10" />
+            </motion.div>
+            <span className="nile-gradient-text">إدارة العملاء</span>
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-[var(--text-secondary)] mt-2 font-cairo text-sm font-bold uppercase tracking-widest"
+          >
+            Customer Database, Debts & Loyalty Points
+          </motion.p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleExportReport}
             disabled={isExporting}
-            className="glass-card px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/5 transition-colors font-cairo disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all border border-white/10 font-cairo hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] group disabled:opacity-50"
           >
-            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {isExporting ? <Loader2 className="w-5 h-5 animate-spin text-[var(--nile-teal)]" /> : <Download className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />}
             {isExporting ? 'جاري التصدير...' : 'تصدير التقرير'}
           </button>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="nile-button flex items-center gap-2"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--nile-teal)]/10 hover:bg-[var(--nile-teal)]/20 text-[color:var(--nile-teal)] font-bold transition-all border border-[var(--nile-teal)]/20 font-cairo hover:shadow-[0_0_15px_var(--nile-teal-glow)] group"
           >
-            <Plus className="w-5 h-5" />
-            <span className="font-cairo">إضافة عميل جديد</span>
+            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+            <span>إضافة عميل جديد</span>
           </button>
         </div>
       </header>
@@ -315,14 +334,18 @@ export default function CustomersPage() {
             {paginatedData.map((customer) => {
               const isSelected = selectedIds.has(customer.id);
               return (
-                <div
+                <motion.div
                   key={customer.id}
-                  className={`glass-panel p-6 border transition-all group relative ${isSelected ? 'border-[#00CED1]/50 bg-[#00CED1]/5 shadow-[0_0_15px_rgba(0,206,209,0.1)]' : 'border-white/5 hover:border-[#00CED1]/30'}`}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className={`glass-panel p-6 border transition-all group relative overflow-hidden z-10 ${isSelected ? 'border-[var(--nile-teal)]/50 bg-[var(--nile-teal)]/5 shadow-[0_0_20px_var(--nile-teal-glow)]' : 'border-white/10 hover:border-white/20 hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]'}`}
                 >
+                  <div className="absolute inset-0 bg-gradient-to-bl from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0 pointer-events-none" />
+                  
                   {/* Checkbox */}
                   <button
                     onClick={() => toggleSelect(customer.id)}
-                    className={`absolute top-4 left-4 w-7 h-7 rounded-lg flex items-center justify-center transition-all border ${isSelected ? 'bg-[#00CED1] border-[#00CED1] text-black' : 'bg-white/5 border-white/20 text-transparent hover:border-[#00CED1]/50'}`}
+                    className={`absolute z-20 top-4 left-4 w-7 h-7 rounded-lg flex items-center justify-center transition-all border ${isSelected ? 'bg-[var(--nile-teal)] border-[var(--nile-teal)] text-black' : 'bg-white/5 border-white/20 text-transparent hover:border-[var(--nile-teal)]/50'}`}
                   >
                     <Check className="w-4 h-4" />
                   </button>
@@ -369,13 +392,13 @@ export default function CustomersPage() {
                     <CreditCard className={`w-6 h-6 ${customer.total_debt > 0 ? 'text-red-400' : 'text-green-400'} opacity-30`} />
                   </div>
 
-                  <div className="flex gap-2">
+                     <div className="flex gap-2 relative z-20">
                     <Link
                       href={`/customers/${customer.id}`}
-                      className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white font-cairo group/btn hover:bg-[#00CED1]/10 hover:border-[#00CED1]/30 transition-all font-medium text-sm"
+                      className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white font-cairo group/btn hover:bg-[var(--nile-teal)]/10 hover:border-[var(--nile-teal)]/30 transition-all font-bold text-sm hover:shadow-[0_0_15px_var(--nile-teal-glow)]"
                     >
                       الملف الشخصي
-                      <ChevronRight className="w-4 h-4 group-hover/btn:-translate-x-1 transition-transform rotate-180" />
+                      <ChevronRight className="w-5 h-5 group-hover/btn:-translate-x-1.5 transition-transform rotate-180" />
                     </Link>
                     {customer.total_debt > 0 && (
                       <button
@@ -385,13 +408,13 @@ export default function CustomersPage() {
                           setPaymentNotes({ [customer.id]: '' });
                           setIsPaymentMode(true);
                         }}
-                        className="py-3 px-4 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center gap-2 text-green-400 font-cairo hover:bg-green-500/20 transition-all font-bold text-sm"
+                        className="py-3 px-5 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center gap-2 text-green-400 font-cairo hover:bg-green-500/20 hover:border-green-500/50 transition-all font-bold text-sm hover:shadow-[0_0_15px_rgba(74,222,128,0.2)]"
                       >
-                        <Wallet className="w-4 h-4" /> دفع
+                        <Wallet className="w-5 h-5" /> دفع
                       </button>
                     )}
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>

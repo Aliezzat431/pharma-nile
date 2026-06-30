@@ -125,24 +125,43 @@ export default function FinancialsPage() {
       
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            التقارير <span className="nile-gradient-text text-[#00CED1]">المالية</span>
-          </h1>
-          <p className="text-gray-400 mt-2 text-lg font-cairo">تحليل الأرباح، المبيعات والتدفقات النقدية — محدّث لحظياً.</p>
+        <div className="space-y-1">
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-4xl font-black flex items-center gap-4 font-cairo tracking-tight"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-[var(--nile-teal)] flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] relative"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-white/20 blur-md" />
+              <TrendingUp className="text-black w-6 h-6 z-10" />
+            </motion.div>
+            <span className="nile-gradient-text">التقارير المالية</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-[var(--text-secondary)] font-cairo text-sm font-bold uppercase tracking-widest"
+          >
+            Financial Reports · Real-Time Analytics
+          </motion.p>
         </div>
         <div className="flex gap-3 flex-wrap">
           {/* Tabs */}
           <div className="glass-card p-1 flex gap-1 bg-white/5 rounded-xl border border-white/10">
-            <button 
+            <button
               onClick={() => setActiveTab('daily')}
-              className={`px-4 py-2 rounded-xl text-sm font-cairo transition-all ${activeTab === 'daily' ? 'bg-[#00CED1]/25 text-[#00CED1] font-bold' : 'text-gray-400 hover:text-white'}`}
+              className={`px-4 py-2 rounded-xl text-sm font-cairo font-bold transition-all ${activeTab === 'daily' ? 'bg-[var(--nile-teal)]/25 text-[color:var(--nile-teal)] shadow-[0_0_10px_var(--nile-teal-glow)]' : 'text-gray-400 hover:text-white'}`}
             >
               يومي
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('monthly')}
-              className={`px-4 py-2 rounded-xl text-sm font-cairo transition-all flex items-center gap-1.5 ${activeTab === 'monthly' ? 'bg-[#D4AF37]/25 text-[#D4AF37] font-bold' : 'text-gray-400 hover:text-white'}`}
+              className={`px-4 py-2 rounded-xl text-sm font-cairo transition-all flex items-center gap-1.5 font-bold ${activeTab === 'monthly' ? 'bg-[var(--royal-gold)]/25 text-[color:var(--royal-gold)] shadow-[0_0_10px_var(--royal-gold-glow)]' : 'text-gray-400 hover:text-white'}`}
             >
               <CalendarDays className="w-3.5 h-3.5" />
               شهري
@@ -150,10 +169,10 @@ export default function FinancialsPage() {
           </div>
 
           {activeTab === 'daily' && (
-            <select 
+            <select
               value={range}
               onChange={(e) => setRange(Number(e.target.value))}
-              className="glass-panel px-4 py-2 text-sm bg-transparent outline-none font-cairo border border-white/10 rounded-xl"
+              className="glass-panel px-4 py-2 text-sm bg-transparent outline-none font-cairo border border-white/10 rounded-xl hover:border-white/20 transition-all"
             >
               <option value={7} className="bg-[#050505]">آخر 7 أيام</option>
               <option value={30} className="bg-[#050505]">آخر 30 يوم</option>

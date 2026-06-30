@@ -258,73 +258,74 @@ export default function InvoicesPage() {
 
   return (
     <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4">
-      <header data-gsap="fade-up" className="flex flex-col md:flex-row items-center justify-between mb-2 gap-4">
-        <div className="w-full text-center md:text-right">
-          <h1 className="text-3xl font-bold flex items-center justify-center md:justify-start gap-3 font-cairo text-foreground">
-            <FileText className="text-[#D4AF37]" />
-            سجل <span className="text-[#D4AF37]">الفواتير</span>
-          </h1>
-          <p className="text-gray-400 mt-2 font-cairo">عرض وطباعة جميع الفواتير الصادرة من نقطة البيع</p>
+      <header data-gsap="fade-up" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-4xl font-black flex items-center gap-4 font-cairo tracking-tight"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--royal-gold)] to-[var(--nile-teal)] flex items-center justify-center shadow-[0_0_20px_var(--royal-gold-glow)] relative"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-white/20 blur-md" />
+              <FileText className="text-black w-6 h-6 z-10" />
+            </motion.div>
+            <span className="nile-gradient-text">سجل الفواتير</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-[var(--text-secondary)] font-cairo text-sm font-bold uppercase tracking-widest"
+          >
+            Sales Invoices · Print &amp; Review
+          </motion.p>
         </div>
-        <button 
+        <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`glass-card px-5 py-3 flex items-center gap-2 font-cairo text-sm transition-all ${showFilters ? 'border-[#00CED1]/50 text-[#00CED1]' : 'text-gray-400'}`}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-cairo text-sm font-bold transition-all border group ${
+            showFilters
+              ? 'bg-[var(--nile-teal)]/10 border-[var(--nile-teal)]/40 text-[color:var(--nile-teal)] shadow-[0_0_15px_var(--nile-teal-glow)]'
+              : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+          }`}
         >
-          <Filter className="w-4 h-4" />
+          <Filter className="w-4 h-4 group-hover:scale-110 transition-transform" />
           فلاتر متقدمة
           {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
       </header>
 
-      {}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5">
-          <div className="flex items-center justify-between">
-            <div className="font-cairo">
-              <p className="text-gray-400 text-xs">إجمالي الإيرادات</p>
-              <p className="text-2xl font-bold text-[#D4AF37] mt-1">{stats.totalRevenue.toLocaleString('ar-EG')} <span className="text-sm">ج.م</span></p>
+        {[
+          { label: 'إجمالي الإيرادات', value: `${stats.totalRevenue.toLocaleString('ar-EG')} ج.م`, icon: DollarSign, color: 'text-[var(--royal-gold)]', glow: 'bg-[var(--royal-gold)]/10', delay: 0 },
+          { label: 'صافي الربح', value: `${stats.totalProfit.toLocaleString('ar-EG')} ج.م`, icon: TrendingUp, color: 'text-emerald-400', glow: 'bg-emerald-500/10', delay: 0.05 },
+          { label: 'عدد الفواتير', value: filteredAndSortedOrders.length, icon: FileText, color: 'text-[var(--nile-teal)]', glow: 'bg-[var(--nile-teal)]/10', delay: 0.1 },
+          { label: 'نقدي / آجل', value: `${stats.cashCount} / ${stats.debtCount}`, icon: Wallet, color: 'text-gray-400', glow: 'bg-white/5', delay: 0.15 },
+        ].map((stat, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: stat.delay }}
+            whileHover={{ y: -6, scale: 1.02 }}
+            className="glass-card p-5 relative overflow-hidden group border border-white/10 hover:border-white/20 transition-all hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="flex items-start justify-between relative z-10">
+              <div className="font-cairo">
+                <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider mb-2 group-hover:text-white transition-colors">{stat.label}</p>
+                <p className={`text-2xl font-black font-inter ${stat.color}`}>{stat.value}</p>
+              </div>
+              <div className={`w-12 h-12 rounded-xl ${stat.glow} ${stat.color} flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-6`}>
+                <stat.icon className="w-6 h-6 drop-shadow-[0_0_6px_currentColor]" />
+              </div>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-[#D4AF37]" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card p-5">
-          <div className="flex items-center justify-between">
-            <div className="font-cairo">
-              <p className="text-gray-400 text-xs">صافي الربح</p>
-              <p className="text-2xl font-bold text-green-400 mt-1">{stats.totalProfit.toLocaleString('ar-EG')} <span className="text-sm">ج.م</span></p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-400" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-5">
-          <div className="flex items-center justify-between">
-            <div className="font-cairo">
-              <p className="text-gray-400 text-xs">عدد الفواتير</p>
-              <p className="text-2xl font-bold text-[#00CED1] mt-1">{filteredAndSortedOrders.length}</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-[#00CED1]/10 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-[#00CED1]" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card p-5">
-          <div className="flex items-center justify-between">
-            <div className="font-cairo">
-              <p className="text-gray-400 text-xs">نقدي / آجل</p>
-              <p className="text-2xl font-bold text-foreground mt-1">{stats.cashCount} / {stats.debtCount}</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
-              <Wallet className="w-6 h-6 text-gray-400" />
-            </div>
-          </div>
-        </motion.div>
+            <div className={`absolute -bottom-6 -right-6 w-20 h-20 rounded-full blur-[30px] opacity-10 ${stat.glow} group-hover:opacity-40 transition-all duration-700`} />
+          </motion.div>
+        ))}
       </div>
 
       {}

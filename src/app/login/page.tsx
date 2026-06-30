@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/validations";
@@ -14,6 +14,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { signIn, loading, user } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -68,16 +69,26 @@ export default function LoginPage() {
           <label className="block text-sm font-medium text-foreground/70">
             كلمة المرور
           </label>
-          <input
-            type="password"
-            {...register("password")}
-            className={cn(
-              "w-full rounded-xl bg-white/5 px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-nile-teal",
-              "placeholder:text-foreground/40",
-              errors.password && "focus:ring-red-500 border border-red-500"
-            )}
-            placeholder="••••••••"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              {...register("password")}
+              className={cn(
+                "w-full rounded-xl bg-white/5 px-4 py-2 pr-4 pl-10 text-foreground focus:outline-none focus:ring-2 focus:ring-nile-teal",
+                "placeholder:text-foreground/40",
+                errors.password && "focus:ring-red-500 border border-red-500"
+              )}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(v => !v)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-foreground/40 hover:text-nile-teal transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
         </div>
         <button

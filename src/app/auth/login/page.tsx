@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Lock, Mail, ShieldAlert, UserPlus, Building2 } from "lucide-react";
+import { Loader2, Lock, Mail, ShieldAlert, UserPlus, Building2, Sparkles, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
@@ -18,6 +19,8 @@ export default function LoginPage() {
   const [pharmacies, setPharmacies] = useState<{ id: string, name: string }[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showAdminKey, setShowAdminKey] = useState(false);
   useEffect(() => {
     const loadPharmacies = async () => {
 
@@ -86,22 +89,53 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--background)] relative selection:bg-[var(--nile-teal)] selection:text-white py-12 px-4 overflow-y-auto font-cairo text-right" dir="rtl">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)] relative selection:bg-[var(--nile-teal)] selection:text-white py-12 px-4 overflow-hidden font-cairo text-right" dir="rtl">
       { }
 
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--nile-teal)]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[var(--royal-gold)]/5 rounded-full blur-[100px] pointer-events-none" />
+      <motion.div 
+        animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }} 
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute top-[10%] left-[10%] w-[500px] h-[500px] bg-[var(--nile-teal)]/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" 
+      />
+      <motion.div 
+        animate={{ scale: [1, 1.3, 1], rotate: [0, -90, 0] }} 
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        className="absolute bottom-[10%] right-[10%] w-[600px] h-[600px] bg-[var(--royal-gold)]/10 rounded-full blur-[150px] pointer-events-none mix-blend-screen" 
+      />
 
       { }
-      <div className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 border border-white/5 bg-background/50 animate-in fade-in zoom-in duration-700">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--nile-teal)]/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,206,209,0.2)] border border-[var(--nile-teal)]/20">
-            <Lock className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 mb-2">
-            مرحباً بك
-          </h1>
-          <p className="text-gray-400 text-sm">تسجيل الدخول إلى نظام إدارة الصيدلية</p>
+      <motion.div 
+        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
+        className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 border border-white/10 bg-black/60 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
+      >
+        <div className="text-center mb-10">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1, rotate: 360 }}
+            transition={{ type: "spring", duration: 1.5, bounce: 0.5, delay: 0.2 }}
+            className="w-24 h-24 mx-auto bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--royal-gold)] rounded-[2rem] flex items-center justify-center mb-6 shadow-[0_0_40px_var(--nile-teal-glow)] relative group"
+          >
+            <div className="absolute inset-0 rounded-[2rem] bg-white/20 blur-xl opacity-0 transition-opacity group-hover:opacity-100" />
+            <Sparkles className="w-12 h-12 text-black z-10" />
+          </motion.div>
+          <motion.h1 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-4xl font-black mb-3 nile-gradient-text tracking-tight"
+          >
+            نظام الإدارة المتقدم
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="text-[var(--text-secondary)] text-sm font-bold uppercase tracking-widest"
+          >
+            Premium Workspace Authorization
+          </motion.p>
         </div>
 
         {error && (
@@ -144,15 +178,23 @@ export default function LoginPage() {
                 <Lock className="h-4 w-4 text-gray-500" />
               </div>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 disabled={isLoading}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 dir="ltr"
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-11 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-11 pl-11 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
                 placeholder="••••••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 hover:text-[var(--nile-teal)] transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 
@@ -198,32 +240,49 @@ export default function LoginPage() {
                 <Lock className="h-4 w-4 text-[var(--royal-gold)]/40" />
               </div>
               <input
-                type="password"
+                type={showAdminKey ? 'text' : 'password'}
                 value={adminKey}
                 disabled={isLoading}
                 onChange={(e) => setAdminKey(e.target.value)}
                 dir="ltr"
-                className="w-full bg-[var(--royal-gold)]/5 border border-[var(--royal-gold)]/10 rounded-xl py-2.5 pr-11 pl-4 text-white focus:outline-none focus:border-[var(--royal-gold)]/40 transition-all text-sm text-left font-sans disabled:opacity-50"
+                className="w-full bg-[var(--royal-gold)]/5 border border-[var(--royal-gold)]/10 rounded-xl py-2.5 pr-11 pl-11 text-white focus:outline-none focus:border-[var(--royal-gold)]/40 transition-all text-sm text-left font-sans disabled:opacity-50"
                 placeholder="••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowAdminKey(v => !v)}
+                className="absolute inset-y-0 left-0 pl-4 flex items-center text-[var(--royal-gold)]/40 hover:text-[var(--royal-gold)] transition-colors"
+                tabIndex={-1}
+              >
+                {showAdminKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 
           { }
-          <button
+          <motion.button
             type="submit"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             disabled={isLoading || pharmacies.length === 0}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--nile-teal)] to-[#009b9e] text-black font-bold text-base hover:opacity-90 hover:shadow-[0_0_20px_rgba(0,206,209,0.2)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
+            className="relative w-full py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 overflow-hidden group shadow-[0_10px_30px_-10px_var(--nile-teal-glow)] mt-6 bg-[color:var(--nile-teal)]"
+            style={{ background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))' }}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>جاري الدخول...</span>
-              </>
-            ) : (
-              <span>تسجيل الدخول</span>
-            )}
-          </button>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[20deg] w-1/3 -translate-x-[200%] group-hover:translate-x-[300%] transition-transform duration-1000 ease-in-out" />
+            <div className="relative z-10 flex items-center gap-2 text-black">
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin drop-shadow" />
+                  <span className="tracking-wide">جاري التحقق...</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-5 h-5 drop-shadow" />
+                  <span className="tracking-wide text-xl">دخول النظام</span>
+                </>
+              )}
+            </div>
+          </motion.button>
         </form>
 
         <div className="mt-8 pt-6 border-t border-white/5 text-center">
@@ -236,7 +295,7 @@ export default function LoginPage() {
             إنشاء حساب جديد
           </Link>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

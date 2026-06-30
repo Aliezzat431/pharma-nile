@@ -137,15 +137,15 @@ export default function Sidebar() {
         {/* Header Section */}
         <div className={`p-6 pb-2 mb-4 transition-all duration-500 ${isCollapsed ? 'px-4' : 'p-8'}`}>
           <div className={`flex items-center gap-3 bg-gradient-to-l bg-[var(--nile-teal)]/10 to-transparent p-3 rounded-2xl border-r-4 border-[var(--nile-teal)] relative group overflow-hidden`}>
-            <div className="w-10 h-10 min-w-[40px] rounded-xl bg-[var(--nile-teal)] flex items-center justify-center neon-glow-teal z-10 transition-transform group-hover:rotate-12">
+            <div className="w-12 h-12 min-w-[48px] rounded-xl bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--royal-gold)] flex items-center justify-center shadow-[0_0_20px_var(--nile-teal-glow)] z-10 transition-transform group-hover:rotate-12 group-hover:scale-110">
               <Sparkles className="w-6 h-6 text-black" />
             </div>
             {!isCollapsed && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <h1 className="text-xl font-bold text-white tracking-tight font-cairo">
+                <h1 className="text-2xl font-black nile-gradient-text tracking-tight font-cairo">
                   {preferences?.pharmacyName || 'PharmaNile'}
                 </h1>
-                <p className="text-[10px] text-[var(--nile-teal)] font-bold uppercase tracking-widest opacity-80">Premium OS</p>
+                <p className="text-[11px] text-[var(--text-secondary)] font-bold uppercase tracking-[0.2em] opacity-90">Premium OS</p>
               </div>
             )}
             
@@ -180,19 +180,25 @@ export default function Sidebar() {
                         onClick={() => {
                           if (isMobile) setIsCollapsed(true);
                         }}
-                        className={`flex-1 flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ${
+                        className={`relative flex-1 flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ${
                           isActive 
-                          ? 'bg-[var(--nile-teal-glow)] text-[var(--nile-teal)] border-r-2 border-[var(--nile-teal)] shadow-lg' 
-                          : 'text-[var(--sidebar-text-inactive)] hover:bg-[var(--glass-surface)] hover:text-[var(--foreground)]'
+                          ? 'text-white font-black drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' 
+                          : 'text-[var(--sidebar-text-inactive)] hover:bg-white/5 hover:text-white'
                         } ${isCollapsed ? 'justify-center' : ''}`}
                       >
-                        <item.icon className={`w-5 h-5 min-w-[20px] transition-transform group-hover:scale-110 ${isActive ? 'text-[var(--nile-teal)]' : ''}`} />
+                        {isActive && (
+                          <motion.div
+                            layoutId="sidebar-active"
+                            className="absolute inset-0 bg-gradient-to-l from-[var(--nile-teal-glow)] via-transparent to-transparent border-r-4 border-[var(--nile-teal)] rounded-xl -z-10 shadow-[inner_0_0_20px_var(--nile-teal-glow)]"
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          />
+                        )}
+                        <item.icon className={`w-5 h-5 min-w-[20px] transition-transform group-hover:scale-110 z-10 ${isActive ? 'text-[var(--nile-teal)] drop-shadow-[0_0_8px_var(--nile-teal)]' : ''}`} />
                         {!isCollapsed && (
-                          <span className="font-cairo font-bold text-sm tracking-wide whitespace-nowrap animate-in fade-in slide-in-from-right-2 duration-300">
+                          <span className="font-cairo text-sm tracking-wide whitespace-nowrap z-10">
                             {item.label}
                           </span>
                         )}
-                        {(isActive && !isCollapsed) && <div className="mr-auto w-1.5 h-1.5 rounded-full bg-[var(--nile-teal)] neon-glow-teal" />}
                       </Link>
                       
                       {/* Tooltip for Collapsed State */}

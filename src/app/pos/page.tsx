@@ -770,19 +770,48 @@ export default function POSTerminal() {
 
             {checkoutSuccess && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute inset-0 flex flex-col items-center justify-center bg-[#050505]/95 backdrop-blur-md z-20"
+                initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+                animate={{ opacity: 1, backdropFilter: 'blur(16px)' }}
+                className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-50 rounded-3xl"
               >
-                <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
-                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                <motion.div 
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                  className="w-32 h-32 rounded-full bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--royal-gold)] flex items-center justify-center mb-6 shadow-[0_0_50px_var(--nile-teal-glow)] relative"
+                >
+                  <motion.div 
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="absolute inset-0 rounded-full bg-white/20 blur-xl"
+                  />
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring" }}
+                    className="w-16 h-16 rounded-full bg-black/90 flex items-center justify-center z-10"
+                  >
+                    <svg className="w-10 h-10 text-white drop-shadow-[0_0_10px_white]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
                     </svg>
-                  </div>
-                </div>
-                <h2 className="text-2xl font-bold text-white font-cairo">تمت عملية البيع بنجاح</h2>
-                <p className="text-gray-400 font-cairo">جاري طباعة الفاتورة والبدء في طلب جديد...</p>
+                  </motion.div>
+                </motion.div>
+                <motion.h2 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-4xl font-black font-cairo mb-3 nile-gradient-text tracking-wider"
+                >
+                  تم الدفع بنجاح
+                </motion.h2>
+                <motion.p 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-gray-300 font-cairo text-xl font-medium"
+                >
+                  جاري إعداد الفاتورة والطلب الجديد...
+                </motion.p>
               </motion.div>
             )}
           </div>
@@ -900,24 +929,38 @@ export default function POSTerminal() {
                 handleCheckoutWithTotal(total);
               }}
               disabled={cart.length === 0 || isProcessing}
-              className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 font-cairo
+              style={cart.length > 0 && !isProcessing ? { background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))' } : {}}
+              className={`relative w-full py-5 rounded-2xl font-bold text-xl transition-all flex items-center justify-center gap-3 font-cairo overflow-hidden group
                 ${cart.length > 0 && !isProcessing
-                  ? paymentMethod === 'sadqah'
-                    ? 'bg-gradient-to-r from-[#FF69B4] to-[#f54291] text-white hover:shadow-[0_0_25px_rgba(255,105,180,0.5)] scale-100 hover:scale-[1.02]'
-                    : 'bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-white hover:shadow-[0_0_25px_rgba(0,206,209,0.5)] scale-100 hover:scale-[1.02]'
-                  : 'bg-white/10 text-gray-500 cursor-not-allowed'
+                  ? 'text-black shadow-[0_15px_35px_-10px_var(--nile-teal-glow)] hover:shadow-[0_20px_45px_-10px_var(--royal-gold-glow)] hover:-translate-y-1'
+                  : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/10'
                 }
               `}
             >
-              {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <CreditCard className="w-6 h-6" />}
+              {/* Shine / sweep animation */}
+              {cart.length > 0 && !isProcessing && (
+                <motion.div 
+                  initial={{ x: '-200%' }}
+                  animate={{ x: '300%' }} 
+                  transition={{ repeat: Infinity, duration: 2.5, ease: "linear" }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[20deg] w-1/3" 
+                />
+              )}
+              {isProcessing ? <Loader2 className="w-7 h-7 text-white animate-spin relative z-10" /> : <CreditCard className="w-7 h-7 relative z-10" />}
+              <span className="tracking-wide relative z-10">
               {isProcessing 
                 ? 'جاري المعالجة...' 
                 : !isOnline 
-                  ? 'إتمام عملية البيع (تسجيل أوفلاين/محلي)' 
+                  ? 'تسجيل فاتورة (أوفلاين)' 
                   : paymentMethod === 'sadqah' 
-                    ? 'إتمام عملية الصدقة' 
-                    : 'إتمام عملية البيع'}
-              {!isProcessing && <ChevronRight className="w-5 h-5 mr-auto" />}
+                    ? 'إتمام الصدقة' 
+                    : 'إتمام الدفع الآن'}
+              </span>
+              {!isProcessing && cart.length > 0 && (
+                <motion.div className="mr-auto relative z-10" animate={{ x: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
+                  <ChevronRight className="w-6 h-6" />
+                </motion.div>
+              )}
             </button>
           </div>
         </div>

@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { staffCreateSchema } from '@/lib/validations';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
-import { Users as UsersIcon, Mail, UserPlus, X, Loader2 } from 'lucide-react';
+import { Users as UsersIcon, Mail, UserPlus, X, Loader2, Eye, EyeOff } from 'lucide-react';
 
 type StaffFormValues = z.infer<typeof staffCreateSchema>;
 
@@ -21,6 +21,7 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, addLoading }: AddSt
     resolver: zodResolver(staffCreateSchema) as any,
     defaultValues: { email: '', password: '', full_name: '', role: 'staff' }
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (data: StaffFormValues) => {
     await onAddStaff(data);
@@ -117,13 +118,21 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, addLoading }: AddSt
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-1 font-cairo block">كلمة المرور</label>
-                  <div className={cn("glass-panel p-3", errors.password && "border-red-500/50")}>
+                  <div className={cn("glass-panel p-3 flex items-center gap-3", errors.password && "border-red-500/50")}>
                     <input 
-                      type="password" 
+                      type={showPassword ? 'text' : 'password'}
                       {...register("password")}
-                      className="w-full bg-transparent border-none outline-none font-inter text-white text-left"
+                      className="flex-1 bg-transparent border-none outline-none font-inter text-white text-left"
                       placeholder="••••••••"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="text-gray-500 hover:text-[#00CED1] transition-colors flex-shrink-0"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                   {errors.password && <p className="text-red-400 text-xs font-cairo">{errors.password.message}</p>}
                 </div>

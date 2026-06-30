@@ -589,30 +589,48 @@ export default function InventoryDashboard() {
       {/* Header */}
       <header data-gsap="fade-up" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo">
-            <PackageOpen className="text-[#00CED1]" />
-            إدارة <span className="text-[#00CED1]">المخزن</span>
-          </h1>
-          <p className="text-gray-400 mt-2 font-cairo">تتبع المنتجات، التشغيلات، وتواريخ الانتهاء</p>
+          <motion.h1 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-4xl font-black flex items-center gap-4 font-cairo tracking-tight"
+          >
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--royal-gold)] flex items-center justify-center shadow-[0_0_20px_var(--nile-teal-glow)] relative"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-white/20 blur-md" />
+              <PackageOpen className="text-black w-6 h-6 z-10" />
+            </motion.div>
+            <span className="nile-gradient-text">إدارة المخزن</span>
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-[var(--text-secondary)] mt-2 font-cairo text-sm font-bold uppercase tracking-widest"
+          >
+            Tracking Products, Batches, and Expirations
+          </motion.p>
         </div>
         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
           <Link
             href="/inventory/import"
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-all border border-white/10 font-cairo shadow-lg"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all border border-white/10 font-cairo hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] group"
           >
-            <FileUp className="w-5 h-5 text-[#D4AF37]" /> استيراد ملف (.txt)
+            <FileUp className="w-5 h-5 text-[#D4AF37] group-hover:-translate-y-1 transition-transform" /> استيراد ملف
           </Link>
           <Link
             href="/products/create"
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#00CED1]/10 hover:bg-[#00CED1]/20 text-[#00CED1] font-medium transition-all border border-[#00CED1]/20 font-cairo"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--nile-teal)]/10 hover:bg-[var(--nile-teal)]/20 text-[color:var(--nile-teal)] font-bold transition-all border border-[var(--nile-teal)]/20 font-cairo hover:shadow-[0_0_15px_var(--nile-teal-glow)] group"
           >
-            <Plus className="w-5 h-5" /> إضافة صنف جديد
+            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" /> إضافة صنف
           </Link>
           <button
             onClick={() => setIsQuickAddOpen(true)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] font-medium transition-all border border-[#D4AF37]/20 font-cairo"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-[var(--royal-gold)]/20 to-[#f2cd56]/10 text-[color:var(--royal-gold)] hover:text-[#f2cd56] font-bold transition-all border border-[var(--royal-gold)]/30 font-cairo hover:shadow-[0_0_15px_var(--royal-gold-glow)] group"
           >
-            <PlusCircle className="w-5 h-5" /> توريد تشغيلة (Batch)
+            <PlusCircle className="w-5 h-5 group-hover:scale-110 transition-transform" /> توريد تشغيلة
           </button>
         </div>
       </header>
@@ -633,16 +651,22 @@ export default function InventoryDashboard() {
             glow: 'bg-emerald-500/10' 
           },
         ].map((stat, i) => (
-          <div key={i} className="glass-card p-5 flex items-center gap-5 border-white/5 relative overflow-hidden group hover:bg-white/[0.05] transition-all">
-            <div className={`w-12 h-12 rounded-2xl ${stat.glow} ${stat.color} flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-black/20`}>
-              <stat.icon className="w-6 h-6" />
+          <motion.div 
+            key={i} 
+            whileHover={{ y: -8, scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="glass-card p-6 flex items-start gap-5 relative overflow-hidden group border border-white/10 hover:border-white/20 transition-all hover:shadow-[0_15px_35px_-10px_rgba(0,0,0,0.5)] z-10"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0" />
+            <div className={`w-14 h-14 rounded-2xl ${stat.glow} ${stat.color} flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-xl relative z-10`}>
+              <stat.icon className="w-7 h-7 drop-shadow-[0_0_8px_currentColor]" />
             </div>
-            <div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.1em] font-cairo mb-1">{stat.label}</p>
-              <p className="text-xl font-black font-inter tracking-tight">{stat.value}</p>
+            <div className="flex-1 relative z-10 mt-1">
+              <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-[0.1em] font-cairo mb-1 group-hover:text-white transition-colors">{stat.label}</p>
+              <p className="text-3xl font-black font-inter tracking-tight">{stat.value}</p>
             </div>
-            <div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full blur-[40px] opacity-10 ${stat.glow} group-hover:opacity-30 transition-opacity`} />
-          </div>
+            <div className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-[40px] opacity-10 ${stat.glow} group-hover:opacity-40 transition-all duration-700 group-hover:scale-150 z-0`} />
+          </motion.div>
         ))}
       </div>
 
