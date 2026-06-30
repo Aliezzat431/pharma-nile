@@ -28,13 +28,13 @@
 [data-theme="light"] {
   --background: #f6f8fc;
 
-  --text-primary: #0b1220;
-  --text-secondary: #1f2a37;
-  --text-muted: #4b5563;
+  --text-primary: #000000;
+  --text-secondary: #0d1116;
+  --text-muted: #343941;
   --text-inactive: #9aa4b2;
 
-  --nile-teal: #0e7490;
-  --royal-gold: #a16207;
+  --nile-teal: #115669;
+  --royal-gold: #886029;
 
   --nile-teal-glow: rgba(14, 116, 144, 0.08);
   --royal-gold-glow: rgba(161, 98, 7, 0.08);
