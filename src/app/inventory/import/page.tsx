@@ -11,6 +11,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import GlassTable from '@/components/ui/GlassTable';
 
+// تأكد من تعديل المسار ده حسب مكان ملف الثوابت عندك
+import { treatmentTypes } from '@/lib/unitOptions';
+
 interface ParsedItem {
   name: string;
   barcode: string;
@@ -18,7 +21,8 @@ interface ParsedItem {
   sale_price: number;
   purchase_price: number;
   company: string;
-  type?: string;
+  type?: string; // This will now store the ID (e.g., 'eye_drops')
+  typeName?: string; // This will store the Arabic Name (e.g., 'نقط عين')
   unit_quantity?: number;
   status: 'pending' | 'success' | 'error';
   error?: string;
@@ -33,8 +37,6 @@ export default function ImportInventoryPage() {
   const [importProgress, setImportProgress] = useState(0);
   const { user } = useAuth();
   const router = useRouter();
-
-  console.log('🚀 ImportInventoryPage Component Loaded!');
 
   const parseFile = async (file: File) => {
     console.group('📂 [File Parsing]');
@@ -54,15 +56,38 @@ export default function ImportInventoryPage() {
         return;
       }
 
-      const categoryName = lines[0]; 
-      setCategory(categoryName);
-      console.log('Category:', categoryName);
+      const rawCategoryName = lines[0]; 
+      let finalCategory = 'مستحضرات';
+      let defaultTypeId = 'cosmetics'; // Default fallback ID
 
-      let defaultType = 'tablet';
-      if (categoryName.includes('لبوس')) defaultType = 'suppository';
-      else if (categoryName.includes('نقط')) defaultType = 'drops';
-      else if (categoryName.includes('حقن')) defaultType = 'injection';
-      console.log('Default Type:', defaultType);
+      // --- Smart Mapping Logic using treatmentTypes ---
+      const matchedType = treatmentTypes.find(t => 
+        rawCategoryName.includes(t.name) || 
+        rawCategoryName.toLowerCase().includes(t.id.toLowerCase())
+      );
+
+      if (matchedType) {
+        finalCategory = matchedType.name;
+        defaultTypeId = matchedType.id;
+      } else {
+        // Fallback for common keywords if exact match failed
+        if (rawCategoryName.includes('عين')) {
+            finalCategory = 'نقط عين';
+            defaultTypeId = 'eye_drops';
+        } else if (rawCategoryName.includes('أنف')) {
+            finalCategory = 'نقط أنف';
+            defaultTypeId = 'nasal_drops';
+        } else if (rawCategoryName.includes('لبوس')) {
+            finalCategory = 'لبوس';
+            defaultTypeId = 'suppository';
+        } else if (rawCategoryName.includes('حقن')) {
+            finalCategory = 'حقن';
+            defaultTypeId = 'injection';
+        }
+      }
+      
+      setCategory(finalCategory);
+      console.log('Mapped Category:', finalCategory, '| Type ID:', defaultTypeId);
 
       const parsed: ParsedItem[] = [];
 
@@ -86,7 +111,8 @@ export default function ImportInventoryPage() {
             purchase_price: Number((salePrice * 0.75).toFixed(2)),
             company: parts[4] || 'غير محدد',
             unit_quantity: parseInt(parts[5]) || 1, 
-            type: defaultType,
+            type: defaultTypeId, // Store the ID for DB
+            typeName: finalCategory, // Store Arabic name for UI display
             status: 'pending'
           });
         }
@@ -123,8 +149,6 @@ export default function ImportInventoryPage() {
 
   const startImport = async () => {
     console.group('🚀 [Start Import]');
-    console.log('User:', user?.email);
-    console.log('Pharmacy ID:', user?.user_metadata?.pharmacy_id);
     
     if (!user?.user_metadata?.pharmacy_id) {
       console.error('❌ No pharmacy_id in user metadata!');
@@ -160,13 +184,12 @@ export default function ImportInventoryPage() {
           sale_price: item.sale_price,
           purchase_price: item.purchase_price,
           company: item.company,
-          type: item.type || 'tablet',
+          type: item.type || 'cosmetics', // Send the ID to DB
           unit_quantity: item.unit_quantity || 1
         };
       });
 
       console.log(`📦 Sending ${formattedItems.length} items to RPC`);
-      console.log('Payload sample:', formattedItems[0]);
 
       const { data, error } = await supabase.rpc('bulk_import_inventory', {
         p_pharmacy_id: pharmacyId,
@@ -195,7 +218,6 @@ export default function ImportInventoryPage() {
         }));
 
         setImportProgress(100);
-        // Do not redirect if there are errors, let user see the status
         alert('حدثت بعض الأخطاء أثناء استيراد الأصناف. يرجى مراجعة الجدول.');
       } else {
         setItems(prev => prev.map(it => ({ ...it, status: 'success' })));
@@ -218,7 +240,10 @@ export default function ImportInventoryPage() {
 
   const columns: any[] = [
     { header: 'الصنف', accessor: (it: ParsedItem) => it.name },
-    { header: 'النوع', accessor: (it: ParsedItem) => it.type === 'suppository' ? 'لبوس' : it.type === 'drops' ? 'نقط' : 'أقراص' },
+    { 
+      header: 'النوع', 
+      accessor: (it: ParsedItem) => it.typeName || treatmentTypes.find(t => t.id === it.type)?.name || it.type 
+    },
     { header: 'الباركود', accessor: (it: ParsedItem) => it.barcode },
     { header: 'تاريخ الصلاحية', accessor: (it: ParsedItem) => it.expiry },
     { header: 'الوحدة/علبة', accessor: (it: ParsedItem) => it.unit_quantity },
