@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
 
-// تهيئة العميل بحماية في حالة عدم وجود المفتاح
-const groqApiKey = process.env.GROQ_API_KEY;
-const groq = groqApiKey ? new Groq({ apiKey: groqApiKey }) : null;
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+// ✅ الموديل الجديد والمحدث
+const GROQ_MODEL = "llama-3.3-70b-versatile"; 
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,32 +17,24 @@ const supabase = createClient(
 export async function POST(req: Request) {
   try {
     const { message, context } = await req.json();
-    
-    // محاولة جلب الـ Pharmacy ID من أكثر من مصدر للأمان
-    const pharmacyId = context?.pharmacyId || 
-                       (req.headers.get('x-pharmacy-id')) || 
-                       'eb41535f-e35c-428d-96af-130defca3e1e'; // Fallback for testing
+    const pharmacyId = context?.pharmacyId;
+
+    if (!pharmacyId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // جلب بيانات سريعة للسياق
-    const startOfDay = new Date().setHours(0,0,0,0);
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    
     const { data: salesData } = await supabase
       .from('orders')
       .select('total')
       .eq('pharmacy_id', pharmacyId)
-      .gte('created_at', new Date(startOfDay).toISOString());
+      .gte('created_at', startOfDay.toISOString());
 
     const totalSales = salesData?.reduce((acc: number, o: any) => acc + (o.total || 0), 0) || 0;
 
-    // إذا لم يكن مفتاح Groq متاحاً، نرد برد ذكي محلي (Fallback)
-    if (!groq) {
-      return NextResponse.json({
-        content: `⚠️ **تنبيه للنظام:** مفتاح الذكاء الاصطناعي غير مفعل حالياً.\n\nلكن بناءً على بياناتي المحلية:\n- مبيعات اليوم: **${totalSales} ج.م**\n- أنا جاهز لاستقبال أوامرك بمجرد تفعيل المفتاح!`,
-        actions: [{ type: 'inventory', title: 'عرض المخزون' }],
-        commands: []
-      });
-    }
-
-    // نظام الـ Prompt المحترف
     const systemPrompt = `أنت "الدكتور محسن"، مساعد الصيدلية الذكي.
     رد بالعامية المصرية بأسلوب مهني وخفيف.
     بيانات اليوم: المبيعات ${totalSales} ج.م.
@@ -50,7 +45,7 @@ export async function POST(req: Request) {
         { role: "system", content: systemPrompt },
         { role: "user", content: message }
       ],
-      model: "llama3-70b-8192",
+      model: GROQ_MODEL, // استخدام الموديل الجديد
       temperature: 0.3,
     });
 
@@ -75,11 +70,10 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('Copilot Error:', error);
-    // رد خطأ واضح جداً عشان تعرف المشكلة فين
     return NextResponse.json({
-      content: `❌ **خطأ تقني:** ${error.message}\n\nتأكد من مفتاح GROQ_API_KEY في ملف .env`,
+      content: `❌ **خطأ تقني:** ${error.message}`,
       actions: [],
       commands: []
-    }, { status: 200 }); // بنرجع 200 عشان الـ UI يعرض رسالة الخطأ كـ Chat Message
+    }, { status: 200 });
   }
 }
