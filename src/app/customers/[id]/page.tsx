@@ -10,6 +10,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getCustomerDetails, recordCustomerPayment } from '@/lib/api/customers';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/ui/Pagination';
 
 export default function CustomerProfile() {
   const params = useParams();
@@ -22,6 +24,9 @@ export default function CustomerProfile() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentData, setPaymentData] = useState({ amount: '', payment_type: 'partial' as 'partial' | 'full', note: '' });
   const [activeTab, setActiveTab] = useState<'invoices' | 'payments' | 'history'>('invoices');
+
+  const INVOICES_PAGE_SIZE = 10;
+  const PAYMENTS_PAGE_SIZE = 10;
 
   useEffect(() => {
     if (customerId) fetchDetails();
@@ -349,4 +354,22 @@ export default function CustomerProfile() {
       </AnimatePresence>
     </div>
   );
+}
+
+/* ─── Invoices Tab with Pagination ─────────────────────────────────── */
+function CustomerInvoicesTab({ customer }: { customer: any }) {
+  const PAGE_SIZE = 10;
+  const orders = customer.orders || [];
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(orders, { pageSize: PAGE_SIZE });
+
+  return null; // rendered inline above
+}
+
+/* ─── Payments Tab with Pagination ─────────────────────────────────── */
+function CustomerPaymentsTab({ customer }: { customer: any }) {
+  const PAGE_SIZE = 10;
+  const payments = customer.debt_payments || [];
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(payments, { pageSize: PAGE_SIZE });
+
+  return null; // rendered inline above
 }

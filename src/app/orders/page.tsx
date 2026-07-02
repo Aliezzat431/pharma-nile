@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
   TrendingUp, BarChart3, PieChart as PieChartIcon, Activity, 
@@ -13,6 +13,8 @@ import { SalesSummaryCards } from './components/SalesSummaryCards';
 import { SalesTrendChart } from './components/SalesTrendChart';
 import { PaymentMethodsChart } from './components/PaymentMethodsChart';
 import { TopProductsChart } from './components/TopProductsChart';
+import { usePagination } from '@/hooks/usePagination'; // تأكد من المسار
+import Pagination from '@/components/ui/Pagination';   // تأكد من المسار
 
 interface OrderItem {
   id: string;
@@ -31,6 +33,8 @@ interface Order {
   status: string;
   order_items: OrderItem[];
 }
+
+const PAGE_SIZE = 10; // عدد الطلبات في كل صفحة بالجدول
 
 export default function SalesDashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -72,8 +76,8 @@ export default function SalesDashboardPage() {
         query = query.gte('created_at', fromDate.toISOString());
       }
 
-      // Sort by date descending for better chart visualization
-      query = query.order('created_at', { ascending: true });
+      // Sort by date descending for the table (newest first)
+      query = query.order('created_at', { ascending: false });
 
       const { data, error } = await query;
       if (error) throw error;
@@ -86,7 +90,7 @@ export default function SalesDashboardPage() {
     }
   };
 
-  // Calculations
+  // Calculations (Based on ALL orders for accurate stats)
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total), 0);
   const totalProfit = orders.reduce((sum, order) => sum + Number(order.profit_total || 0), 0);
   const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
@@ -156,6 +160,12 @@ export default function SalesDashboardPage() {
     ].filter(d => d.value > 0);
   };
   const paymentData = generatePaymentData();
+
+  // Pagination Hook for the Orders Table
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
+    orders,
+    { pageSize: PAGE_SIZE }
+  );
 
   // Export to CSV Function
   const handleExportCSV = () => {
@@ -249,6 +259,71 @@ export default function SalesDashboardPage() {
             <SalesTrendChart trendData={trendData} />
             <PaymentMethodsChart paymentData={paymentData} />
             <TopProductsChart topProductsData={topProductsData} />
+          </div>
+
+          {/* Detailed Sales Table with Pagination */}
+          <div className="mt-12">
+            <h3 className="text-xl font-bold font-cairo mb-4 flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-[#00CED1]" />
+              تفاصيل العمليات الأخيرة
+            </h3>
+            
+            <div className="glass-panel overflow-hidden border-white/5">
+              <div className="overflow-x-auto">
+                <table className="w-full text-right border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-white/5 font-cairo text-gray-400 text-sm">
+                      <th className="p-4 font-semibold">رقم العملية</th>
+                      <th className="p-4 font-semibold">التاريخ</th>
+                      <th className="p-4 font-semibold">طريقة الدفع</th>
+                      <th className="p-4 font-semibold">عدد الأصناف</th>
+                      <th className="p-4 font-semibold">الإجمالي</th>
+                      <th className="p-4 font-semibold">الربح</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedData.map((order) => (
+                      <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                        <td className="p-4 font-mono text-xs text-gray-500">#{order.id.slice(0, 8)}</td>
+                        <td className="p-4 text-sm text-gray-300">
+                          {new Date(order.created_at).toLocaleDateString('ar-EG')} 
+                          <span className="text-xs text-gray-500 ml-2">
+                            {new Date(order.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded text-xs font-bold ${
+                            order.payment_method === 'cash' ? 'bg-emerald-500/10 text-emerald-400' :
+                            order.payment_method === 'debt' ? 'bg-yellow-500/10 text-yellow-400' :
+                            'bg-pink-500/10 text-pink-400'
+                          }`}>
+                            {order.payment_method === 'cash' ? 'نقدي' : order.payment_method === 'debt' ? 'آجل' : 'صدقة'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-sm text-gray-300">
+                          {order.order_items.reduce((acc, item) => acc + item.quantity, 0)} صنف
+                        </td>
+                        <td className="p-4 text-sm font-bold text-white">{Number(order.total).toLocaleString()} ج.م</td>
+                        <td className="p-4 text-sm text-emerald-400">{Number(order.profit_total || 0).toLocaleString()} ج.م</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination Component */}
+              {totalPages > 1 && (
+                <div className="p-4 border-t border-white/5">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    itemsPerPage={PAGE_SIZE}
+                    onPageChange={setPage}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}
