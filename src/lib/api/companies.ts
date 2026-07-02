@@ -61,7 +61,7 @@ export async function updateCompany(id: string, updates: Partial<Omit<Company, '
     .eq('id', id)
     .eq('pharmacy_id', pharmacyId) // 🔒 طبقة الأمان الثنائية
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error updating company:', error);

@@ -126,7 +126,7 @@ export default function StaffManagement() {
   useEffect(() => {
     if (!user?.id) return;
     const fetchProfile = async () => {
-      const { data } = await supabase.from('user_profiles').select('*').eq('id', user.id).single();
+      const { data } = await supabase.from('user_profiles').select('*').eq('id', user.id).maybeSingle();
       if (data) setCurrentUserProfile(data);
     };
     fetchProfile();

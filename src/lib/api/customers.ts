@@ -79,7 +79,7 @@ export async function updateCustomer(id: string, updates: Partial<Customer>) {
     .eq('id', id)
     .eq('pharmacy_id', pharmacyId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error updating customer:', error);
@@ -105,7 +105,7 @@ export async function getCustomerDetails(id: string) {
     `)
     .eq('id', id)
     .eq('pharmacy_id', pharmacyId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching customer details:', error);
@@ -142,7 +142,7 @@ export async function recordCustomerPayment(payment: Omit<CustomerPayment, 'id' 
     .select('total_debt')
     .eq('id', payment.customer_id)
     .eq('pharmacy_id', pharmacyId)
-    .single();
+    .maybeSingle();
 
   if (currentCustomer) {
     await supabase

@@ -141,7 +141,7 @@ async function _jsCheckoutFallback(
   if (orderError || !order) throw new Error('Failed to create order');
 
   if (paymentMethod === 'debt' && customerId) {
-    const { data: customer } = await supabase.from('customers').select('total_debt').eq('id', customerId).eq('pharmacy_id', pharmacyId).single();
+    const { data: customer } = await supabase.from('customers').select('total_debt').eq('id', customerId).eq('pharmacy_id', pharmacyId).maybeSingle();
     if (customer) {
       await supabase.from('customers').update({ total_debt: customer.total_debt + finalTotal }).eq('id', customerId).eq('pharmacy_id', pharmacyId);
     }
@@ -152,7 +152,7 @@ async function _jsCheckoutFallback(
     .from('pharmacy_settings')
     .select('inventory_method')
     .eq('pharmacy_id', pharmacyId)
-    .single();
+    .maybeSingle();
   
   const method = settings?.inventory_method || 'FEFO';
 
@@ -163,7 +163,7 @@ async function _jsCheckoutFallback(
       for (const dist of item.batchDistributions) {
         if (dist.quantity <= 0 || remainingToDeduct <= 0) continue;
         const deduction = Math.min(dist.quantity, remainingToDeduct);
-        const { data: explicitBatch } = await supabase.from('batches').select('id, quantity').eq('id', dist.batchId).eq('pharmacy_id', pharmacyId).single();
+        const { data: explicitBatch } = await supabase.from('batches').select('id, quantity').eq('id', dist.batchId).eq('pharmacy_id', pharmacyId).maybeSingle();
         if (explicitBatch) {
           await supabase.from('order_items').insert([{ order_id: order.id, product_id: item.id, batch_id: explicitBatch.id, name: item.name, price: dist.price, quantity: deduction, unit: item.unit, pharmacy_id: pharmacyId }]);
           await supabase.from('batches').update({ quantity: explicitBatch.quantity - deduction }).eq('id', explicitBatch.id).eq('pharmacy_id', pharmacyId);
@@ -248,7 +248,7 @@ export async function processReturn(orderId: string) {
     .select('*, order_items(*)')
     .eq('id', orderId)
     .eq('pharmacy_id', pharmacyId)
-    .single();
+    .maybeSingle();
 
   if (fetchError || !order) {
     throw new Error('Order not found or access denied');
@@ -265,7 +265,7 @@ export async function processReturn(orderId: string) {
         .select('quantity')
         .eq('id', item.batch_id)
         .eq('pharmacy_id', pharmacyId)
-        .single();
+        .maybeSingle();
       
       if (batch) {
         await supabase
@@ -283,7 +283,7 @@ export async function processReturn(orderId: string) {
       .select('total_debt')
       .eq('id', order.customer_id)
       .eq('pharmacy_id', pharmacyId)
-      .single();
+      .maybeSingle();
 
     if (customer) {
       const newDebt = Math.max(0, (customer.total_debt || 0) - (order.total || 0));

@@ -524,7 +524,7 @@ export default function InventoryDashboard() {
       (item) =>
         item.name.toLowerCase().includes(query) ||
         item.company.toLowerCase().includes(query) ||
-        item.batches.some((b) => b.barcode.toLowerCase().includes(query))
+        item.batches.some((b) => b.barcode && b.barcode.toLowerCase().includes(query))
     );
   }, [items, search]);
 
@@ -546,7 +546,7 @@ export default function InventoryDashboard() {
     }
     const results = items.filter(i => 
       i.name.toLowerCase().includes(val.toLowerCase()) || 
-      i.batches.some(b => b.barcode.includes(val))
+      i.batches.some(b => b.barcode && b.barcode.includes(val))
     ).slice(0, 5);
     setQuickAddResults(results);
   };

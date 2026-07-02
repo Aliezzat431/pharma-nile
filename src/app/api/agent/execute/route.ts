@@ -44,10 +44,15 @@ export async function POST(req: Request) {
         .from('agent_action_logs')
         .select('*')
         .eq('id', logId)
-        .single();
+        .maybeSingle();
 
       if (logError) throw logError;
-      if (!log) throw new Error('Undo log not found');
+      if (!log) {
+        return NextResponse.json(
+          { error: 'سجل العملية المطلوب التراجع عنها غير موجود في النظام.' },
+          { status: 404 }
+        );
+      }
       if (log.undone) {
         return NextResponse.json({ reply: 'تم التراجع عن هذه العملية بالفعل سابقاً!' });
       }

@@ -12,6 +12,10 @@ import {
 import { motion } from 'framer-motion';
 import { getSadqahStats } from '@/lib/api/sadqah';
 import type { SadqahEntry } from '@/lib/api/sadqah';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/ui/Pagination';
+
+const PAGE_SIZE = 20;
 
 const AHADITH = [
   'قال رسول الله ﷺ: "ما نقصت صدقة من مال". [رواه مسلم]',
@@ -78,6 +82,11 @@ export default function SadqahPage() {
         ) ||
         e.id.toLowerCase().includes(search.toLowerCase())
     ) || [];
+
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
+    filteredEntries,
+    { pageSize: PAGE_SIZE }
+  );
 
   return (
     <div className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -213,7 +222,7 @@ export default function SadqahPage() {
                   </td>
                 </tr>
               ) : filteredEntries.length > 0 ? (
-                filteredEntries.map((entry, idx) => (
+                paginatedData.map((entry, idx) => (
                   <motion.tr
                     key={entry.id}
                     initial={{ opacity: 0 }}
@@ -268,6 +277,17 @@ export default function SadqahPage() {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-white/5">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={PAGE_SIZE}
+              onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

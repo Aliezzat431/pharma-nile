@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
   TrendingUp, BarChart3, PieChart as PieChartIcon, Activity, 
-  DollarSign, Package, Loader2, Calendar, ShoppingBag
+  DollarSign, Package, Loader2, Calendar, ShoppingBag, Printer, FileSpreadsheet
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { usePageGSAP } from '@/hooks/usePageGSAP';
@@ -72,6 +72,9 @@ export default function SalesDashboardPage() {
         query = query.gte('created_at', fromDate.toISOString());
       }
 
+      // Sort by date descending for better chart visualization
+      query = query.order('created_at', { ascending: true });
+
       const { data, error } = await query;
       if (error) throw error;
       
@@ -83,6 +86,7 @@ export default function SalesDashboardPage() {
     }
   };
 
+  // Calculations
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total), 0);
   const totalProfit = orders.reduce((sum, order) => sum + Number(order.profit_total || 0), 0);
   const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
@@ -90,6 +94,7 @@ export default function SalesDashboardPage() {
     sum + order.order_items.reduce((itemSum, item) => itemSum + Number(item.quantity), 0)
   , 0);
 
+  // Chart Data Generators
   const generateTrendData = () => {
     const grouped: Record<string, { date: string, sales: number, profit: number }> = {};
     const now = new Date();
@@ -152,6 +157,30 @@ export default function SalesDashboardPage() {
   };
   const paymentData = generatePaymentData();
 
+  // Export to CSV Function
+  const handleExportCSV = () => {
+    const headers = ["التاريخ", "رقم الطلب", "المنتجات", "الإجمالي", "الربح", "طريقة الدفع"];
+    const rows = orders.map(o => [
+      new Date(o.created_at).toLocaleDateString('ar-EG'),
+      o.id.slice(0, 8),
+      o.order_items.map(i => `${i.name} (${i.quantity})`).join(', '),
+      o.total,
+      o.profit_total,
+      o.payment_method === 'cash' ? 'نقدي' : o.payment_method === 'debt' ? 'آجل' : 'صدقة'
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `sales_report_${dateRange}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4">
       <header data-gsap="fade-up" className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -162,26 +191,48 @@ export default function SalesDashboardPage() {
           </h1>
           <p className="text-gray-400 mt-2 font-cairo">نظرة شاملة على أداء المبيعات والأرباح لمتجرك</p>
         </div>
-        <div className="flex flex-nowrap bg-black/40 border border-white/5 rounded-xl p-1 overflow-hidden font-cairo w-full lg:w-auto overflow-x-auto snap-x">
-          {[
-            { id: 'today', label: 'اليوم' },
-            { id: 'week', label: 'هذا الأسبوع' },
-            { id: 'month', label: 'هذا الشهر' },
-            { id: 'all', label: 'الكل' }
-          ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setDateRange(tab.id as any)}
-                className={"flex-1 lg:flex-none px-4 py-2 text-sm rounded-lg transition-all whitespace-nowrap snap-center " + (dateRange === tab.id ? "bg-[#00CED1]/20 text-[#00CED1] font-bold" : "text-gray-400 hover:text-white")}
+        
+        <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
+           {/* Action Buttons */}
+           <div className="flex gap-2">
+              <button 
+                onClick={() => window.print()}
+                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all border border-white/10"
+                title="طباعة التقرير"
               >
-                {tab.label}
+                <Printer className="w-5 h-5" />
               </button>
-          ))}
+              <button 
+                onClick={handleExportCSV}
+                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-[#00CED1] transition-all border border-white/10"
+                title="تصدير Excel"
+              >
+                <FileSpreadsheet className="w-5 h-5" />
+              </button>
+           </div>
+
+           {/* Date Range Tabs */}
+           <div className="flex flex-nowrap bg-black/40 border border-white/5 rounded-xl p-1 overflow-hidden font-cairo w-full lg:w-auto overflow-x-auto snap-x">
+            {[
+              { id: 'today', label: 'اليوم' },
+              { id: 'week', label: 'هذا الأسبوع' },
+              { id: 'month', label: 'هذا الشهر' },
+              { id: 'all', label: 'الكل' }
+            ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setDateRange(tab.id as any)}
+                  className={"flex-1 lg:flex-none px-4 py-2 text-sm rounded-lg transition-all whitespace-nowrap snap-center " + (dateRange === tab.id ? "bg-[#00CED1]/20 text-[#00CED1] font-bold" : "text-gray-400 hover:text-white")}
+                >
+                  {tab.label}
+                </button>
+            ))}
+          </div>
         </div>
       </header>
 
       {loading ? (
-        <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
+        <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3 min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin text-[#00CED1]" />
           <p className="font-cairo">جاري تحليل البيانات...</p>
         </div>
@@ -204,4 +255,3 @@ export default function SalesDashboardPage() {
     </div>
   );
 }
-

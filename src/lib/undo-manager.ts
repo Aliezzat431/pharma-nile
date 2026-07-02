@@ -51,7 +51,7 @@ class UndoManager {
         if (items) {
           for (const item of items) {
             if (item.batch_id) {
-               const { data: batch } = await supabase.from('batches').select('quantity').eq('id', item.batch_id).single();
+               const { data: batch } = await supabase.from('batches').select('quantity').eq('id', item.batch_id).maybeSingle();
                if (batch) {
                  await supabase.from('batches').update({ quantity: batch.quantity + item.quantity }).eq('id', item.batch_id);
                }

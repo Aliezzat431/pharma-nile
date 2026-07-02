@@ -89,7 +89,7 @@ Rules:
     // Get Pharmacy ID securely
     let pharmacyId = req.headers.get('x-pharmacy-id') || user?.user_metadata?.pharmacy_id;
     if (!pharmacyId) {
-         const { data: accessData } = await supabase.from('user_pharmacy_access').select('pharmacy_id').eq('user_id', user?.id).eq('is_primary', true).single();
+         const { data: accessData } = await supabase.from('user_pharmacy_access').select('pharmacy_id').eq('user_id', user?.id).eq('is_primary', true).maybeSingle();
          if (accessData) pharmacyId = accessData.pharmacy_id;
     }
 
@@ -176,7 +176,7 @@ Rules:
                     // For now, let's just insert and hope the frontend sent linked data or we skip strict FK for bulk import speed
                     // BETTER APPROACH: Query products by barcode if available in the batch row mapping
                     if (batch.barcode) { // If barcode is in batch row
-                         const { data: prod } = await supabase.from('products').select('id').eq('pharmacy_id', pharmacyId).eq('barcode', batch.barcode).single();
+                         const { data: prod } = await supabase.from('products').select('id').eq('pharmacy_id', pharmacyId).eq('barcode', batch.barcode).maybeSingle();
                          if (prod) batch.product_id = prod.id;
                     }
                     return batch;

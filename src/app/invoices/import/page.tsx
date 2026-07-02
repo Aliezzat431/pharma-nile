@@ -111,24 +111,26 @@ export default function InvoiceImportPage() {
       const enriched: ExtractedItem[] = await Promise.all(
         rawItems.map(async (item) => {
           let existing = null;
+          const cleanBarcode = String(item.barcode || '').trim();
 
-          if (item.barcode && item.barcode.length > 5) {
+          if (cleanBarcode && cleanBarcode.length > 5) {
             const { data: byBarcode } = await supabase
               .from('products')
               .select('id, name, barcode')
               .eq('pharmacy_id', pharmacyId)
-              .eq('barcode', item.barcode.trim())
+              .eq('barcode', cleanBarcode)
               .maybeSingle();
             
             if (byBarcode) existing = byBarcode;
           }
 
-          if (!existing && item.product_name && item.product_name.trim().length > 2) {
+          const cleanName = String(item.product_name || '').trim();
+          if (!existing && cleanName.length > 2) {
             const { data: byName } = await supabase
               .from('products')
               .select('id, name, barcode')
               .eq('pharmacy_id', pharmacyId)
-              .ilike('name', `%${item.product_name.trim()}%`)
+              .ilike('name', `%${cleanName}%`)
               .limit(1)
               .maybeSingle();
             
@@ -180,12 +182,13 @@ export default function InvoiceImportPage() {
   };
 
   const lookupProduct = async (idx: number, name: string) => {
-    if (!pharmacyId || name.trim().length < 2) return;
+    const cleanName = String(name || '').trim();
+    if (!pharmacyId || cleanName.length < 2) return;
     const { data: existing } = await supabase
       .from('products')
       .select('id, name')
       .eq('pharmacy_id', pharmacyId)
-      .ilike('name', `%${name}%`)
+      .ilike('name', `%${cleanName}%`)
       .limit(1)
       .maybeSingle();
 
@@ -205,8 +208,9 @@ export default function InvoiceImportPage() {
     let saved = 0;
 
     const parseDate = (input: string) => {
-      if (!input) return '';
-      const parts = input.split(/[\/\-.]/).map(p => p.trim());
+      const cleanInput = String(input || '').trim();
+      if (!cleanInput) return '';
+      const parts = cleanInput.split(/[\/\-.]/).map(p => p.trim());
       if (parts.length === 3) {
         const d = parts[0].padStart(2, '0');
         const m = parts[1].padStart(2, '0');
@@ -218,13 +222,13 @@ export default function InvoiceImportPage() {
         const y = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
         return `${y}-${m}-15`;
       }
-      return input;
+      return cleanInput;
     };
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (!item._checked || item._status !== 'pending') continue;
-      if (!item.product_name.trim()) continue;
+      if (!item.product_name || !String(item.product_name).trim()) continue;
 
       setItems(prev => prev.map((it, idx) => idx === i ? { ...it, _status: 'saving' } : it));
 

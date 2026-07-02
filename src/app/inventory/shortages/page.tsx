@@ -6,6 +6,10 @@ import { PackageX, Search, ShoppingCart, RefreshCw, Loader2, ArrowLeftRight, Ale
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/ui/Pagination'; // تأكد من المسار ده
+
+const PAGE_SIZE = 25;
 
 interface ShortageItem {
   product_id: string;
@@ -50,7 +54,6 @@ export default function ShortagesPage() {
     setErrorMessage(null);
 
     try {
-
       const { data, error } = await supabase
         .from('product_inventory')
         .select('*')
@@ -73,6 +76,11 @@ export default function ShortagesPage() {
     if (!query) return shortages;
     return shortages.filter(item => item.name.toLowerCase().includes(query));
   }, [shortages, search]);
+
+  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
+    filteredShortages,
+    { pageSize: PAGE_SIZE }
+  );
 
   const stats = useMemo(() => {
     return {
@@ -106,7 +114,7 @@ export default function ShortagesPage() {
         </button>
       </header>
 
-      {}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
          <div className="glass-panel p-6 border-red-500/20 bg-red-500/5">
             <p className="text-gray-400 text-sm font-cairo mb-2">إجمالي النواقص الحاد (رصيد 0)</p>
@@ -122,7 +130,7 @@ export default function ShortagesPage() {
          </div>
       </div>
 
-      {}
+      {/* Search Bar */}
       <div className="flex gap-4">
         <div className="flex-1 glass-panel p-2 flex items-center gap-3">
           <Search className="w-5 h-5 text-gray-400 mr-2" />
@@ -136,7 +144,7 @@ export default function ShortagesPage() {
         </div>
       </div>
 
-      {}
+      {/* Error Message */}
       {errorMessage && (
         <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-3 font-cairo">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -144,7 +152,7 @@ export default function ShortagesPage() {
         </div>
       )}
 
-      {}
+      {/* Table */}
       <div className="glass-panel overflow-hidden border-white/5">
          <div className="overflow-x-auto">
             <table className="w-full text-right border-collapse">
@@ -172,7 +180,7 @@ export default function ShortagesPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredShortages.map((item, i) => (
+                    paginatedData.map((item, i) => (
                       <motion.tr 
                         key={item.product_id}
                         initial={{ opacity: 0, y: 8 }}
@@ -223,6 +231,19 @@ export default function ShortagesPage() {
                </tbody>
             </table>
          </div>
+         
+         {/* Pagination Component */}
+         {!loading && filteredShortages.length > 0 && (
+            <div className="p-4 border-t border-white/5">
+               <Pagination
+                 currentPage={currentPage}
+                 totalPages={totalPages}
+                 totalItems={totalItems}
+                 itemsPerPage={PAGE_SIZE}
+                 onPageChange={setPage}
+               />
+            </div>
+         )}
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       .from('user_profiles')
       .select('pharmacy_id, role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (profileError || !currentUserProfile) {
       return NextResponse.json(

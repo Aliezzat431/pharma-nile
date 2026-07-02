@@ -90,7 +90,7 @@ export async function shipTransfer(transferId: string, fromPharmacyId: string, p
     .select('*')
     .eq('id', transferId)
     .eq('from_pharmacy_id', fromPharmacyId)
-    .single();
+    .maybeSingle();
 
   if (fetchError || !transfer) throw new Error('Transfer not found or unauthorized');
   if (transfer.status !== 'pending') throw new Error('Transfer is not pending');
@@ -152,14 +152,14 @@ export async function receiveTransfer(
     .select('*')
     .eq('id', transferId)
     .eq('to_pharmacy_id', toPharmacyId)
-    .single();
+    .maybeSingle();
 
   if (fetchError || !transfer) throw new Error('Transfer not found or unauthorized');
   if (transfer.status !== 'shipped') throw new Error('Transfer is not shipped');
 
   if (receiveDetails.batchId) {
 
-    const { data: batch } = await supabase.from('batches').select('quantity').eq('id', receiveDetails.batchId).single();
+    const { data: batch } = await supabase.from('batches').select('quantity').eq('id', receiveDetails.batchId).maybeSingle();
     if (batch) {
       await supabase.from('batches').update({ quantity: Number(batch.quantity) + Number(transfer.quantity) }).eq('id', receiveDetails.batchId);
     }

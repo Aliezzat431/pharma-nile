@@ -28,7 +28,7 @@ export async function GET(req: Request) {
             .select('pharmacy_id')
             .eq('user_id', user.id)
             .eq('is_primary', true)
-            .single();
+            .maybeSingle();
         
         if (accessData?.pharmacy_id) {
             pharmacyId = accessData.pharmacy_id;
@@ -39,7 +39,7 @@ export async function GET(req: Request) {
                 .select('pharmacy_id')
                 .eq('user_id', user.id)
                 .limit(1)
-                .single();
+                .maybeSingle();
              if (anyAccess) pharmacyId = anyAccess.pharmacy_id;
         }
     }

@@ -113,7 +113,7 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
     .select('total_debt')
     .eq('id', payment.debtor_id)
     .eq('pharmacy_id', pharmacyId)
-    .single();
+    .maybeSingle();
 
   if (debtor) {
     const newDebt = Math.max(0, debtor.total_debt - payment.amount);
@@ -172,7 +172,7 @@ export async function getDebtorDetails(id: string) {
     .select('*, debt_payments(*)')
     .eq('id', id)
     .eq('pharmacy_id', pharmacyId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching debtor details:', error);
