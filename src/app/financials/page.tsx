@@ -12,6 +12,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart as ReBarChart, Bar, Cell, PieChart, Pie, Legend
 } from 'recharts';
+//comment
 
 const COLORS = ['#00CED1', '#D4AF37', '#FF4E4E'];
 
@@ -49,7 +50,7 @@ interface Order {
   profit_total: number;
   cost_total: number;
   payment_method: string;
-  status: string;
+  status?: string; // جعلناه اختيارياً لأنه قد لا يأتي في الـ select أحياناً
 }
 
 export default function FinancialsPage() {
