@@ -11,7 +11,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import GlassTable from '@/components/ui/GlassTable';
 
-// تأكد من تعديل المسار ده حسب مكان ملف الثوابت عندك
 import { treatmentTypes } from '@/lib/unitOptions';
 
 interface ParsedItem {
