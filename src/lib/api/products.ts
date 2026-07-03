@@ -100,6 +100,8 @@ export async function searchProducts(query: string, pharmacyId: string) {
 }
 
 export async function getProducts(pharmacyId: string) {
+  if (!pharmacyId || pharmacyId === 'undefined' || pharmacyId === 'null') return [];
+
   const { data: products, error } = await supabase
     .from('products')
     .select('*')
@@ -138,7 +140,7 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
       .eq('id', batch.product_id)
       .eq('pharmacy_id', pharmacyId)
       .limit(1)
-      .single();
+      .maybeSingle(); // ✅ safe — product may have been deleted after batch lookup
 
     if (error || !products) return null;
 
@@ -172,23 +174,42 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
  * Syncs the entire pharmacy product catalog to IndexedDB for offline read operation.
  */
 export async function syncProductCatalogToCache(pharmacyId: string): Promise<void> {
+  // Hard cap: fetching unlimited rows can OOM large pharmacies after years of data.
+  const PAGE_SIZE = 1000;
+  let allProducts: any[] = [];
+  let page = 0;
+
   try {
-    const { data: products, error } = await supabase
-      .from('products')
-      .select(`
-        *,
-        batches (
-          *
-        ),
-        pharmacy:pharmacies(name)
-      `)
-      .eq('pharmacy_id', pharmacyId)
-      .eq('batches.pharmacy_id', pharmacyId);
+    while (true) {
+      const { data: products, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          batches (
+            *
+          ),
+          pharmacy:pharmacies(name)
+        `)
+        .eq('pharmacy_id', pharmacyId)
+        .eq('batches.pharmacy_id', pharmacyId)
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-    if (error) throw error;
+      if (error) throw error;
+      if (!products || products.length === 0) break;
 
-    if (products) {
-      const mapped = products.map((p: any) => {
+      allProducts = allProducts.concat(products);
+      if (products.length < PAGE_SIZE) break; // last page
+      page++;
+
+      // Safety: stop at 5 pages (5000 products) to prevent runaway fetches
+      if (page >= 5) {
+        console.warn('[Cache Sync] Hit 5000-product safety cap. Stopping early.');
+        break;
+      }
+    }
+
+    if (allProducts.length > 0) {
+      const mapped = allProducts.map((p: any) => {
         const activeBatches = (p.batches || [])
           .filter((b: Batch) => b.quantity > 0)
           .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
@@ -266,9 +287,10 @@ export async function createBatch(batch: Partial<Batch>) {
     .from('batches')
     .insert([payload])
     .select()
-    .single();
+    .maybeSingle(); // ✅ safe — avoids PGRST116 if RLS silently blocks the insert
 
   if (error) throw error;
+  if (!data) throw new Error('فشل إنشاء التشغيلة — تحقق من صلاحيات قاعدة البيانات.');
   return data;
 }
 

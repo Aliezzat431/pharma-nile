@@ -50,12 +50,13 @@ export async function requestTransfer(
       status: 'pending'
     }])
     .select()
-    .single();
+    .maybeSingle(); // ✅ safe
 
   if (error) {
     console.error('Error requesting transfer:', error);
     throw error;
   }
+  if (!data) throw new Error('فشل إنشاء طلب النقل.');
   return data;
 }
 

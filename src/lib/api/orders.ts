@@ -136,14 +136,15 @@ async function _jsCheckoutFallback(
     .from('orders')
     .insert([{ ...orderBase, pharmacy_id: pharmacyId }])
     .select()
-    .single();
+    .maybeSingle(); // ✅ safe — avoids PGRST116 if RLS blocks the insert
 
   if (orderError || !order) throw new Error('Failed to create order');
 
   if (paymentMethod === 'debt' && customerId) {
     const { data: customer } = await supabase.from('customers').select('total_debt').eq('id', customerId).eq('pharmacy_id', pharmacyId).maybeSingle();
     if (customer) {
-      await supabase.from('customers').update({ total_debt: customer.total_debt + finalTotal }).eq('id', customerId).eq('pharmacy_id', pharmacyId);
+      const safeDebt = Math.max(0, Number(customer.total_debt || 0) + finalTotal);
+      await supabase.from('customers').update({ total_debt: safeDebt }).eq('id', customerId).eq('pharmacy_id', pharmacyId);
     }
   }
 

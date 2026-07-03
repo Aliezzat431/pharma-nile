@@ -66,12 +66,13 @@ export async function addDebtor(debtorData: Omit<Debtor, 'id' | 'total_debt' | '
       },
     ])
     .select()
-    .single();
+    .maybeSingle(); // ✅ safe — avoids PGRST116 if insert is blocked
 
   if (error) {
     console.error('Error adding debtor:', error);
     throw error;
   }
+  if (!data) throw new Error('فشل إنشاء العميل. تحقق من الصلاحيات.');
 
   return data as Debtor;
 }
@@ -100,12 +101,13 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
       },
     ])
     .select()
-    .single();
+    .maybeSingle(); // ✅ safe
 
   if (paymentError) {
     console.error('Error recording debt payment:', paymentError);
     throw paymentError;
   }
+  if (!paymentData) throw new Error('فشل تسجيل الدفعة.');
 
   // Directly update the customer's outstanding balance in customers table (avoiding non-existent update_debtor_balance RPC)
   const { data: debtor } = await supabase
@@ -116,7 +118,7 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
     .maybeSingle();
 
   if (debtor) {
-    const newDebt = Math.max(0, debtor.total_debt - payment.amount);
+    const newDebt = Math.max(0, Number(debtor.total_debt || 0) - Number(payment.amount));
     
     await supabase
       .from('customers')

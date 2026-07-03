@@ -11,6 +11,7 @@ import AgentCopilot from '@/components/agent/AgentCopilot';
 import WorkspaceManager from '@/components/agent/WorkspaceManager';
 import DevToolsBlocker from '@/components/shared/DevToolsBlocker';
 import { ThemeProvider } from 'next-themes';
+import { GlobalErrorBoundary } from '@/lib/error-boundary';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' });
@@ -37,23 +38,25 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={`${inter.variable} ${cairo.variable}`} suppressHydrationWarning>
       <body className="antialiased bg-[var(--background)] text-[var(--text-primary)] font-cairo">
-        <DevToolsBlocker />
-        <ServiceWorkerRegistrar />
-        <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
-          <StoreProvider>
-            <AuthProvider>
-              <Suspense fallback={<div className="min-h-screen bg-[var(--background)] animate-pulse"></div>}>
-                <LayoutWrapper>
-                   {children}
-                </LayoutWrapper>
-              </Suspense>
-              <UndoToast />
-              <SyncToastProvider />
-              <AgentCopilot />
-              <WorkspaceManager />
-            </AuthProvider>
-          </StoreProvider>
-        </ThemeProvider>
+        <GlobalErrorBoundary>
+          <DevToolsBlocker />
+          <ServiceWorkerRegistrar />
+          <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
+            <StoreProvider>
+              <AuthProvider>
+                <Suspense fallback={<div className="min-h-screen bg-[var(--background)] animate-pulse"></div>}>
+                  <LayoutWrapper>
+                     {children}
+                  </LayoutWrapper>
+                </Suspense>
+                <UndoToast />
+                <SyncToastProvider />
+                <AgentCopilot />
+                <WorkspaceManager />
+              </AuthProvider>
+            </StoreProvider>
+          </ThemeProvider>
+        </GlobalErrorBoundary>
       </body>
     </html>
   );

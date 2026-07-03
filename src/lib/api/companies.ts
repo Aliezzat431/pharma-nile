@@ -40,12 +40,13 @@ export async function addCompany(company: Omit<Company, 'id' | 'created_at' | 'p
     .from('companies')
     .insert([{ ...company, pharmacy_id: pharmacyId }])
     .select()
-    .single();
+    .maybeSingle(); // ✅ safe
 
   if (error) {
     console.error('Error adding company:', error);
     throw error;
   }
+  if (!data) throw new Error('فشل إنشاء الشركة. تحقق من الصلاحيات.');
   return data as Company;
 }
 

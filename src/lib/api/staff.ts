@@ -28,10 +28,16 @@ export async function getAllStaff() {
 }
 
 export async function updateStaffRole(userId: string, role: 'admin' | 'staff') {
+  // 🔒 Security: ensure the caller can only change roles within their own pharmacy
+  const { data: { user } } = await supabase.auth.getUser();
+  const pharmacyId = user?.user_metadata?.pharmacy_id;
+  if (!pharmacyId) throw new Error('Unauthorized');
+
   const { error } = await supabase
     .from('user_profiles')
     .update({ role })
-    .eq('id', userId);
+    .eq('id', userId)
+    .eq('pharmacy_id', pharmacyId); // 🔒 tenant isolation — prevents cross-pharmacy role escalation
 
   if (error) {
     console.error('Error updating staff role:', error);

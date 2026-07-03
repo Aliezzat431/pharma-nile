@@ -56,12 +56,13 @@ export async function addCustomer(customer: Omit<Customer, 'id' | 'total_debt' |
     .from('customers')
     .insert([{ ...customer, name: trimmedName, phone: customer.phone?.trim(), total_debt: 0, pharmacy_id: pharmacyId }])
     .select()
-    .single();
+    .maybeSingle(); // ✅ safe
 
   if (error) {
     console.error('Error adding customer:', error);
     throw error;
   }
+  if (!data) throw new Error('فشل إنشاء العميل.');
   return data as Customer;
 }
 
@@ -130,12 +131,13 @@ export async function recordCustomerPayment(payment: Omit<CustomerPayment, 'id' 
       note: payment.note
     }])
     .select()
-    .single();
+    .maybeSingle(); // ✅ safe
 
   if (paymentError) {
     console.error('Error recording payment:', paymentError);
     throw paymentError;
   }
+  if (!paymentData) throw new Error('فشل تسجيل الدفعة.');
 
   const { data: currentCustomer } = await supabase
     .from('customers')
@@ -147,7 +149,7 @@ export async function recordCustomerPayment(payment: Omit<CustomerPayment, 'id' 
   if (currentCustomer) {
     await supabase
       .from('customers')
-      .update({ total_debt: Math.max(0, currentCustomer.total_debt - payment.amount) })
+      .update({ total_debt: Math.max(0, Number(currentCustomer.total_debt || 0) - Number(payment.amount)) })
       .eq('id', payment.customer_id)
       .eq('pharmacy_id', pharmacyId);
   }
