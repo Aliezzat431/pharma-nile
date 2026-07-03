@@ -28,6 +28,12 @@ export default function CustomerProfile() {
   const INVOICES_PAGE_SIZE = 10;
   const PAYMENTS_PAGE_SIZE = 10;
 
+  const orders = customer?.orders || [];
+  const { paginatedData: paginatedOrders, currentPage: ordersPage, totalPages: totalOrdersPages, totalItems: totalOrders, setPage: setOrdersPage } = usePagination(orders, { pageSize: INVOICES_PAGE_SIZE });
+
+  const payments = customer?.debt_payments || [];
+  const { paginatedData: paginatedPayments, currentPage: paymentsPage, totalPages: totalPaymentsPages, totalItems: totalPayments, setPage: setPaymentsPage } = usePagination(payments, { pageSize: PAYMENTS_PAGE_SIZE });
+
   useEffect(() => {
     if (customerId) fetchDetails();
   }, [customerId]);
@@ -174,9 +180,9 @@ export default function CustomerProfile() {
                       <h3 className="text-xl font-bold font-cairo text-white">سجل المشتريات</h3>
                       <button
                         onClick={() => {
-                          if (!customer.orders?.length) { alert('لا توجد فواتير لتصديرها'); return; }
+                          if (!orders.length) { alert('لا توجد فواتير لتصديرها'); return; }
                           const headers = ['رقم الفاتورة', 'التاريخ', 'الإجمالي (ج.م)', 'طريقة الدفع'];
-                          const rows = customer.orders.map((o: any) => [
+                          const rows = orders.map((o: any) => [
                             `"${o.id.slice(0, 8)}"`,
                             `"${new Date(o.created_at).toLocaleDateString('ar-EG')}"`,
                             o.total ?? 0,
@@ -197,28 +203,43 @@ export default function CustomerProfile() {
                         <Download className="w-4 h-4" /> تحميل كشف فواتير
                       </button>
                    </div>
-                   {customer.orders?.length > 0 ? customer.orders.map((order: any) => (
-                     <div key={order.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 rounded-lg bg-[#00CED1]/10 flex items-center justify-center text-[#00CED1]">
-                              <ShoppingBag className="w-5 h-5" />
-                           </div>
-                           <div>
-                              <p className="font-bold text-white font-cairo text-sm">فاتورة #{order.id.slice(0, 8)}</p>
-                              <p className="text-xs text-gray-500 font-sans">{new Date(order.created_at).toLocaleString('ar-EG')}</p>
-                           </div>
-                        </div>
-                        <div className="text-left flex items-center gap-6">
-                           <div>
-                              <p className="text-xs text-gray-500 font-cairo mb-1 text-left">القيمة</p>
-                              <p className="font-bold text-[#D4AF37] font-sans">{(order.total || 0).toLocaleString()} ج.م</p>
-                           </div>
-                           <button className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white">
-                              <ArrowUpRight className="w-4 h-4" />
-                           </button>
-                        </div>
-                     </div>
-                   )) : (
+                   {paginatedOrders.length > 0 ? (
+                     <>
+                       {paginatedOrders.map((order: any) => (
+                         <div key={order.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-lg bg-[#00CED1]/10 flex items-center justify-center text-[#00CED1]">
+                                  <ShoppingBag className="w-5 h-5" />
+                               </div>
+                               <div>
+                                  <p className="font-bold text-white font-cairo text-sm">فاتورة #{order.id.slice(0, 8)}</p>
+                                  <p className="text-xs text-gray-500 font-sans">{new Date(order.created_at).toLocaleString('ar-EG')}</p>
+                               </div>
+                            </div>
+                            <div className="text-left flex items-center gap-6">
+                               <div>
+                                  <p className="text-xs text-gray-500 font-cairo mb-1 text-left">القيمة</p>
+                                  <p className="font-bold text-[#D4AF37] font-sans">{(order.total || 0).toLocaleString()} ج.م</p>
+                               </div>
+                               <button className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white">
+                                  <ArrowUpRight className="w-4 h-4" />
+                               </button>
+                            </div>
+                         </div>
+                       ))}
+                       {orders.length > INVOICES_PAGE_SIZE && (
+                         <div className="pt-4">
+                            <Pagination
+                              currentPage={ordersPage}
+                              totalPages={totalOrdersPages}
+                              totalItems={totalOrders}
+                              itemsPerPage={INVOICES_PAGE_SIZE}
+                              onPageChange={setOrdersPage}
+                            />
+                         </div>
+                       )}
+                     </>
+                   ) : (
                      <div className="py-20 text-center opacity-40 font-cairo text-gray-400">لا توجد فواتير مسجلة لهذا العميل.</div>
                    )}
                 </div>
@@ -227,25 +248,40 @@ export default function CustomerProfile() {
               {activeTab === 'payments' && (
                 <div className="space-y-4">
                    <h3 className="text-xl font-bold font-cairo text-white mb-6">مدفوعات الدين</h3>
-                   {customer.debt_payments?.length > 0 ? customer.debt_payments.map((p: any) => (
-                     <div key={p.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
-                              <ArrowDownLeft className="w-5 h-5" />
-                           </div>
-                           <div>
-                              <p className="font-bold text-green-400 font-sans">{(p.amount || 0).toLocaleString()} ج.م</p>
-                              <p className="text-xs text-gray-500 font-sans">{new Date(p.payment_date || p.created_at).toLocaleString('ar-EG')}</p>
-                           </div>
-                        </div>
-                        <div className="text-left">
-                           {p.note && <p className="text-xs text-gray-400 font-cairo mb-1.5 italic">"{p.note}"</p>}
-                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-cairo ${p.payment_type === 'full' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-blue-500/20 text-blue-400'}`}>
-                              {p.payment_type === 'full' ? 'تصفية كاملة' : 'دفعة جزئية'}
-                           </span>
-                        </div>
-                     </div>
-                   )) : (
+                   {paginatedPayments.length > 0 ? (
+                     <>
+                       {paginatedPayments.map((p: any) => (
+                         <div key={p.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
+                                  <ArrowDownLeft className="w-5 h-5" />
+                               </div>
+                               <div>
+                                  <p className="font-bold text-green-400 font-sans">{(p.amount || 0).toLocaleString()} ج.م</p>
+                                  <p className="text-xs text-gray-500 font-sans">{new Date(p.payment_date || p.created_at).toLocaleString('ar-EG')}</p>
+                               </div>
+                            </div>
+                            <div className="text-left">
+                               {p.note && <p className="text-xs text-gray-400 font-cairo mb-1.5 italic">"{p.note}"</p>}
+                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-cairo ${p.payment_type === 'full' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-blue-500/20 text-blue-400'}`}>
+                                  {p.payment_type === 'full' ? 'تصفية كاملة' : 'دفعة جزئية'}
+                                </span>
+                            </div>
+                         </div>
+                       ))}
+                       {payments.length > PAYMENTS_PAGE_SIZE && (
+                         <div className="pt-4">
+                            <Pagination
+                              currentPage={paymentsPage}
+                              totalPages={totalPaymentsPages}
+                              totalItems={totalPayments}
+                              itemsPerPage={PAYMENTS_PAGE_SIZE}
+                              onPageChange={setPaymentsPage}
+                            />
+                         </div>
+                       )}
+                     </>
+                   ) : (
                      <div className="py-20 text-center opacity-40 font-cairo text-gray-400">لم يتم تسجيل أي دفعات مالية بعد.</div>
                    )}
                 </div>
@@ -310,7 +346,7 @@ export default function CustomerProfile() {
                       type="button" 
                       disabled={processing}
                       onClick={() => setPaymentData({...paymentData, payment_type: 'partial'})} 
-                      className={`py-4 rounded-2xl font-cairo border transition-colors ${paymentData.payment_type === 'partial' ? 'bg-[#00CED1]/10 border-[#00CED1] text-[#00CED1] font-bold' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                      className={`py-4 rounded-2xl font-cairo border transition-colors ${paymentData.payment_type === 'partial' ? 'bg-[#00CED1]/10 border-[#00CED1] text-[#00CED1] font-bold' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/15'}`}
                     >
                       جزئي
                     </button>
@@ -318,7 +354,7 @@ export default function CustomerProfile() {
                       type="button" 
                       disabled={processing}
                       onClick={() => setPaymentData({...paymentData, payment_type: 'full', amount: (customer?.total_debt || 0).toString()})} 
-                      className={`py-4 rounded-2xl font-cairo border transition-colors ${paymentData.payment_type === 'full' ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] font-bold' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                      className={`py-4 rounded-2xl font-cairo border transition-colors ${paymentData.payment_type === 'full' ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] font-bold' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/15'}`}
                     >
                       تصفية كاملة
                     </button>
@@ -354,22 +390,4 @@ export default function CustomerProfile() {
       </AnimatePresence>
     </div>
   );
-}
-
-/* ─── Invoices Tab with Pagination ─────────────────────────────────── */
-function CustomerInvoicesTab({ customer }: { customer: any }) {
-  const PAGE_SIZE = 10;
-  const orders = customer.orders || [];
-  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(orders, { pageSize: PAGE_SIZE });
-
-  return null; // rendered inline above
-}
-
-/* ─── Payments Tab with Pagination ─────────────────────────────────── */
-function CustomerPaymentsTab({ customer }: { customer: any }) {
-  const PAGE_SIZE = 10;
-  const payments = customer.debt_payments || [];
-  const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(payments, { pageSize: PAGE_SIZE });
-
-  return null; // rendered inline above
 }
