@@ -86,15 +86,22 @@ Rules:
     const authHeader = req.headers.get('Authorization');
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
     
-    // Get Pharmacy ID securely
-    let pharmacyId = req.headers.get('x-pharmacy-id') || user?.user_metadata?.pharmacy_id;
-    if (!pharmacyId) {
-         const { data: accessData } = await supabase.from('user_pharmacy_access').select('pharmacy_id').eq('user_id', user?.id).eq('is_primary', true).maybeSingle();
-         if (accessData) pharmacyId = accessData.pharmacy_id;
+    if (authError || !user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
     }
 
-    if (!pharmacyId || authError) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    // ── Derive Pharmacy ID securely from Database ───────────────────────────
+    const { data: accessData } = await supabase
+      .from('user_pharmacy_access')
+      .select('pharmacy_id')
+      .eq('user_id', user.id)
+      .eq('is_primary', true)
+      .maybeSingle();
+
+    const pharmacyId = accessData?.pharmacy_id;
+
+    if (!pharmacyId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: No primary pharmacy context found' }, { status: 401 });
     }
 
     // 4. Process Full File (Streaming approach to avoid memory crash)

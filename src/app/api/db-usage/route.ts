@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const { type } = await req.json();
     
     if (!type) {
-      return NextResponse.json({ success: false, error: 'نوع التنظيف غير محدد' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'نوع التنظيف غير حدد' }, { status: 400 });
     }
 
     const supabase = createClient(
@@ -14,31 +14,32 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // 1. Authentication & Context
+    // ── 1. Secure Authentication ────────────────────────────────────────────
     const authHeader = req.headers.get('Authorization');
-    const headerPharmacyId = req.headers.get('x-pharmacy-id');
-    
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
     
-    let pharmacyId = headerPharmacyId || user?.user_metadata?.pharmacy_id;
-    if (!pharmacyId && user?.id) {
-        const { data: accessData } = await supabase
-            .from('user_pharmacy_access')
-            .select('pharmacy_id')
-            .eq('user_id', user.id)
-            .eq('is_primary', true)
-            .single();
-        if (accessData) pharmacyId = accessData.pharmacy_id;
+    if (authError || !user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
     }
 
-    if (!pharmacyId || authError) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    // ── 2. Derive Pharmacy ID securely from Database ───────────────────────
+    const { data: accessData } = await supabase
+      .from('user_pharmacy_access')
+      .select('pharmacy_id')
+      .eq('user_id', user.id)
+      .eq('is_primary', true)
+      .maybeSingle(); // Safe selection - prevents PGRST116 exceptions
+
+    const pharmacyId = accessData?.pharmacy_id;
+
+    if (!pharmacyId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: No primary pharmacy context found' }, { status: 401 });
     }
 
     let deletedCount = 0;
     const now = new Date();
 
-    // 2. Cleanup Logic (Safe Only)
+    // ── 3. Cleanup Logic (Safe Only) ──────────────────────────────────────────
     if (type === 'audit') {
       // مسح سجلات التدقيق أقدم من 60 يوم
       const threshold = new Date(now);

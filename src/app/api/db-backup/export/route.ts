@@ -9,42 +9,38 @@ export async function GET(req: Request) {
     );
 
     const authHeader = req.headers.get('Authorization');
-    const headerPharmacyId = req.headers.get('x-pharmacy-id');
 
-    // 1. Get User Info
+    // 1. Get User Info and Authenticate
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
     
     if (authError || !user) {
         return NextResponse.json({ success: false, error: 'Invalid Token' }, { status: 401 });
     }
 
-    // 2. Resolve Pharmacy ID (The most critical part)
-    let pharmacyId = headerPharmacyId || user?.user_metadata?.pharmacy_id;
+    // 2. Resolve Pharmacy ID securely from Database (never trust client headers/metadata)
+    let pharmacyId = null;
 
-    if (!pharmacyId) {
-        console.log("Pharmacy ID not in header/metadata, checking user_pharmacy_access...");
-        const { data: accessData, error: accessError } = await supabase
+    const { data: accessData } = await supabase
+        .from('user_pharmacy_access')
+        .select('pharmacy_id')
+        .eq('user_id', user.id)
+        .eq('is_primary', true)
+        .maybeSingle();
+    
+    if (accessData?.pharmacy_id) {
+        pharmacyId = accessData.pharmacy_id;
+    } else {
+         // Fallback: Try any access row linked to this user if no primary is found
+         const { data: anyAccess } = await supabase
             .from('user_pharmacy_access')
             .select('pharmacy_id')
             .eq('user_id', user.id)
-            .eq('is_primary', true)
+            .limit(1)
             .maybeSingle();
-        
-        if (accessData?.pharmacy_id) {
-            pharmacyId = accessData.pharmacy_id;
-        } else {
-             // Try any pharmacy if no primary is set
-             const { data: anyAccess } = await supabase
-                .from('user_pharmacy_access')
-                .select('pharmacy_id')
-                .eq('user_id', user.id)
-                .limit(1)
-                .maybeSingle();
-             if (anyAccess) pharmacyId = anyAccess.pharmacy_id;
-        }
+         if (anyAccess) pharmacyId = anyAccess.pharmacy_id;
     }
 
-    console.log("Final Pharmacy ID for Export:", pharmacyId);
+    console.log("Final Authorized Pharmacy ID for Export:", pharmacyId);
 
     if (!pharmacyId) {
       return NextResponse.json({ success: false, error: 'Could not determine Pharmacy ID' }, { status: 401 });
@@ -63,7 +59,6 @@ export async function GET(req: Request) {
 
     // 4. Fetch Data
     for (const table of tablesToExport) {
-      // Use Service Role client which bypasses RLS, but we manually filter by pharmacy_id
       const { data, error } = await supabase
         .from(table)
         .select('*')
@@ -78,7 +73,7 @@ export async function GET(req: Request) {
       }
     }
 
-    // Handle user-specific tables separately
+    // Handle user-specific tables safely
     const { data: profiles } = await supabase.from('user_profiles').select('*').eq('id', user.id);
     backupData['user_profiles'] = profiles || [];
     totalRecords += (profiles || []).length;

@@ -15,26 +15,24 @@ export async function POST(req: Request) {
     );
 
     const authHeader = req.headers.get('Authorization');
-    const headerPharmacyId = req.headers.get('x-pharmacy-id');
-
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
     
-    // Get Pharmacy ID securely
-    let pharmacyId = headerPharmacyId || user?.user_metadata?.pharmacy_id;
-    
-    // Fallback to primary pharmacy if not in metadata
-    if (!pharmacyId && user?.id) {
-        const { data: accessData } = await supabase
-            .from('user_pharmacy_access')
-            .select('pharmacy_id')
-            .eq('user_id', user.id)
-            .eq('is_primary', true)
-            .single();
-        if (accessData) pharmacyId = accessData.pharmacy_id;
+    if (authError || !user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
     }
 
-    if (!pharmacyId || authError) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: No pharmacy context' }, { status: 401 });
+    // ── Derive Pharmacy ID securely from Database (never trust client headers/metadata) ──
+    const { data: accessData } = await supabase
+      .from('user_pharmacy_access')
+      .select('pharmacy_id')
+      .eq('user_id', user.id)
+      .eq('is_primary', true)
+      .maybeSingle(); // Safe selection - prevents PGRST116 exceptions
+
+    const pharmacyId = accessData?.pharmacy_id;
+
+    if (!pharmacyId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: No primary pharmacy context found' }, { status: 401 });
     }
 
     let deletedCount = 0;

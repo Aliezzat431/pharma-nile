@@ -6,7 +6,7 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const GROQ_MODEL = "llama3-70b-8192";
+const GROQ_MODEL = "llama-3.3-70b-versatile"; 
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,14 +21,40 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
+    // ── 1. Secure Authentication & Authorization ────────────────────────────
+    const authHeader = req.headers.get('Authorization');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized: Authentication required" }, { status: 401 });
+    }
+
+    // ── 2. Derive Tenant Context securely from DB ───────────────────────────
+    const { data: accessData } = await supabase
+      .from('user_pharmacy_access')
+      .select('pharmacy_id')
+      .eq('user_id', user.id)
+      .eq('is_primary', true)
+      .maybeSingle();
+
+    const pharmacyId = accessData?.pharmacy_id;
+
+    if (!pharmacyId) {
+      return NextResponse.json({ error: "Unauthorized: No primary pharmacy context found" }, { status: 401 });
+    }
+
+    // ── 3. Fetch Pharmacy Scope Logs only ────────────────────────────────────
     const { data: recentLogs } = await supabase
       .from('agent_action_logs')
       .select('*')
+      .eq('pharmacy_id', pharmacyId) // 🔒 Enforce tenant isolation
       .order('created_at', { ascending: false })
       .limit(3);
 
     const systemPrompt = `أنت "المساعد الذكي" وعقل نظام PharmaNile، الملقب بـ "دكتور محسن".
 أنت صيدلي خبير تقني تدير الصيدلية بذكاء.
+
+بيانات صيدليتك الحالية: pharmacy_id = "${pharmacyId}"
 
 قدراتك التقنية لفتح واجهات العمل (Workspaces):
 - لفتح أي صفحة للمستخدم، استخدم التنسيق الصارم التالي: [OPEN_IFRAME:URL:TITLE]
@@ -50,7 +76,7 @@ export async function POST(req: Request) {
 2. إذا طلب المستخدم حل مشكلة، ابحث عن الصفحة المناسبة وافتحها له فوراً باستخدام [OPEN_IFRAME].
 3. التزم تماماً بالتنسيقات البرمجية المذكورة أعلاه ليتمكن النظام من فهمها وتمريرها للمتصفح.
 
-سجل العمليات الأخيرة في النظام للوعي: ${JSON.stringify(recentLogs || [])}
+سجل العمليات الأخيرة في صيدليتك للوعي: ${JSON.stringify(recentLogs || [])}
 `;
 
     const formattedMessages = [
