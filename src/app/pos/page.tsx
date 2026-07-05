@@ -178,6 +178,7 @@ export default function POSTerminal() {
     return () => window.removeEventListener('message', handleRemoteCommand);
   }, [searchResults, cart]);
 
+  // ========== تحسين البحث: ترتيب النتائج حسب الصلة ==========
   useEffect(() => {
     const fetchResults = async () => {
       if (!pharmacyId) return;
@@ -188,7 +189,32 @@ export default function POSTerminal() {
       setIsSearching(true);
       try {
         const results = await searchProducts(searchInput, pharmacyId);
-        setSearchResults(results as unknown as Product[]);
+        // ترتيب النتائج حسب مدى تطابق الاسم والباركود مع كلمة البحث
+        const sorted = results.sort((a, b) => {
+          const query = searchInput.toLowerCase();
+          const aName = a.name.toLowerCase();
+          const bName = b.name.toLowerCase();
+          const aBarcode = (a.barcode || '').toLowerCase();
+          const bBarcode = (b.barcode || '').toLowerCase();
+
+          const getScore = (product: any) => {
+            const name = product.name.toLowerCase();
+            const barcode = (product.barcode || '').toLowerCase();
+            // 1. تطابق تام
+            if (name === query || barcode === query) return 100;
+            // 2. يبدأ بالكلمة
+            if (name.startsWith(query)) return 90;
+            if (barcode.startsWith(query)) return 85;
+            // 3. يحتوي على الكلمة كاملة (مسافات)
+            if (name.includes(` ${query} `) || name.startsWith(`${query} `) || name.endsWith(` ${query}`)) return 80;
+            // 4. يحتوي على الكلمة
+            if (name.includes(query)) return 70;
+            if (barcode.includes(query)) return 60;
+            return 0;
+          };
+          return getScore(b) - getScore(a);
+        });
+        setSearchResults(sorted);
       } catch (error) {
         console.error("Search failed", error);
       } finally {
@@ -198,7 +224,8 @@ export default function POSTerminal() {
 
     const timeoutId = setTimeout(fetchResults, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchInput]);
+  }, [searchInput, pharmacyId]);
+  // ==========================================================
 
   const handleBarcodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
