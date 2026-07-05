@@ -7,6 +7,7 @@ export interface IframeAction {
   width?: number;
   height?: number;
   isMinimized?: boolean;
+  backgroundColor?: string; // ✅ إضافة خاصية الخلفية
 }
 
 interface AgentState {
@@ -33,7 +34,11 @@ const agentSlice = createSlice({
   reducers: {
     openIframe: (state, action: PayloadAction<Omit<IframeAction, 'id'> & { id?: string }>) => {
       const id = action.payload.id || `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const newIframe = { ...action.payload, id };
+      const newIframe = { 
+        ...action.payload, 
+        id,
+        backgroundColor: action.payload.backgroundColor || '#0a0a0a' // ✅ خلفية افتراضية
+      };
       state.iframes.push(newIframe);
       state.activeIframeId = id;
     },
@@ -82,4 +87,3 @@ export const {
 } = agentSlice.actions;
 
 export default agentSlice.reducer;
-

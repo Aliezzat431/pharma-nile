@@ -24,7 +24,7 @@ import {
   AlertCircle,
   FileUp,
   Code,
-  PanelLeftOpen // أيقونة التوسيع
+  PanelLeftOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -232,7 +232,8 @@ export default function Sidebar() {
                               url: item.href,
                               title: item.label,
                               width: 1000,
-                              height: 750
+                              height: 750,
+                              backgroundColor: '#0a0a0a',
                             }));
                           }}
                           className="absolute left-4 opacity-0 group-hover:opacity-100 p-2 hover:bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] rounded-xl transition-all z-10"
