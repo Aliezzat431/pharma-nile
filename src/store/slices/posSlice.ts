@@ -5,22 +5,22 @@ export interface BatchDistribution {
   batchId: string;
   quantity: number;
   expiry: string;
-  price: number;        // selling price from that batch
-  purchasePrice: number; // cost price from that batch
+  price: number;
+  purchasePrice: number;
 }
 
 export interface CartItem {
-  id: string; // Product ID or Barcode
+  id: string;
   name: string;
-  price: number;           // Display price (first batch FEFO) — kept for backward compat & unit display
-  basePrice: number;       // Original box-level price from first batch
+  price: number;
+  basePrice: number;
   quantity: number;
   unit: string;
   availableUnits: string[];
   unitConversion: number;
   customPills?: number;
-  activeBatches?: any[];                 // All active batches for this product
-  batchDistributions?: BatchDistribution[]; // Auto or user-defined distribution
+  activeBatches?: any[];
+  batchDistributions?: BatchDistribution[];
 }
 
 interface PosState {
@@ -40,17 +40,7 @@ function autoDistribute(
   unitConversion: number,
   customPills?: number,
 ): BatchDistribution[] {
-  if (!activeBatches || activeBatches.length === 0) {
-    console.log('⚠️ autoDistribute: no active batches');
-    return [];
-  }
-
-  console.log('🔍 autoDistribute - inputs:', {
-    requestedQty,
-    unit,
-    unitConversion,
-    customPills: customPills || 10,
-  });
+  if (!activeBatches || activeBatches.length === 0) return [];
 
   const distributions: BatchDistribution[] = [];
   let remaining = requestedQty;
@@ -61,15 +51,11 @@ function autoDistribute(
     if (available <= 0) continue;
 
     const take = Math.min(available, remaining);
-
     const multi = getMultiplier(
       { unit_conversion: unitConversion, unit: 'علبة' },
       unit,
       customPills || 10,
     );
-
-    console.log(`🔍 autoDistribute - batch ${batch.id}: multi = ${multi}`);
-
     const unitPrice = Number((Number(batch.sale_price) / multi).toFixed(2));
     const unitCost = Number((Number(batch.purchase_price) / multi).toFixed(2));
 
@@ -84,7 +70,6 @@ function autoDistribute(
     remaining -= take;
   }
 
-  console.log('🔍 autoDistribute - resulting distributions:', distributions);
   return distributions;
 }
 
@@ -105,7 +90,7 @@ const posSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action: PayloadAction<CartItem>) => {
-      console.log('🔍 addToCart - payload:', action.payload);
+      console.log('🔥 addToCart payload:', action.payload);
       const existingItem = state.cart.find((item) => item.id === action.payload.id);
       if (existingItem) {
         existingItem.quantity += action.payload.quantity;
@@ -128,7 +113,7 @@ const posSlice = createSlice({
         state.cart.push(newItem);
       }
       state.total = calcTotal(state.cart);
-      console.log('🔍 addToCart - total:', state.total);
+      console.log('🔥 addToCart final cart:', state.cart);
     },
     removeFromCart: (state, action: PayloadAction<string>) => {
       state.cart = state.cart.filter((item) => item.id !== action.payload);
@@ -149,20 +134,12 @@ const posSlice = createSlice({
       state.total = calcTotal(state.cart);
     },
     updateUnit: (state, action: PayloadAction<{ id: string; unit: string; customPills?: number }>) => {
+      console.log('🔥 updateUnit called with:', action.payload);
       const item = state.cart.find((item) => item.id === action.payload.id);
       if (item) {
-        console.log('🔍 updateUnit - before update:', {
-          id: item.id,
-          name: item.name,
-          unitConversion: item.unitConversion,
-          basePrice: item.basePrice,
-          currentUnit: item.unit,
-          newUnit: action.payload.unit,
-          customPills: action.payload.customPills || item.customPills || 10,
-        });
-
+        console.log('🔥 item before update:', item);
         item.unit = action.payload.unit;
-        if (action.payload.customPills) {
+        if (action.payload.customPills !== undefined) {
           item.customPills = action.payload.customPills;
         }
 
@@ -172,9 +149,9 @@ const posSlice = createSlice({
           item.customPills || 10,
         );
 
-        console.log('🔍 updateUnit - multiplier:', multi);
+        console.log('🔥 multiplier:', multi);
         item.price = Number((item.basePrice / multi).toFixed(2));
-        console.log('🔍 updateUnit - new price:', item.price);
+        console.log('🔥 new price:', item.price);
 
         item.batchDistributions = autoDistribute(
           item.activeBatches,
@@ -183,9 +160,10 @@ const posSlice = createSlice({
           item.unitConversion,
           item.customPills,
         );
+        console.log('🔥 item after update:', item);
       }
       state.total = calcTotal(state.cart);
-      console.log('🔍 updateUnit - total:', state.total);
+      console.log('🔥 new total:', state.total);
     },
     updateBatchDistribution: (state, action: PayloadAction<{ id: string; distributions: BatchDistribution[] }>) => {
       const item = state.cart.find((item) => item.id === action.payload.id);
