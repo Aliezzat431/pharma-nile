@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
 import { getMultiplier } from '@/lib/unitOptions';
 
 export interface BatchDistribution {
@@ -34,7 +33,6 @@ const initialState: PosState = {
   total: 0,
 };
 
-
 function autoDistribute(
   activeBatches: any[] | undefined,
   requestedQty: number,
@@ -42,7 +40,17 @@ function autoDistribute(
   unitConversion: number,
   customPills?: number,
 ): BatchDistribution[] {
-  if (!activeBatches || activeBatches.length === 0) return [];
+  if (!activeBatches || activeBatches.length === 0) {
+    console.log('⚠️ autoDistribute: no active batches');
+    return [];
+  }
+
+  console.log('🔍 autoDistribute - inputs:', {
+    requestedQty,
+    unit,
+    unitConversion,
+    customPills: customPills || 10,
+  });
 
   const distributions: BatchDistribution[] = [];
   let remaining = requestedQty;
@@ -59,6 +67,9 @@ function autoDistribute(
       unit,
       customPills || 10,
     );
+
+    console.log(`🔍 autoDistribute - batch ${batch.id}: multi = ${multi}`);
+
     const unitPrice = Number((Number(batch.sale_price) / multi).toFixed(2));
     const unitCost = Number((Number(batch.purchase_price) / multi).toFixed(2));
 
@@ -73,20 +84,18 @@ function autoDistribute(
     remaining -= take;
   }
 
+  console.log('🔍 autoDistribute - resulting distributions:', distributions);
   return distributions;
 }
-
 
 function calcTotal(cart: CartItem[]): number {
   return cart.reduce((sum, item) => {
     if (item.batchDistributions && item.batchDistributions.length > 0) {
-
       return sum + item.batchDistributions.reduce(
         (batchSum, d) => batchSum + d.quantity * d.price,
         0,
       );
     }
-
     return sum + item.price * item.quantity;
   }, 0);
 }
@@ -96,10 +105,10 @@ const posSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action: PayloadAction<CartItem>) => {
+      console.log('🔍 addToCart - payload:', action.payload);
       const existingItem = state.cart.find((item) => item.id === action.payload.id);
       if (existingItem) {
         existingItem.quantity += action.payload.quantity;
-
         existingItem.batchDistributions = autoDistribute(
           existingItem.activeBatches,
           existingItem.quantity,
@@ -109,7 +118,6 @@ const posSlice = createSlice({
         );
       } else {
         const newItem = { ...action.payload };
-
         newItem.batchDistributions = autoDistribute(
           newItem.activeBatches,
           newItem.quantity,
@@ -120,6 +128,7 @@ const posSlice = createSlice({
         state.cart.push(newItem);
       }
       state.total = calcTotal(state.cart);
+      console.log('🔍 addToCart - total:', state.total);
     },
     removeFromCart: (state, action: PayloadAction<string>) => {
       state.cart = state.cart.filter((item) => item.id !== action.payload);
@@ -129,7 +138,6 @@ const posSlice = createSlice({
       const item = state.cart.find((item) => item.id === action.payload.id);
       if (item) {
         item.quantity = action.payload.quantity;
-
         item.batchDistributions = autoDistribute(
           item.activeBatches,
           item.quantity,
@@ -143,13 +151,30 @@ const posSlice = createSlice({
     updateUnit: (state, action: PayloadAction<{ id: string; unit: string; customPills?: number }>) => {
       const item = state.cart.find((item) => item.id === action.payload.id);
       if (item) {
+        console.log('🔍 updateUnit - before update:', {
+          id: item.id,
+          name: item.name,
+          unitConversion: item.unitConversion,
+          basePrice: item.basePrice,
+          currentUnit: item.unit,
+          newUnit: action.payload.unit,
+          customPills: action.payload.customPills || item.customPills || 10,
+        });
+
         item.unit = action.payload.unit;
         if (action.payload.customPills) {
           item.customPills = action.payload.customPills;
         }
 
-        const multi = getMultiplier({ unit_conversion: item.unitConversion, unit: "علبة" }, item.unit, item.customPills || 10);
+        const multi = getMultiplier(
+          { unit_conversion: item.unitConversion, unit: 'علبة' },
+          item.unit,
+          item.customPills || 10,
+        );
+
+        console.log('🔍 updateUnit - multiplier:', multi);
         item.price = Number((item.basePrice / multi).toFixed(2));
+        console.log('🔍 updateUnit - new price:', item.price);
 
         item.batchDistributions = autoDistribute(
           item.activeBatches,
@@ -160,12 +185,12 @@ const posSlice = createSlice({
         );
       }
       state.total = calcTotal(state.cart);
+      console.log('🔍 updateUnit - total:', state.total);
     },
     updateBatchDistribution: (state, action: PayloadAction<{ id: string; distributions: BatchDistribution[] }>) => {
       const item = state.cart.find((item) => item.id === action.payload.id);
       if (item) {
         item.batchDistributions = action.payload.distributions;
-
         const totalDist = action.payload.distributions.reduce((sum, d) => sum + d.quantity, 0);
         if (totalDist > 0) {
           item.quantity = totalDist;
@@ -180,6 +205,13 @@ const posSlice = createSlice({
   },
 });
 
-export const { addToCart, removeFromCart, updateQuantity, updateUnit, updateBatchDistribution, clearCart } = posSlice.actions;
-export default posSlice.reducer;
+export const {
+  addToCart,
+  removeFromCart,
+  updateQuantity,
+  updateUnit,
+  updateBatchDistribution,
+  clearCart,
+} = posSlice.actions;
 
+export default posSlice.reducer;
