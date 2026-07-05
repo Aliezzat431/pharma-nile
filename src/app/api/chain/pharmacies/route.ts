@@ -10,14 +10,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'اسم الفرع مطلوب' }, { status: 400 });
     }
 
-    // Use service role so we can look up the user profile server-side
     const adminSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Get the calling user's JWT
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 });
@@ -28,7 +26,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'جلسة غير صالحة' }, { status: 401 });
     }
 
-    // Confirm user is admin
     const { data: profile, error: profileError } = await adminSupabase
       .from('user_profiles')
       .select('role, chain_id')
@@ -45,7 +42,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'حساب المدير غير مرتبط بسلسلة' }, { status: 403 });
     }
 
-    // Check name uniqueness within the chain
     const { data: existing } = await adminSupabase
       .from('pharmacies')
       .select('id')
@@ -57,7 +53,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'يوجد فرع بهذا الاسم بالفعل في سلسلتك' }, { status: 409 });
     }
 
-    // Insert the new branch
     const { data: pharmacy, error: insertError } = await adminSupabase
       .from('pharmacies')
       .insert({
@@ -75,12 +70,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
-    // Grant the admin access to the new branch too
+    // ✅ التعديل هنا - استخدام upsert بدلاً من onConflict
     await adminSupabase
       .from('user_pharmacy_access')
-      .insert({ user_id: user.id, pharmacy_id: pharmacy.id, role: 'admin', is_primary: false })
-      .onConflict('user_id, pharmacy_id')
-      .ignore();
+      .upsert(
+        { 
+          user_id: user.id, 
+          pharmacy_id: pharmacy.id, 
+          role: 'admin', 
+          is_primary: false 
+        },
+        { onConflict: 'user_id, pharmacy_id' }
+      );
 
     return NextResponse.json({ success: true, pharmacy });
   } catch (err: any) {
