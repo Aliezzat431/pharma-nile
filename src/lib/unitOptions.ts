@@ -1,3 +1,7 @@
+// ============================================================
+// src/lib/unitOptions.tsx
+// ============================================================
+
 export const treatmentTypes = [
   { id: "syrup_antibiotic",  name: "مضاد حيوي شرب",    baseUnit: "علبة", hasConversion: false },
   { id: "pill_antibiotic",   name: "مضاد حيوي برشام",  baseUnit: "علبة", units: ["علبة", "شريط", "قرص"], hasConversion: true },
@@ -56,3 +60,39 @@ export const getTypeDisplayName = (typeId: string): string => {
   
   return typeMap[typeId] || typeId;
 };
+
+// ✅ دالة getMultiplier - لحساب مضاعف الوحدة
+export const getMultiplier = (prod: any, selectedUnit: string, customPills = 10): number => {
+  const conv = Number(prod.unit_conversion || prod.unitConversion || 1);
+  const baseUnit = prod.unit || "علبة";
+  
+  if (!selectedUnit || selectedUnit === baseUnit) return 1; // 1 Box
+  
+  if (selectedUnit === "شريط") return conv; // Number of strips
+
+  if (selectedUnit === "قرص" || selectedUnit === "كبسولة" || selectedUnit === "قطعة" || selectedUnit === "لبوسة") {
+    return conv * customPills; // Number of strips * pills per strip
+  }
+
+  return conv;
+};
+
+// ✅ typesWithUnits - للتوافق مع الكود القديم
+export const typesWithUnits: Record<string, string[]> = {};
+
+// بناء typesWithUnits من treatmentTypes
+treatmentTypes.forEach((type) => {
+  const units = (type.hasConversion && type.units)
+    ? type.units
+    : [type.baseUnit];
+  
+  // تسجيل بالاسم العربي و ID
+  typesWithUnits[type.name] = units;
+  typesWithUnits[type.id] = units;
+});
+
+// Aliases and fallbacks for imported types from files
+typesWithUnits['tablet'] = ["علبة", "شريط", "قرص"];
+typesWithUnits['drops'] = ["علبة"];
+typesWithUnits['suppository'] = ["علبة", "شريط", "لبوسة"];
+typesWithUnits['injection'] = ["علبة", "أمبول"];
