@@ -23,6 +23,7 @@ import {
   HeartHandshake,
   AlertCircle,
   FileUp,
+  Code,
   PanelLeftOpen // أيقونة التوسيع
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,7 +35,19 @@ import { openIframe } from '@/store/slices/agentSlice';
 import ThemeToggle from './ThemeToggle';
 import { usePreferences } from '@/hooks/usePreferences';
 
-const menuGroups = [
+interface MenuItem {
+  icon: any;
+  label: string;
+  href: string;
+  roleRequired?: string;
+}
+
+interface MenuGroup {
+  title: string;
+  items: MenuItem[];
+}
+
+const menuGroups: MenuGroup[] = [
   {
     title: 'العمليات اليومية',
     items: [
@@ -68,6 +81,7 @@ const menuGroups = [
     items: [
       { icon: Users, label: 'الموظفين', href: '/staff' },
       { icon: Settings, label: 'الإعدادات', href: '/settings' },
+      { icon: Code, label: 'لوحة المطور', href: '/dev', roleRequired: 'developer' },
     ]
   }
 ];
@@ -171,7 +185,7 @@ export default function Sidebar() {
                 </h3>
               )}
               <div className="space-y-1">
-                {group.items.map((item) => {
+                {group.items.filter(item => !item.roleRequired || user?.user_metadata?.role === item.roleRequired).map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <div key={item.href} className="group relative flex items-center">

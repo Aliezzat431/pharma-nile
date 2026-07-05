@@ -1,6 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+type Tab = 'general' | 'notifications' | 'appearance' | 'shortcuts' | 'database' | 'about' | 'chain';
+
+
+import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { 
   Settings as SettingsIcon, 
@@ -29,11 +32,12 @@ import { AppearanceSettings } from './components/AppearanceSettings';
 import { ShortcutSettings } from './components/ShortcutSettings';
 import { DatabaseSettings } from './components/DatabaseSettings';
 import { AboutSettings } from './components/AboutSettings';
+import { ChainSettings } from './components/ChainSettings';
+import { useAuth } from '@/hooks/useAuth';
 import { usePreferences } from '@/hooks/usePreferences';
 import { Star } from 'lucide-react';
 import { Sunset } from 'lucide-react';
 
-type Tab = 'general' | 'notifications' | 'appearance' | 'shortcuts' | 'database' | 'about';
 
 const ALL_THEMES = [
   // ── الأساسية ──────────────────────────────
@@ -132,22 +136,33 @@ const ALL_THEMES = [
 ];
 
 export default function Settings() {
+  const { user } = useAuth();
+  const userRole = user?.user_metadata?.role;
+
   const { preferences, updateMultiplePreferences, isLoaded, refresh } = usePreferences();
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
+  useEffect(() => {
+    if (userRole === 'chain_admin') {
+      setActiveTab('chain');
+    }
+  }, [userRole]);
+
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme);
   };
 
-  const tabs = [
-    { id: 'general', label: 'الإعدادات العامة', icon: Shield },
-    { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
-    { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
-    { id: 'database', label: 'إدارة البيانات والتنظيف', icon: Zap },
-    { id: 'about', label: 'عن المطورين', icon: Users },
-  ] as const;
+  const tabs: { id: Tab; label: string; icon: any }[] = userRole === 'chain_admin' 
+    ? [ { id: 'chain', label: 'إدارة السلسلة والفروع', icon: Shield } ]
+    : [
+        { id: 'general', label: 'الإعدادات العامة', icon: Shield },
+        { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
+        { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
+        { id: 'database', label: 'إدارة البيانات والتنظيف', icon: Zap },
+        { id: 'about', label: 'عن المطورين', icon: Users },
+      ];
 
   return (
     <div className="px-4 md:px-8 w-full max-w-6xl mx-auto space-y-8 pb-12">
@@ -178,37 +193,39 @@ export default function Settings() {
           </motion.p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={async () => {
-              const btn = document.getElementById('save-settings-btn');
-              if (btn) {
-                btn.innerHTML = '<svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري الحفظ...';
+        {userRole !== 'chain_admin' && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={async () => {
+                const btn = document.getElementById('save-settings-btn');
+                if (btn) {
+                  btn.innerHTML = '<svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري الحفظ...';
 
-                try {
-                  await refresh();
+                  try {
+                    await refresh();
 
-                  btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> تم الحفظ والتحقق';
-                  btn.classList.remove('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
-                  btn.classList.add('bg-green-500/20', 'text-green-400', 'border-green-500/30');
+                    btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> تم الحفظ والتحقق';
+                    btn.classList.remove('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
+                    btn.classList.add('bg-green-500/20', 'text-green-400', 'border-green-500/30');
 
-                  setTimeout(() => {
-                    btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> حفظ كافة التغييرات';
-                    btn.classList.remove('bg-green-500/20', 'text-green-400', 'border-green-500/30');
-                    btn.classList.add('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
-                  }, 2000);
-                } catch (err) {
-                  btn.innerHTML = 'خطأ في الحفظ';
+                    setTimeout(() => {
+                      btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> حفظ كافة التغييرات';
+                      btn.classList.remove('bg-green-500/20', 'text-green-400', 'border-green-500/30');
+                      btn.classList.add('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
+                    }, 2000);
+                  } catch (err) {
+                    btn.innerHTML = 'خطأ في الحفظ';
+                  }
                 }
-              }
-            }}
-            id="save-settings-btn"
-            className="flex items-center gap-2 bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/30 hover:bg-[var(--nile-teal)]/30 px-6 py-3 rounded-xl text-[color:var(--nile-teal)] font-cairo font-bold transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_var(--nile-teal-glow)] hover:shadow-[0_0_30px_var(--nile-teal-glow)] group"
-          >
-            <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            حفظ كافة التغييرات
-          </button>
-        </div>
+              }}
+              id="save-settings-btn"
+              className="flex items-center gap-2 bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/30 hover:bg-[var(--nile-teal)]/30 px-6 py-3 rounded-xl text-[color:var(--nile-teal)] font-cairo font-bold transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_var(--nile-teal-glow)] hover:shadow-[0_0_30px_var(--nile-teal-glow)] group"
+            >
+              <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              حفظ كافة التغييرات
+            </button>
+          </div>
+        )}
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
@@ -252,9 +269,11 @@ export default function Settings() {
             {activeTab === 'shortcuts' && <ShortcutSettings key="shortcuts" />}
             {activeTab === 'database' && <DatabaseSettings key="database" />}
             {activeTab === 'about' && <AboutSettings key="about" />}
+            {activeTab === 'chain' && <ChainSettings key="chain" />}
           </AnimatePresence>
         </div>
       </div>
+
 
       {/* Theme Selection Modal */}
       <AnimatePresence>

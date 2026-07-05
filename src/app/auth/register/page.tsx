@@ -64,9 +64,17 @@ export default function RegisterPage() {
     loadPharmacies();
   }, []);
 
+  const BLOCKED_EMAILS = ['developer@pharma-nile.com'];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Block developer account from being re-registered via the normal form
+    if (BLOCKED_EMAILS.includes(email.trim().toLowerCase())) {
+      setError("❌ هذا البريد الإلكتروني محجوز ولا يمكن استخدامه للتسجيل.");
+      return;
+    }
 
     if (!name.trim() || name.trim().length < 3) {
       setError("❌ يرجى إدخال اسم كامل صحيح (لا يقل عن 3 أحرف).");

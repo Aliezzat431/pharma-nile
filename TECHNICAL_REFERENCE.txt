@@ -1,0 +1,486 @@
+PHARMANILE — TECHNICAL REFERENCE DOCUMENT
+==========================================
+Version: 2.0 (Multi-Chain Architecture)
+Last Updated: July 2026
+Environment: Next.js 15 / Supabase / TypeScript
+
+
+================================================================================
+SECTION 1: SYSTEM REQUIREMENTS & DEPENDENCIES
+================================================================================
+
+Runtime:
+  - Node.js >= 18.x
+  - npm >= 9.x
+
+Core Dependencies:
+  - next@15.x                   (App Router, Server Components)
+  - react@19.x
+  - @supabase/supabase-js@2.x   (Database + Auth client)
+  - @supabase/ssr@0.x           (Server-side auth helpers)
+  - framer-motion@12.x          (Page and component animations)
+  - lucide-react@0.x            (Icon library)
+  - redux toolkit + react-redux  (Global state management)
+  - next-themes                  (Theme switching)
+
+Dev Dependencies:
+  - typescript@5.x
+  - eslint + next/core-web-vitals config
+  - @types/node, @types/react
+
+
+================================================================================
+SECTION 2: SUPABASE DATABASE — COMPLETE TABLE LIST
+================================================================================
+
+TABLE: chains
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid()
+  name         text UNIQUE NOT NULL
+  password     text
+  created_at   timestamptz DEFAULT now()
+  PURPOSE: Top-level tenant entity. One chain = one pharmacy group/franchise.
+
+TABLE: pharmacies
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid()
+  chain_id     uuid REFERENCES chains(id)
+  name         text NOT NULL
+  address      text
+  phone        text
+  is_active    boolean DEFAULT true
+  created_at   timestamptz DEFAULT now()
+  PURPOSE: Individual pharmacy branches.
+
+TABLE: user_profiles
+  id           uuid PRIMARY KEY REFERENCES auth.users(id)
+  pharmacy_id  uuid REFERENCES pharmacies(id)     [NULL for chain_admin]
+  chain_id     uuid REFERENCES chains(id)
+  full_name    text
+  role         text  (chain_admin | admin | manager | staff)
+  created_at   timestamptz DEFAULT now()
+  PURPOSE: Extended user info beyond auth.users.
+
+TABLE: user_pharmacy_access
+  user_id      uuid REFERENCES auth.users(id)
+  pharmacy_id  uuid REFERENCES pharmacies(id)
+  role         text
+  is_primary   boolean DEFAULT false
+  PRIMARY KEY (user_id, pharmacy_id)
+  PURPOSE: Supports users with access to multiple pharmacies.
+
+TABLE: products
+  id             uuid PRIMARY KEY
+  pharmacy_id    uuid REFERENCES pharmacies(id)
+  name           text NOT NULL
+  barcode        text
+  category       text
+  description    text
+  price          numeric(12,2)
+  cost_price     numeric(12,2)
+  quantity       integer DEFAULT 0
+  reorder_level  integer DEFAULT 5
+  expiry_date    date
+  manufacturer   text
+  unit           text
+  created_at     timestamptz
+  updated_at     timestamptz
+
+TABLE: orders
+  id             uuid PRIMARY KEY
+  pharmacy_id    uuid REFERENCES pharmacies(id)
+  customer_id    uuid REFERENCES customers(id)
+  user_id        uuid REFERENCES auth.users(id)
+  total_amount   numeric(12,2)
+  paid_amount    numeric(12,2)
+  discount       numeric(12,2) DEFAULT 0
+  payment_method text
+  status         text (completed | pending | cancelled)
+  notes          text
+  created_at     timestamptz
+
+TABLE: order_items
+  id          uuid PRIMARY KEY
+  order_id    uuid REFERENCES orders(id)
+  product_id  uuid REFERENCES products(id)
+  quantity    integer
+  unit_price  numeric(12,2)
+  total_price numeric(12,2)
+
+TABLE: customers
+  id           uuid PRIMARY KEY
+  pharmacy_id  uuid REFERENCES pharmacies(id)
+  name         text
+  phone        text
+  address      text
+  total_debt   numeric(12,2) DEFAULT 0
+  notes        text
+  created_at   timestamptz
+
+TABLE: invoices
+  id              uuid PRIMARY KEY
+  pharmacy_id     uuid REFERENCES pharmacies(id)
+  supplier_name   text
+  invoice_number  text
+  total_amount    numeric(12,2)
+  paid_amount     numeric(12,2)
+  due_date        date
+  status          text
+  notes           text
+  created_at      timestamptz
+
+TABLE: invoice_items
+  id          uuid PRIMARY KEY
+  invoice_id  uuid REFERENCES invoices(id)
+  product_id  uuid REFERENCES products(id)
+  quantity    integer
+  unit_cost   numeric(12,2)
+
+TABLE: returns
+  id           uuid PRIMARY KEY
+  pharmacy_id  uuid REFERENCES pharmacies(id)
+  order_id     uuid REFERENCES orders(id)
+  product_id   uuid REFERENCES products(id)
+  quantity     integer
+  reason       text
+  status       text
+  created_at   timestamptz
+
+TABLE: stock_transfers
+  id               uuid PRIMARY KEY
+  from_pharmacy_id uuid REFERENCES pharmacies(id)
+  to_pharmacy_id   uuid REFERENCES pharmacies(id)
+  product_id       uuid REFERENCES products(id)
+  quantity         integer
+  status           text (pending | approved | completed | rejected)
+  notes            text
+  created_at       timestamptz
+  updated_at       timestamptz
+
+TABLE: financials
+  id           uuid PRIMARY KEY
+  pharmacy_id  uuid REFERENCES pharmacies(id)
+  type         text (income | expense)
+  category     text
+  amount       numeric(12,2)
+  description  text
+  date         date
+  created_at   timestamptz
+
+TABLE: companies
+  id           uuid PRIMARY KEY
+  pharmacy_id  uuid REFERENCES pharmacies(id)
+  name         text
+  contact      text
+  phone        text
+  email        text
+  address      text
+  notes        text
+
+TABLE: staff_members
+  id           uuid PRIMARY KEY
+  pharmacy_id  uuid REFERENCES pharmacies(id)
+  user_id      uuid REFERENCES auth.users(id)
+  full_name    text
+  role         text
+  salary       numeric(12,2)
+  incentives   numeric(12,2)
+  created_at   timestamptz
+
+TABLE: shortages
+  id           uuid PRIMARY KEY
+  pharmacy_id  uuid REFERENCES pharmacies(id)
+  product_name text
+  quantity     integer
+  notes        text
+  status       text
+  created_at   timestamptz
+
+TABLE: sadqah
+  id           uuid PRIMARY KEY
+  pharmacy_id  uuid REFERENCES pharmacies(id)
+  product_id   uuid REFERENCES products(id)
+  quantity     integer
+  recipient    text
+  notes        text
+  date         date
+
+TABLE: monthly_sales_summary
+  id            uuid PRIMARY KEY
+  pharmacy_id   uuid REFERENCES pharmacies(id)
+  year          integer
+  month         integer
+  total_sales   numeric
+  total_orders  integer
+  total_returns numeric
+  net_revenue   numeric
+  updated_at    timestamptz
+
+TABLE: agent_logs
+  id           uuid PRIMARY KEY
+  pharmacy_id  uuid REFERENCES pharmacies(id)
+  user_id      uuid
+  action       text
+  input        text
+  output       text
+  status       text
+  created_at   timestamptz
+
+TABLE: preferences
+  id             uuid PRIMARY KEY
+  user_id        uuid REFERENCES auth.users(id) UNIQUE
+  pharmacy_id    uuid
+  settings       jsonb
+  updated_at     timestamptz
+
+
+================================================================================
+SECTION 3: ROW LEVEL SECURITY (RLS) POLICY MATRIX
+================================================================================
+
+Policy enforcement is done via these DB helper functions:
+  - get_my_pharmacy_id()  → SELECT pharmacy_id FROM user_profiles WHERE id = auth.uid()
+  - get_my_chain_id()     → SELECT chain_id FROM user_profiles WHERE id = auth.uid()
+
+Table            | SELECT | INSERT | UPDATE | DELETE | Notes
+-----------------+--------+--------+--------+--------+---------------------------
+chains           | ✓      | ✗      | chain_admin only | ✗ | chain_admin sees own
+pharmacies       | chain  | chain_admin | chain_admin | ✗ | chain-scoped
+user_profiles    | self + manager | trigger | self | ✗ |
+products         | pharm  | pharm  | pharm  | admin  | pharmacy-scoped
+orders           | pharm  | pharm  | pharm  | admin  |
+customers        | pharm  | pharm  | pharm  | admin  |
+invoices         | pharm  | pharm  | pharm  | admin  |
+stock_transfers  | chain  | chain  | admin  | ✗      | cross-pharmacy in chain
+financials       | pharm  | pharm  | pharm  | admin  |
+staff_members    | pharm  | admin  | admin  | admin  |
+
+
+================================================================================
+SECTION 4: AUTH JWT TOKEN STRUCTURE
+================================================================================
+
+After successful login, Supabase JWT contains:
+
+{
+  "sub": "<user-uuid>",
+  "email": "user@example.com",
+  "user_metadata": {
+    "pharmacy_id": "<pharmacy-uuid>",   // null for chain_admin
+    "chain_id": "<chain-uuid>",
+    "role": "admin | manager | staff | chain_admin",
+    "full_name": "نور محمد"
+  },
+  "exp": 1234567890,
+  "aud": "authenticated"
+}
+
+NOTE: JWT metadata is set during registration via raw_user_meta_data.
+      The trigger handle_new_user_registration() reads these values.
+      Changes to role require re-login or session refresh.
+
+
+================================================================================
+SECTION 5: API ROUTE DETAILS
+================================================================================
+
+POST /api/auth/register
+  Body: { email, password, full_name, pharmacy_id, chain_id, role }
+  Action: Creates Supabase auth user with metadata
+  Returns: { success, user_id }
+  Auth: Service role (bypasses RLS)
+
+POST /api/staff/create
+  Body: { email, password, full_name, role, pharmacy_id }
+  Auth: Requires admin JWT
+  Action: Creates staff user scoped to same pharmacy
+  File: src/app/api/staff/create/route.ts
+
+GET /api/db-backup/export
+  Auth: Admin JWT
+  Action: Exports all pharmacy data as JSON blob
+  Returns: JSON with all tables for current pharmacy
+
+POST /api/db-cleanup
+  Auth: Admin JWT
+  Action: Removes orphaned records, expired sessions
+  Note: Does NOT delete user pharmacy data
+
+GET /api/db-usage
+  Auth: Admin JWT
+  Returns: { table_stats, total_rows, db_size_mb }
+
+POST /api/ai-autofill
+  Body: { barcode?, product_name? }
+  Action: Uses Gemini to fill product details automatically
+  Returns: { name, category, description, price_estimate }
+
+POST /api/analyze-product
+  Body: { image_base64 }
+  Action: Gemini Vision analyzes product image
+  Returns: { name, barcode, category, details }
+
+POST /api/invoice-scan
+  Body: { image_base64 }
+  Action: OCR + Gemini extracts invoice line items
+  Returns: { supplier, items: [{name, qty, price}] }
+
+POST /api/prescription-scan
+  Body: { image_base64 }
+  Action: Reads Arabic/English prescription
+  Returns: { medications: [{name, dose, frequency}] }
+
+POST /api/copilot
+  Body: { message, context }
+  Action: AI assistant for pharmacy questions
+  Returns: { response, suggested_actions }
+
+POST /api/agent/execute
+  Body: { command, parameters }
+  Action: Executes structured AI agent operations
+  Examples: search_product, create_order, check_inventory
+
+
+================================================================================
+SECTION 6: OFFLINE MODE INTERNALS
+================================================================================
+
+Queue Storage: localStorage key = "offline_returns_queue"
+
+Queue Item Structure:
+  {
+    id: string (timestamp),
+    type: "return" | "order",
+    data: { ... },
+    createdAt: ISO timestamp,
+    retryCount: number
+  }
+
+Sync Trigger:
+  - Browser 'online' event fires in LayoutWrapper.tsx
+  - Calls syncOfflineReturns(processReturn) from lib/supabase/offline-orders.ts
+  - Also calls /api/__trigger_sync for service worker sync
+  - Returns count of synced items
+  - Shows toast notification with sync count
+
+Maximum Retry: 3 attempts per item before marking as failed
+
+
+================================================================================
+SECTION 7: THEME SYSTEM
+================================================================================
+
+Themes are CSS variable sets in globals.css.
+next-themes manages the data-theme attribute on <html>.
+
+Available themes and their primary color:
+  dark         #050505 background  / #00CED1 accent
+  light        #f8fafc background  / #00CED1 accent
+  midnight     #020612 background  / #3b82f6 accent
+  forest       #040d0a background  / #22c55e accent
+  coffee       #140d0b background  / #d97706 accent
+  dracula      #1e1f29 background  / #bd93f9 accent
+  ocean        #010b14 background  / #06b6d4 accent
+  amethyst     #0d0b1a background  / #a855f7 accent
+  sunset       #140806 background  / #f97316 accent
+  cyberpunk    #000000 background  / #facc15 accent
+  snowy        #f8fafc background  / #0ea5e9 accent
+
+User preference is saved via usePreferences hook to Supabase.
+
+
+================================================================================
+SECTION 8: KEYBOARD SHORTCUTS
+================================================================================
+
+Global:
+  Ctrl+K          Open command palette (search everything)
+  Alt+Shift+D     Go to Dashboard
+  Alt+Shift+P     Go to POS
+  Alt+Shift+I     Go to Inventory
+  Alt+Shift+S     Go to Shortages
+  Alt+Shift+C     Go to Customers
+  Alt+Shift+G     Go to Settings
+
+POS Specific:
+  Enter           Confirm cart item quantity
+  Escape          Clear search / cancel
+  F2              Focus barcode scanner input
+
+
+================================================================================
+SECTION 9: KNOWN ISSUES & GOTCHAS
+================================================================================
+
+1. RLS on user_profiles:
+   - anon role needs SELECT on pharmacies + SELECT on chains for login flow
+   - Must GRANT SELECT ON public.pharmacies TO anon; in DB
+
+2. chain_admin has no pharmacy_id:
+   - LayoutWrapper must NOT block access for chain_admin
+   - Check userRole !== 'chain_admin' before blocking
+
+3. JWT metadata vs user_profiles:
+   - Always trust user_profiles in DB (via get_my_pharmacy_id())
+   - Never trust client-supplied headers for pharmacy context
+   - JWT metadata can be stale before session refresh
+
+4. .single() vs .maybeSingle():
+   - Use .maybeSingle() for any query that might return 0 rows
+   - .single() throws PGRST116 error if no row found
+
+5. Stock transfers RLS:
+   - Requires both pharmacies to share same chain_id
+   - from_pharmacy_id and to_pharmacy_id must be in user's chain
+
+6. Offline queue race condition:
+   - If user goes offline during sync, items may be partially uploaded
+   - Queue checks for duplicates using timestamp-based IDs
+
+7. Pagination:
+   - All list views use usePagination(20) — 20 items per page by default
+   - Supabase .range(from, to) is 0-indexed
+
+8. Build warning: next-themes hydration:
+   - suppressHydrationWarning must be on <html> element
+   - This is expected behavior, not a bug
+
+
+================================================================================
+SECTION 10: DEVELOPMENT WORKFLOW
+================================================================================
+
+Starting development:
+  npm run dev                    # Start dev server at :3000
+  
+Type checking:
+  npx tsc --noEmit               # Check types without building
+  
+Linting:
+  npm run lint                   # ESLint check
+  
+Building:
+  npm run build                  # Production build
+
+Database changes:
+  1. Write SQL in database/ folder
+  2. Run in Supabase SQL Editor
+  3. Update TypeScript types if table structure changed
+  4. Test with both anon and authenticated clients
+
+Adding a new page:
+  1. Create src/app/[route]/page.tsx
+  2. Add 'use client' if using hooks/state
+  3. Add route to Sidebar.tsx nav items
+  4. Add keyboard shortcut in LayoutWrapper.tsx if needed
+  5. Apply standard layout: header with motion.h1, glass-panel cards
+
+Adding a new API route:
+  1. Create src/app/api/[route]/route.ts
+  2. Always use createServerClient() (not browser client)
+  3. Verify auth via supabase.auth.getUser()
+  4. Use service role only when bypassing RLS intentionally
+  5. Return consistent { data, error } shapes
+
+
+================================================================================
+END OF TECHNICAL REFERENCE
+================================================================================

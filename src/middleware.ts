@@ -72,9 +72,24 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
   }
 
-  if (user && request.nextUrl.pathname === '/auth/login') {
+  if (request.nextUrl.pathname.startsWith('/dev')) {
+    const userRole = user?.user_metadata?.role;
+    if (userRole !== 'developer') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/';
+      const redirect = NextResponse.redirect(url);
+      // Prevent the browser from caching any dev page
+      redirect.headers.set('Cache-Control', 'no-store');
+      return redirect;
+    }
+    // Role is verified — still add no-cache so stale sessions can't linger
+    response.headers.set('Cache-Control', 'no-store');
+  }
+
+  if (user && (request.nextUrl.pathname === '/auth/login' || request.nextUrl.pathname === '/auth/register')) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    const userRole = user?.user_metadata?.role;
+    url.pathname = userRole === 'developer' ? '/dev' : '/';
     return NextResponse.redirect(url);
   }
 

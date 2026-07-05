@@ -130,7 +130,24 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   console.log(user);
-  if (!pharmacyId) {
+  const userRole = user?.user_metadata?.role;
+  if (pathname === '/dev' && userRole !== 'developer') {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4 font-cairo" dir="rtl">
+        <AlertCircle className="w-16 h-16 text-[#FF6b6b]" />
+        <h2 className="text-2xl font-bold text-white">غير مصرح بالدخول</h2>
+        <p className="text-gray-400 max-w-md">هذه الصفحة مخصصة لمطور النظام فقط.</p>
+        <button 
+          onClick={() => router.push('/')}
+          className="mt-4 px-6 py-2.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)] hover:text-black font-bold text-[var(--nile-teal)] transition-all rounded-xl"
+        >
+          العودة للوحة التحكم
+        </button>
+      </div>
+    );
+  }
+
+  if (!pharmacyId && userRole !== 'chain_admin' && userRole !== 'developer') {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4">
         <AlertCircle className="w-16 h-16 text-[#FF6b6b]" />
