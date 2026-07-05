@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Search, Barcode, Trash2, CreditCard, ChevronRight, Loader2, AlertCircle, ShoppingCart, X, UserPlus, Save, Bot, FileText, Upload, Pill, CheckCircle2, ClipboardList } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Search, Barcode, Trash2, CreditCard, ChevronRight, Loader2, AlertCircle, ShoppingCart, X, UserPlus, Save, Bot, FileText, Upload, Pill, CheckCircle2, ClipboardList, Filter, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addToCart, removeFromCart, clearCart, updateUnit, updateQuantity, updateBatchDistribution } from '@/store/slices/posSlice';
@@ -9,7 +9,8 @@ import { Package } from 'lucide-react';
 import { searchProducts, getProductByBarcode, syncProductCatalogToCache, Product } from '@/lib/api/products';
 import { processCheckout } from '@/lib/api/orders';
 import { typesWithUnits } from '@/lib/unitOptions';
-import { analyzeProduct } from '@/lib/api/ai'; // Import the new AI helper
+import { analyzeProduct } from '@/lib/api/ai';
+import { treatmentTypes } from '@/lib/unitOptions';
 
 import { undoManager } from '@/lib/undo-manager';
 import dynamic from 'next/dynamic';
@@ -32,13 +33,18 @@ import { showToast } from '@/components/ui/SyncToastProvider';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
 
+// Helper function to get display name for type
+const getTypeDisplayName = (typeId: string) => {
+  const found = treatmentTypes.find(t => t.id === typeId);
+  return found ? found.name : typeId;
+};
+
 export default function POSTerminal() {
   const { user } = useAuth();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
 
   const dispatch = useAppDispatch();
   const { cart, total } = useAppSelector((state) => state.pos);
-
 
   const [searchInput, setSearchInput] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -49,6 +55,10 @@ export default function POSTerminal() {
   const [isOnline, setIsOnline] = useState(true);
   const [batchModal, setBatchModal] = useState<{ isOpen: boolean; item: any | null }>({ isOpen: false, item: null });
   const [batchDistributions, setBatchDistributions] = useState<any[]>([]);
+
+  // ✅ فلتر الأنواع
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [showTypeFilter, setShowTypeFilter] = useState(false);
 
   const [agentWindows, setAgentWindows] = useState<{ id: string; url: string; title: string; x?: number; y?: number }[]>([]);
   const [activeReceipt, setActiveReceipt] = useState<{
@@ -80,8 +90,23 @@ export default function POSTerminal() {
   const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(new Set());
   const [showRecommendations, setShowRecommendations] = useState(false);
 
+  // ✅ الحصول على الأنواع الفعلية الموجودة في المنتجات التي تظهر في البحث
+  const availableTypes = useMemo(() => {
+    const types = new Set<string>();
+    searchResults.forEach(product => {
+      if (product.type) types.add(product.type);
+    });
+    return Array.from(types).sort();
+  }, [searchResults]);
+
+  // ✅ فلتر المنتجات حسب النوع المختار
+  const filteredResults = useMemo(() => {
+    if (!selectedType) return searchResults;
+    return searchResults.filter(product => product.type === selectedType);
+  }, [searchResults, selectedType]);
+
   const toggleProductBatches = (e: React.MouseEvent, productId: string) => {
-    e.stopPropagation(); // prevent adding to cart
+    e.stopPropagation();
     setExpandedProductIds(prev => {
       const next = new Set(prev);
       if (next.has(productId)) next.delete(productId);
@@ -112,7 +137,7 @@ export default function POSTerminal() {
   const handleAddAiSuggestion = (choice: any, price: number) => {
     const units = typesWithUnits[choice.type] || ['علبة'];
     dispatch(addToCart({
-      id: `ai-${Date.now()}-${Math.random()}`, // Temporary ID for cart
+      id: `ai-${Date.now()}-${Math.random()}`,
       name: choice.name,
       basePrice: price,
       price: price,
@@ -128,9 +153,7 @@ export default function POSTerminal() {
 
   useEffect(() => {
     const handleRemoteCommand = (event: MessageEvent) => {
-
       if (event.origin !== window.location.origin) return;
-
       const { command, data } = event.data;
       if (command === 'ADD_TO_CART') {
         const product = searchResults.find(p =>
@@ -142,14 +165,13 @@ export default function POSTerminal() {
           console.log(`AI Agent added ${product.name} to cart`);
         }
       } else if (command === 'OPEN_WINDOW') {
-
         setAgentWindows(prev => [
           ...prev,
           {
             id: data.id || Math.random().toString(36).substr(2, 9),
             url: data.url,
             title: data.title || 'Agent Vision',
-            x: Math.random() * 100, // slight offset
+            x: Math.random() * 100,
             y: Math.random() * 100
           }
         ]);
@@ -194,7 +216,6 @@ export default function POSTerminal() {
 
     if (product) {
       const units = typesWithUnits[product.type] || ['علبة'];
-
       dispatch(addToCart({
         id: product.id,
         name: product.name,
@@ -221,7 +242,6 @@ export default function POSTerminal() {
       addProductToCart(product);
       setSearchInput('');
     } else {
-
       setSearchInput(barcode);
     }
   };
@@ -236,13 +256,11 @@ export default function POSTerminal() {
     let lastKeyTime = Date.now();
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
       const currentTime = Date.now();
-
       if (currentTime - lastKeyTime > 50) {
         barcodeBuffer = '';
       }
@@ -263,7 +281,6 @@ export default function POSTerminal() {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
-  // Listen to network status change events and trigger catalog backup sync
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsOnline(window.navigator.onLine);
@@ -272,8 +289,6 @@ export default function POSTerminal() {
         setIsOnline(true);
         if (pharmacyId) {
           syncProductCatalogToCache(pharmacyId);
-          
-          // Re-sync transactions recorded offline
           try {
             const syncedCount = await syncOfflineTransactions(processCheckout);
             if (syncedCount > 0) {
@@ -296,11 +311,8 @@ export default function POSTerminal() {
       window.addEventListener('online', handleOnline);
       window.addEventListener('offline', handleOffline);
 
-      // Perform initial sync if online
       if (window.navigator.onLine && pharmacyId) {
         syncProductCatalogToCache(pharmacyId);
-        
-        // Check for prior unsynced transactions on page load
         syncOfflineTransactions(processCheckout).then(syncedCount => {
           if (syncedCount > 0) {
             showToast({
@@ -330,7 +342,6 @@ export default function POSTerminal() {
     }
 
     const units = typesWithUnits[product.type] || ['علبة'];
-
     dispatch(addToCart({
       id: product.id,
       name: product.name,
@@ -393,7 +404,6 @@ export default function POSTerminal() {
   };
 
   const executeCheckoutProcess = async (cartToProcess: any[], totalToProcess: number) => {
-
     if (totalToProcess < 0) {
       showToast({ variant: 'error', message: "خطأ: الإجمالي لا يمكن أن يكون قيمة سالبة." });
       return;
@@ -592,51 +602,125 @@ export default function POSTerminal() {
       <div className="flex-1 min-h-[50vh] lg:min-h-0 flex flex-col gap-6">
         <POSHeader isOnline={isOnline} />
 
-        {/* شريط البحث */}
-        <form onSubmit={handleBarcodeSubmit} className="glass-panel p-2 flex items-center gap-3 relative">
-          <div className="pl-3 text-gray-400">
-            {isSearching ? <Loader2 className="w-5 h-5 animate-spin text-[#00CED1]" /> : <Search className="w-5 h-5" />}
-          </div>
-          <input
-            type="text"
-            placeholder="ابحث عن منتج أو امسح الباركود..."
-            className="flex-1 bg-transparent border-none outline-none text-lg text-white placeholder-gray-500 py-3 font-cairo"
-            value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-              setShowRecommendations(true);
-            }}
-            onFocus={() => setShowRecommendations(true)}
-            onBlur={() => setTimeout(() => setShowRecommendations(false), 200)}
-            autoComplete="off"
-            autoFocus
-          />
+        {/* شريط البحث + فلتر الأنواع */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <form onSubmit={handleBarcodeSubmit} className="flex-1 glass-panel p-2 flex items-center gap-3 relative">
+            <div className="pl-3 text-gray-400">
+              {isSearching ? <Loader2 className="w-5 h-5 animate-spin text-[#00CED1]" /> : <Search className="w-5 h-5" />}
+            </div>
+            <input
+              type="text"
+              placeholder="ابحث عن منتج أو امسح الباركود..."
+              className="flex-1 bg-transparent border-none outline-none text-lg text-white placeholder-gray-500 py-3 font-cairo"
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setShowRecommendations(true);
+              }}
+              onFocus={() => setShowRecommendations(true)}
+              onBlur={() => setTimeout(() => setShowRecommendations(false), 200)}
+              autoComplete="off"
+              autoFocus
+            />
+          </form>
 
-          <POSRecommendations
-            suggestions={searchResults}
-            visible={showRecommendations && searchInput.length >= 2}
-            loading={isSearching}
-            onSelect={(p) => {
-              addProductToCart(p);
-              setShowRecommendations(false);
-            }}
-          />
-        </form>
+          {/* ✅ فلتر الأنواع */}
+          <div className="relative">
+            <button
+              onClick={() => setShowTypeFilter(!showTypeFilter)}
+              className={`glass-panel px-4 py-2 flex items-center justify-center gap-2 transition-all font-cairo h-full min-h-[52px] ${
+                selectedType ? 'text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/10' : 'text-gray-400'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span className="text-sm whitespace-nowrap">
+                {selectedType ? getTypeDisplayName(selectedType) : 'جميع الأنواع'}
+              </span>
+              <ChevronRight className={`w-4 h-4 transition-transform ${showTypeFilter ? 'rotate-90' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {showTypeFilter && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[300px] overflow-y-auto"
+                >
+                  <div className="p-2">
+                    {/* خيار "الكل" */}
+                    <button
+                      onClick={() => {
+                        setSelectedType('');
+                        setShowTypeFilter(false);
+                      }}
+                      className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
+                        !selectedType ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <X className="w-4 h-4" />
+                      جميع الأنواع
+                    </button>
+
+                    {/* قائمة الأنواع المتاحة في نتائج البحث */}
+                    {availableTypes.length === 0 && (
+                      <div className="text-center py-6 text-gray-500 text-xs font-cairo">
+                        لا توجد أنواع متاحة
+                      </div>
+                    )}
+                    {availableTypes.map((type) => {
+                      const displayName = getTypeDisplayName(type);
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => {
+                            setSelectedType(type);
+                            setShowTypeFilter(false);
+                          }}
+                          className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
+                            selectedType === type ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                          }`}
+                        >
+                          <Tag className="w-4 h-4" />
+                          {displayName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
 
         {/* الماسح الضوئي */}
         <LiveScanner onScan={handleCameraScan} />
 
         {/* قائمة المنتجات */}
         <div className="flex-1 glass-card p-6 overflow-y-auto relative">
-          <h2 className="text-lg font-medium text-gray-400 mb-4 border-b border-white/10 pb-2 font-cairo">
-            {searchInput.length >= 2 ? 'نتائج البحث' : 'قائمة المنتجات'}
-          </h2>
+          <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+            <h2 className="text-lg font-medium text-gray-400 font-cairo">
+              {searchInput.length >= 2 ? 'نتائج البحث' : 'قائمة المنتجات'}
+            </h2>
+            {/* عرض عدد النتائج والفلتر النشط */}
+            {searchInput.length >= 2 && filteredResults.length > 0 && (
+              <span className="text-xs text-gray-500 font-cairo">
+                {filteredResults.length} منتج
+                {selectedType && ` • ${getTypeDisplayName(selectedType)}`}
+              </span>
+            )}
+          </div>
 
           {/* حالة عدم وجود نتائج */}
-          {searchInput.length >= 2 && searchResults.length === 0 && !isSearching && (
+          {searchInput.length >= 2 && filteredResults.length === 0 && !isSearching && (
             <div className="flex flex-col items-center justify-center p-10 text-gray-500 gap-3">
               <AlertCircle className="w-10 h-10 text-yellow-500/50" />
-              <p className="font-cairo">لا توجد نتائج لـ "{searchInput}"</p>
+              <p className="font-cairo">
+                {selectedType 
+                  ? `لا توجد نتائج من نوع "${getTypeDisplayName(selectedType)}" لـ "${searchInput}"`
+                  : `لا توجد نتائج لـ "${searchInput}"`
+                }
+              </p>
               
               <button
                 onClick={handleAskAI}
@@ -655,7 +739,7 @@ export default function POSTerminal() {
                   {aiSuggestions.map((choice, idx) => (
                     <div key={idx} className="bg-white/5 border border-[#D4AF37]/30 rounded-xl p-4 text-right">
                       <h4 className="text-white font-bold font-cairo">{choice.name}</h4>
-                      <p className="text-xs text-gray-400 font-cairo mt-1">{choice.company} • {choice.type}</p>
+                      <p className="text-xs text-gray-400 font-cairo mt-1">{choice.company} • {getTypeDisplayName(choice.type)}</p>
                       <p className="text-xs text-gray-500 font-cairo mt-1">تحويل الوحدة: {choice.unit_conversion}</p>
                       
                       <div className="mt-3 flex gap-2">
@@ -690,7 +774,8 @@ export default function POSTerminal() {
           )}
 
           <div className="flex flex-col gap-4">
-            {searchResults.map((product) => (
+            {/* ✅ عرض المنتجات المفلترة */}
+            {filteredResults.map((product) => (
               <POSProductCard
                 key={product.id}
                 product={product as any}
@@ -709,7 +794,7 @@ export default function POSTerminal() {
         </div>
       </div>
 
-      {}
+      {/* 2. اللوحة اليمنى: السلة */}
       <div className="w-full lg:w-[450px] flex flex-col gap-6 h-[50vh] lg:h-auto lg:flex-none">
         <div className="glass-panel flex-1 p-0 overflow-hidden flex flex-col relative">
           <div className="p-6 border-b border-white/5 flex justify-between items-center">
@@ -724,11 +809,10 @@ export default function POSTerminal() {
             )}
           </div>
 
-          {}
+          {/* قائمة السلة */}
           <div className="flex-1 overflow-y-auto p-2">
             <AnimatePresence>
               {cart.map((item: any) => {
-
                 const itemTotal = item.batchDistributions && item.batchDistributions.length > 0
                   ? item.batchDistributions.reduce((s: number, d: any) => s + d.quantity * d.price, 0)
                   : item.price * item.quantity;
@@ -816,10 +900,9 @@ export default function POSTerminal() {
             )}
           </div>
 
-          {}
+          {/* Footer السلة - الدفع */}
           <div className="p-6 bg-[#050505]/80 border-t border-white/10 backdrop-blur-md">
-
-            {}
+            {/* طرق الدفع */}
             <div className="mb-6 space-y-3">
               <label className="text-xs text-gray-500 font-cairo block mr-1">طريقة الدفع</label>
               <div className="grid grid-cols-3 gap-2">
@@ -838,7 +921,7 @@ export default function POSTerminal() {
               </div>
             </div>
 
-            {}
+            {/* اختيار العميل للدين */}
             <AnimatePresence>
               {paymentMethod === 'debt' && (
                 <motion.div
@@ -937,7 +1020,6 @@ export default function POSTerminal() {
                 }
               `}
             >
-              {/* Shine / sweep animation */}
               {cart.length > 0 && !isProcessing && (
                 <motion.div 
                   initial={{ x: '-200%' }}
@@ -996,8 +1078,7 @@ export default function POSTerminal() {
         onClose={() => setActiveReceipt(null)}
       />
 
-
-      {}
+      {/* Copilot Button */}
       <button
         onClick={() => setIsCopilotOpen(!isCopilotOpen)}
         className="fixed bottom-6 right-6 p-4 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#f2cd56] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-110 transition-transform z-50 flex items-center justify-center font-bold"
@@ -1006,7 +1087,7 @@ export default function POSTerminal() {
         {isCopilotOpen ? <X className="w-8 h-8" /> : <Bot className="w-8 h-8" />}
       </button>
 
-      {}
+      {/* Copilot Window */}
       <AnimatePresence>
         {isCopilotOpen && (
           <motion.div
@@ -1030,7 +1111,7 @@ export default function POSTerminal() {
         )}
       </AnimatePresence>
 
-      {}
+      {/* Agent Windows */}
       <AnimatePresence>
         {agentWindows.map((win) => (
           <motion.div
@@ -1051,7 +1132,7 @@ export default function POSTerminal() {
               <button
                 onClick={() => setAgentWindows(prev => prev.filter(w => w.id !== win.id))}
                 className="text-gray-400 hover:text-red-400 transition-colors"
-                onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking close
+                onPointerDown={(e) => e.stopPropagation()}
               >
                 <X className="w-5 h-5" />
               </button>

@@ -19,7 +19,9 @@ import {
   Trash2,
   Pencil,
   Calendar,
-  FileUp
+  FileUp,
+  Filter,
+  XCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -28,7 +30,7 @@ import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
 import { deleteProduct, createBatch, deleteBatch, updateBatch } from '@/lib/api/products';
-
+import { treatmentTypes, typesWithUnits} from "@/lib/unitOptions"
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), {
   ssr: false,
@@ -96,7 +98,7 @@ function InventoryBatchPanel({
       const y = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
       return `${y}-${m}-15`;
     }
-    return input; // Fallback
+    return input;
   };
 
   const handleAddBatch = async () => {
@@ -435,6 +437,8 @@ export default function InventoryDashboard() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedType, setSelectedType] = useState<string>(''); // ✅ فلتر النوع
+  const [showTypeFilter, setShowTypeFilter] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -517,16 +521,22 @@ export default function InventoryDashboard() {
     }
   };
 
+  // ✅ فلتر متقدم: بحث + نوع
   const filteredItems = useMemo(() => {
     const query = search.toLowerCase().trim();
-    if (!query) return items;
-    return items.filter(
-      (item) =>
+    return items.filter((item) => {
+      // فلتر النوع
+      if (selectedType && item.type !== selectedType) return false;
+      
+      // فلتر البحث
+      if (!query) return true;
+      return (
         item.name.toLowerCase().includes(query) ||
         item.company.toLowerCase().includes(query) ||
         item.batches.some((b) => b.barcode && b.barcode.toLowerCase().includes(query))
-    );
-  }, [items, search]);
+      );
+    });
+  }, [items, search, selectedType]);
 
   // Pagination
   const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
@@ -583,6 +593,21 @@ export default function InventoryDashboard() {
   };
 
   const handleCameraScan = (barcode: string) => setSearch(barcode);
+
+  // ✅ الحصول على الأنواع الفعلية الموجودة في النظام
+  const availableTypes = useMemo(() => {
+    const types = new Set<string>();
+    items.forEach(item => {
+      if (item.type) types.add(item.type);
+    });
+    return Array.from(types).sort();
+  }, [items]);
+
+  // ✅ الحصول على الاسم العربي لكل نوع
+  const getTypeDisplayName = (typeId: string) => {
+    const found = treatmentTypes.find(t => t.id === typeId);
+    return found ? found.name : typeId;
+  };
 
   return (
     <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4">
@@ -670,7 +695,7 @@ export default function InventoryDashboard() {
         ))}
       </div>
 
-      {/* Search & Controls */}
+      {/* Search & Controls + فلتر الأنواع */}
       <div data-gsap="fade-up" className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 glass-panel p-2 flex items-center gap-3">
           <Search className="w-5 h-5 text-gray-400 mr-3" />
@@ -682,6 +707,68 @@ export default function InventoryDashboard() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
+        {/* ✅ فلتر الأنواع */}
+        <div className="relative">
+          <button
+            onClick={() => setShowTypeFilter(!showTypeFilter)}
+            className={`glass-card px-5 py-3 flex items-center justify-center gap-2 transition-all font-cairo w-full md:w-auto ${
+              selectedType ? 'text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/10' : 'text-gray-400'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            {selectedType ? getTypeDisplayName(selectedType) : 'جميع الأنواع'}
+            <ChevronDown className={`w-4 h-4 transition-transform ${showTypeFilter ? 'rotate-180' : ''}`} />
+          </button>
+
+          <AnimatePresence>
+            {showTypeFilter && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[300px] overflow-y-auto"
+              >
+                <div className="p-2">
+                  {/* خيار "الكل" */}
+                  <button
+                    onClick={() => {
+                      setSelectedType('');
+                      setShowTypeFilter(false);
+                    }}
+                    className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
+                      !selectedType ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <XCircle className="w-4 h-4" />
+                    جميع الأنواع
+                  </button>
+
+                  {/* قائمة الأنواع المتاحة */}
+                  {availableTypes.map((type) => {
+                    const displayName = getTypeDisplayName(type);
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          setSelectedType(type);
+                          setShowTypeFilter(false);
+                        }}
+                        className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
+                          selectedType === type ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <Tag className="w-4 h-4" />
+                        {displayName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         <button
           onClick={fetchInventory}
           disabled={loading}
@@ -723,7 +810,7 @@ export default function InventoryDashboard() {
                   <td colSpan={8} className="p-12 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-3">
                       <AlertCircle className="w-10 h-10 opacity-50" />
-                      لا توجد منتجات مطابقة
+                      {selectedType ? `لا توجد منتجات من نوع "${getTypeDisplayName(selectedType)}"` : 'لا توجد منتجات مطابقة'}
                     </div>
                   </td>
                 </tr>
@@ -742,7 +829,9 @@ export default function InventoryDashboard() {
                           <div>
                             <p className="font-bold text-white font-cairo text-base group-hover:text-[#00CED1] transition-colors">{item.name}</p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] text-gray-500 font-cairo bg-white/5 px-2 py-0.5 rounded-md">{item.type}</span>
+                              <span className="text-[10px] text-gray-500 font-cairo bg-white/5 px-2 py-0.5 rounded-md">
+                                {getTypeDisplayName(item.type) || item.type}
+                              </span>
                               <span className={`text-[10px] font-bold font-cairo px-2 py-0.5 rounded-md ${item.pharmacy_id === pharmacyId ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[#D4AF37]/10 text-[#D4AF37]'}`}>
                                 {item.pharmacy_name}
                               </span>
@@ -758,7 +847,7 @@ export default function InventoryDashboard() {
                       </td>
                       <td className="p-5">
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 border border-white/10 px-2.5 py-1 rounded-full bg-white/5">
-                          {item.inventory_method}
+                          {item.inventory_method || 'FEFO'}
                         </span>
                       </td>
                       <td className="p-5 text-center">
@@ -858,6 +947,8 @@ export default function InventoryDashboard() {
           </div>
         )}
       </AnimatePresence>
+      
+      {/* Quick Add Modal */}
       <AnimatePresence>
         {isQuickAddOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -916,11 +1007,11 @@ export default function InventoryDashboard() {
                             </div>
                             <div>
                                 <p className="font-bold text-white font-cairo">{p.name}</p>
-                                <p className="text-[10px] text-gray-500 font-cairo">{p.company} - {p.type}</p>
+                                <p className="text-[10px] text-gray-500 font-cairo">{getTypeDisplayName(p.type)} - {p.company}</p>
                             </div>
                           </div>
                           <div className="text-left">
-                            <p className="text-sm font-bold text-[#D4AF37]">{p.total_quantity} علبة</p>
+                            <p className="text-sm font-bold text-[#D4AF37]">{p.total_quantity} قطعة</p>
                             <p className="text-[10px] text-gray-500 font-cairo">الرصيد الحالي</p>
                           </div>
                         </div>
@@ -939,7 +1030,7 @@ export default function InventoryDashboard() {
                           <Tag className="w-5 h-5 text-[#D4AF37]" />
                           <div>
                             <p className="font-bold text-white font-cairo">{selectedProduct.name}</p>
-                            <p className="text-xs text-[#D4AF37]/80 font-cairo">{selectedProduct.company}</p>
+                            <p className="text-xs text-[#D4AF37]/80 font-cairo">{getTypeDisplayName(selectedProduct.type)} - {selectedProduct.company}</p>
                           </div>
                        </div>
                        <button 
