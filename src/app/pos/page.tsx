@@ -8,9 +8,8 @@ import { addToCart, removeFromCart, clearCart, updateUnit, updateQuantity, updat
 import { Package } from 'lucide-react';
 import { searchProducts, getProductByBarcode, syncProductCatalogToCache, Product } from '@/lib/api/products';
 import { processCheckout } from '@/lib/api/orders';
-import { typesWithUnits } from '@/lib/unitOptions';
+import { treatmentTypes, getTypeDisplayName } from "@/lib/unitOptions";
 import { analyzeProduct } from '@/lib/api/ai';
-import { treatmentTypes } from '@/lib/unitOptions';
 
 import { undoManager } from '@/lib/undo-manager';
 import dynamic from 'next/dynamic';
@@ -32,12 +31,6 @@ import { showToast } from '@/components/ui/SyncToastProvider';
 
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
-
-// Helper function to get display name for type
-const getTypeDisplayName = (typeId: string) => {
-  const found = treatmentTypes.find(t => t.id === typeId);
-  return found ? found.name : typeId;
-};
 
 export default function POSTerminal() {
   const { user } = useAuth();
@@ -135,7 +128,8 @@ export default function POSTerminal() {
   };
 
   const handleAddAiSuggestion = (choice: any, price: number) => {
-    const units = typesWithUnits[choice.type] || ['علبة'];
+    // استخدام treatmentTypes بدلاً من typesWithUnits
+    const units = ['علبة']; // الوحدة الافتراضية
     dispatch(addToCart({
       id: `ai-${Date.now()}-${Math.random()}`,
       name: choice.name,
@@ -215,7 +209,7 @@ export default function POSTerminal() {
     setIsSearching(false);
 
     if (product) {
-      const units = typesWithUnits[product.type] || ['علبة'];
+      const units = ['علبة']; // الوحدة الافتراضية
       dispatch(addToCart({
         id: product.id,
         name: product.name,
@@ -341,7 +335,7 @@ export default function POSTerminal() {
       return;
     }
 
-    const units = typesWithUnits[product.type] || ['علبة'];
+    const units = ['علبة']; // الوحدة الافتراضية
     dispatch(addToCart({
       id: product.id,
       name: product.name,
@@ -624,7 +618,7 @@ export default function POSTerminal() {
             />
           </form>
 
-          {/* ✅ فلتر الأنواع */}
+          {/* ✅ فلتر الأنواع - عرض بالعربي */}
           <div className="relative">
             <button
               onClick={() => setShowTypeFilter(!showTypeFilter)}
@@ -774,11 +768,14 @@ export default function POSTerminal() {
           )}
 
           <div className="flex flex-col gap-4">
-            {/* ✅ عرض المنتجات المفلترة */}
+            {/* ✅ عرض المنتجات المفلترة مع النوع بالعربي */}
             {filteredResults.map((product) => (
               <POSProductCard
                 key={product.id}
-                product={product as any}
+                product={{
+                  ...product,
+                  typeDisplayName: getTypeDisplayName(product.type)
+                } as any}
                 isExpanded={expandedProductIds.has(product.id)}
                 onAddToCart={addProductToCart}
                 onToggleBatches={toggleProductBatches}
@@ -822,7 +819,10 @@ export default function POSTerminal() {
                 return (
                   <POSCartItem
                     key={item.id}
-                    item={item}
+                    item={{
+                      ...item,
+                      typeDisplayName: getTypeDisplayName(item.type)
+                    }}
                     itemTotal={itemTotal}
                     totalStock={totalStock}
                     hasMultipleBatches={hasMultipleBatches}

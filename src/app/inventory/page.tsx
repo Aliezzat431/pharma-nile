@@ -30,7 +30,7 @@ import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
 import { deleteProduct, createBatch, deleteBatch, updateBatch } from '@/lib/api/products';
-import { treatmentTypes, typesWithUnits} from "@/lib/unitOptions"
+import { treatmentTypes, getTypeDisplayName } from "@/lib/unitOptions";
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), {
   ssr: false,
@@ -437,7 +437,7 @@ export default function InventoryDashboard() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedType, setSelectedType] = useState<string>(''); // ✅ فلتر النوع
+  const [selectedType, setSelectedType] = useState<string>('');
   const [showTypeFilter, setShowTypeFilter] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
@@ -453,7 +453,6 @@ export default function InventoryDashboard() {
     expiry_date: '',
   });
 
-  // GSAP page-entry animation
   const pageRef = usePageGSAP();
   const { user } = useAuth();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -525,10 +524,7 @@ export default function InventoryDashboard() {
   const filteredItems = useMemo(() => {
     const query = search.toLowerCase().trim();
     return items.filter((item) => {
-      // فلتر النوع
       if (selectedType && item.type !== selectedType) return false;
-      
-      // فلتر البحث
       if (!query) return true;
       return (
         item.name.toLowerCase().includes(query) ||
@@ -544,7 +540,6 @@ export default function InventoryDashboard() {
     { pageSize: PAGE_SIZE }
   );
 
-  // Animate table rows on page / data change
   const tbodyRef = useGSAPList<HTMLTableSectionElement>([paginatedData]);
 
   const handleQuickBatchAddBySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -602,12 +597,6 @@ export default function InventoryDashboard() {
     });
     return Array.from(types).sort();
   }, [items]);
-
-  // ✅ الحصول على الاسم العربي لكل نوع
-  const getTypeDisplayName = (typeId: string) => {
-    const found = treatmentTypes.find(t => t.id === typeId);
-    return found ? found.name : typeId;
-  };
 
   return (
     <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4">
