@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Lock, Mail, ShieldAlert, UserPlus, Building2, Sparkles, Eye, EyeOff, Code } from "lucide-react";
+import { Loader2, Lock, Mail, ShieldAlert, UserPlus, Building2, Sparkles, Eye, EyeOff, Code, AlertCircle, Landmark } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
 
@@ -24,6 +24,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showAdminKey, setShowAdminKey] = useState(false);
 
+  // Branch Selector Verification Context
+  const [hasSelection, setHasSelection] = useState(false);
+  const [chainName, setChainName] = useState("");
+  const [pharmacyName, setPharmacyName] = useState("");
+
   // Developer Form State
   const [devPasswordInput, setDevPasswordInput] = useState("");
   const [showDevPassword, setShowDevPassword] = useState(false);
@@ -32,35 +37,71 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  function getCookie(name: string) {
+    if (typeof document === 'undefined') return '';
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+    return '';
+  }
+
   useEffect(() => {
-    const loadPharmacies = async () => {
+    const loadSelectedPharmacy = async () => {
+      setError("");
+      const cookiePharmId = getCookie('pharma-nile-selected-pharmacy-id') || localStorage.getItem('selected_pharmacy_id') || "";
+
+      if (!cookiePharmId) {
+        setHasSelection(false);
+        return;
+      }
+
+      setIsLoading(true);
       try {
         const supabase = createClient();
-        const { data, error: fetchError } = await supabase
+        const { data: pharm, error: fetchError } = await supabase
           .from('pharmacies')
-          .select('id, name')
-          .eq('is_active', true);
+          .select(`
+            id, 
+            name, 
+            chain_id, 
+            chains ( name )
+          `)
+          .eq('id', cookiePharmId)
+          .eq('is_active', true)
+          .maybeSingle();
 
-        if (fetchError) {
-          console.error("Error fetching pharmacies:", fetchError.message);
-          setError("تعذر جلب قائمة الفروع، يرجى تحديث الصفحة.");
-          return;
-        }
-
-        if (data && data.length > 0) {
-          setPharmacies(data);
-          setSelectedPharmacyId(data[0].id);
+        if (fetchError || !pharm) {
+          console.error("Error or branch not found:", fetchError);
+          setHasSelection(false);
         } else {
-          setError("لا توجد صيدليات نشطة مسجلة في النظام حالياً.");
+          setSelectedPharmacyId(pharm.id);
+          setPharmacyName(pharm.name);
+          setChainName((pharm.chains as any)?.name || "فرع مستقل");
+          setPharmacies([{ id: pharm.id, name: pharm.name }]);
+          setHasSelection(true);
         }
       } catch (err) {
-        console.error("Unexpected error loading pharmacies:", err);
-        setError("حدث خطأ غير متوقع أثناء تحميل الفروع.");
+        console.error("Unexpected error loading selected pharmacy:", err);
+        setHasSelection(false);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    loadPharmacies();
+    loadSelectedPharmacy();
   }, []);
+
+  const handleChangeBranch = () => {
+    // Clear cookies
+    document.cookie = "pharma-nile-selected-chain-id=; path=/; max-age=0";
+    document.cookie = "pharma-nile-selected-pharmacy-id=; path=/; max-age=0";
+    document.cookie = "pharma-nile-chain-verified=; path=/; max-age=0";
+    // Clear localStorage
+    localStorage.removeItem('selected_pharmacy_id');
+    localStorage.removeItem('selected_chain_id');
+    setHasSelection(false);
+    router.push('/welcome');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,9 +155,6 @@ export default function LoginPage() {
       }
 
       // Step 2 — sign in with the validated credentials.
-      // The API has already stamped role=developer in metadata so the JWT
-      // issued here will carry the correct role claim for the middleware.
-      // DEVELOPER_PASSWORD in .env is also the Supabase account password.
       await signIn(data.email, devPasswordInput);
 
       router.push("/dev");
@@ -190,7 +228,12 @@ export default function LoginPage() {
           </div>
         )}
 
-        {isDeveloperMode ? (
+        {isLoading && pharmacies.length === 0 && !isDeveloperMode ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-3 text-[var(--nile-teal)]">
+            <Loader2 className="w-10 h-10 animate-spin" />
+            <span className="text-gray-400 text-xs">جاري التحقق من الفرع المحدد...</span>
+          </div>
+        ) : isDeveloperMode ? (
           /* Developer Sign In Form */
           <form onSubmit={handleDeveloperSubmit} className="space-y-5">
             <div className="space-y-2">
@@ -246,9 +289,49 @@ export default function LoginPage() {
               </div>
             </motion.button>
           </form>
+        ) : !hasSelection ? (
+          /* Selection Required Message Card */
+          <div className="text-center space-y-6">
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold flex items-center gap-3 text-sm text-right" dir="rtl">
+              <AlertCircle className="w-6 h-6 shrink-0" />
+              <span>خطوة مطلوبة: يرجى تحديد السلسلة والفرع وتأكيد هويتك برمز الوصول قبل تسجيل الدخول.</span>
+            </div>
+            
+            <motion.button
+              onClick={() => router.push('/welcome')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="relative w-full py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 overflow-hidden bg-gradient-to-r from-[var(--nile-teal)] to-[color:var(--royal-gold)] text-black"
+            >
+              <Building2 className="w-5 h-5 text-black" />
+              <span>اختر السلسلة والفرع الآن</span>
+            </motion.button>
+          </div>
         ) : (
           /* Normal Pharmacy Sign In Form */
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Show Selected Chain and Branch Info */}
+            <div className="p-4 bg-cyan-400/5 border border-cyan-400/15 rounded-2xl flex flex-col gap-2 text-sm text-right relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 rounded-full blur-xl pointer-events-none" />
+              <div className="flex items-center gap-2.5 text-gray-400">
+                <Landmark className="w-4 h-4 text-[var(--nile-teal)]" />
+                <span className="font-medium text-xs">سلسلة صيدليات:</span>
+                <span className="text-white font-bold">{chainName}</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-gray-400">
+                <Building2 className="w-4 h-4 text-[var(--nile-teal)]" />
+                <span className="font-medium text-xs">الفرع الحالي:</span>
+                <span className="text-white font-bold">{pharmacyName}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleChangeBranch}
+                className="text-xs text-[var(--nile-teal)] font-bold hover:underline self-end focus:outline-none mt-1 active:scale-95 transition-all"
+              >
+                تغيير الفرع والسلسلة
+              </button>
+            </div>
+
             <div className="space-y-1">
               <label className="text-xs font-medium text-gray-400 mr-1 block">
                 البريد الإلكتروني
@@ -296,37 +379,6 @@ export default function LoginPage() {
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-400 mr-1 block">
-                اختر الفرع / الصيدلية
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <Building2 className="h-4 w-4 text-gray-500" />
-                </div>
-                <select
-                  value={selectedPharmacyId}
-                  disabled={isLoading || pharmacies.length === 0}
-                  onChange={(e) => setSelectedPharmacyId(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-11 pl-10 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm appearance-none cursor-pointer text-right disabled:opacity-50"
-                  required
-                >
-                  {pharmacies.length === 0 ? (
-                    <option value="" disabled className="bg-[var(--background)]">جاري تحميل الفروع...</option>
-                  ) : (
-                    pharmacies.map(p => (
-                      <option key={p.id} value={p.id} className="bg-[#050505] text-white">{p.name}</option>
-                    ))
-                  )}
-                </select>
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                  </svg>
-                </div>
               </div>
             </div>
 

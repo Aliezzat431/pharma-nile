@@ -175,7 +175,7 @@ export default function DevDashboard() {
 
       // Agent logs
       const { data: logs } = await supabase
-        .from('agent_logs').select('*').order('created_at', { ascending: false }).limit(30);
+        .from('agent_action_logs').select('*').order('created_at', { ascending: false }).limit(30);
       setAgentLogs(logs || []);
 
       setLastRefresh(new Date());
@@ -352,7 +352,6 @@ export default function DevDashboard() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {[
-                  { f: 'FULL_DB_SETUP.sql', desc: '⭐ الإعداد الكامل — شغّل أولاً', priority: true },
                   { f: 'chains_migration.sql', desc: 'إضافة جدول السلاسل + RLS متعدد المستأجرين', priority: true },
                   { f: 'fix_rls_triggers.sql', desc: 'trigger التسجيل + RLS hardening' },
                   { f: 'fix_registration_permissions.sql', desc: 'صلاحيات انون والخدمة' },

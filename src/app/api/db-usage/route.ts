@@ -1,106 +1,120 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
-    const { type } = await req.json();
-    
-    if (!type) {
-      return NextResponse.json({ success: false, error: 'نوع التنظيف غير حدد' }, { status: 400 });
-    }
-
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // ── 1. Secure Authentication ────────────────────────────────────────────
+    // ── 1. Secure Authentication ─────────────────────────────────────────────
     const authHeader = req.headers.get('Authorization');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
-    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader?.replace('Bearer ', '')
+    );
+
     if (authError || !user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    // ── 2. Derive Pharmacy ID securely from Database ───────────────────────
-    const { data: accessData } = await supabase
+    // ── 2. Derive Pharmacy ID securely from DB ───────────────────────────────
+    let pharmacyId: string | null = null;
+
+    const { data: primaryAccess } = await supabase
       .from('user_pharmacy_access')
       .select('pharmacy_id')
       .eq('user_id', user.id)
       .eq('is_primary', true)
-      .maybeSingle(); // Safe selection - prevents PGRST116 exceptions
+      .maybeSingle();
 
-    const pharmacyId = accessData?.pharmacy_id;
+    if (primaryAccess?.pharmacy_id) {
+      pharmacyId = primaryAccess.pharmacy_id;
+    } else {
+      const { data: anyAccess } = await supabase
+        .from('user_pharmacy_access')
+        .select('pharmacy_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+      if (anyAccess?.pharmacy_id) pharmacyId = anyAccess.pharmacy_id;
+    }
 
     if (!pharmacyId) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: No primary pharmacy context found' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'No pharmacy context found' }, { status: 401 });
     }
 
-    let deletedCount = 0;
-    const now = new Date();
+    // ── 3. Collect table row counts ──────────────────────────────────────────
+    const tables = [
+      'products', 'batches', 'customers', 'orders', 'order_items',
+      'financial_transactions', 'debt_payments', 'sessions',
+      'audit_logs', 'monthly_summaries', 'inventory_snapshots', 'stock_transfers'
+    ];
 
-    // ── 3. Cleanup Logic (Safe Only) ──────────────────────────────────────────
-    if (type === 'audit') {
-      // مسح سجلات التدقيق أقدم من 60 يوم
-      const threshold = new Date(now);
-      threshold.setDate(threshold.getDate() - 60);
-      
-      const { count } = await supabase
-        .from('audit_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('pharmacy_id', pharmacyId)
-        .lt('created_at', threshold.toISOString());
+    const tableCounts: Record<string, number> = {};
+    let totalRecords = 0;
 
-      if (count && count > 0) {
-          await supabase.from('audit_logs').delete().eq('pharmacy_id', pharmacyId).lt('created_at', threshold.toISOString());
-          deletedCount = count;
-      }
+    await Promise.all(
+      tables.map(async (table) => {
+        const { count } = await supabase
+          .from(table as any)
+          .select('*', { count: 'exact', head: true })
+          .eq('pharmacy_id', pharmacyId);
+        const c = count ?? 0;
+        tableCounts[table] = c;
+        totalRecords += c;
+      })
+    );
 
-    } else if (type === 'sessions') {
-      // مسح الجلسات المنتهية أقدم من سنة
-      const threshold = new Date(now);
-      threshold.setFullYear(threshold.getFullYear() - 1);
-      
-      const { count } = await supabase
-        .from('sessions')
-        .select('*', { count: 'exact', head: true })
-        .eq('pharmacy_id', pharmacyId)
-        .not('logout_time', 'is', null)
-        .lt('logout_time', threshold.toISOString());
+    // ── 4. Count extracted invoices ──────────────────────────────────────────
+    const { count: invoiceCount } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('pharmacy_id', pharmacyId)
+      .eq('status', 'completed');
 
-      if (count && count > 0) {
-          await supabase.from('sessions').delete().eq('pharmacy_id', pharmacyId).not('logout_time', 'is', null).lt('logout_time', threshold.toISOString());
-          deletedCount = count;
-      }
+    // ── 5. Count pending-deleted (cancelled orders) ──────────────────────────
+    const { count: cancelledCount } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('pharmacy_id', pharmacyId)
+      .eq('status', 'cancelled');
 
-    } else if (type === 'cancelled_orders') {
-      // مسح الطلبات الملغاة فقط (آمن تماماً)
-      const { count } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('pharmacy_id', pharmacyId)
-        .eq('status', 'cancelled');
+    // ── 6. Compute estimated DB usage ────────────────────────────────────────
+    // Rough estimate: ~900 bytes per record average across all tables
+    const estimatedBytes = totalRecords * 900;
+    const estimatedMB = estimatedBytes / (1024 * 1024);
+    const limitMB = 500;
+    const sizePercentage = Math.min(100, Math.round((estimatedMB / limitMB) * 100 * 10) / 10);
 
-      if (count && count > 0) {
-          await supabase.from('orders').delete().eq('pharmacy_id', pharmacyId).eq('status', 'cancelled');
-          deletedCount = count;
-      }
+    // ── 7. System health score ────────────────────────────────────────────────
+    const cleanableCount =
+      (tableCounts['sessions'] ?? 0) +
+      (tableCounts['audit_logs'] ?? 0) +
+      (cancelledCount ?? 0);
 
-    } else {
-      return NextResponse.json({ success: false, error: 'نوع التنظيف غير مدعوم أو غير آمن' }, { status: 400 });
-    }
+    // Health degrades the closer we are to limit
+    const health = Math.max(0, Math.round(100 - sizePercentage * 0.5));
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `تم تنظيف بيانات ${type} بنجاح.`,
-      count: deletedCount 
+    return NextResponse.json({
+      success: true,
+      data: {
+        database: {
+          mbUsed: Math.max(0.1, parseFloat(estimatedMB.toFixed(2))),
+          limitMB,
+          sizePercentage,
+        },
+        tables: tableCounts,
+        totalRecords,
+        extractedInvoices: invoiceCount ?? 0,
+        pendingDeleted: cancelledCount ?? 0,
+        cleanableCount,
+        health,
+      },
     });
 
   } catch (error: any) {
-    console.error('DB Cleanup Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'حدث خطأ أثناء التنظيف' }, 
-      { status: 500 }
-    );
+    console.error('[db-usage] Error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
