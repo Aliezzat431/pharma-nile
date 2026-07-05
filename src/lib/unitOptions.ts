@@ -33,13 +33,11 @@ export const getTypeDisplayName = (typeId: string): string => {
     return typeId;
   }
   
-  // البحث في list الأنواع
   const found = treatmentTypes.find(t => t.id === typeId);
   if (found) {
     return found.name;
   }
   
-  // معالجة الحالات الخاصة
   const typeMap: Record<string, string> = {
     'ear_drops': 'قطرات أذن',
     'eye_drops': 'قطرات عين',
@@ -55,29 +53,30 @@ export const getTypeDisplayName = (typeId: string): string => {
     'cream': 'كريم',
     'gel': 'جل',
     'powder': 'بودرة',
-    'solution': 'محلول'
+    'solution': 'محلول',
+    'cosmetics': 'مستحضرات'
   };
   
   return typeMap[typeId] || typeId;
 };
 
-// ✅ دالة getMultiplier - لحساب مضاعف الوحدة
+// ✅ دالة getMultiplier
 export const getMultiplier = (prod: any, selectedUnit: string, customPills = 10): number => {
   const conv = Number(prod.unit_conversion || prod.unitConversion || 1);
   const baseUnit = prod.unit || "علبة";
   
-  if (!selectedUnit || selectedUnit === baseUnit) return 1; // 1 Box
+  if (!selectedUnit || selectedUnit === baseUnit) return 1;
   
-  if (selectedUnit === "شريط") return conv; // Number of strips
-
+  if (selectedUnit === "شريط") return conv;
+  
   if (selectedUnit === "قرص" || selectedUnit === "كبسولة" || selectedUnit === "قطعة" || selectedUnit === "لبوسة") {
-    return conv * customPills; // Number of strips * pills per strip
+    return conv * customPills;
   }
-
+  
   return conv;
 };
 
-// ✅ typesWithUnits - للتوافق مع الكود القديم
+// ✅ typesWithUnits - خريطة النوع → الوحدات المتاحة
 export const typesWithUnits: Record<string, string[]> = {};
 
 // بناء typesWithUnits من treatmentTypes
@@ -86,13 +85,22 @@ treatmentTypes.forEach((type) => {
     ? type.units
     : [type.baseUnit];
   
-  // تسجيل بالاسم العربي و ID
   typesWithUnits[type.name] = units;
   typesWithUnits[type.id] = units;
 });
 
-// Aliases and fallbacks for imported types from files
-typesWithUnits['tablet'] = ["علبة", "شريط", "قرص"];
-typesWithUnits['drops'] = ["علبة"];
+// ✅ إضافة كل الأنواع يدوياً للتأكد (مهم جداً!)
 typesWithUnits['suppository'] = ["علبة", "شريط", "لبوسة"];
+typesWithUnits['tablet'] = ["علبة", "شريط", "قرص"];
+typesWithUnits['capsule'] = ["علبة", "شريط", "كبسولة"];
 typesWithUnits['injection'] = ["علبة", "أمبول"];
+typesWithUnits['eye_drops'] = ["علبة"];
+typesWithUnits['ear_drops'] = ["علبة"];
+typesWithUnits['nasal_drops'] = ["علبة"];
+typesWithUnits['cosmetics'] = ["علبة"];
+typesWithUnits['ointment'] = ["علبة"];
+
+// Aliases for backward compatibility
+typesWithUnits['لبوس'] = ["علبة", "شريط", "لبوسة"];
+typesWithUnits['أقراص'] = ["علبة", "شريط", "قرص"];
+typesWithUnits['كبسولات'] = ["علبة", "شريط", "كبسولة"];
