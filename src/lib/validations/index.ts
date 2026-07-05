@@ -4,8 +4,14 @@ import { z } from "zod";
 export const passwordSchema = z
   .string()
   .min(8, { message: "Password must be at least 8 characters long" })
-  .regex(/[a-zA-Z]/, { message: "Password must contain at least one letter" })
-  .regex(/[0-9]/, { message: "Password must contain at least one number" });
+  .refine(
+    (password) => /[a-zA-Z]/.test(password),
+    { message: "Password must contain at least one letter" }
+  )
+  .refine(
+    (password) => /[0-9]/.test(password),
+    { message: "Password must contain at least one number" }
+  );
 
 export const phoneSchema = z
   .string()
