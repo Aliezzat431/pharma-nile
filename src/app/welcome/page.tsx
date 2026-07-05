@@ -175,12 +175,28 @@ export default function WelcomePage() {
     setIsLoading(true);
     setWizardError('');
     try {
+      // ✅ Enhanced error handling for RPC call
       const { data: isMatch, error } = await supabase.rpc('verify_chain_password', {
         p_chain_id: selectedChainId,
         p_password: chainPassword
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("[Chain Password] RPC Error:", error);
+        
+        // Better error messaging for different failure modes
+        if (error.message?.includes('function') || error.message?.includes('does not exist')) {
+          setWizardError("خدمة التحقق من السلسلة غير متاحة. يرجى التواصل مع الإدارة.");
+        } else if (error.message?.includes('permission') || error.message?.includes('denied')) {
+          setWizardError("لا توجد صلاحيات للوصول إلى هذه السلسلة.");
+        } else if (error.message?.includes('timeout') || error.message?.includes('connection')) {
+          setWizardError("انقطع الاتصال بقاعدة البيانات. يرجى المحاولة مجدداً.");
+        } else {
+          // Generic error with more context
+          setWizardError(`حدث خطأ أثناء فحص كلمة المرور: ${error.message || 'خطأ غير معروف'}`);
+        }
+        throw error;
+      }
 
       if (isMatch) {
         setPasswordSuccess(true);
@@ -194,7 +210,10 @@ export default function WelcomePage() {
           .eq('is_active', true)
           .order('created_at', { ascending: true });
 
-        if (bError) throw bError;
+        if (bError) {
+          console.error("[Chain Branches] Fetch Error:", bError);
+          throw bError;
+        }
 
         setTimeout(() => {
           setBranches(branchData || []);
@@ -205,8 +224,18 @@ export default function WelcomePage() {
         setWizardError("كلمة مرور السلسلة غير صحيحة. يرجى المحاولة مرة أخرى.");
       }
     } catch (err: any) {
-      console.error("Verification error:", err);
-      setWizardError("حدث خطأ أثناء فحص كلمة المرور. يرجى التحقق والتحميل مجدداً.");
+      console.error("[handleVerifyPassword] Full Error Stack:", {
+        message: err?.message,
+        code: err?.code,
+        status: err?.status,
+        details: err?.details,
+        hint: err?.hint
+      });
+      
+      // Only show error if not already set by RPC error handler
+      if (!wizardError) {
+        setWizardError("حدث خطأ أثناء فحص كلمة المرور. يرجى تحديث الصفحة والمحاولة مجدداً.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -292,7 +321,7 @@ export default function WelcomePage() {
                 {/* Hero Icon */}
                 <div className="hero-pill relative w-24 h-24 md:w-32 md:h-32">
                   <div className="absolute inset-0 bg-cyan-400/20 blur-3xl animate-pulse" />
-                  <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent backdrop-blur-xl border border-white/20 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden group">
+                  <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent backdrop-blur-xl border border-white/20 rounded-[2.5rem] flex items-center justify-center shadow-2xl group hover:shadow-[0_0_40px_#22d3ee] transition-shadow">
                     <Pill className="w-12 h-12 md:w-16 md:h-16 text-cyan-400 transition-transform group-hover:scale-110" />
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-cyan-400/10 to-transparent" />
                   </div>
@@ -313,7 +342,7 @@ export default function WelcomePage() {
                     ref={subtitleRef}
                     className="text-lg md:text-3xl text-gray-400 font-cairo font-light max-w-3xl mx-auto leading-relaxed"
                   >
-                    المستقبل هنا. أدر صيدليتك بأحدث تقنيات <span className="text-white font-bold">الذكاء الاصطناعي</span> في تجربة فريدة.
+                    المستقبل هنا. أدر صيدليتك بأحدث تقنيات <span className="text-white font-bold">الذكاء الاصطناعي</span> في تجربة فريدة
                   </p>
                 </div>
 
@@ -325,7 +354,7 @@ export default function WelcomePage() {
                   {features.map((f, i) => (
                     <div 
                       key={i}
-                      className="group relative glass-panel p-6 md:p-8 border-white/5 bg-white/[0.02] overflow-hidden hover:bg-white/[0.06] transition-all duration-500 rounded-[2rem] border border-white/10"
+                      className="group relative glass-panel p-6 md:p-8 border-white/5 bg-white/[0.02] overflow-hidden hover:bg-white/[0.06] transition-all duration-500 rounded-[2rem] border border-white/5"
                     >
                       <f.icon className={`w-8 h-8 md:w-10 md:h-10 mb-4 text-cyan-400 transition-transform group-hover:scale-110`} />
                       <h3 className="text-white font-bold font-cairo text-base md:text-lg mb-2">{f.text}</h3>
@@ -340,7 +369,7 @@ export default function WelcomePage() {
                   <button
                     ref={btnRef}
                     onClick={handleStart}
-                    className="group relative px-12 md:px-20 py-5 md:py-7 bg-white text-black font-black text-xl md:text-2xl rounded-3xl overflow-hidden hover:scale-105 active:scale-95 transition-all shadow-[0_20px_80px_rgba(255,255,255,0.1)] flex items-center gap-4"
+                    className="group relative px-12 md:px-20 py-5 md:py-7 bg-white text-black font-black text-xl md:text-2xl rounded-3xl overflow-hidden hover:scale-105 active:scale-95 transition-transform flex items-center gap-3"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <span className="relative z-10 font-cairo tracking-tighter group-hover:text-white transition-colors">
@@ -415,7 +444,7 @@ export default function WelcomePage() {
                       <button
                         key={c.id}
                         onClick={() => handleSelectChain(c.id, c.name)}
-                        className="w-full text-right p-4 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.05] hover:border-cyan-400/40 transition-all duration-300 flex items-center justify-between group active:scale-98"
+                        className="w-full text-right p-4 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.05] hover:border-cyan-400/40 transition-all duration-300 flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-3">
                           <Building2 className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
@@ -489,7 +518,7 @@ export default function WelcomePage() {
                           type={showPassword ? 'text' : 'password'}
                           value={chainPassword}
                           onChange={(e) => setChainPassword(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pr-11 pl-11 text-white focus:outline-none focus:border-cyan-400/50 transition-all text-sm text-left font-sans"
+                          className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pr-11 pl-11 text-white focus:outline-none focus:border-cyan-400/50 transition-all text-sm text-left"
                           placeholder="كلمة مرور السلسلة"
                           disabled={isLoading}
                         />
@@ -511,7 +540,7 @@ export default function WelcomePage() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full py-3.5 bg-gradient-to-r from-cyan-400 to-blue-600 text-black font-bold text-sm rounded-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_-5px_rgba(34,211,238,0.2)] disabled:opacity-50"
+                      className="w-full py-3.5 bg-gradient-to-r from-cyan-400 to-blue-600 text-black font-bold text-sm rounded-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {isLoading ? (
                         <>
@@ -581,7 +610,7 @@ export default function WelcomePage() {
                       <button
                         key={b.id}
                         onClick={() => handleSelectBranch(b.id)}
-                        className="w-full text-right p-4 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.05] hover:border-cyan-400/40 transition-all duration-300 flex flex-col gap-1 group active:scale-98"
+                        className="w-full text-right p-4 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.05] hover:border-cyan-400/40 transition-all duration-300 flex flex-col gap-1"
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-white text-sm">{b.name}</span>
