@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, ArrowRight, ShieldCheck, Zap, BarChart3, Pill, 
   Building2, Lock, Eye, EyeOff, Search, ChevronLeft, ChevronRight,
-  CheckCircle2, AlertCircle, RefreshCw, Key, Landmark
+  CheckCircle2, AlertCircle, RefreshCw, Key, Landmark, Bug, XCircle
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -38,6 +38,14 @@ export default function WelcomePage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [wizardError, setWizardError] = useState<string>('');
   const [passwordSuccess, setPasswordSuccess] = useState<boolean>(false);
+  
+  // Debug states for UI
+  const [showDebug, setShowDebug] = useState<boolean>(false);
+  const [debugDetails, setDebugDetails] = useState<{
+    step: string;
+    error: string;
+    details: any;
+  } | null>(null);
 
   useEffect(() => {
     // Loading simulation for dramatic effect
@@ -126,6 +134,7 @@ export default function WelcomePage() {
   const loadChains = async () => {
     setIsLoading(true);
     setWizardError('');
+    setDebugDetails(null);
     try {
       const { data, error } = await supabase
         .from('chains')
@@ -136,7 +145,12 @@ export default function WelcomePage() {
       setFilteredChains(data || []);
     } catch (err: any) {
       console.error("Error loading chains:", err);
-      setWizardError("تعذر تحميل قائمة السلاسل. يرجى التحقق من الاتصال.");
+      setDebugDetails({
+        step: 'تحميل السلاسل',
+        error: err.message || 'خطأ غير معروف',
+        details: err
+      });
+      setWizardError(`❌ تعذر تحميل قائمة السلاسل: ${err.message || 'خطأ غير معروف'}`);
     } finally {
       setIsLoading(false);
     }
@@ -162,6 +176,7 @@ export default function WelcomePage() {
     setSelectedChainName(name);
     setChainPassword('');
     setWizardError('');
+    setDebugDetails(null);
     setPhase('verify-password');
   };
 
@@ -174,30 +189,85 @@ export default function WelcomePage() {
 
     setIsLoading(true);
     setWizardError('');
+    setDebugDetails(null);
+    
     try {
-      // ✅ Enhanced error handling for RPC call
-      const { data: isMatch, error } = await supabase.rpc('verify_chain_password', {
+      // Step 1: Check if chain exists
+      const { data: chainExists, error: chainCheckError } = await supabase
+        .from('chains')
+        .select('id, name, password')
+        .eq('id', selectedChainId)
+        .single();
+
+      if (chainCheckError) {
+        setDebugDetails({
+          step: 'التحقق من وجود السلسلة',
+          error: chainCheckError.message,
+          details: chainCheckError
+        });
+        setWizardError(`❌ السلسلة غير موجودة: ${chainCheckError.message}`);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!chainExists) {
+        setDebugDetails({
+          step: 'التحقق من وجود السلسلة',
+          error: 'السلسلة غير موجودة في قاعدة البيانات',
+          details: { chainId: selectedChainId }
+        });
+        setWizardError('❌ السلسلة غير موجودة في النظام');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!chainExists.password) {
+        setDebugDetails({
+          step: 'التحقق من كلمة المرور',
+          error: 'كلمة المرور غير محددة لهذه السلسلة',
+          details: { chainName: chainExists.name }
+        });
+        setWizardError('⚠️ هذه السلسلة ليس لديها كلمة مرور محددة. يرجى التواصل مع المدير.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Step 2: Call RPC function
+      const { data: isMatch, error: rpcError } = await supabase.rpc('verify_chain_password', {
         p_chain_id: selectedChainId,
         p_password: chainPassword
       });
 
-      if (error) {
-        console.error("[Chain Password] RPC Error:", error);
+      if (rpcError) {
+        console.error("[RPC Error]:", rpcError);
+        setDebugDetails({
+          step: 'استدعاء دالة التحقق (RPC)',
+          error: rpcError.message || 'خطأ في RPC',
+          details: {
+            code: rpcError.code,
+            details: rpcError.details,
+            hint: rpcError.hint,
+            message: rpcError.message
+          }
+        });
         
-        // Better error messaging for different failure modes
-        if (error.message?.includes('function') || error.message?.includes('does not exist')) {
-          setWizardError("خدمة التحقق من السلسلة غير متاحة. يرجى التواصل مع الإدارة.");
-        } else if (error.message?.includes('permission') || error.message?.includes('denied')) {
-          setWizardError("لا توجد صلاحيات للوصول إلى هذه السلسلة.");
-        } else if (error.message?.includes('timeout') || error.message?.includes('connection')) {
-          setWizardError("انقطع الاتصال بقاعدة البيانات. يرجى المحاولة مجدداً.");
+        // عرض رسالة خطأ مفصلة
+        let errorMessage = '❌ حدث خطأ أثناء التحقق: ';
+        if (rpcError.message?.includes('function') || rpcError.message?.includes('does not exist')) {
+          errorMessage += 'دالة التحقق غير موجودة في قاعدة البيانات';
+        } else if (rpcError.message?.includes('permission') || rpcError.message?.includes('denied')) {
+          errorMessage += 'ليس لديك صلاحية للتحقق';
+        } else if (rpcError.message?.includes('timeout')) {
+          errorMessage += 'انتهت مهلة الاتصال بقاعدة البيانات';
         } else {
-          // Generic error with more context
-          setWizardError(`حدث خطأ أثناء فحص كلمة المرور: ${error.message || 'خطأ غير معروف'}`);
+          errorMessage += rpcError.message || 'خطأ غير معروف';
         }
-        throw error;
+        setWizardError(errorMessage);
+        setIsLoading(false);
+        return;
       }
 
+      // Step 3: Check password match
       if (isMatch) {
         setPasswordSuccess(true);
         setWizardError('');
@@ -211,8 +281,14 @@ export default function WelcomePage() {
           .order('created_at', { ascending: true });
 
         if (bError) {
-          console.error("[Chain Branches] Fetch Error:", bError);
-          throw bError;
+          setDebugDetails({
+            step: 'جلب فروع السلسلة',
+            error: bError.message,
+            details: bError
+          });
+          setWizardError(`✅ تم التحقق ولكن حدث خطأ في جلب الفروع: ${bError.message}`);
+          setIsLoading(false);
+          return;
         }
 
         setTimeout(() => {
@@ -221,21 +297,28 @@ export default function WelcomePage() {
           setPhase('choose-branch');
         }, 1000);
       } else {
-        setWizardError("كلمة مرور السلسلة غير صحيحة. يرجى المحاولة مرة أخرى.");
+        setWizardError("❌ كلمة مرور السلسلة غير صحيحة. يرجى المحاولة مرة أخرى.");
+        setDebugDetails({
+          step: 'مقارنة كلمة المرور',
+          error: 'كلمة المرور غير متطابقة',
+          details: {
+            entered: '***',
+            stored: '***'
+          }
+        });
       }
     } catch (err: any) {
-      console.error("[handleVerifyPassword] Full Error Stack:", {
-        message: err?.message,
-        code: err?.code,
-        status: err?.status,
-        details: err?.details,
-        hint: err?.hint
+      console.error("[handleVerifyPassword] Full Error:", err);
+      setDebugDetails({
+        step: 'خطأ غير متوقع',
+        error: err.message || 'خطأ غير معروف',
+        details: {
+          name: err.name,
+          code: err.code,
+          stack: err.stack
+        }
       });
-      
-      // Only show error if not already set by RPC error handler
-      if (!wizardError) {
-        setWizardError("حدث خطأ أثناء فحص كلمة المرور. يرجى تحديث الصفحة والمحاولة مجدداً.");
-      }
+      setWizardError(`❌ حدث خطأ غير متوقع: ${err.message || 'خطأ غير معروف'}`);
     } finally {
       setIsLoading(false);
     }
@@ -500,6 +583,48 @@ export default function WelcomePage() {
                   </div>
                 )}
 
+                {/* Debug Details Box */}
+                {debugDetails && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Bug className="w-4 h-4 text-yellow-400" />
+                        <span className="text-yellow-400 text-xs font-bold">تفاصيل الخطأ</span>
+                      </div>
+                      <button 
+                        onClick={() => setDebugDetails(null)}
+                        className="text-gray-500 hover:text-white transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="space-y-1 text-xs font-mono">
+                      <div className="flex gap-2">
+                        <span className="text-gray-500">الخطوة:</span>
+                        <span className="text-white">{debugDetails.step}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-gray-500">الخطأ:</span>
+                        <span className="text-red-400">{debugDetails.error}</span>
+                      </div>
+                      {debugDetails.details && (
+                        <details className="mt-2">
+                          <summary className="text-gray-400 cursor-pointer hover:text-white text-xs">
+                            تفاصيل إضافية
+                          </summary>
+                          <pre className="mt-2 p-2 bg-black/40 rounded text-gray-300 text-[10px] overflow-auto max-h-32 whitespace-pre-wrap">
+                            {JSON.stringify(debugDetails.details, null, 2)}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+
                 {passwordSuccess ? (
                   <motion.div 
                     initial={{ scale: 0.8, opacity: 0 }}
@@ -554,16 +679,27 @@ export default function WelcomePage() {
                   </form>
                 )}
 
-                <div className="mt-8 pt-4 border-t border-white/5">
+                <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-between">
                   <button
                     onClick={() => {
                       setPhase('choose-chain');
                       setWizardError('');
+                      setDebugDetails(null);
                     }}
                     className="text-gray-400 hover:text-white text-xs font-bold flex items-center gap-1 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>رجوع لاختيار السلسلة</span>
+                  </button>
+                  
+                  {/* زر عرض تفاصيل إضافية */}
+                  <button
+                    type="button"
+                    onClick={() => setShowDebug(!showDebug)}
+                    className="text-gray-500 hover:text-cyan-400 text-xs font-bold flex items-center gap-1 transition-colors"
+                  >
+                    <Bug className="w-3.5 h-3.5" />
+                    <span>تصحيح</span>
                   </button>
                 </div>
               </motion.div>
@@ -627,6 +763,7 @@ export default function WelcomePage() {
                     onClick={() => {
                       setPhase('verify-password');
                       setWizardError('');
+                      setDebugDetails(null);
                     }}
                     className="text-gray-400 hover:text-white text-xs font-bold flex items-center gap-1 transition-colors"
                   >
