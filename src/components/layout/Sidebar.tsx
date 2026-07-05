@@ -33,6 +33,7 @@ import { supabase } from '@/lib/supabase';
 import { useAppDispatch } from '@/store/hooks';
 import { openIframe } from '@/store/slices/agentSlice';
 import ThemeToggle from './ThemeToggle';
+import BranchSwitcher from './BranchSwitcher';
 import { usePreferences } from '@/hooks/usePreferences';
 
 interface MenuItem {
@@ -247,6 +248,9 @@ export default function Sidebar() {
             </div>
           ))}
         </nav>
+
+        {/* Branch Switcher — only visible for chain users */}
+        <BranchSwitcher isCollapsed={isCollapsed} />
 
         {/* Footer Section */}
         <div className="p-4 border-t border-[var(--glass-border)] space-y-3">

@@ -147,7 +147,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     );
   }
 
-  if (!pharmacyId && userRole !== 'chain_admin' && userRole !== 'developer') {
+  if (!pharmacyId && userRole !== 'chain_admin' && userRole !== 'admin' && userRole !== 'developer') {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4">
         <AlertCircle className="w-16 h-16 text-[#FF6b6b]" />
