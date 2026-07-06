@@ -8,7 +8,7 @@ import { addToCart, removeFromCart, clearCart, updateUnit, updateQuantity, updat
 import { Package } from 'lucide-react';
 import { searchProducts, getProductByBarcode, syncProductCatalogToCache, Product } from '@/lib/api/products';
 import { processCheckout } from '@/lib/api/orders';
-import { treatmentTypes, getTypeDisplayName } from "@/lib/unitOptions";
+import { treatmentTypes } from "@/lib/unitOptions"; // ✅ استورد treatmentTypes فقط
 import { analyzeProduct } from '@/lib/api/ai';
 
 import { undoManager } from '@/lib/undo-manager';
@@ -32,6 +32,21 @@ import { showToast } from '@/components/ui/SyncToastProvider';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
 
+// ✅ دالة مساعدة للحصول على الاسم العربي للنوع (محلياً)
+const getTypeDisplayName = (typeId: string): string => {
+  const found = treatmentTypes.find(t => t.id === typeId);
+  return found ? found.name : typeId;
+};
+
+// ✅ دالة مساعدة للحصول على الوحدات المتاحة حسب نوع المنتج
+const getAvailableUnits = (type: string): string[] => {
+  const found = treatmentTypes.find(t => t.id === type);
+  if (found && found.hasConversion && found.units) {
+    return found.units;
+  }
+  return ['علبة'];
+};
+
 export default function POSTerminal() {
   const { user } = useAuth();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -49,7 +64,6 @@ export default function POSTerminal() {
   const [batchModal, setBatchModal] = useState<{ isOpen: boolean; item: any | null }>({ isOpen: false, item: null });
   const [batchDistributions, setBatchDistributions] = useState<any[]>([]);
 
-  // ✅ فلتر الأنواع
   const [selectedType, setSelectedType] = useState<string>('');
   const [showTypeFilter, setShowTypeFilter] = useState(false);
 
@@ -83,7 +97,7 @@ export default function POSTerminal() {
   const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(new Set());
   const [showRecommendations, setShowRecommendations] = useState(false);
 
-  // ✅ الحصول على الأنواع الفعلية الموجودة في المنتجات التي تظهر في البحث
+  // ✅ الأنواع المتاحة في نتائج البحث
   const availableTypes = useMemo(() => {
     const types = new Set<string>();
     searchResults.forEach(product => {
@@ -128,8 +142,7 @@ export default function POSTerminal() {
   };
 
   const handleAddAiSuggestion = (choice: any, price: number) => {
-    // استخدام treatmentTypes بدلاً من typesWithUnits
-    const units = ['علبة']; // الوحدة الافتراضية
+    const units = getAvailableUnits(choice.type);
     dispatch(addToCart({
       id: `ai-${Date.now()}-${Math.random()}`,
       name: choice.name,
@@ -178,7 +191,7 @@ export default function POSTerminal() {
     return () => window.removeEventListener('message', handleRemoteCommand);
   }, [searchResults, cart]);
 
-  // ========== تحسين البحث: ترتيب النتائج حسب الصلة ==========
+  // ========== تحسين البحث وضمان وجود unit_conversion ==========
   useEffect(() => {
     const fetchResults = async () => {
       if (!pharmacyId) return;
@@ -188,8 +201,11 @@ export default function POSTerminal() {
       }
       setIsSearching(true);
       try {
-        const results = await searchProducts(searchInput, pharmacyId);
-        // ترتيب النتائج حسب مدى تطابق الاسم والباركود مع كلمة البحث
+        let results = await searchProducts(searchInput, pharmacyId);
+        results = results.map(p => ({
+          ...p,
+          unit_conversion: p.unit_conversion ?? 1
+        }));
         const sorted = results.sort((a, b) => {
           const query = searchInput.toLowerCase();
           const aName = a.name.toLowerCase();
@@ -200,14 +216,10 @@ export default function POSTerminal() {
           const getScore = (product: any) => {
             const name = product.name.toLowerCase();
             const barcode = (product.barcode || '').toLowerCase();
-            // 1. تطابق تام
             if (name === query || barcode === query) return 100;
-            // 2. يبدأ بالكلمة
             if (name.startsWith(query)) return 90;
             if (barcode.startsWith(query)) return 85;
-            // 3. يحتوي على الكلمة كاملة (مسافات)
             if (name.includes(` ${query} `) || name.startsWith(`${query} `) || name.endsWith(` ${query}`)) return 80;
-            // 4. يحتوي على الكلمة
             if (name.includes(query)) return 70;
             if (barcode.includes(query)) return 60;
             return 0;
@@ -225,29 +237,18 @@ export default function POSTerminal() {
     const timeoutId = setTimeout(fetchResults, 300);
     return () => clearTimeout(timeoutId);
   }, [searchInput, pharmacyId]);
-  // ==========================================================
 
   const handleBarcodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pharmacyId || !searchInput.trim()) return;
 
     setIsSearching(true);
-    const product = await getProductByBarcode(searchInput.trim(), pharmacyId);
+    let product = await getProductByBarcode(searchInput.trim(), pharmacyId);
     setIsSearching(false);
 
     if (product) {
-      const units = ['علبة']; // الوحدة الافتراضية
-      dispatch(addToCart({
-        id: product.id,
-        name: product.name,
-        basePrice: product.current_price || 0,
-        price: product.current_price || 0,
-        quantity: 1,
-        unit: 'علبة',
-        availableUnits: units,
-        unitConversion: product.unit_conversion || 1,
-        activeBatches: product.activeBatches,
-      }));
+      product = { ...product, unit_conversion: product.unit_conversion ?? 1 };
+      addProductToCart(product);
       setSearchInput('');
     }
   };
@@ -256,10 +257,11 @@ export default function POSTerminal() {
     if (!pharmacyId) return;
     setSearchInput(barcode);
     setIsSearching(true);
-    const product = await getProductByBarcode(barcode, pharmacyId);
+    let product = await getProductByBarcode(barcode, pharmacyId);
     setIsSearching(false);
 
     if (product) {
+      product = { ...product, unit_conversion: product.unit_conversion ?? 1 };
       addProductToCart(product);
       setSearchInput('');
     } else {
@@ -352,6 +354,7 @@ export default function POSTerminal() {
     }
   }, [pharmacyId]);
 
+  // ✅ دالة إضافة المنتج للسلة مع التأكد من unitConversion والوحدات المتاحة
   const addProductToCart = (product: Product, clearSearch = true) => {
     if (product.current_price === undefined || product.current_price === 0) {
       showToast({
@@ -362,7 +365,13 @@ export default function POSTerminal() {
       return;
     }
 
-    const units = ['علبة']; // الوحدة الافتراضية
+    const units = getAvailableUnits(product.type);
+    const unitConversion = product.unit_conversion ?? 1;
+
+    console.log('🔍 addProductToCart - product:', product);
+    console.log('🔍 unitConversion:', unitConversion);
+    console.log('🔍 availableUnits:', units);
+
     dispatch(addToCart({
       id: product.id,
       name: product.name,
@@ -371,7 +380,7 @@ export default function POSTerminal() {
       quantity: 1,
       unit: 'علبة',
       availableUnits: units,
-      unitConversion: product.unit_conversion || 1,
+      unitConversion: unitConversion,
       activeBatches: product.activeBatches,
     }));
 
@@ -645,7 +654,7 @@ export default function POSTerminal() {
             />
           </form>
 
-          {/* ✅ فلتر الأنواع - عرض بالعربي */}
+          {/* فلتر الأنواع */}
           <div className="relative">
             <button
               onClick={() => setShowTypeFilter(!showTypeFilter)}
@@ -669,7 +678,6 @@ export default function POSTerminal() {
                   className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[300px] overflow-y-auto"
                 >
                   <div className="p-2">
-                    {/* خيار "الكل" */}
                     <button
                       onClick={() => {
                         setSelectedType('');
@@ -683,7 +691,6 @@ export default function POSTerminal() {
                       جميع الأنواع
                     </button>
 
-                    {/* قائمة الأنواع المتاحة في نتائج البحث */}
                     {availableTypes.length === 0 && (
                       <div className="text-center py-6 text-gray-500 text-xs font-cairo">
                         لا توجد أنواع متاحة
@@ -723,7 +730,6 @@ export default function POSTerminal() {
             <h2 className="text-lg font-medium text-gray-400 font-cairo">
               {searchInput.length >= 2 ? 'نتائج البحث' : 'قائمة المنتجات'}
             </h2>
-            {/* عرض عدد النتائج والفلتر النشط */}
             {searchInput.length >= 2 && filteredResults.length > 0 && (
               <span className="text-xs text-gray-500 font-cairo">
                 {filteredResults.length} منتج
@@ -732,7 +738,6 @@ export default function POSTerminal() {
             )}
           </div>
 
-          {/* حالة عدم وجود نتائج */}
           {searchInput.length >= 2 && filteredResults.length === 0 && !isSearching && (
             <div className="flex flex-col items-center justify-center p-10 text-gray-500 gap-3">
               <AlertCircle className="w-10 h-10 text-yellow-500/50" />
@@ -795,7 +800,6 @@ export default function POSTerminal() {
           )}
 
           <div className="flex flex-col gap-4">
-            {/* ✅ عرض المنتجات المفلترة مع النوع بالعربي */}
             {filteredResults.map((product) => (
               <POSProductCard
                 key={product.id}
@@ -833,7 +837,6 @@ export default function POSTerminal() {
             )}
           </div>
 
-          {/* قائمة السلة */}
           <div className="flex-1 overflow-y-auto p-2">
             <AnimatePresence>
               {cart.map((item: any) => {
@@ -927,9 +930,7 @@ export default function POSTerminal() {
             )}
           </div>
 
-          {/* Footer السلة - الدفع */}
           <div className="p-6 bg-[#050505]/80 border-t border-white/10 backdrop-blur-md">
-            {/* طرق الدفع */}
             <div className="mb-6 space-y-3">
               <label className="text-xs text-gray-500 font-cairo block mr-1">طريقة الدفع</label>
               <div className="grid grid-cols-3 gap-2">
@@ -948,7 +949,6 @@ export default function POSTerminal() {
               </div>
             </div>
 
-            {/* اختيار العميل للدين */}
             <AnimatePresence>
               {paymentMethod === 'debt' && (
                 <motion.div
@@ -1105,7 +1105,6 @@ export default function POSTerminal() {
         onClose={() => setActiveReceipt(null)}
       />
 
-      {/* Copilot Button */}
       <button
         onClick={() => setIsCopilotOpen(!isCopilotOpen)}
         className="fixed bottom-6 right-6 p-4 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#f2cd56] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-110 transition-transform z-50 flex items-center justify-center font-bold"
@@ -1114,7 +1113,6 @@ export default function POSTerminal() {
         {isCopilotOpen ? <X className="w-8 h-8" /> : <Bot className="w-8 h-8" />}
       </button>
 
-      {/* Copilot Window */}
       <AnimatePresence>
         {isCopilotOpen && (
           <motion.div
@@ -1138,7 +1136,6 @@ export default function POSTerminal() {
         )}
       </AnimatePresence>
 
-      {/* Agent Windows */}
       <AnimatePresence>
         {agentWindows.map((win) => (
           <motion.div

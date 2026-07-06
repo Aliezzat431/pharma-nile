@@ -1,3 +1,4 @@
+// src/store/slices/posSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { getMultiplier } from '@/lib/unitOptions';
 
@@ -5,22 +6,22 @@ export interface BatchDistribution {
   batchId: string;
   quantity: number;
   expiry: string;
-  price: number;
-  purchasePrice: number;
+  price: number;        // selling price from that batch
+  purchasePrice: number; // cost price from that batch
 }
 
 export interface CartItem {
-  id: string;
+  id: string; // Product ID or Barcode
   name: string;
-  price: number;
-  basePrice: number;
+  price: number;           // Display price (first batch FEFO) — kept for backward compat & unit display
+  basePrice: number;       // Original box-level price from first batch
   quantity: number;
   unit: string;
   availableUnits: string[];
   unitConversion: number;
   customPills?: number;
-  activeBatches?: any[];
-  batchDistributions?: BatchDistribution[];
+  activeBatches?: any[];                 // All active batches for this product
+  batchDistributions?: BatchDistribution[]; // Auto or user-defined distribution
 }
 
 interface PosState {
@@ -51,6 +52,7 @@ function autoDistribute(
     if (available <= 0) continue;
 
     const take = Math.min(available, remaining);
+
     const multi = getMultiplier(
       { unit_conversion: unitConversion, unit: 'علبة' },
       unit,
@@ -90,7 +92,6 @@ const posSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action: PayloadAction<CartItem>) => {
-      console.log('🔥 addToCart payload:', action.payload);
       const existingItem = state.cart.find((item) => item.id === action.payload.id);
       if (existingItem) {
         existingItem.quantity += action.payload.quantity;
@@ -113,7 +114,6 @@ const posSlice = createSlice({
         state.cart.push(newItem);
       }
       state.total = calcTotal(state.cart);
-      console.log('🔥 addToCart final cart:', state.cart);
     },
     removeFromCart: (state, action: PayloadAction<string>) => {
       state.cart = state.cart.filter((item) => item.id !== action.payload);
@@ -134,24 +134,20 @@ const posSlice = createSlice({
       state.total = calcTotal(state.cart);
     },
     updateUnit: (state, action: PayloadAction<{ id: string; unit: string; customPills?: number }>) => {
-      console.log('🔥 updateUnit called with:', action.payload);
       const item = state.cart.find((item) => item.id === action.payload.id);
       if (item) {
-        console.log('🔥 item before update:', item);
         item.unit = action.payload.unit;
-        if (action.payload.customPills !== undefined) {
+        if (action.payload.customPills) {
           item.customPills = action.payload.customPills;
         }
 
+        // ✅ استخدام unitConversion المخزنة في item لحساب المضاعف
         const multi = getMultiplier(
           { unit_conversion: item.unitConversion, unit: 'علبة' },
           item.unit,
           item.customPills || 10,
         );
-
-        console.log('🔥 multiplier:', multi);
         item.price = Number((item.basePrice / multi).toFixed(2));
-        console.log('🔥 new price:', item.price);
 
         item.batchDistributions = autoDistribute(
           item.activeBatches,
@@ -160,10 +156,8 @@ const posSlice = createSlice({
           item.unitConversion,
           item.customPills,
         );
-        console.log('🔥 item after update:', item);
       }
       state.total = calcTotal(state.cart);
-      console.log('🔥 new total:', state.total);
     },
     updateBatchDistribution: (state, action: PayloadAction<{ id: string; distributions: BatchDistribution[] }>) => {
       const item = state.cart.find((item) => item.id === action.payload.id);

@@ -1,64 +1,62 @@
+
 export const treatmentTypes = [
-  { id: "syrup_antibiotic", name: "مضاد حيوي شرب", baseUnit: "علبة", hasConversion: false },
-  { id: "pill_antibiotic", name: "مضاد حيوي برشام", baseUnit: "علبة", units: ["علبة", "شريط", "قرص"], hasConversion: true },
-  { id: "pill_normal", name: "دواء عادي برشام", baseUnit: "علبة", units: ["علبة", "شريط", "قرص"], hasConversion: true },
-  { id: "syrup_normal", name: "دواء شرب عادي", baseUnit: "علبة", hasConversion: false },
-  { id: "pill_vitamin", name: "فيتامين برشام", baseUnit: "علبة", units: ["علبة", "شريط", "قرص"], hasConversion: true },
-  { id: "syrup_vitamin", name: "فيتامين شرب", baseUnit: "علبة", hasConversion: false },
-  { id: "oral_drops", name: "نقط فم", baseUnit: "علبة", hasConversion: false },
-  { id: "nasal_drops", name: "قطرات أنف", baseUnit: "علبة", hasConversion: false },
-  { id: "eye_drops", name: "قطرات عين", baseUnit: "علبة", hasConversion: false },
-  { id: "ear_drops", name: "قطرات أذن", baseUnit: "علبة", hasConversion: false },
-  { id: "oral_spray", name: "بخاخ فم", baseUnit: "علبة", hasConversion: false },
-  { id: "nasal_spray", name: "بخاخ أنف", baseUnit: "علبة", hasConversion: false },
-  { id: "ointment", name: "مرهم", baseUnit: "علبة", hasConversion: false },
-  { id: "suppository", name: "لبوس", baseUnit: "علبة", units: ["علبة", "شريط", "لبوسة"], hasConversion: true },
-  { id: "injection", name: "حقن", baseUnit: "علبة", units: ["علبة", "أمبول"], hasConversion: true },
-  { id: "insulin", name: "أنسولين", baseUnit: "علبة", units: ["علبة", "قلم"], hasConversion: true },
-  { id: "effervescent", name: "فوار", baseUnit: "علبة", units: ["علبة", "كيس"], hasConversion: true },
-  { id: "cosmetics", name: "مستحضرات", baseUnit: "علبة", hasConversion: false },
-  { id: "tablet", name: "أقراص", baseUnit: "علبة", units: ["علبة", "شريط", "قرص"], hasConversion: true },
-  { id: "capsule", name: "كبسولات", baseUnit: "علبة", units: ["علبة", "شريط", "كبسولة"], hasConversion: true },
+  { id: "syrup_antibiotic",  name: "مضاد حيوي شرب",    baseUnit: "علبة", hasConversion: false },
+  { id: "pill_antibiotic",   name: "مضاد حيوي برشام",  baseUnit: "علبة", units: ["علبة", "شريط", "قرص"], hasConversion: true },
+
+  { id: "pill_normal",       name: "دواء عادي برشام",  baseUnit: "علبة", units: ["علبة", "شريط", "قرص"], hasConversion: true },
+  { id: "syrup_normal",      name: "دواء شرب عادي",    baseUnit: "علبة", hasConversion: false },
+
+  { id: "pill_vitamin",      name: "فيتامين برشام",    baseUnit: "علبة", units: ["علبة", "شريط", "قرص"], hasConversion: true },
+  { id: "syrup_vitamin",     name: "فيتامين شرب",      baseUnit: "علبة", hasConversion: false },
+
+  { id: "oral_drops",        name: "نقط فم",           baseUnit: "علبة", hasConversion: false },
+  { id: "nasal_drops",       name: "نقط أنف",          baseUnit: "علبة", hasConversion: false },
+  { id: "eye_drops",         name: "نقط عين",          baseUnit: "علبة", hasConversion: false },
+
+  { id: "oral_spray",        name: "بخاخ فم",          baseUnit: "علبة", hasConversion: false },
+  { id: "nasal_spray",       name: "بخاخ أنف",         baseUnit: "علبة", hasConversion: false },
+
+  { id: "ointment",          name: "مرهم",             baseUnit: "علبة", hasConversion: false },
+  { id: "suppository",       name: "لبوس",             baseUnit: "علبة", units: ["علبة", "شريط", "لبوسة"], hasConversion: true },
+
+  { id: "injection",         name: "حقن",              baseUnit: "علبة", units: ["علبة", "أمبول"], hasConversion: true },
+  { id: "insulin",           name: "أنسولين",          baseUnit: "علبة", units: ["علبة", "قلم"],   hasConversion: true },
+
+  { id: "effervescent",      name: "فوار",             baseUnit: "علبة", units: ["علبة", "كيس"],   hasConversion: true },
+
+  { id: "cosmetics",         name: "مستحضرات",        baseUnit: "علبة", hasConversion: false }
 ];
 
-export const getTypeDisplayName = (typeId: string): string => {
-  const found = treatmentTypes.find(t => t.id === typeId);
-  return found ? found.name : typeId;
-};
+export const typesWithUnits = treatmentTypes.reduce((acc: Record<string, string[]>, type) => {
+  const units = (type.hasConversion && type.units)
+    ? type.units
+    : [type.baseUnit];
+  
+  // Register by both Arabic name and English ID
+  acc[type.name] = units;
+  acc[type.id] = units;
+  return acc;
+}, {});
 
-export const getMultiplier = (prod: any, selectedUnit: string, customPills: number = 10): number => {
-  console.log('🧮 getMultiplier called with:', { prod, selectedUnit, customPills });
-  const conv = Number(prod.unit_conversion || prod.unitConversion || 1);
-  const baseUnit = prod.unit || "علبة";
-  
-  if (!selectedUnit || selectedUnit === baseUnit) {
-    console.log('🧮 multiplier = 1 (same unit or no unit)');
-    return 1;
-  }
-  
-  if (selectedUnit === "شريط") {
-    console.log(`🧮 multiplier = ${conv} (strip)`);
-    return conv;
-  }
-  
-  if (selectedUnit === "قرص" || selectedUnit === "كبسولة" || selectedUnit === "قطعة" || selectedUnit === "لبوسة") {
-    const result = conv * customPills;
-    console.log(`🧮 multiplier = ${result} (unit: ${selectedUnit}, conv: ${conv}, pills: ${customPills})`);
-    return result;
-  }
-  
-  console.log(`🧮 multiplier = ${conv} (fallback)`);
-  return conv;
-};
-
-export const typesWithUnits: Record<string, string[]> = {};
-treatmentTypes.forEach((type) => {
-  const units = (type.hasConversion && type.units) ? type.units : [type.baseUnit];
-  typesWithUnits[type.name] = units;
-  typesWithUnits[type.id] = units;
-});
-
+// Aliases and fallbacks for imported types from files
 typesWithUnits['tablet'] = ["علبة", "شريط", "قرص"];
 typesWithUnits['drops'] = ["علبة"];
 typesWithUnits['suppository'] = ["علبة", "شريط", "لبوسة"];
 typesWithUnits['injection'] = ["علبة", "أمبول"];
+
+
+export const getMultiplier = (prod: any, selectedUnit: string, customPills = 10) => {
+    const conv = Number(prod.unit_conversion || prod.unitConversion || 1);
+    const baseUnit = prod.unit || "علبة";
+    
+    if (!selectedUnit || selectedUnit === baseUnit) return 1; // 1 Box
+    
+    if (selectedUnit === "شريط") return conv; // Number of strips
+
+    if (selectedUnit === "قرص" || selectedUnit === "كبسولة" || selectedUnit === "قطعة" || selectedUnit === "لبوسة") {
+        return conv * customPills; // Number of strips * pills per strip
+    }
+
+    return conv;
+};
+
