@@ -1,3 +1,5 @@
+// app/pos/page.tsx
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -38,12 +40,49 @@ const getTypeDisplayName = (typeId: string): string => {
   return found ? found.name : typeId;
 };
 
+// ✅ خريطة تحويل الأسماء العربية إلى المعرفات الإنجليزية
+const arabicToId: Record<string, string> = {
+  'لبوس': 'suppository',
+  'قطرات عين': 'eye_drops',
+  'قطرات أنف': 'nasal_drops',
+  'قطرات أذن': 'ear_drops',
+  'أقراص': 'tablet',
+  'كبسولات': 'capsule',
+  'مرهم': 'ointment',
+  'حقن': 'injection',
+  'فوار': 'effervescent',
+  'أنسولين': 'insulin',
+  'نقط فم': 'oral_drops',
+  'بخاخ فم': 'oral_spray',
+  'بخاخ أنف': 'nasal_spray',
+  'مضاد حيوي شرب': 'syrup_antibiotic',
+  'مضاد حيوي برشام': 'pill_antibiotic',
+  'دواء عادي برشام': 'pill_normal',
+  'دواء شرب عادي': 'syrup_normal',
+  'فيتامين برشام': 'pill_vitamin',
+  'فيتامين شرب': 'syrup_vitamin',
+  'مستحضرات': 'cosmetics',
+};
+
 // ✅ دالة مساعدة للحصول على الوحدات المتاحة حسب نوع المنتج
 const getAvailableUnits = (type: string): string[] => {
-  const found = treatmentTypes.find(t => t.id === type);
+  // 1. حاول البحث بالمعرف مباشرة
+  let found = treatmentTypes.find(t => t.id === type);
+  
+  // 2. لو مش موجود، حاول تترجم العربي لإنجليزي
+  if (!found) {
+    const englishId = arabicToId[type];
+    if (englishId) {
+      found = treatmentTypes.find(t => t.id === englishId);
+    }
+  }
+  
+  // 3. لو لقيته وعنده تحويل، أرجع الوحدات المتاحة
   if (found && found.hasConversion && found.units) {
     return found.units;
   }
+  
+  // 4. غير ذلك أرجع علبة بس
   return ['علبة'];
 };
 
@@ -732,11 +771,9 @@ export default function POSTerminal() {
         )}
       </AnimatePresence>
 
-      {/* 1. اللوحة اليسرى: البحث، الماسح، والنتائج */}
       <div className="flex-1 min-h-[50vh] lg:min-h-0 flex flex-col gap-6">
         <POSHeader isOnline={isOnline} />
 
-        {/* شريط البحث + فلتر الأنواع */}
         <div className="flex flex-col sm:flex-row gap-3">
           <form onSubmit={handleBarcodeSubmit} className="flex-1 glass-panel p-2 flex items-center gap-3 relative">
             <div className="pl-3 text-gray-400">
