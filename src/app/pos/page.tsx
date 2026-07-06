@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -23,7 +23,8 @@ import {
   Calendar,
   FileUp,
   Filter,
-  XCircle
+  XCircle,
+  Bug,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -32,7 +33,7 @@ import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
 import { deleteProduct, createBatch, deleteBatch, updateBatch } from '@/lib/api/products';
-import { treatmentTypes } from "@/lib/unitOptions"; // ✅ استيراد treatmentTypes فقط
+import { treatmentTypes } from "@/lib/unitOptions";
 
 // ✅ دالة مساعدة محلية للحصول على الاسم العربي للنوع
 const getTypeDisplayName = (typeId: string): string => {
@@ -110,18 +111,24 @@ function InventoryBatchPanel({
   };
 
   const handleAddBatch = async () => {
+    console.log('[INVENTORY DEBUG] handleAddBatch called for product:', item.name, item.id);
     try {
       if (!newBatch.quantity || !newBatch.expiry_date || !newBatch.purchase_price || !newBatch.sale_price) {
         setInventoryError('الرجاء إكمال كافة البيانات المطلوبة للتشغيلة');
         return;
       }
 
+      console.log('[INVENTORY DEBUG] New batch data:', newBatch);
+      const parsedExpiry = parseDate(newBatch.expiry_date);
+      console.log('[INVENTORY DEBUG] Parsed expiry date:', parsedExpiry);
+
       await createBatch({
         product_id: item.id,
         ...newBatch,
-        expiry_date: parseDate(newBatch.expiry_date),
+        expiry_date: parsedExpiry,
       });
 
+      console.log('[INVENTORY DEBUG] Batch created successfully');
       setShowAddForm(false);
       setNewBatch({
         barcode: '',
@@ -132,7 +139,7 @@ function InventoryBatchPanel({
       });
       fetchInventory();
     } catch (error: any) {
-      console.error('Error adding batch:', error);
+      console.error('[INVENTORY DEBUG] Error adding batch:', error);
       setInventoryError(error.message || 'حدث خطأ أثناء إضافة التشغيلة');
     }
   };
@@ -141,6 +148,7 @@ function InventoryBatchPanel({
 
   const handleUpdateBatch = async () => {
     if (!editingBatch) return;
+    console.log('[INVENTORY DEBUG] handleUpdateBatch called for batch:', editingBatch.id);
     try {
       await updateBatch(editingBatch.id, {
         barcode: editingBatch.barcode,
@@ -149,38 +157,44 @@ function InventoryBatchPanel({
         sale_price: editingBatch.sale_price,
         expiry_date: parseDate(editingBatch.expiry_date)
       });
+      console.log('[INVENTORY DEBUG] Batch updated successfully');
       setEditingBatch(null);
       fetchInventory();
     } catch (error: any) {
-      console.error('Error updating batch:', error);
+      console.error('[INVENTORY DEBUG] Error updating batch:', error);
       setInventoryError(error.message || 'حدث خطأ أثناء تحديث التشغيلة');
     }
   };
 
   const handleDeleteBatch = async (batchId: string) => {
+    console.log('[INVENTORY DEBUG] handleDeleteBatch called for batch:', batchId);
     if (!window.confirm('هل أنت متأكد من حذف هذه التشغيلة؟ سيتم مسح الكمية المرتبطة بها نهائياً.')) return;
     try {
       await deleteBatch(batchId);
+      console.log('[INVENTORY DEBUG] Batch deleted successfully');
       fetchInventory();
     } catch (error: any) {
-      console.error('Error deleting batch:', error);
+      console.error('[INVENTORY DEBUG] Error deleting batch:', error);
       setInventoryError(error.message || 'فشل حذف التشغيلة. قد تكون مرتبطة بعمليات بيع.');
     }
   };
 
   const handleDeleteProduct = async () => {
+    console.log('[INVENTORY DEBUG] handleDeleteProduct called for product:', item.name, item.id);
     if (!window.confirm(`هل أنت متأكد من حذف المنتج "${item.name}" نهائياً من النظام؟`)) return;
     try {
       await deleteProduct(item.id);
+      console.log('[INVENTORY DEBUG] Product deleted successfully');
       fetchInventory();
     } catch (error: any) {
-      console.error('Error deleting product:', error);
+      console.error('[INVENTORY DEBUG] Error deleting product:', error);
       setInventoryError(error.message || 'فشل حذف المنتج. قد يكون هناك مبيعات مرتبطة به.');
     }
   };
 
   return (
     <div className="p-6 bg-white/[0.02] border-t border-white/5">
+      {/* ... JSX remains same ... */}
       <div className="flex justify-between items-center mb-4">
         <h4 className="text-sm font-bold text-gray-400 font-cairo">التشغيلات المتاحة</h4>
         <div className="flex gap-2">
@@ -203,6 +217,7 @@ function InventoryBatchPanel({
         </div>
       </div>
 
+      {/* باقي الكود كما هو */}
       <AnimatePresence>
         {showAddForm && (
           <motion.div
@@ -461,6 +476,9 @@ export default function InventoryDashboard() {
     expiry_date: '',
   });
 
+  // ✅ Debug state
+  const [showDebug, setShowDebug] = useState(false);
+
   const pageRef = usePageGSAP();
   const { user } = useAuth();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -485,8 +503,10 @@ export default function InventoryDashboard() {
   }, [pharmacyId]);
 
   const fetchInventory = async () => {
+    console.log('[INVENTORY DEBUG] fetchInventory called');
     setLoading(true);
     try {
+      console.log('[INVENTORY DEBUG] Fetching products for pharmacy:', pharmacyId);
       const { data: products, error } = await supabase
         .from('products')
         .select(`
@@ -497,6 +517,8 @@ export default function InventoryDashboard() {
         .eq('pharmacy_id', pharmacyId)
         .eq('batches.pharmacy_id', pharmacyId);
       if (error) throw error;
+
+      console.log('[INVENTORY DEBUG] Raw products data:', products);
 
       const formatted: InventoryItem[] = products.map((p: any) => {
         const sortedBatches = [...(p.batches || [])].sort(
@@ -519,14 +541,23 @@ export default function InventoryDashboard() {
         };
       });
 
+      console.log('[INVENTORY DEBUG] Formatted items:', formatted);
       setItems(formatted);
     } catch (error) {
-      console.error('Error fetching inventory:', error);
+      console.error('[INVENTORY DEBUG] Error fetching inventory:', error);
       setInventoryError('حدث خطأ أثناء جلب بيانات المخزن');
     } finally {
       setLoading(false);
     }
   };
+
+  // Debug effect to log items changes
+  useEffect(() => {
+    console.log('[INVENTORY DEBUG] items updated, count:', items.length);
+    if (showDebug) {
+      console.table(items.map(i => ({ name: i.name, type: i.type, total: i.total_quantity, batches: i.batches.length })));
+    }
+  }, [items, showDebug]);
 
   // فلتر متقدم: بحث + نوع
   const filteredItems = useMemo(() => {
@@ -607,7 +638,64 @@ export default function InventoryDashboard() {
   }, [items]);
 
   return (
-    <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4">
+    <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4 relative">
+      {/* 🔍 Debug Toggle Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={() => setShowDebug(!showDebug)}
+          className="p-2 rounded-full bg-[#00CED1]/20 hover:bg-[#00CED1]/40 text-[#00CED1] transition-all shadow-lg"
+          title="تفعيل وضع التصحيح"
+        >
+          <Bug className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Debug Panel */}
+      <AnimatePresence>
+        {showDebug && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 right-4 z-50 w-96 max-h-[80vh] overflow-auto bg-black/90 border border-[#00CED1]/30 rounded-2xl shadow-2xl p-4 text-xs font-mono text-gray-300 backdrop-blur-xl"
+          >
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-[#00CED1] font-bold font-cairo">🔍 Debug Info</h3>
+              <span className="text-gray-500">Items: {items.length}</span>
+            </div>
+            <div className="space-y-2">
+              <div className="bg-white/5 p-2 rounded">
+                <div className="text-gray-400">Pharmacy ID:</div>
+                <div className="text-white truncate">{pharmacyId || 'N/A'}</div>
+              </div>
+              <div className="bg-white/5 p-2 rounded">
+                <div className="text-gray-400">Selected Type:</div>
+                <div className="text-white">{selectedType || 'All'}</div>
+              </div>
+              <div className="bg-white/5 p-2 rounded">
+                <div className="text-gray-400">Search Query:</div>
+                <div className="text-white">{search || '(empty)'}</div>
+              </div>
+              <div className="bg-white/5 p-2 rounded">
+                <div className="text-gray-400">Filtered Items:</div>
+                <div className="text-white">{filteredItems.length}</div>
+              </div>
+              <div className="bg-white/5 p-2 rounded max-h-40 overflow-y-auto">
+                <div className="text-gray-400 mb-1">Product List (first 5):</div>
+                {items.slice(0, 5).map((item, idx) => (
+                  <div key={idx} className="text-white border-b border-white/5 py-1">
+                    <span className="text-[#00CED1]">{item.name}</span>
+                    <span className="text-gray-500 ml-2">type: {item.type}</span>
+                    <span className="text-gray-500 ml-2">qty: {item.total_quantity}</span>
+                  </div>
+                ))}
+                {items.length > 5 && <div className="text-gray-500">... and {items.length - 5} more</div>}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header data-gsap="fade-up" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
