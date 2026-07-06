@@ -30,7 +30,23 @@ import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
 import { deleteProduct, createBatch, deleteBatch, updateBatch } from '@/lib/api/products';
-import { treatmentTypes, getTypeDisplayName } from "@/lib/unitOptions";
+// ✅ استيراد treatmentTypes فقط
+import { treatmentTypes } from "@/lib/unitOptions";
+
+// ✅ تعريف الدالة محلياً
+const getTypeDisplayName = (typeId: string): string => {
+  const found = treatmentTypes.find(t => t.id === typeId);
+  return found ? found.name : typeId;
+};
+
+// ✅ تعريف دالة الوحدات المتاحة (إذا احتجتها)
+const getAvailableUnits = (type: string): string[] => {
+  const found = treatmentTypes.find(t => t.id === type);
+  if (found && found.hasConversion && found.units) {
+    return found.units;
+  }
+  return ['علبة'];
+};
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), {
   ssr: false,
