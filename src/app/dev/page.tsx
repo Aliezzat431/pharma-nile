@@ -288,8 +288,8 @@ export default function DevDashboard() {
       });
 
       // --- Table stats all in parallel ---
-      const TABLES = ['products','orders','customers','invoices','returns',
-                      'stock_transfers','financials','companies','shortages'];
+      const TABLES = ['products','orders','customers','batches',
+                      'stock_transfers','financial_transactions','audit_logs','sessions','monthly_summaries'];
       const tableResults = await Promise.all(
         TABLES.map(t =>
           supabase.from(t as any)

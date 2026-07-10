@@ -147,6 +147,7 @@ CREATE TABLE orders (
   profit_total numeric DEFAULT 0,
   status text DEFAULT 'completed',
   payment_method text DEFAULT 'cash',
+  notes text,
   created_at timestamptz DEFAULT now()
 );
 
@@ -170,11 +171,12 @@ CREATE TABLE stock_transfers (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   from_pharmacy_id  uuid NOT NULL REFERENCES pharmacies(id) ON DELETE CASCADE,
   to_pharmacy_id    uuid NOT NULL REFERENCES pharmacies(id) ON DELETE CASCADE,
-  product_id        uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  product_id        uuid REFERENCES products(id) ON DELETE CASCADE,
+  product_name      text,  -- denormalized name for legacy API compatibility
   batch_id          uuid REFERENCES batches(id) ON DELETE SET NULL,
   quantity          int NOT NULL CHECK (quantity > 0),
-  status            text NOT NULL DEFAULT 'pending' 
-                    CHECK (status IN ('pending', 'approved', 'rejected', 'completed', 'cancelled')),
+  status            text NOT NULL DEFAULT 'pending'
+                    CHECK (status IN ('pending', 'approved', 'rejected', 'completed', 'cancelled', 'shipped')),
   notes             text,
   requested_by      uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   approved_by       uuid REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -546,6 +548,143 @@ BEGIN
   RETURN jsonb_build_object('success', true, 'count', v_count, 'errors', v_errors);
 END; $$;
 
+-- Find Product in Other Pharmacies (used by transfers page cross-chain search)
+CREATE OR REPLACE FUNCTION find_product_in_other_pharmacies(search_term text, current_pharmacy_id uuid)
+RETURNS TABLE (
+  pharmacy_id uuid, pharmacy_name text,
+  product_id uuid, product_name text,
+  quantity int, price numeric
+)
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    ph.id               AS pharmacy_id,
+    ph.name             AS pharmacy_name,
+    p.id                AS product_id,
+    p.name              AS product_name,
+    COALESCE(SUM(b.quantity), 0)::int AS quantity,
+    p.price
+  FROM products p
+  JOIN pharmacies ph ON p.pharmacy_id = ph.id
+  LEFT JOIN batches b ON b.product_id = p.id AND b.pharmacy_id = p.pharmacy_id AND b.quantity > 0
+  WHERE p.pharmacy_id <> current_pharmacy_id
+    AND ph.is_active = true
+    AND (
+      p.name      ILIKE '%' || search_term || '%' OR
+      p.barcode   ILIKE '%' || search_term || '%' OR
+      p.company_name ILIKE '%' || search_term || '%'
+    )
+  GROUP BY ph.id, ph.name, p.id, p.name, p.price
+  ORDER BY quantity DESC, p.name ASC
+  LIMIT 30;
+END; $$;
+
+-- Get Financial Stats (used by /financials page)
+CREATE OR REPLACE FUNCTION get_financial_stats(p_pharmacy_id uuid, p_days int DEFAULT 30)
+RETURNS json LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_cutoff timestamptz := now() - (p_days || ' days')::interval;
+  v_result json;
+BEGIN
+  SELECT json_build_object(
+    'total_sales',        COALESCE(SUM(total), 0),
+    'total_cost',         COALESCE(SUM(cost_total), 0),
+    'total_profit',       COALESCE(SUM(profit_total), 0),
+    'total_transactions', COUNT(*),
+    'cash_revenue',       COALESCE(SUM(CASE WHEN payment_method = 'cash'   THEN total ELSE 0 END), 0),
+    'debt_revenue',       COALESCE(SUM(CASE WHEN payment_method = 'debt'   THEN total ELSE 0 END), 0),
+    'sadqah_revenue',     COALESCE(SUM(CASE WHEN payment_method = 'sadqah' THEN total ELSE 0 END), 0),
+    'daily_revenue', (
+      SELECT json_agg(d ORDER BY d.date DESC)
+      FROM (
+        SELECT date_trunc('day', created_at)::date::text AS date,
+               SUM(total) AS revenue, SUM(profit_total) AS profit
+        FROM orders
+        WHERE pharmacy_id = p_pharmacy_id AND status = 'completed' AND created_at >= v_cutoff
+        GROUP BY date_trunc('day', created_at)::date
+      ) d
+    )
+  ) INTO v_result
+  FROM orders
+  WHERE pharmacy_id = p_pharmacy_id AND status = 'completed' AND created_at >= v_cutoff;
+
+  RETURN COALESCE(v_result, json_build_object(
+    'total_sales', 0, 'total_cost', 0, 'total_profit', 0,
+    'total_transactions', 0, 'cash_revenue', 0, 'debt_revenue', 0,
+    'sadqah_revenue', 0, 'daily_revenue', '[]'::json
+  ));
+END; $$;
+
+-- Get Monthly Report (used by /financials monthly view)
+CREATE OR REPLACE FUNCTION get_monthly_report(
+  p_pharmacy_id uuid, p_year int DEFAULT NULL, p_months_back int DEFAULT 12
+)
+RETURNS TABLE (
+  id uuid, pharmacy_id uuid, year int, month int, month_name text,
+  total_revenue numeric, total_cost numeric, total_profit numeric,
+  total_orders int, cash_revenue numeric, debt_revenue numeric,
+  sadqah_revenue numeric, returns_total numeric, updated_at timestamptz
+)
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    m.id, m.pharmacy_id, m.year, m.month,
+    to_char(to_date(m.month::text, 'MM'), 'Month') AS month_name,
+    m.total_revenue, m.total_cost, m.total_profit, m.total_orders,
+    m.cash_revenue, m.debt_revenue, m.sadqah_revenue, m.returns_total, m.updated_at
+  FROM monthly_summaries m
+  WHERE m.pharmacy_id = p_pharmacy_id
+    AND (p_year IS NULL OR m.year = p_year)
+  ORDER BY m.year DESC, m.month DESC
+  LIMIT p_months_back;
+END; $$;
+
+-- Get Critical Alerts (unified urgent alerts for dashboard)
+CREATE OR REPLACE FUNCTION get_critical_alerts(p_pharmacy_id uuid)
+RETURNS json LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_out_of_stock json;
+  v_expiring     json;
+  v_high_debt    json;
+BEGIN
+  SELECT json_agg(row_to_json(t)) INTO v_out_of_stock
+  FROM (
+    SELECT p.name, p.id AS product_id, 0 AS quantity
+    FROM product_inventory pi
+    JOIN products p ON pi.id = p.id
+    WHERE pi.pharmacy_id = p_pharmacy_id AND pi.total_quantity <= 0
+    LIMIT 5
+  ) t;
+
+  SELECT json_agg(row_to_json(t)) INTO v_expiring
+  FROM (
+    SELECT p.name, b.expiry_date, b.quantity, b.id AS batch_id
+    FROM batches b
+    JOIN products p ON b.product_id = p.id
+    WHERE b.pharmacy_id = p_pharmacy_id AND b.quantity > 0
+      AND b.expiry_date <= (now() + interval '90 days')
+    ORDER BY b.expiry_date ASC
+    LIMIT 5
+  ) t;
+
+  SELECT json_agg(row_to_json(t)) INTO v_high_debt
+  FROM (
+    SELECT c.name, c.total_debt, c.id AS customer_id
+    FROM customers c
+    WHERE c.pharmacy_id = p_pharmacy_id AND c.total_debt > 5000
+    ORDER BY c.total_debt DESC
+    LIMIT 5
+  ) t;
+
+  RETURN json_build_object(
+    'out_of_stock',        COALESCE(v_out_of_stock, '[]'::json),
+    'expiring_soon',       COALESCE(v_expiring,     '[]'::json),
+    'high_debt_customers', COALESCE(v_high_debt,    '[]'::json)
+  );
+END; $$;
+
 -- 7. ROW LEVEL SECURITY (RLS) POLICIES
 
 -- Enable RLS on all tables
@@ -687,6 +826,7 @@ GRANT ALL ON TABLE sessions TO authenticated;
 GRANT ALL ON TABLE monthly_summaries TO authenticated;
 GRANT ALL ON TABLE inventory_snapshots TO authenticated;
 GRANT ALL ON TABLE stock_transfers TO authenticated;
+GRANT ALL ON TABLE agent_action_logs TO authenticated;
 
 GRANT SELECT ON TABLE product_inventory TO authenticated;
 GRANT EXECUTE ON FUNCTION smart_search TO authenticated;
@@ -695,3 +835,7 @@ GRANT EXECUTE ON FUNCTION get_dashboard_stats TO authenticated;
 GRANT EXECUTE ON FUNCTION complete_stock_transfer TO authenticated;
 GRANT EXECUTE ON FUNCTION bulk_import_inventory TO authenticated;
 GRANT EXECUTE ON FUNCTION verify_chain_password TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION find_product_in_other_pharmacies TO authenticated;
+GRANT EXECUTE ON FUNCTION get_financial_stats TO authenticated;
+GRANT EXECUTE ON FUNCTION get_monthly_report TO authenticated;
+GRANT EXECUTE ON FUNCTION get_critical_alerts TO authenticated;
