@@ -8,10 +8,29 @@ export async function POST(request: NextRequest) {
 
     const devPassword = process.env.DEVELOPER_PASSWORD;
     const devEmail = process.env.DEVELOPER_EMAIL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    // DEBUG: log env vars presence (never log actual key values)
+    console.log('[DevAuth DEBUG] env check:', {
+      hasDevPassword: !!devPassword,
+      hasDevEmail: !!devEmail,
+      hasSupabaseUrl: !!supabaseUrl,
+      hasServiceRoleKey: !!serviceRoleKey,
+      supabaseUrlValue: supabaseUrl,        // OK to log URL
+      devEmailValue: devEmail,              // OK to log email
+    });
 
     if (!devPassword || !devEmail) {
       return NextResponse.json(
-        { error: 'تكوين حساب المطور غير مكتمل في النظام' },
+        { error: `[DEBUG] DEVELOPER_PASSWORD=${devPassword ? 'set' : 'MISSING'} | DEVELOPER_EMAIL=${devEmail ? 'set' : 'MISSING'}` },
+        { status: 500 }
+      );
+    }
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json(
+        { error: `[DEBUG] NEXT_PUBLIC_SUPABASE_URL=${supabaseUrl ? 'set' : 'MISSING'} | SUPABASE_SERVICE_ROLE_KEY=${serviceRoleKey ? 'set' : 'MISSING'}` },
         { status: 500 }
       );
     }
@@ -44,9 +63,9 @@ export async function POST(request: NextRequest) {
       await adminSupabase.auth.admin.listUsers({ perPage: 1000 });
 
     if (listError) {
-      console.error('[DevAuth] listUsers error:', listError.message);
+      console.error('[DevAuth] listUsers error:', listError);
       return NextResponse.json(
-        { error: 'خطأ داخلي أثناء التحقق من حساب المطور' },
+        { error: `[DEBUG] listUsers failed: ${listError.message} | status: ${(listError as any)?.status ?? 'n/a'}` },
         { status: 500 }
       );
     }
@@ -68,9 +87,9 @@ export async function POST(request: NextRequest) {
     );
 
     if (updateError) {
-      console.error('[DevAuth] updateUserById error:', updateError.message);
+      console.error('[DevAuth] updateUserById error:', updateError);
       return NextResponse.json(
-        { error: 'فشل تهيئة صلاحيات المطور' },
+        { error: `[DEBUG] updateUserById failed: ${updateError.message}` },
         { status: 500 }
       );
     }
@@ -81,7 +100,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('[DevAuth] Unexpected error:', error);
     return NextResponse.json(
-      { error: 'حدث خطأ غير متوقع' },
+      { error: `[DEBUG] Unexpected: ${error?.message ?? String(error)}` },
       { status: 500 }
     );
   }

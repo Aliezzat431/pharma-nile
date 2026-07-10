@@ -669,10 +669,12 @@ CREATE POLICY "audit_select" ON audit_logs FOR SELECT TO authenticated USING (ph
 CREATE POLICY "snapshots_select" ON inventory_snapshots FOR SELECT TO authenticated USING (pharmacy_id = get_my_pharmacy_id());
 
 -- PROFILES & ACCESS
-CREATE POLICY "profiles_select_own" ON user_profiles FOR SELECT TO authenticated USING (id = auth.uid());
-CREATE POLICY "profiles_insert_own" ON user_profiles FOR INSERT TO authenticated, anon WITH CHECK (true);
+CREATE POLICY "profiles_select_own" ON user_profiles FOR SELECT TO authenticated USING (id = auth.uid() OR pharmacy_id = get_my_pharmacy_id());
+CREATE POLICY "profiles_insert_own" ON user_profiles FOR INSERT TO authenticated WITH CHECK (id = auth.uid());
+CREATE POLICY "profiles_update_own" ON user_profiles FOR UPDATE TO authenticated USING (id = auth.uid() OR pharmacy_id = get_my_pharmacy_id()) WITH CHECK (id = auth.uid() OR pharmacy_id = get_my_pharmacy_id());
 CREATE POLICY "access_select_own" ON user_pharmacy_access FOR SELECT TO authenticated USING (user_id = auth.uid());
-CREATE POLICY "access_insert_own" ON user_pharmacy_access FOR INSERT TO authenticated, anon WITH CHECK (true);
+CREATE POLICY "access_insert_own" ON user_pharmacy_access FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+CREATE POLICY "access_update_own" ON user_pharmacy_access FOR UPDATE TO authenticated USING (user_id = auth.uid());
 
 -- ─────────────────────────────────────────────────────────────
 -- 8. PERMISSIONS (GRANTS)
