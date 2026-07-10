@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const { password } = await request.json();
 
     const devPassword = process.env.DEVELOPER_PASSWORD;
-    const devEmail    = process.env.DEVELOPER_EMAIL;
+    const devEmail = process.env.DEVELOPER_EMAIL;
 
     if (!devPassword || !devEmail) {
       return NextResponse.json(
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Timing-safe password comparison ---
-    const inputBuf  = Buffer.from(password  ?? '');
+    const inputBuf = Buffer.from(password ?? '');
     const secretBuf = Buffer.from(devPassword);
 
     const isMatch =

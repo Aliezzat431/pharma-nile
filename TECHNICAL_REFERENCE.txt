@@ -1,8 +1,20 @@
 PHARMANILE — TECHNICAL REFERENCE DOCUMENT
 ==========================================
-Version: 2.0 (Multi-Chain Architecture)
+Version: 2.1 (Multi-Chain Architecture)
 Last Updated: July 2026
 Environment: Next.js 15 / Supabase / TypeScript
+
+Changelog v2.1:
+  - Added Section 11: Database Triggers Reference
+  - Added Section 12: Index Strategy & Performance
+  - Added Section 13: Realtime Subscriptions
+  - Added Section 14: Migration Strategy
+  - Added Section 15: Backup & Recovery
+  - Added Section 16: Monitoring & Health Checks
+  - Fixed Section 3: chain_admin RLS clarity
+  - Fixed Section 5: /api/agent/execute auth requirement
+  - Fixed Section 6: Offline conflict resolution strategy
+  - Fixed Section 9: chain_admin pharmacy_id=null is intentional
 
 
 ================================================================================
@@ -21,6 +33,7 @@ Core Dependencies:
   - framer-motion@12.x          (Page and component animations)
   - lucide-react@0.x            (Icon library)
   - redux toolkit + react-redux  (Global state management)
+  - recharts@2.x                (Charts: dashboard / financials)
   - next-themes                  (Theme switching)
 
 Dev Dependencies:
@@ -42,7 +55,7 @@ TABLE: chains
 
 TABLE: pharmacies
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid()
-  chain_id     uuid REFERENCES chains(id)
+  chain_id     uuid REFERENCES chains(id) ON DELETE CASCADE
   name         text NOT NULL
   address      text
   phone        text
@@ -52,12 +65,14 @@ TABLE: pharmacies
 
 TABLE: user_profiles
   id           uuid PRIMARY KEY REFERENCES auth.users(id)
-  pharmacy_id  uuid REFERENCES pharmacies(id)     [NULL for chain_admin]
+  pharmacy_id  uuid REFERENCES pharmacies(id)     [NULL for chain_admin & developer]
   chain_id     uuid REFERENCES chains(id)
   full_name    text
-  role         text  (chain_admin | admin | manager | staff)
+  role         text  (chain_admin | admin | manager | staff | developer)
+  salary       numeric DEFAULT 0
+  incentives   numeric DEFAULT 0
   created_at   timestamptz DEFAULT now()
-  PURPOSE: Extended user info beyond auth.users.
+  PURPOSE: Extended user info beyond auth.users. Populated by trigger (see Section 11).
 
 TABLE: user_pharmacy_access
   user_id      uuid REFERENCES auth.users(id)
@@ -89,21 +104,38 @@ TABLE: orders
   pharmacy_id    uuid REFERENCES pharmacies(id)
   customer_id    uuid REFERENCES customers(id)
   user_id        uuid REFERENCES auth.users(id)
-  total_amount   numeric(12,2)
+  total          numeric(12,2)
+  cost_total     numeric(12,2)
+  profit_total   numeric(12,2)
   paid_amount    numeric(12,2)
   discount       numeric(12,2) DEFAULT 0
-  payment_method text
-  status         text (completed | pending | cancelled)
+  payment_method text  (cash | debt | sadqah)
+  status         text  (completed | pending | cancelled | returned)
   notes          text
   created_at     timestamptz
 
 TABLE: order_items
-  id          uuid PRIMARY KEY
-  order_id    uuid REFERENCES orders(id)
-  product_id  uuid REFERENCES products(id)
-  quantity    integer
-  unit_price  numeric(12,2)
-  total_price numeric(12,2)
+  id            uuid PRIMARY KEY
+  order_id      uuid REFERENCES orders(id) ON DELETE CASCADE
+  product_id    uuid REFERENCES products(id)
+  batch_id      uuid REFERENCES batches(id)
+  pharmacy_id   uuid REFERENCES pharmacies(id)
+  name          text
+  quantity      integer
+  price         numeric(12,2)
+  unit          text
+  NOTE: ON DELETE CASCADE means deleting an order removes all its items automatically.
+
+TABLE: batches
+  id             uuid PRIMARY KEY
+  product_id     uuid REFERENCES products(id)
+  pharmacy_id    uuid REFERENCES pharmacies(id)
+  barcode        text
+  quantity       integer DEFAULT 0
+  purchase_price numeric(12,2)
+  expiry_date    date
+  created_at     timestamptz
+  PURPOSE: Tracks individual stock batches for FEFO/FIFO/LIFO inventory control.
 
 TABLE: customers
   id           uuid PRIMARY KEY
@@ -129,10 +161,11 @@ TABLE: invoices
 
 TABLE: invoice_items
   id          uuid PRIMARY KEY
-  invoice_id  uuid REFERENCES invoices(id)
+  invoice_id  uuid REFERENCES invoices(id) ON DELETE CASCADE
   product_id  uuid REFERENCES products(id)
   quantity    integer
   unit_cost   numeric(12,2)
+  NOTE: ON DELETE CASCADE — deleting invoice removes all line items.
 
 TABLE: returns
   id           uuid PRIMARY KEY
@@ -203,26 +236,45 @@ TABLE: sadqah
   notes        text
   date         date
 
-TABLE: monthly_sales_summary
+TABLE: monthly_summaries  [pre-aggregated, see database_optimization.sql]
   id            uuid PRIMARY KEY
-  pharmacy_id   uuid REFERENCES pharmacies(id)
+  pharmacy_id   uuid REFERENCES pharmacies(id) ON DELETE CASCADE
   year          integer
-  month         integer
-  total_sales   numeric
+  month         integer CHECK (month BETWEEN 1 AND 12)
+  total_revenue numeric(14,2)
+  total_cost    numeric(14,2)
+  total_profit  numeric(14,2)
   total_orders  integer
-  total_returns numeric
-  net_revenue   numeric
+  cash_revenue  numeric(14,2)
+  debt_revenue  numeric(14,2)
+  returns_total numeric(14,2)
   updated_at    timestamptz
+  UNIQUE (pharmacy_id, year, month)
 
-TABLE: agent_logs
-  id           uuid PRIMARY KEY
-  pharmacy_id  uuid REFERENCES pharmacies(id)
-  user_id      uuid
-  action       text
-  input        text
-  output       text
-  status       text
-  created_at   timestamptz
+TABLE: pharmacy_settings
+  pharmacy_id             uuid PRIMARY KEY REFERENCES pharmacies(id) ON DELETE CASCADE
+  pharmacy_name           text
+  email                   text
+  phone                   text
+  inventory_method        text DEFAULT 'FEFO'   (FEFO | FIFO | LIFO)
+  stock_alert_threshold   integer DEFAULT 20
+  tax_percentage          numeric DEFAULT 14
+  printer_size            text DEFAULT '80mm'
+  return_days_limit       integer DEFAULT 14
+  updated_at              timestamptz
+
+TABLE: agent_action_logs
+  id               uuid PRIMARY KEY
+  pharmacy_id      uuid REFERENCES pharmacies(id)
+  user_id          uuid
+  action_type      text   (INSERT | UPDATE | DELETE)
+  table_name       text
+  record_id        uuid
+  previous_payload jsonb
+  new_payload      jsonb
+  undone           boolean DEFAULT false
+  created_at       timestamptz
+  PURPOSE: Undo/redo log for AI agent operations.
 
 TABLE: preferences
   id             uuid PRIMARY KEY
@@ -236,46 +288,76 @@ TABLE: preferences
 SECTION 3: ROW LEVEL SECURITY (RLS) POLICY MATRIX
 ================================================================================
 
-Policy enforcement is done via these DB helper functions:
-  - get_my_pharmacy_id()  → SELECT pharmacy_id FROM user_profiles WHERE id = auth.uid()
-  - get_my_chain_id()     → SELECT chain_id FROM user_profiles WHERE id = auth.uid()
+DB helper functions used in all policies:
+  get_my_pharmacy_id() → SELECT pharmacy_id FROM user_profiles WHERE id = auth.uid()
+  get_my_chain_id()    → SELECT chain_id    FROM user_profiles WHERE id = auth.uid()
 
-Table            | SELECT | INSERT | UPDATE | DELETE | Notes
------------------+--------+--------+--------+--------+---------------------------
-chains           | ✓      | ✗      | chain_admin only | ✗ | chain_admin sees own
-pharmacies       | chain  | chain_admin | chain_admin | ✗ | chain-scoped
-user_profiles    | self + manager | trigger | self | ✗ |
-products         | pharm  | pharm  | pharm  | admin  | pharmacy-scoped
-orders           | pharm  | pharm  | pharm  | admin  |
-customers        | pharm  | pharm  | pharm  | admin  |
-invoices         | pharm  | pharm  | pharm  | admin  |
-stock_transfers  | chain  | chain  | admin  | ✗      | cross-pharmacy in chain
-financials       | pharm  | pharm  | pharm  | admin  |
-staff_members    | pharm  | admin  | admin  | admin  |
+────────────────────────────────────────────────────────────────────────────────
+Table            | SELECT          | INSERT       | UPDATE       | DELETE
+────────────────────────────────────────────────────────────────────────────────
+chains           | chain_admin *1  | ✗            | chain_admin  | ✗
+pharmacies       | chain-scoped    | chain_admin  | chain_admin  | ✗
+user_profiles    | self + manager  | trigger only | self         | ✗
+products         | pharmacy-scoped | pharm        | pharm        | admin
+orders           | pharmacy-scoped | pharm        | pharm        | admin
+order_items      | pharmacy-scoped | pharm        | pharm        | admin
+customers        | pharmacy-scoped | pharm        | pharm        | admin
+invoices         | pharmacy-scoped | pharm        | pharm        | admin
+invoice_items    | pharmacy-scoped | pharm        | pharm        | admin
+returns          | pharmacy-scoped | pharm        | pharm        | admin
+stock_transfers  | chain-scoped *2 | chain        | admin        | ✗
+financials       | pharmacy-scoped | pharm        | pharm        | admin
+staff_members    | pharmacy-scoped | admin        | admin        | admin
+agent_action_logs| pharmacy-scoped | pharm        | pharm        | admin
+monthly_summaries| pharmacy-scoped | pharm (auto) | pharm (auto) | admin
+pharmacy_settings| pharmacy-scoped | admin        | admin        | ✗
+────────────────────────────────────────────────────────────────────────────────
+
+*1 chain_admin ACCESS CLARIFICATION (critical):
+   - chain_admin's pharmacy_id is NULL — this is INTENTIONAL, not an error.
+   - chain_admin can SELECT all pharmacies WHERE chain_id = get_my_chain_id().
+   - chain_admin can SELECT/UPDATE chains WHERE id = get_my_chain_id().
+   - LayoutWrapper MUST NOT block chain_admin for missing pharmacy_id.
+   - Check: if (userRole !== 'chain_admin' && !pharmacyId) → redirect.
+
+*2 stock_transfers chain scope:
+   - Both from_pharmacy_id and to_pharmacy_id must belong to the same chain.
+   - Policy uses: from_pharmacy_id IN (SELECT id FROM pharmacies WHERE chain_id = get_my_chain_id())
+
+anon role grants required for login page:
+  GRANT SELECT ON public.chains    TO anon;
+  GRANT SELECT ON public.pharmacies TO anon;
 
 
 ================================================================================
 SECTION 4: AUTH JWT TOKEN STRUCTURE
 ================================================================================
 
-After successful login, Supabase JWT contains:
+After successful login, Supabase JWT user_metadata contains:
 
 {
   "sub": "<user-uuid>",
   "email": "user@example.com",
   "user_metadata": {
-    "pharmacy_id": "<pharmacy-uuid>",   // null for chain_admin
-    "chain_id": "<chain-uuid>",
-    "role": "admin | manager | staff | chain_admin",
-    "full_name": "نور محمد"
+    "pharmacy_id": "<pharmacy-uuid>",   // NULL for chain_admin and developer
+    "chain_id":    "<chain-uuid>",
+    "role":        "admin | manager | staff | chain_admin | developer",
+    "full_name":   "نور محمد"
   },
   "exp": 1234567890,
   "aud": "authenticated"
 }
 
-NOTE: JWT metadata is set during registration via raw_user_meta_data.
-      The trigger handle_new_user_registration() reads these values.
-      Changes to role require re-login or session refresh.
+IMPORTANT NOTES:
+  1. JWT metadata is stamped at registration via raw_user_meta_data in signUp().
+  2. The trigger handle_new_user_registration() (see Section 11) reads these
+     values and syncs them to user_profiles on auth.users INSERT.
+  3. JWT is cached — after changing a user's role in user_profiles, the user
+     MUST sign out and back in for JWT claims to reflect the new role.
+  4. NEVER trust client-supplied role/pharmacy_id headers. Always derive
+     context from get_my_pharmacy_id() / get_my_chain_id() DB functions.
+  5. developer role: pharmacy_id is NULL. Not subject to normal RLS scoping.
+     Developer access is admin-only and controlled via DEVELOPER_EMAIL env var.
 
 
 ================================================================================
@@ -283,60 +365,75 @@ SECTION 5: API ROUTE DETAILS
 ================================================================================
 
 POST /api/auth/register
-  Body: { email, password, full_name, pharmacy_id, chain_id, role }
-  Action: Creates Supabase auth user with metadata
+  Body:   { email, password, full_name, pharmacy_id, chain_id, role }
+  Auth:   Service role key (bypasses RLS intentionally)
+  Action: Creates Supabase auth user + syncs user_profiles via trigger
   Returns: { success, user_id }
-  Auth: Service role (bypasses RLS)
+
+POST /api/auth/developer
+  Body:   { password }
+  Auth:   Matches DEVELOPER_PASSWORD env var; uses service role to create/sync
+  Action: Finds or creates developer user in auth.users + user_profiles
+  Returns: { session } or { error }
+  Security: Rate-limited. Developer email defined only in server env vars.
 
 POST /api/staff/create
-  Body: { email, password, full_name, role, pharmacy_id }
-  Auth: Requires admin JWT
-  Action: Creates staff user scoped to same pharmacy
-  File: src/app/api/staff/create/route.ts
+  Body:   { email, password, full_name, role, pharmacy_id }
+  Auth:   Admin JWT (role verified server-side)
+  Action: Creates staff user scoped to same pharmacy as calling admin
+  File:   src/app/api/staff/create/route.ts
 
 GET /api/db-backup/export
-  Auth: Admin JWT
+  Auth:   Admin JWT
   Action: Exports all pharmacy data as JSON blob
   Returns: JSON with all tables for current pharmacy
 
 POST /api/db-cleanup
-  Auth: Admin JWT
+  Auth:   Admin JWT
   Action: Removes orphaned records, expired sessions
-  Note: Does NOT delete user pharmacy data
+  Note:   Does NOT delete pharmacy business data
 
 GET /api/db-usage
-  Auth: Admin JWT
+  Auth:   Admin JWT
   Returns: { table_stats, total_rows, db_size_mb }
 
 POST /api/ai-autofill
-  Body: { barcode?, product_name? }
+  Auth:   Authenticated (any role)
+  Body:   { barcode?, product_name? }
   Action: Uses Gemini to fill product details automatically
   Returns: { name, category, description, price_estimate }
 
 POST /api/analyze-product
-  Body: { image_base64 }
+  Auth:   Authenticated
+  Body:   { image_base64 }
   Action: Gemini Vision analyzes product image
   Returns: { name, barcode, category, details }
 
 POST /api/invoice-scan
-  Body: { image_base64 }
+  Auth:   Authenticated
+  Body:   { image_base64 }
   Action: OCR + Gemini extracts invoice line items
   Returns: { supplier, items: [{name, qty, price}] }
 
 POST /api/prescription-scan
-  Body: { image_base64 }
+  Auth:   Authenticated
+  Body:   { image_base64 }
   Action: Reads Arabic/English prescription
   Returns: { medications: [{name, dose, frequency}] }
 
 POST /api/copilot
-  Body: { message, context }
+  Auth:   Authenticated
+  Body:   { message, context }
   Action: AI assistant for pharmacy questions
   Returns: { response, suggested_actions }
 
 POST /api/agent/execute
-  Body: { command, parameters }
-  Action: Executes structured AI agent operations
-  Examples: search_product, create_order, check_inventory
+  Auth:   ⚠️  Admin or Developer role REQUIRED (verified server-side)
+  Body:   { command, parameters }
+  Action: Executes structured AI agent operations with undo logging
+  Examples: search_product, create_order, undo_last_action
+  Security: Every mutation is logged to agent_action_logs for rollback.
+            Unauthorized calls return 403. Never expose to staff/manager.
 
 
 ================================================================================
@@ -347,21 +444,32 @@ Queue Storage: localStorage key = "offline_returns_queue"
 
 Queue Item Structure:
   {
-    id: string (timestamp),
-    type: "return" | "order",
-    data: { ... },
-    createdAt: ISO timestamp,
-    retryCount: number
+    id:          string  (timestamp-based, used as idempotency key),
+    type:        "return" | "order",
+    data:        { ... },
+    createdAt:   ISO timestamp,
+    retryCount:  number   (max 3 before marking failed)
   }
 
 Sync Trigger:
   - Browser 'online' event fires in LayoutWrapper.tsx
   - Calls syncOfflineReturns(processReturn) from lib/supabase/offline-orders.ts
-  - Also calls /api/__trigger_sync for service worker sync
-  - Returns count of synced items
-  - Shows toast notification with sync count
+  - Also calls /api/__trigger_sync for service worker background sync
+  - Returns count of synced items; shows toast notification
 
-Maximum Retry: 3 attempts per item before marking as failed
+Conflict Resolution Strategy:
+  - Strategy: LAST-WRITE-WINS on sync
+  - Timestamp-based IDs prevent duplicate insertions (idempotent POST)
+  - If a product's stock has changed while offline:
+      → Return sync proceeds; stock levels are recalculated server-side
+      → If stock is now 0 and a return would make it negative, the sync
+         API returns a conflict error and marks that item as "failed"
+  - Failed items remain in queue with status="conflict"; user sees a
+    warning toast and must resolve manually via the Returns module
+  - No automatic merge — manual resolution is the intentional policy
+    to avoid accidental stock corruption in multi-user pharmacies
+
+Maximum Retry: 3 attempts per item, then item.status = "failed"
 
 
 ================================================================================
@@ -372,19 +480,19 @@ Themes are CSS variable sets in globals.css.
 next-themes manages the data-theme attribute on <html>.
 
 Available themes and their primary color:
-  dark         #050505 background  / #00CED1 accent
-  light        #f8fafc background  / #00CED1 accent
-  midnight     #020612 background  / #3b82f6 accent
-  forest       #040d0a background  / #22c55e accent
-  coffee       #140d0b background  / #d97706 accent
-  dracula      #1e1f29 background  / #bd93f9 accent
-  ocean        #010b14 background  / #06b6d4 accent
-  amethyst     #0d0b1a background  / #a855f7 accent
-  sunset       #140806 background  / #f97316 accent
-  cyberpunk    #000000 background  / #facc15 accent
-  snowy        #f8fafc background  / #0ea5e9 accent
+  dark         #050505 background  / #00E5FF teal  / #FFD700 gold
+  light        #f6f8fc background  / #115669 teal  / #886029 gold
+  midnight     #02040a background  / #3b82f6 blue  / #8b5cf6 purple
+  forest       #0b1c14 background  / #10b981 green / #fbbf24 amber
+  coffee       #1c1512 background  / #eb5e28 orange/ #c6ac8f tan
+  dracula      #1e1f29 background  / #8be9fd cyan  / #ff79c6 pink
+  ocean        #001219 background  / #00b4d8 blue  / #ee6c4d coral
+  amethyst     #0a0514 background  / #d8b4fe violet/ #f0abfc fuchsia
+  sunset       #1a0b08 background  / #f43f5e rose  / #f59e0b amber
+  cyberpunk    #050511 background  / #00f3ff cyan  / #ff003c red
+  snowy        #f1f5f9 background  / #0284c7 blue  / #059669 green
 
-User preference is saved via usePreferences hook to Supabase.
+User theme preference is saved via usePreferences hook to the preferences table.
 
 
 ================================================================================
@@ -405,43 +513,60 @@ POS Specific:
   Escape          Clear search / cancel
   F2              Focus barcode scanner input
 
+Dev Console Terminal:
+  ArrowUp/Down    Navigate command history
+  Enter           Execute command
+  clear           Reset terminal buffer + localStorage
+
 
 ================================================================================
 SECTION 9: KNOWN ISSUES & GOTCHAS
 ================================================================================
 
-1. RLS on user_profiles:
-   - anon role needs SELECT on pharmacies + SELECT on chains for login flow
-   - Must GRANT SELECT ON public.pharmacies TO anon; in DB
+1. anon role grants for login page:
+   - anon needs SELECT on pharmacies + chains for the login selector UI.
+   - Run: GRANT SELECT ON public.pharmacies TO anon;
+          GRANT SELECT ON public.chains     TO anon;
 
-2. chain_admin has no pharmacy_id:
-   - LayoutWrapper must NOT block access for chain_admin
-   - Check userRole !== 'chain_admin' before blocking
+2. chain_admin has pharmacy_id = NULL — THIS IS INTENTIONAL:
+   - LayoutWrapper MUST NOT redirect chain_admin due to missing pharmacy_id.
+   - Correct guard: if (!pharmacyId && role !== 'chain_admin' && role !== 'developer')
+   - chain_admin's scope is the entire chain, not a single branch.
 
-3. JWT metadata vs user_profiles:
-   - Always trust user_profiles in DB (via get_my_pharmacy_id())
-   - Never trust client-supplied headers for pharmacy context
-   - JWT metadata can be stale before session refresh
+3. JWT metadata staleness:
+   - JWT is issued at sign-in and cached. Role/pharmacy changes require re-login.
+   - Server-side, always use get_my_pharmacy_id() (reads live user_profiles).
+   - Never trust client-supplied role or pharmacy context headers.
 
 4. .single() vs .maybeSingle():
-   - Use .maybeSingle() for any query that might return 0 rows
-   - .single() throws PGRST116 error if no row found
+   - Use .maybeSingle() for any query that might return 0 rows.
+   - .single() throws PGRST116 if no row found — causes unhandled exceptions.
 
-5. Stock transfers RLS:
-   - Requires both pharmacies to share same chain_id
-   - from_pharmacy_id and to_pharmacy_id must be in user's chain
+5. Stock transfer RLS:
+   - Both from_pharmacy_id and to_pharmacy_id must share same chain_id.
+   - RLS validates this server-side; client cannot bypass.
 
 6. Offline queue race condition:
-   - If user goes offline during sync, items may be partially uploaded
-   - Queue checks for duplicates using timestamp-based IDs
+   - Items synced in background may conflict if data changed while offline.
+   - See Section 6 for the full conflict resolution strategy.
+   - Failed items are marked status="conflict" and require manual review.
 
 7. Pagination:
-   - All list views use usePagination(20) — 20 items per page by default
-   - Supabase .range(from, to) is 0-indexed
+   - All list views use usePagination(20) — 20 items per page by default.
+   - Supabase .range(from, to) is 0-indexed; to = from + pageSize - 1.
 
 8. Build warning: next-themes hydration:
-   - suppressHydrationWarning must be on <html> element
-   - This is expected behavior, not a bug
+   - suppressHydrationWarning must be on <html> element.
+   - This is expected behavior from next-themes, not a bug.
+
+9. TypeScript error in .next/dev/types/routes.d.ts:
+   - This file is auto-generated and can become stale during dev.
+   - Fix: Delete the file. It regenerates on next `npm run dev`.
+   - It does NOT indicate errors in src/ files.
+
+10. dev/page.tsx refresh rate limiting:
+    - Refresh button has a 5-second cooldown enforced client-side.
+    - This prevents excessive Supabase API calls during diagnosis.
 
 
 ================================================================================
@@ -450,37 +575,370 @@ SECTION 10: DEVELOPMENT WORKFLOW
 
 Starting development:
   npm run dev                    # Start dev server at :3000
-  
+
 Type checking:
   npx tsc --noEmit               # Check types without building
-  
+  # Ignore .next/dev/types/routes.d.ts errors — they are generated artifacts
+
 Linting:
   npm run lint                   # ESLint check
-  
+
 Building:
   npm run build                  # Production build
 
 Database changes:
   1. Write SQL in database/ folder
-  2. Run in Supabase SQL Editor
+  2. Run in Supabase SQL Editor (Dashboard → SQL Editor)
   3. Update TypeScript types if table structure changed
   4. Test with both anon and authenticated clients
+  5. Verify RLS policies with a test user at each role level
 
 Adding a new page:
   1. Create src/app/[route]/page.tsx
   2. Add 'use client' if using hooks/state
   3. Add route to Sidebar.tsx nav items
   4. Add keyboard shortcut in LayoutWrapper.tsx if needed
-  5. Apply standard layout: header with motion.h1, glass-panel cards
+  5. Apply standard layout: glass-panel cards, motion.h1 header, font-cairo dir=rtl
 
 Adding a new API route:
   1. Create src/app/api/[route]/route.ts
   2. Always use createServerClient() (not browser client)
-  3. Verify auth via supabase.auth.getUser()
-  4. Use service role only when bypassing RLS intentionally
-  5. Return consistent { data, error } shapes
+  3. Verify auth via supabase.auth.getUser() at the top
+  4. Use service role ONLY when bypassing RLS intentionally (document why)
+  5. Return consistent { data, error } response shapes
+  6. For mutating routes: add role check (admin / developer only)
+
+Adding a new table:
+  1. Define schema in database/core_schema.sql
+  2. Add RLS: ALTER TABLE x ENABLE ROW LEVEL SECURITY;
+  3. Create pharmacy-scoped policy (see existing pattern)
+  4. Add indexes (see Section 12)
+  5. Enable Realtime if POS or live UI needs it (see Section 13)
 
 
 ================================================================================
-END OF TECHNICAL REFERENCE
+SECTION 11: DATABASE TRIGGERS REFERENCE
+================================================================================
+
+File: database/fix_rls_triggers.sql
+
+─── TRIGGER 1: handle_new_user_registration() ───────────────────────────────
+  Event:  AFTER INSERT ON auth.users
+  Name:   trg_on_auth_user_created
+  Action: Reads raw_user_meta_data from the new auth.users row and:
+            1. Inserts a record into user_profiles (id, pharmacy_id, full_name, role)
+            2. Inserts a record into user_pharmacy_access (user_id, pharmacy_id, is_primary=true)
+            3. Both use ON CONFLICT DO UPDATE / DO NOTHING for idempotency
+  Security: SECURITY DEFINER — runs with superuser privileges to bypass RLS
+  IMPORTANT: This trigger is the ONLY approved mechanism for creating user_profiles.
+             Never directly INSERT into user_profiles from client code.
+  Where used: Called automatically on every auth.signUp() and on
+              the developer provisioning route (/api/auth/developer).
+
+SQL:
+  CREATE OR REPLACE FUNCTION public.handle_new_user_registration()
+  RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+  DECLARE
+    v_full_name   text;
+    v_role        text;
+    v_pharmacy_id uuid;
+  BEGIN
+    v_full_name   := COALESCE(new.raw_user_meta_data->>'full_name', 'صيدلي نيل جديد');
+    v_role        := COALESCE(new.raw_user_meta_data->>'role', 'staff');
+    v_pharmacy_id := (new.raw_user_meta_data->>'pharmacy_id')::uuid;
+
+    IF v_pharmacy_id IS NOT NULL AND EXISTS (SELECT 1 FROM pharmacies WHERE id = v_pharmacy_id) THEN
+      INSERT INTO user_profiles (id, pharmacy_id, full_name, role)
+      VALUES (new.id, v_pharmacy_id, v_full_name, v_role)
+      ON CONFLICT (id) DO UPDATE SET
+        pharmacy_id = EXCLUDED.pharmacy_id, full_name = EXCLUDED.full_name, role = EXCLUDED.role;
+
+      INSERT INTO user_pharmacy_access (user_id, pharmacy_id, role, is_primary)
+      VALUES (new.id, v_pharmacy_id, v_role, true)
+      ON CONFLICT (user_id, pharmacy_id) DO NOTHING;
+    END IF;
+    RETURN new;
+  END; $$;
+
+  DROP TRIGGER IF EXISTS trg_on_auth_user_created ON auth.users;
+  CREATE TRIGGER trg_on_auth_user_created
+    AFTER INSERT ON auth.users FOR EACH ROW
+    EXECUTE FUNCTION public.handle_new_user_registration();
+
+─── TRIGGER 2: trigger_refresh_monthly_summary() ────────────────────────────
+  File:   database/database_optimization.sql
+  Event:  AFTER INSERT OR UPDATE OF status, total ON orders
+  Name:   trg_orders_monthly_summary
+  Action: Calls upsert_monthly_summary() to keep monthly_summaries table
+          up-to-date after every completed/updated order.
+  Note:   Cross-month updates (order moved to different month) also refresh
+          the OLD month's summary row.
+
+─── TRIGGER 3: update_updated_at_column() ───────────────────────────────────
+  Pattern used on: products, stock_transfers, preferences, pharmacy_settings
+  SQL:
+    CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER LANGUAGE plpgsql AS $$
+    BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
+
+    CREATE TRIGGER trg_products_updated_at
+      BEFORE UPDATE ON products FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+
+
+================================================================================
+SECTION 12: INDEX STRATEGY & PERFORMANCE
+================================================================================
+
+File: database/database_optimization.sql
+
+All indexes use IF NOT EXISTS — safe to re-run.
+
+─── CRITICAL INDEXES (run immediately on new DB) ────────────────────────────
+
+  -- Products: barcode lookup (POS hot path) + pharmacy filter
+  CREATE INDEX IF NOT EXISTS idx_products_pharmacy_name
+    ON products (pharmacy_id, name);
+  CREATE INDEX IF NOT EXISTS idx_products_name_trgm
+    ON products USING gin (name gin_trgm_ops);   -- fuzzy Arabic search
+  -- Requires: CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+  -- Orders: most common query pattern (list by pharmacy, newest first)
+  CREATE INDEX IF NOT EXISTS idx_orders_pharmacy_created
+    ON orders (pharmacy_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_orders_pharmacy_status
+    ON orders (pharmacy_id, status);
+
+  -- Order items: parent join (fast_checkout & order detail)
+  CREATE INDEX IF NOT EXISTS idx_order_items_order_id
+    ON order_items (order_id);
+  CREATE INDEX IF NOT EXISTS idx_order_items_pharmacy_product
+    ON order_items (pharmacy_id, product_id);
+
+  -- Batches: FEFO stock deduction (POS critical path)
+  CREATE INDEX IF NOT EXISTS idx_batches_product_pharmacy_qty
+    ON batches (product_id, pharmacy_id, quantity DESC);
+  CREATE INDEX IF NOT EXISTS idx_batches_pharmacy_expiry
+    ON batches (pharmacy_id, expiry_date ASC) WHERE quantity > 0;
+
+  -- Customers: phone search
+  CREATE INDEX IF NOT EXISTS idx_customers_pharmacy_phone
+    ON customers (pharmacy_id, phone);
+
+  -- Monthly summaries: financial reports
+  CREATE INDEX IF NOT EXISTS idx_monthly_summaries_pharmacy_year_month
+    ON monthly_summaries (pharmacy_id, year DESC, month DESC);
+
+─── RECOMMENDED ADDITIONAL INDEXES ──────────────────────────────────────────
+
+  CREATE INDEX IF NOT EXISTS idx_financials_pharmacy_date
+    ON financials (pharmacy_id, date DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_returns_pharmacy_created
+    ON returns (pharmacy_id, created_at DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_shortages_pharmacy_status
+    ON shortages (pharmacy_id, status);
+
+─── QUERY GUIDELINES ────────────────────────────────────────────────────────
+  1. Always filter by pharmacy_id first — it is the primary partition key.
+  2. Use .select('col1, col2') — never SELECT * in production queries.
+  3. Use .range(from, to) pagination on all list queries (20 items/page).
+  4. Use RPCs (get_dashboard_stats, fast_checkout) for complex multi-table
+     operations — they run server-side in a single roundtrip.
+  5. Run EXPLAIN ANALYZE in Supabase SQL Editor to debug slow queries.
+  6. Connection pooling: Supabase uses PgBouncer in transaction mode.
+     Do NOT use SET LOCAL or session-level settings in RPC functions.
+
+─── ORPHAN RECORD CLEANUP ───────────────────────────────────────────────────
+  order_items and invoice_items use ON DELETE CASCADE on their FK to parent.
+  Manual cleanup helper if needed:
+
+  CREATE OR REPLACE FUNCTION cleanup_orphaned_records()
+  RETURNS void LANGUAGE plpgsql AS $$
+  BEGIN
+    DELETE FROM order_items   WHERE order_id   NOT IN (SELECT id FROM orders);
+    DELETE FROM invoice_items WHERE invoice_id NOT IN (SELECT id FROM invoices);
+  END; $$;
+
+  -- Run manually: SELECT cleanup_orphaned_records();
+
+
+================================================================================
+SECTION 13: REALTIME SUBSCRIPTIONS
+================================================================================
+
+Supabase Realtime requires REPLICA IDENTITY FULL on tables to receive
+full OLD/NEW row data in change events (UPDATE/DELETE).
+
+─── TABLES WITH REALTIME ENABLED ────────────────────────────────────────────
+
+  -- Enable full row identity for realtime diff tracking
+  ALTER TABLE orders   REPLICA IDENTITY FULL;
+  ALTER TABLE products REPLICA IDENTITY FULL;
+
+  -- Add tables to the realtime publication
+  ALTER PUBLICATION supabase_realtime ADD TABLE orders;
+  ALTER PUBLICATION supabase_realtime ADD TABLE products;
+
+─── WHERE REALTIME IS USED IN THE APP ───────────────────────────────────────
+
+  Dashboard (src/app/page.tsx):
+    supabase.channel('dashboard-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'batches' }, refresh)
+      .subscribe()
+
+  POS (src/app/pos/page.tsx):
+    Subscribes to products changes to reflect live stock updates when
+    multiple cashiers operate simultaneously on the same branch.
+
+─── REALTIME SECURITY NOTE ──────────────────────────────────────────────────
+  Realtime respects RLS. A client subscribed to 'orders' only receives
+  events for rows their RLS policy allows them to SELECT.
+  Ensure RLS is enabled on all realtime-subscribed tables.
+
+─── HOW TO UNSUBSCRIBE ──────────────────────────────────────────────────────
+  Always clean up subscriptions in useEffect return:
+    return () => { supabase.removeChannel(channel); }
+
+
+================================================================================
+SECTION 14: MIGRATION STRATEGY
+================================================================================
+
+PharmaNile uses a file-based migration workflow with Supabase SQL Editor.
+There is no automated migration runner (e.g., Flyway) in the current setup.
+
+─── FILE STRUCTURE ──────────────────────────────────────────────────────────
+
+  database/
+  ├── schema.sql              # Full production schema (source of truth)
+  ├── core_schema.sql         # Core tables only (subset for quick reference)
+  ├── FULL_DB_SETUP.sql       # Complete from-scratch setup (schema + RLS + grants)
+  ├── chains_migration.sql    # Multi-chain support migration
+  ├── database_optimization.sql # Indexes, RPCs, monthly_summaries
+  ├── fix_rls_triggers.sql    # Auth trigger + RLS policies
+  ├── setup_chain_admin.sql   # chain_admin role configuration
+  ├── fix_registration_permissions.sql # anon grants for login
+  ├── seed_data.sql           # Demo data for testing
+  ├── seeds.sql               # Minimal seed (chains + pharmacies)
+  ├── reset.sql               # ⚠️ DESTRUCTIVE: drops and recreates all tables
+  └── debug_stats.sql         # Read-only diagnostic queries
+
+─── WORKFLOW FOR SCHEMA CHANGES ─────────────────────────────────────────────
+
+  1. Write migration SQL in a new file: database/YYYYMMDD_description.sql
+  2. Test on a development Supabase project first
+  3. Run in production via Supabase Dashboard → SQL Editor
+  4. Update schema.sql to reflect the new state
+  5. Update TECHNICAL_REFERENCE.txt (this file) with any new tables/columns
+  6. If columns changed, update TypeScript types by running:
+       npx supabase gen types typescript --project-id <ref> > src/types/database.ts
+  7. Document the migration in git commit message with:
+       "db: <short description> — run database/YYYYMMDD_description.sql"
+
+─── ROLLBACK STRATEGY ───────────────────────────────────────────────────────
+  - For additive changes (ADD COLUMN, CREATE INDEX): use DROP COLUMN / DROP INDEX
+  - For destructive changes: restore from Supabase Point-in-Time Recovery (see Section 15)
+  - reset.sql exists for local dev only — NEVER run in production
+
+
+================================================================================
+SECTION 15: BACKUP & RECOVERY
+================================================================================
+
+─── SUPABASE AUTOMATED BACKUPS ──────────────────────────────────────────────
+  - Pro plan: Daily backups retained for 7 days
+  - Enterprise plan: Point-in-time recovery (PITR) up to 30 days
+  - Backups are accessible via Supabase Dashboard → Database → Backups
+
+─── APPLICATION-LEVEL EXPORT ────────────────────────────────────────────────
+  GET /api/db-backup/export
+    - Exports all tables for the authenticated pharmacy as JSON
+    - Recommended: run weekly and store externally
+    - Useful for data portability and emergency recovery
+
+  POST /api/db-cleanup
+    - Removes orphaned records and expired sessions
+    - Safe to run regularly (does not delete business data)
+
+─── RECOVERY PROCEDURE ──────────────────────────────────────────────────────
+  In case of accidental data deletion:
+  1. Check agent_action_logs — AI mutations are logged with previous_payload
+     and can be reversed via the undo endpoint
+  2. Use Supabase Dashboard Point-in-Time Recovery for database-level restore
+  3. For table-level restore: contact Supabase support with the backup timestamp
+  4. For application exports: re-import via database/clean_import.sql pattern
+
+─── IMPORT PROCEDURE ────────────────────────────────────────────────────────
+  File: database/clean_import.sql
+  Use case: Migrate data between Supabase projects or restore from JSON export
+  Steps:
+    1. Disable RLS temporarily (SECURITY DEFINER context)
+    2. Import via Supabase service role client
+    3. Re-enable RLS
+
+
+================================================================================
+SECTION 16: MONITORING & HEALTH CHECKS
+================================================================================
+
+─── HEALTH CHECK ENDPOINTS ──────────────────────────────────────────────────
+  GET /api/db-usage
+    Returns: { table_stats[], total_rows, db_size_mb }
+    Auth: Admin JWT
+    Use: Dashboard widget, weekly monitoring
+
+  Developer Dashboard (/dev)
+    Auth: developer or admin role only
+    Checks performed on load:
+      - Supabase Auth API latency (measured, displayed in ms)
+      - pharmacies / chains table SELECT (RLS validation)
+      - products / orders SELECT with pharmacy_id (RLS isolation test)
+      - localStorage offline queue size
+      - Integrity score = (passing checks / total checks) × 100%
+
+─── PERFORMANCE METRICS TO WATCH ────────────────────────────────────────────
+  1. DB query latency:   target < 100ms; alert if > 300ms
+  2. Auth API latency:   target < 200ms
+  3. Offline queue size: alert if > 0 items for > 1 hour
+  4. Monthly summary freshness: should update within seconds of each order
+  5. Realtime subscription drops: monitor in browser console for channel errors
+
+─── DATABASE DIAGNOSTICS ────────────────────────────────────────────────────
+  File: database/debug_stats.sql
+  Contains read-only queries for:
+    - Table row counts per pharmacy
+    - RLS policy audit
+    - Index hit ratio
+    - Slow query identification
+
+  Run in Supabase SQL Editor when diagnosing performance issues.
+
+─── ALERT THRESHOLDS (RECOMMENDED) ──────────────────────────────────────────
+  | Metric                      | Warning     | Critical    |
+  |-----------------------------|-------------|-------------|
+  | DB query latency            | > 200ms     | > 500ms     |
+  | Auth API response           | > 300ms     | > 1000ms    |
+  | Offline queue size          | > 5 items   | > 20 items  |
+  | products table rows (single | > 5,000     | > 20,000    |
+  |   pharmacy)                 |             |             |
+  | Integrity score (/dev)      | < 90%       | < 70%       |
+
+─── SUPABASE BUILT-IN MONITORING ────────────────────────────────────────────
+  Dashboard → Reports:
+    - API usage by endpoint
+    - Auth events (sign-in failures, new registrations)
+    - Database query performance
+    - Realtime connection count
+
+  Dashboard → Database → Performance Advisor:
+    - Automatically suggests missing indexes
+    - Identifies unused indexes
+    - Shows row count estimates
+
+
+================================================================================
+END OF TECHNICAL REFERENCE v2.1
 ================================================================================

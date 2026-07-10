@@ -266,7 +266,9 @@ export default function Sidebar() {
                 <p className="text-xs font-bold text-[var(--foreground)] truncate font-cairo">
                   {user?.user_metadata?.full_name || 'Pharma Nile'}
                 </p>
-                <p className="text-[10px] text-[var(--sidebar-text-inactive)] font-bold font-inter truncate">Admin Level</p>
+                <p className="text-[10px] text-[var(--sidebar-text-inactive)] font-bold font-inter truncate">
+                  {user?.user_metadata?.role === 'developer' ? 'مطور النظام' : 'Admin Level'}
+                </p>
               </div>
             )}
           </div>

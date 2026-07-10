@@ -10,11 +10,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'اسم الفرع مطلوب' }, { status: 400 });
     }
 
-    const adminSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) {
+      return NextResponse.json({ error: 'خطأ في إعدادات الخادم' }, { status: 500 });
+    }
+    const adminSupabase = createClient(url, key, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'يوجد فرع بهذا الاسم بالفعل في سلسلتك' }, { status: 409 });
     }
 
-    const { data: pharmacy, error: insertError } = await adminSupabase
+    const { data: insertedRows, error: insertError } = await adminSupabase
       .from('pharmacies')
       .insert({
         name:     name.trim(),
@@ -62,12 +65,12 @@ export async function POST(request: NextRequest) {
         is_active: true,
         chain_id: profile.chain_id,
       })
-      .select()
-      .single();
+      .select();
 
-    if (insertError) {
-      console.error('[chain/pharmacies] insert error:', insertError.message);
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    const pharmacy = insertedRows?.[0] ?? null;
+    if (insertError || !pharmacy) {
+      console.error('[chain/pharmacies] insert error:', insertError?.message);
+      return NextResponse.json({ error: insertError?.message ?? 'فشل إنشاء الفرع' }, { status: 500 });
     }
 
     // ✅ التعديل هنا - استخدام upsert بدلاً من onConflict

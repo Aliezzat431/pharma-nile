@@ -1,0 +1,213 @@
+name: PharmaNile CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ─── Job 1: Code Quality ────────────────────────────────────────────────────
+  quality:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+        # Exclude stale .next generated files
+        continue-on-error: false
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Check for .single() usage (must use .maybeSingle())
+        run: |
+          echo "Checking for unsafe .single() usage..."
+          if grep -rn "\.single()" src/ --include="*.ts" --include="*.tsx" | grep -v "\.maybeSingle()" | grep -v "// safe-single" | grep -v "node_modules"; then
+            echo "❌ Found .single() usage. Replace with .maybeSingle() or add // safe-single comment."
+            exit 1
+          fi
+          echo "✅ No unsafe .single() found"
+
+      - name: Check for process.env direct access without validation
+        run: |
+          echo "Checking for unguarded process.env access in API routes..."
+          if grep -rn "process\.env\." src/app/api/ --include="*.ts" | grep -v "getServerEnv()" | grep -v "// raw-env-ok" | grep -v "NODE_ENV"; then
+            echo "⚠️  Warning: Direct process.env access in API routes. Consider using getServerEnv()."
+          fi
+          echo "✅ Env access check complete"
+
+  # ─── Job 2: Security Checks ─────────────────────────────────────────────────
+  security:
+    name: 🔐 Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: NPM audit (high severity only)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Scanning for hardcoded secrets..."
+          PATTERNS=(
+            "SUPABASE_SERVICE_ROLE_KEY\s*=\s*['\"]eyJ"
+            "password\s*=\s*['\"][^'\"]{8,}"
+            "api_key\s*=\s*['\"][^'\"]{16,}"
+          )
+          FOUND=0
+          for PATTERN in "${PATTERNS[@]}"; do
+            if grep -rEn "$PATTERN" src/ --include="*.ts" --include="*.tsx" | grep -v ".env" | grep -v "process.env"; then
+              echo "❌ Potential hardcoded secret detected!"
+              FOUND=1
+            fi
+          done
+          if [ $FOUND -eq 0 ]; then
+            echo "✅ No hardcoded secrets detected"
+          else
+            exit 1
+          fi
+
+      - name: Verify middleware.ts exists and exports config
+        run: |
+          if [ ! -f "src/middleware.ts" ]; then
+            echo "❌ src/middleware.ts is missing! Auth middleware is required."
+            exit 1
+          fi
+          if ! grep -q "export const config" src/middleware.ts; then
+            echo "❌ middleware.ts is missing 'export const config' matcher."
+            exit 1
+          fi
+          echo "✅ Middleware present and configured"
+
+  # ─── Job 3: Build ───────────────────────────────────────────────────────────
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    needs: [quality, security]
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DEVELOPER_EMAIL: ${{ secrets.DEVELOPER_EMAIL }}
+      DEVELOPER_PASSWORD: ${{ secrets.DEVELOPER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate required secrets are present
+        run: |
+          MISSING=0
+          for VAR in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY DEVELOPER_EMAIL DEVELOPER_PASSWORD; do
+            if [ -z "${!VAR}" ]; then
+              echo "❌ Missing required secret: $VAR"
+              MISSING=1
+            fi
+          done
+          if [ $MISSING -eq 1 ]; then
+            echo "❌ Deployment blocked: Missing required environment variables"
+            exit 1
+          fi
+          echo "✅ All required secrets present"
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: nextjs-build-${{ github.sha }}
+          path: .next/
+          retention-days: 7
+
+  # ─── Job 4: Health Check after deploy (staging) ─────────────────────────────
+  health-check:
+    name: 🏥 Post-Deploy Health Check
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/staging'
+    env:
+      STAGING_URL: ${{ secrets.STAGING_URL }}
+    steps:
+      - name: Wait for Vercel deployment
+        run: sleep 30
+
+      - name: Check /api/health endpoint
+        run: |
+          RESPONSE=$(curl -sf "$STAGING_URL/api/health" -o response.json -w "%{http_code}")
+          echo "HTTP Status: $RESPONSE"
+          cat response.json
+          if [ "$RESPONSE" != "200" ]; then
+            echo "❌ Health check failed with status $RESPONSE"
+            exit 1
+          fi
+          STATUS=$(cat response.json | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','unknown'))")
+          if [ "$STATUS" != "ok" ]; then
+            echo "❌ Health check returned status: $STATUS"
+            exit 1
+          fi
+          echo "✅ Health check passed: $STATUS"
+
+  # ─── Job 5: Deploy to Production (main branch only) ─────────────────────────
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: ${{ secrets.PRODUCTION_URL }}
+    steps:
+      - name: Notify deploy start
+        run: |
+          echo "🚀 Starting production deployment for commit ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Actor: ${{ github.actor }}"
+
+      - name: Remind to run RLS verification
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "⚠️  MANUAL STEP REQUIRED BEFORE THIS DEPLOYMENT:"
+          echo "    Run database/verify_rls_predeploy.sql in"
+          echo "    Supabase SQL Editor and confirm all checks pass."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Vercel handles the actual deployment via Git integration."
+          echo "Deployment to: ${{ secrets.PRODUCTION_URL }}"

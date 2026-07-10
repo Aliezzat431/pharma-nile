@@ -3,18 +3,20 @@ import { createClient } from '@supabase/supabase-js';
 
 // Setup Supabase Admin Client using service_role key
 const getSupabaseAdmin = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    throw new Error('Supabase environment variables are missing');
+    throw new Error(
+      '[PharmaNile] Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars.'
+    );
   }
-  
+
   return createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   });
 };
 
@@ -82,17 +84,17 @@ export async function POST(request: NextRequest) {
         }
 
         // Create new chain
-        const { data: newChain, error: chainCreateErr } = await adminSupabase
+        const { data: createdChains, error: chainCreateErr } = await adminSupabase
           .from('chains')
           .insert({
             name: chainName.trim(),
             password: chainPassword.trim(),
           })
-          .select()
-          .single();
+          .select();
 
+        const newChain = createdChains?.[0] ?? null;
         if (chainCreateErr || !newChain) {
-          return NextResponse.json({ error: `فشل إنشاء السلسلة: ${chainCreateErr?.message}` }, { status: 500 });
+          return NextResponse.json({ error: `فشل إنشاء السلسلة: ${chainCreateErr?.message ?? 'لم يتم إنشاء السجل'}` }, { status: 500 });
         }
 
         targetChainId = newChain.id;
@@ -113,21 +115,20 @@ export async function POST(request: NextRequest) {
       }
 
       // Create new pharmacy branch
-      const { data: newPharmacy, error: pharmacyCreateErr } = await adminSupabase
+      const { data: createdPharmacies, error: pharmacyCreateErr } = await adminSupabase
         .from('pharmacies')
         .insert({
           name: newPharmacyName.trim(),
           address: newPharmacyAddress?.trim() || null,
           phone: newPharmacyPhone?.trim() || null,
           chain_id: targetChainId,
-          is_active: true
+          is_active: true,
         })
-        .select()
-        .single();
+        .select();
 
+      const newPharmacy = createdPharmacies?.[0] ?? null;
       if (pharmacyCreateErr || !newPharmacy) {
-        // If chain was created but pharmacy failed, we theoretically have an orphan chain, but we throw error
-        return NextResponse.json({ error: `فشل إنشاء فرع الصيدلية: ${pharmacyCreateErr?.message}` }, { status: 500 });
+        return NextResponse.json({ error: `فشل إنشاء فرع الصيدلية: ${pharmacyCreateErr?.message ?? 'لم يتم إنشاء السجل'}` }, { status: 500 });
       }
 
       targetPharmacyId = newPharmacy.id;
