@@ -7,39 +7,28 @@ export async function POST(request: NextRequest) {
     const { password } = await request.json();
 
     const devPassword = process.env.DEVELOPER_PASSWORD;
-    const devEmail = process.env.DEVELOPER_EMAIL;
+    const devEmail    = process.env.DEVELOPER_EMAIL;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    // DEBUG: log env vars presence (never log actual key values)
-    console.log('[DevAuth DEBUG] env check:', {
-      hasDevPassword: !!devPassword,
-      hasDevEmail: !!devEmail,
-      hasSupabaseUrl: !!supabaseUrl,
-      hasServiceRoleKey: !!serviceRoleKey,
-      supabaseUrlValue: supabaseUrl,        // OK to log URL
-      devEmailValue: devEmail,              // OK to log email
-    });
+    const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!devPassword || !devEmail) {
       return NextResponse.json(
-        { error: `[DEBUG] DEVELOPER_PASSWORD=${devPassword ? 'set' : 'MISSING'} | DEVELOPER_EMAIL=${devEmail ? 'set' : 'MISSING'}` },
+        { error: 'تكوين حساب المطور غير مكتمل في النظام' },
         { status: 500 }
       );
     }
 
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!supabaseUrl || !serviceKey) {
       return NextResponse.json(
-        { error: `[DEBUG] NEXT_PUBLIC_SUPABASE_URL=${supabaseUrl ? 'set' : 'MISSING'} | SUPABASE_SERVICE_ROLE_KEY=${serviceRoleKey ? 'set' : 'MISSING'}` },
+        { error: 'متغيرات بيئة Supabase غير مكتملة' },
         { status: 500 }
       );
     }
 
     // --- Timing-safe password comparison ---
-    const inputBuf = Buffer.from(password ?? '');
+    const inputBuf  = Buffer.from(password ?? '');
     const secretBuf = Buffer.from(devPassword);
-
-    const isMatch =
+    const isMatch   =
       inputBuf.length === secretBuf.length &&
       crypto.timingSafeEqual(inputBuf, secretBuf);
 
@@ -50,57 +39,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Ensure the Supabase user has role=developer stamped in metadata ---
-    // This is done BEFORE the client calls signInWithPassword so that the
-    // JWT issued at login already carries the correct role claim.
-    const adminSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const adminSupabase = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-    const { data: { users }, error: listError } =
-      await adminSupabase.auth.admin.listUsers({ perPage: 1000 });
+    // --- Find user by querying auth.users directly (avoids the flaky listUsers Admin endpoint) ---
+    const { data: authUser, error: findError } = await adminSupabase
+      .schema('auth')
+      .from('users')
+      .select('id, email')
+      .eq('email', devEmail)
+      .maybeSingle();
 
-    if (listError) {
-      console.error('[DevAuth] listUsers error:', listError);
+    if (findError) {
+      console.error('[DevAuth] auth.users query error:', findError);
       return NextResponse.json(
-        { error: `[DEBUG] listUsers failed: ${listError.message} | status: ${(listError as any)?.status ?? 'n/a'}` },
+        { error: `خطأ أثناء البحث عن حساب المطور: ${findError.message}` },
         { status: 500 }
       );
     }
 
-    const devUser = users.find((u) => u.email === devEmail);
-
-    if (!devUser) {
-      console.error('[DevAuth] Developer Supabase account not found:', devEmail);
+    if (!authUser) {
+      console.error('[DevAuth] Developer account not found in auth.users:', devEmail);
       return NextResponse.json(
-        { error: 'حساب المطور غير موجود في قاعدة البيانات — أنشئه يدوياً في Supabase Auth' },
+        { error: 'حساب المطور غير موجود — أنشئه يدوياً في Supabase Auth ثم أضف بريده في DEVELOPER_EMAIL' },
         { status: 404 }
       );
     }
 
-    // Stamp role before the client signs in
+    // --- Stamp role=developer in metadata BEFORE the client signs in ---
     const { error: updateError } = await adminSupabase.auth.admin.updateUserById(
-      devUser.id,
+      authUser.id,
       { user_metadata: { role: 'developer', pharmacy_id: null, chain_id: null } }
     );
 
     if (updateError) {
       console.error('[DevAuth] updateUserById error:', updateError);
       return NextResponse.json(
-        { error: `[DEBUG] updateUserById failed: ${updateError.message}` },
+        { error: `فشل تهيئة صلاحيات المطور: ${updateError.message}` },
         { status: 500 }
       );
     }
 
-    // Return only the email — never return the password
     return NextResponse.json({ success: true, email: devEmail });
 
   } catch (error: any) {
     console.error('[DevAuth] Unexpected error:', error);
     return NextResponse.json(
-      { error: `[DEBUG] Unexpected: ${error?.message ?? String(error)}` },
+      { error: `حدث خطأ غير متوقع: ${error?.message ?? String(error)}` },
       { status: 500 }
     );
   }
