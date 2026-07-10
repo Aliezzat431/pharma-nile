@@ -397,7 +397,29 @@ export default function InvoiceImportPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image}
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFile(file);
+                  }}
+                  className="hidden"
+                />
+
+                {!selectedFile ? (
+                  <>
+                    <div className="w-20 h-20 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center mb-4">
+                      <Upload className="w-8 h-8 text-gray-500" />
+                    </div>
+                    <p className="font-bold font-cairo text-white text-lg">ارفع صورة الفاتورة</p>
+                    <p className="text-xs text-gray-400 font-cairo mt-1 text-center max-w-xs">
+                      اسحب الصورة هنا أو اضغط للاختيار
+                    </p>
+                    <p className="text-[10px] text-gray-600 font-cairo mt-2">
+                      JPG, PNG, WEBP
+                    </p>
+                  </>
+                ) : (
+                  <div className="w-full h-full min-h-[300px] flex items-center justify-center">
                     <img src={previewUrl!} alt="Invoice" className="w-full h-full object-contain" />
                   </div>
                 )}
