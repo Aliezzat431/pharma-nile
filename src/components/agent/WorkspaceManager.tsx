@@ -18,7 +18,7 @@ export default function WorkspaceManager() {
       <AnimatePresence>
         {iframes.map((iframe, index) => {
           const isActive = activeIframeId === iframe.id;
-          const staggerOffset = (index % 5) * 30; // 30px stagger
+          const staggerOffset = (index % 5) * 30; 
 
           return (
             <motion.div

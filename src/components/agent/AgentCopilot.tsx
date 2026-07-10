@@ -43,7 +43,7 @@ export default function AgentCopilot() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: userMessage,
-          history: messages.slice(-5) // Send last 5 messages for context
+          history: messages.slice(-5) 
         })
       });
 

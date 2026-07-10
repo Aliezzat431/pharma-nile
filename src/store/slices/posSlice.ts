@@ -1,4 +1,4 @@
-// src/store/slices/posSlice.ts
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { getMultiplier } from '@/lib/unitOptions';
 
@@ -6,22 +6,22 @@ export interface BatchDistribution {
   batchId: string;
   quantity: number;
   expiry: string;
-  price: number;        // selling price from that batch
-  purchasePrice: number; // cost price from that batch
+  price: number;        
+  purchasePrice: number; 
 }
 
 export interface CartItem {
-  id: string; // Product ID or Barcode
+  id: string; 
   name: string;
-  price: number;           // Display price (first batch FEFO) — kept for backward compat & unit display
-  basePrice: number;       // Original box-level price from first batch
+  price: number;           
+  basePrice: number;       
   quantity: number;
   unit: string;
   availableUnits: string[];
   unitConversion: number;
   customPills?: number;
-  activeBatches?: any[];                 // All active batches for this product
-  batchDistributions?: BatchDistribution[]; // Auto or user-defined distribution
+  activeBatches?: any[];                 
+  batchDistributions?: BatchDistribution[]; 
 }
 
 interface PosState {
@@ -141,7 +141,7 @@ const posSlice = createSlice({
           item.customPills = action.payload.customPills;
         }
 
-        // ✅ استخدام unitConversion المخزنة في item لحساب المضاعف
+        
         const multi = getMultiplier(
           { unit_conversion: item.unitConversion, unit: 'علبة' },
           item.unit,

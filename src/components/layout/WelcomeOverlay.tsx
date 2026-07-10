@@ -17,7 +17,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    // ✅ تم الإبقاء على Cookies كما طلبت
+    
     const hasVisited = document.cookie.includes('pharma-nile-visited=true');
     
     if (hasVisited) {
@@ -26,7 +26,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
       return;
     }
 
-    // Loading simulation
+    
     const interval = setInterval(() => {
       setLoadingProgress(prev => {
         if (prev >= 100) {
@@ -66,7 +66,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
         "-=0.5"
       );
 
-      // Creative Title Reveal
+      
       tl.fromTo(".char-reveal",
         { y: 100, opacity: 0, rotateX: -90 },
         { y: 0, opacity: 1, rotateX: 0, duration: 1.2, stagger: 0.05, ease: 'expo.out' },
@@ -102,7 +102,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
   }, [showContent]);
 
   const handleStart = () => {
-    // ✅ حفظ الحالة في Cookie لمدة سنة
+    
     document.cookie = "pharma-nile-visited=true; path=/; max-age=31536000"; 
     
     gsap.to(containerRef.current, {
@@ -148,7 +148,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
         </div>
       )}
 
-      {/* Background Mesh & Particles */}
+      {}
       <div className="absolute inset-0 pointer-events-none opacity-40">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-cyan-500/20 rounded-full blur-[150px] animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/20 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -164,7 +164,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
           }}
           className="relative z-10 max-w-5xl w-full px-6 flex flex-col items-center gap-12"
         >
-          {/* Hero Icon */}
+          {}
           <div className="hero-pill relative w-28 h-28">
             <div className="absolute inset-0 bg-cyan-400/20 blur-3xl animate-pulse" />
             <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent backdrop-blur-xl border border-white/20 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden group">
@@ -173,7 +173,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
             </div>
           </div>
 
-          {/* Epic Typography - ✅ تم إضافة dir="ltr" هنا لإصلاح اتجاه النص الإنجليزي */}
+          {}
           <div className="text-center space-y-6">
             <div className="overflow-hidden py-2">
               <h1 
@@ -195,7 +195,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
             </p>
           </div>
 
-          {/* Features Cards */}
+          {}
           <div 
             ref={featuresRef}
             className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full"
@@ -214,7 +214,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
             ))}
           </div>
 
-          {/* CTA Box */}
+          {}
           <div className="flex flex-col items-center gap-6 mt-4">
             <button
               ref={btnRef}
@@ -237,7 +237,7 @@ export default function WelcomeOverlay({ onComplete }: { onComplete: () => void 
         </motion.div>
       )}
 
-      {/* Scanning Line Effect */}
+      {}
       <div className="absolute inset-x-0 h-[100px] bg-gradient-to-b from-transparent via-cyan-400/5 to-transparent top-0 animate-scanline pointer-events-none" />
       
       <style jsx>{`

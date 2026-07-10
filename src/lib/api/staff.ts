@@ -17,7 +17,7 @@ export async function getAllStaff() {
   const { data, error } = await supabase
     .from('user_profiles')
     .select('*')
-    .eq('pharmacy_id', pharmacyId) // 🔒 Isolation
+    .eq('pharmacy_id', pharmacyId) 
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -28,7 +28,7 @@ export async function getAllStaff() {
 }
 
 export async function updateStaffRole(userId: string, role: 'admin' | 'staff') {
-  // 🔒 Security: ensure the caller can only change roles within their own pharmacy
+  
   const { data: { user } } = await supabase.auth.getUser();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error('Unauthorized');
@@ -37,7 +37,7 @@ export async function updateStaffRole(userId: string, role: 'admin' | 'staff') {
     .from('user_profiles')
     .update({ role })
     .eq('id', userId)
-    .eq('pharmacy_id', pharmacyId); // 🔒 tenant isolation — prevents cross-pharmacy role escalation
+    .eq('pharmacy_id', pharmacyId); 
 
   if (error) {
     console.error('Error updating staff role:', error);

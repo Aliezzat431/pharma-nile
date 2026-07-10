@@ -8,7 +8,7 @@ export async function GET(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // ── 1. Secure Authentication ─────────────────────────────────────────────
+    
     const authHeader = req.headers.get('Authorization');
     const { data: { user }, error: authError } = await supabase.auth.getUser(
       authHeader?.replace('Bearer ', '')
@@ -18,7 +18,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    // ── 2. Derive Pharmacy ID securely from DB ───────────────────────────────
+    
     let pharmacyId: string | null = null;
 
     const { data: primaryAccess } = await supabase
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'No pharmacy context found' }, { status: 401 });
     }
 
-    // ── 3. Collect table row counts ──────────────────────────────────────────
+    
     const tables = [
       'products', 'batches', 'customers', 'orders', 'order_items',
       'financial_transactions', 'debt_payments', 'sessions',
@@ -66,34 +66,34 @@ export async function GET(req: Request) {
       })
     );
 
-    // ── 4. Count extracted invoices ──────────────────────────────────────────
+    
     const { count: invoiceCount } = await supabase
       .from('orders')
       .select('*', { count: 'exact', head: true })
       .eq('pharmacy_id', pharmacyId)
       .eq('status', 'completed');
 
-    // ── 5. Count pending-deleted (cancelled orders) ──────────────────────────
+    
     const { count: cancelledCount } = await supabase
       .from('orders')
       .select('*', { count: 'exact', head: true })
       .eq('pharmacy_id', pharmacyId)
       .eq('status', 'cancelled');
 
-    // ── 6. Compute estimated DB usage ────────────────────────────────────────
-    // Rough estimate: ~900 bytes per record average across all tables
+    
+    
     const estimatedBytes = totalRecords * 900;
     const estimatedMB = estimatedBytes / (1024 * 1024);
     const limitMB = 500;
     const sizePercentage = Math.min(100, Math.round((estimatedMB / limitMB) * 100 * 10) / 10);
 
-    // ── 7. System health score ────────────────────────────────────────────────
+    
     const cleanableCount =
       (tableCounts['sessions'] ?? 0) +
       (tableCounts['audit_logs'] ?? 0) +
       (cancelledCount ?? 0);
 
-    // Health degrades the closer we are to limit
+    
     const health = Math.max(0, Math.round(100 - sizePercentage * 0.5));
 
     return NextResponse.json({

@@ -34,7 +34,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       const handleOnline = async () => {
         setIsOnline(true);
         showToast({ variant: 'online', message: '✅ تم استعادة الاتصال بالإنترنت — جاري مزامنة البيانات...', duration: 4000 });
-        // Best-effort sync of queued offline returns globally
+        
         try {
           const count = await syncOfflineReturns(processReturn);
           if (count > 0) {
@@ -75,7 +75,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     window.addEventListener('sidebar-toggle', handleLayout);
 
     const handleKeyDown = (e: KeyboardEvent) => {
-
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCmdOpen(prev => !prev);
@@ -84,12 +83,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       if (e.altKey && e.shiftKey) {
         const key = e.key.toLowerCase();
         const routes: Record<string, string> = {
-          'd': '/',          // Dashboard
-          'p': '/pos',        // Point of Sale
-          'i': '/inventory',  // Inventory
-          's': '/shortages',  // Shortages (Nawaqis)
-          'c': '/customers',  // Customers
-          'g': '/settings',   // Settings (G representing Gear/Settings)
+          'd': '/',
+          'p': '/pos',
+          'i': '/inventory',
+          's': '/shortages',
+          'c': '/customers',
+          'g': '/settings',
         };
 
         if (routes[key]) {
@@ -130,9 +129,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   }
 
   const pharmacyId = user?.user_metadata?.pharmacy_id;
-  console.log(user);
   const userRole = user?.user_metadata?.role;
-  if (pathname === '/dev' && userRole !== 'developer') {
+
+  // ─── Developer route protection ─────────────────────────────────────────────
+  if (pathname === '/dev' && userRole !== 'developer' && userRole !== 'admin') {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4 font-cairo" dir="rtl">
         <AlertCircle className="w-16 h-16 text-[#FF6b6b]" />
@@ -148,12 +148,14 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     );
   }
 
-  if (!pharmacyId && userRole !== 'chain_admin' && userRole !== 'admin' && userRole !== 'developer') {
+  // ─── Pharmacy context guard ──────────────────────────────────────────────────
+  // chain_admin and developer can have NULL pharmacy_id
+  if (!pharmacyId && userRole !== 'chain_admin' && userRole !== 'developer') {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4">
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4" dir="rtl">
         <AlertCircle className="w-16 h-16 text-[#FF6b6b]" />
-        <h2 className="text-2xl font-bold font-cairo text-white">غير مصرح بالدخول للنظام (إصدار Multi-Tenant)</h2>
-        <p className="text-gray-400 font-cairo max-w-md">يرجى تسجيل الدخول بشكل صحيح كمسؤول لاستعادة هوية الصيدلية واستئناف عمليات النظام.</p>
+        <h2 className="text-2xl font-bold font-cairo text-white">غير مصرح بالدخول للنظام (Multi-Tenant)</h2>
+        <p className="text-gray-400 font-cairo max-w-md">يرجى تسجيل الدخول بشكل صحيح كمسؤول لاستعادة هوية الصيدلية.</p>
         <button 
           onClick={() => router.push('/auth/login')}
           className="mt-4 px-6 py-2.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)] hover:text-black font-cairo font-bold text-[var(--nile-teal)] transition-all rounded-xl"
@@ -185,18 +187,18 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             </div>
 
             <p className="text-[12px] text-gray-400 font-cairo leading-relaxed">
-              تعذر الاتصال بقاعدة البيانات السحابية لـ PharmaNile. لحفظ سلامة الحسابات ومزامنة الجرد والتقارير المالية، تم تعليق شاشات الإدارة والإعدادات مؤقتاً لحين استعادة الشبكة.
+              تعذر الاتصال بقاعدة البيانات السحابية. تم تعليق شاشات الإدارة مؤقتاً لحين استعادة الشبكة.
             </p>
 
             <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-emerald-400 text-xs text-right leading-relaxed w-full font-cairo">
-              💡 <span className="font-bold underline text-white">ملاحظة هامة:</span> نقطة البيع (POS) تعمل بالكامل دون اتصال! يمكنك إتمام المبيعات ومسح الباركود، وسيتم مزامنتها سحابياً فور عودة الشبكة.
+              💡 <span className="font-bold underline text-white">ملاحظة:</span> نقطة البيع (POS) تعمل بالكامل دون اتصال.
             </div>
 
             <button
               onClick={() => router.push('/pos')}
               className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#f2cd56] text-black font-bold font-cairo hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all hover:scale-[1.02] active:scale-95 text-sm"
             >
-              الانتقال لنقطة البيع البديلة (POS Terminal)
+              الانتقال لنقطة البيع (POS Terminal)
             </button>
           </div>
         </main>
@@ -211,70 +213,70 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {!isOnline && (
         <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-[11px] py-1.5 px-4 text-center font-semibold font-cairo flex items-center justify-center gap-2 border-b border-amber-500/25 animate-in slide-in-from-top duration-300 z-50">
           <WifiOff className="w-3.5 h-3.5 animate-pulse" />
-          <span>أنت تعمل حالياً في وضع عدم الاتصال بالشبكة (Cairo Local Mode). يتم حفظ المبيعات محلياً ومزامنتها فور الإتاحة.</span>
+          <span>وضع عدم الاتصال — يتم حفظ المبيعات محلياً ومزامنتها فور الإتاحة.</span>
         </div>
       )}
       
       <div className="flex flex-1 h-full w-full relative">
-      {(!isMinimal && !isCopilot) && <Sidebar />}
-      
-      {}
-      <main 
-        className={`flex-1 h-screen overflow-y-auto overflow-x-hidden relative z-10 transition-all duration-500 ease-in-out ${
-          (isMinimal || isCopilot) 
-          ? 'mr-0 p-0' 
-          : isSidebarCollapsed 
-            ? 'mr-0 md:mr-24 p-4 sm:p-6 md:p-8 w-full' 
-            : 'mr-0 md:mr-72 p-4 sm:p-6 md:p-8 w-full'
-        }`}
-      >
-        {}
-        {(!isMinimal && !isCopilot) && (
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 pointer-events-auto gap-4 md:gap-0">
-            <div className="flex items-center gap-4 w-full md:w-auto">
-              {}
+        {(!isMinimal && !isCopilot) && <Sidebar />}
+        
+        <main 
+          className={`flex-1 h-screen overflow-y-auto overflow-x-hidden relative z-10 transition-all duration-500 ease-in-out ${
+            (isMinimal || isCopilot) 
+            ? 'mr-0 p-0' 
+            : isSidebarCollapsed 
+              ? 'mr-0 md:mr-24 p-4 sm:p-6 md:p-8 w-full' 
+              : 'mr-0 md:mr-72 p-4 sm:p-6 md:p-8 w-full'
+          }`}
+        >
+          {(!isMinimal && !isCopilot) && (
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 pointer-events-auto gap-4 md:gap-0">
+              <div className="flex items-center gap-4 w-full md:w-auto">
+                <button 
+                  onClick={() => window.dispatchEvent(new Event('sidebar-toggle'))}
+                  className="md:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                </button>
+                
+                <button 
+                  onClick={handleCloneToWindow}
+                  className="px-4 py-2 bg-[#111111]/80 hover:bg-[#1A1A1A] border border-white/10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[var(--nile-teal)] transition-all hover:scale-105 shadow-lg backdrop-blur-sm flex-1 md:flex-none"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                  <span>فتح النافذة</span>
+                </button>
+              </div>
+
               <button 
-                onClick={() => window.dispatchEvent(new Event('sidebar-toggle'))}
-                className="md:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
+                onClick={() => setIsCmdOpen(true)}
+                className="glass-card px-4 py-2 flex items-center gap-4 text-gray-500 hover:text-white transition-all group"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-              </button>
-              
-              <button 
-                onClick={handleCloneToWindow}
-                className="px-4 py-2 bg-[#111111]/80 hover:bg-[#1A1A1A] border border-white/10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[var(--nile-teal)] transition-all hover:scale-105 shadow-lg backdrop-blur-sm flex-1 md:flex-none"
-              >
-                <Maximize2 className="w-4 h-4" />
-                <span>فتح النافذة</span>
+                <div className="flex items-center gap-2">
+                  <Search className="w-4 h-4 group-hover:text-[var(--nile-teal)] transition-colors" />
+                  <span className="text-xs font-cairo font-bold">ابحث عن أي شيء (Ctrl+K)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px]">Ctrl</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px]">K</span>
+                </div>
               </button>
             </div>
-
-            <button 
-              onClick={() => setIsCmdOpen(true)}
-              className="glass-card px-4 py-2 flex items-center gap-4 text-gray-500 hover:text-white transition-all group"
-            >
-              <div className="flex items-center gap-2">
-                <Search className="w-4 h-4 group-hover:text-[var(--nile-teal)] transition-colors" />
-                <span className="text-xs font-cairo font-bold">ابحث عن أي شيء (Ctrl+K)</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px]">Ctrl</span>
-                <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px]">K</span>
-              </div>
-            </button>
+          )}
+          
+          <div className="animate-entrance">
+            {children}
           </div>
-        )}
+        </main>
         
-        <div className="animate-entrance">
-          {children}
-        </div>
-      </main>
-      
-      {}
-      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-[var(--nile-teal)]/5 blur-[120px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
-      <div className="fixed bottom-[-10%] right-[20%] w-[50vw] h-[50vw] rounded-full bg-[var(--royal-gold)]/3 blur-[150px] pointer-events-none -z-10 mix-blend-screen transition-opacity duration-1000"></div>
-      
+        <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-[var(--nile-teal)]/5 blur-[120px] pointer-events-none -z-10 mix-blend-screen"></div>
+        <div className="fixed bottom-[-10%] right-[20%] w-[50vw] h-[50vw] rounded-full bg-[var(--royal-gold)]/3 blur-[150px] pointer-events-none -z-10 mix-blend-screen"></div>
       </div>
+      
       <CommandPalette isOpen={isCmdOpen} onClose={() => setIsCmdOpen(false)} />
       <ChatWidget />
       <DeveloperWidget />

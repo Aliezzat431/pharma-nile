@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    // ── 1. Secure Authentication & Authorization ────────────────────────────
+    
     const authHeader = req.headers.get('Authorization');
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
 
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized: Authentication required" }, { status: 401 });
     }
 
-    // ── 2. Derive Tenant Context securely from DB ───────────────────────────
+    
     const { data: accessData } = await supabase
       .from('user_pharmacy_access')
       .select('pharmacy_id')
@@ -43,11 +43,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized: No primary pharmacy context found" }, { status: 401 });
     }
 
-    // ── 3. Fetch Pharmacy Scope Logs only ────────────────────────────────────
+    
     const { data: recentLogs } = await supabase
       .from('agent_action_logs')
       .select('*')
-      .eq('pharmacy_id', pharmacyId) // 🔒 Enforce tenant isolation
+      .eq('pharmacy_id', pharmacyId) 
       .order('created_at', { ascending: false })
       .limit(3);
 
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     const chatCompletion = await groq.chat.completions.create({
       messages: formattedMessages,
       model: GROQ_MODEL,
-      temperature: 0.2, // لضمان ثبات الأكواد البرمجية المستخرجة
+      temperature: 0.2, 
     });
 
     const aiResponse = chatCompletion.choices[0]?.message?.content || "";
@@ -129,7 +129,7 @@ export async function POST(req: Request) {
     const cleanContent = aiResponse
       .replace(/\[OPEN_IFRAME:.*?\]/g, "")
       .replace(/\[ASK_PERMISSION:.*?\]/g, "")
-      .replace(/\s+/g, " ") // تنظيف المسافات الزائدة الناتجة عن الحذف
+      .replace(/\s+/g, " ") 
       .trim();
 
     return NextResponse.json({ 

@@ -7,7 +7,7 @@ export interface IframeAction {
   width?: number;
   height?: number;
   isMinimized?: boolean;
-  backgroundColor?: string; // ✅ إضافة خاصية الخلفية
+  backgroundColor?: string; 
 }
 
 interface AgentState {
@@ -37,7 +37,7 @@ const agentSlice = createSlice({
       const newIframe = { 
         ...action.payload, 
         id,
-        backgroundColor: action.payload.backgroundColor || '#0a0a0a' // ✅ خلفية افتراضية
+        backgroundColor: action.payload.backgroundColor || '#0a0a0a' 
       };
       state.iframes.push(newIframe);
       state.activeIframeId = id;

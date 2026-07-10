@@ -52,21 +52,21 @@ export default function ReturnsPage() {
   const pageRef = usePageGSAP();
   const listRef = useGSAPList<HTMLDivElement>([]);
 
-  // Monitor network status
+  
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setIsOnline(window.navigator.onLine);
 
     const onOnline = async () => {
       setIsOnline(true);
-      // Auto-sync any queued returns
+      
       setOfflineSyncing(true);
       try {
         const count = await syncOfflineReturns(processReturn);
         if (count > 0) {
           alert(`✅ تم رفع ${count} مرتجع(ات) مؤجلة إلى السحابة بنجاح!`);
           setPendingReturnIds([]);
-          fetchOrders(); // Refresh from server
+          fetchOrders(); 
         }
       } catch (err) {
         console.error('Failed to sync offline returns:', err);
@@ -84,7 +84,7 @@ export default function ReturnsPage() {
     };
   }, []);
 
-  // Load pending return IDs from IndexedDB on mount
+  
   useEffect(() => {
     getQueuedReturns().then(list => {
       setPendingReturnIds(list.map(r => r.id));
@@ -103,7 +103,7 @@ export default function ReturnsPage() {
       cutoff.setDate(cutoff.getDate() - limit);
 
       if (!navigator.onLine) {
-        // Offline: load from IndexedDB cache
+        
         const cached = await getCachedOrdersList();
         const filtered = cached.filter(o =>
           o.status !== 'returned' && o.status !== 'cancelled' &&
@@ -126,7 +126,7 @@ export default function ReturnsPage() {
       const fetched = data || [];
       setOrders(fetched);
 
-      // Cache for offline use (background, non-blocking)
+      
       saveOrdersToCache(fetched).catch(console.error);
     } catch (error) {
       console.error('Error fetching orders, trying cache...', error);
@@ -148,7 +148,7 @@ export default function ReturnsPage() {
     setReturningId(order.id);
     try {
       if (!isOnline) {
-        // Queue offline — will sync on reconnect
+        
         await queueOfflineReturn(order.id);
         setPendingReturnIds(prev => [...prev, order.id]);
         setReturnSuccess(order.id);
@@ -196,7 +196,7 @@ export default function ReturnsPage() {
   return (
     <div ref={pageRef} className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-6 pb-12">
 
-      {/* Offline Banner */}
+      {}
       <AnimatePresence>
         {!isOnline && (
           <motion.div

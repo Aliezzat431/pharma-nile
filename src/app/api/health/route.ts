@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize a separate lightweight client for health verification to bypass default cookies
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -56,7 +56,7 @@ export async function GET() {
     });
 
     const dbStart = Date.now();
-    // Lightweight check on chains table to check schema connectivity
+    
     const { error } = await supabase.from('chains').select('id').limit(1).maybeSingle();
     const dbLatency = Date.now() - dbStart;
 

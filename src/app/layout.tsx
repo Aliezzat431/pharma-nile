@@ -12,7 +12,7 @@ import WorkspaceManager from '@/components/agent/WorkspaceManager';
 import DevToolsBlocker from '@/components/shared/DevToolsBlocker';
 import { ThemeProvider } from 'next-themes';
 import { GlobalErrorBoundary } from '@/lib/error-boundary';
-import { IframeModal } from '@/components/ui/IframeModal'; // ✅ إضافة الاستيراد
+import { IframeModal } from '@/components/ui/IframeModal'; 
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' });
@@ -54,7 +54,7 @@ export default function RootLayout({
                 <SyncToastProvider />
                 <AgentCopilot />
                 <WorkspaceManager />
-                <IframeModal /> {/* ✅ إضافة المودال هنا */}
+                <IframeModal /> {}
               </AuthProvider>
             </StoreProvider>
           </ThemeProvider>

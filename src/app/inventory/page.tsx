@@ -30,16 +30,16 @@ import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
 import { deleteProduct, createBatch, deleteBatch, updateBatch } from '@/lib/api/products';
-// ✅ استيراد treatmentTypes فقط
+
 import { treatmentTypes } from "@/lib/unitOptions";
 
-// ✅ تعريف الدالة محلياً
+
 const getTypeDisplayName = (typeId: string): string => {
   const found = treatmentTypes.find(t => t.id === typeId);
   return found ? found.name : typeId;
 };
 
-// ✅ تعريف دالة الوحدات المتاحة (إذا احتجتها)
+
 const getAvailableUnits = (type: string): string[] => {
   const found = treatmentTypes.find(t => t.id === type);
   if (found && found.hasConversion && found.units) {
@@ -77,7 +77,7 @@ interface InventoryItem {
 
 const PAGE_SIZE = 15;
 
-// ─── Batch Panel ─────────────────────────────────────────────────────────────
+
 function InventoryBatchPanel({
   item,
   fetchInventory,
@@ -323,7 +323,7 @@ function InventoryBatchPanel({
                 }`}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                  {/* Barcode */}
+                  {}
                   <div className="space-y-1.5">
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">الباركود</p>
                     {isEditing ? (
@@ -338,7 +338,7 @@ function InventoryBatchPanel({
                     )}
                   </div>
 
-                  {/* Quantity */}
+                  {}
                   <div className="space-y-1.5">
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">الكمية</p>
                     {isEditing ? (
@@ -355,7 +355,7 @@ function InventoryBatchPanel({
                     )}
                   </div>
 
-                  {/* Expiry */}
+                  {}
                   <div className="space-y-1.5">
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">تاريخ الانتهاء</p>
                     {isEditing ? (
@@ -372,7 +372,7 @@ function InventoryBatchPanel({
                     )}
                   </div>
 
-                  {/* Purchase Price */}
+                  {}
                   <div className="space-y-1.5">
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">سعر الشراء</p>
                     {isEditing ? (
@@ -388,7 +388,7 @@ function InventoryBatchPanel({
                     )}
                   </div>
 
-                  {/* Selling Price */}
+                  {}
                   <div className="space-y-1.5">
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">سعر البيع</p>
                     {isEditing ? (
@@ -448,7 +448,7 @@ function InventoryBatchPanel({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+
 export default function InventoryDashboard() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -473,7 +473,7 @@ export default function InventoryDashboard() {
   const { user } = useAuth();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
 
-  // Auto-hide error
+  
   useEffect(() => {
     if (inventoryError) {
       const timer = setTimeout(() => setInventoryError(null), 4000);
@@ -536,7 +536,7 @@ export default function InventoryDashboard() {
     }
   };
 
-  // ✅ فلتر متقدم: بحث + نوع
+  
   const filteredItems = useMemo(() => {
     const query = search.toLowerCase().trim();
     return items.filter((item) => {
@@ -550,7 +550,7 @@ export default function InventoryDashboard() {
     });
   }, [items, search, selectedType]);
 
-  // Pagination
+  
   const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
     filteredItems,
     { pageSize: PAGE_SIZE }
@@ -605,7 +605,7 @@ export default function InventoryDashboard() {
 
   const handleCameraScan = (barcode: string) => setSearch(barcode);
 
-  // ✅ الحصول على الأنواع الفعلية الموجودة في النظام
+  
   const availableTypes = useMemo(() => {
     const types = new Set<string>();
     items.forEach(item => {
@@ -616,7 +616,7 @@ export default function InventoryDashboard() {
 
   return (
     <div ref={pageRef} className="w-full max-w-7xl mx-auto space-y-6 pb-12 p-2 sm:p-4">
-      {/* Header */}
+      {}
       <header data-gsap="fade-up" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
           <motion.h1 
@@ -665,7 +665,7 @@ export default function InventoryDashboard() {
         </div>
       </header>
 
-      {/* Stats Section */}
+      {}
       <div data-gsap="fade-up" className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: 'إجمالي المنتجات', value: items.length, icon: PackageOpen, color: 'text-[#00CED1]', glow: 'bg-[#00CED1]/10' },
@@ -700,7 +700,7 @@ export default function InventoryDashboard() {
         ))}
       </div>
 
-      {/* Search & Controls + فلتر الأنواع */}
+      {}
       <div data-gsap="fade-up" className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 glass-panel p-2 flex items-center gap-3">
           <Search className="w-5 h-5 text-gray-400 mr-3" />
@@ -713,7 +713,7 @@ export default function InventoryDashboard() {
           />
         </div>
 
-        {/* ✅ فلتر الأنواع */}
+        {}
         <div className="relative">
           <button
             onClick={() => setShowTypeFilter(!showTypeFilter)}
@@ -735,7 +735,7 @@ export default function InventoryDashboard() {
                 className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[300px] overflow-y-auto"
               >
                 <div className="p-2">
-                  {/* خيار "الكل" */}
+                  {}
                   <button
                     onClick={() => {
                       setSelectedType('');
@@ -749,7 +749,7 @@ export default function InventoryDashboard() {
                     جميع الأنواع
                   </button>
 
-                  {/* قائمة الأنواع المتاحة */}
+                  {}
                   {availableTypes.map((type) => {
                     const displayName = getTypeDisplayName(type);
                     return (
@@ -784,12 +784,12 @@ export default function InventoryDashboard() {
         </button>
       </div>
 
-      {/* Scanner */}
+      {}
       <div data-gsap="fade-up">
         <LiveScanner onScan={handleCameraScan} />
       </div>
 
-      {/* Table */}
+      {}
       <div data-gsap="fade-up" className="glass-panel overflow-hidden border border-white/5 rounded-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-right border-collapse">
@@ -922,7 +922,7 @@ export default function InventoryDashboard() {
         </div>
       </div>
 
-      {/* Pagination */}
+      {}
       {!loading && totalPages > 1 && (
         <Pagination
           currentPage={currentPage}
@@ -936,7 +936,7 @@ export default function InventoryDashboard() {
         />
       )}
 
-      {/* Error Toast */}
+      {}
       <AnimatePresence>
         {inventoryError && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
@@ -953,7 +953,7 @@ export default function InventoryDashboard() {
         )}
       </AnimatePresence>
       
-      {/* Quick Add Modal */}
+      {}
       <AnimatePresence>
         {isQuickAddOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">

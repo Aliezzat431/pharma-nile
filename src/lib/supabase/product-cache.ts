@@ -1,4 +1,4 @@
-// ✅ Product Cache helper for Offline Read-Only POS Terminal operations using IndexedDB
+
 
 const DB_NAME = 'PharmaNileCache';
 const DB_VERSION = 1;
@@ -19,7 +19,7 @@ export interface CachedProduct {
   pharmacy_name: string;
 }
 
-// In-memory fallback if IndexedDB is fully disabled in the browser environment (e.g. Private Browsing)
+
 let memoryCacheFallback: CachedProduct[] = [];
 
 function openDB(): Promise<IDBDatabase> {
@@ -47,11 +47,9 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-/**
- * Saves all products of the pharmacy to IndexedDB (with Ram fallback)
- */
+
 export async function saveProductsToCache(pharmacyId: string, products: CachedProduct[]): Promise<void> {
-  // Update in-memory backup anyway
+  
   for (const product of products) {
     const idx = memoryCacheFallback.findIndex(p => p.id === product.id);
     const item = { ...product, pharmacy_id: pharmacyId };
@@ -67,9 +65,9 @@ export async function saveProductsToCache(pharmacyId: string, products: CachedPr
     const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
 
-    // Save each item
+    
     for (const product of products) {
-      // Keep pharmacy context
+      
       store.put({ ...product, pharmacy_id: pharmacyId });
     }
 
@@ -82,9 +80,7 @@ export async function saveProductsToCache(pharmacyId: string, products: CachedPr
   }
 }
 
-/**
- * Loads all cached products for the active pharmacy
- */
+
 export async function getCachedProducts(pharmacyId: string): Promise<CachedProduct[]> {
   try {
     const db = await openDB();
@@ -94,7 +90,7 @@ export async function getCachedProducts(pharmacyId: string): Promise<CachedProdu
 
     return new Promise((resolve) => {
       request.onsuccess = () => {
-        // Filter by pharmacy_id to respect multi-tenancy
+        
         const filtered = (request.result || []).filter((item: any) => item.pharmacy_id === pharmacyId);
         resolve(filtered);
       };
@@ -109,9 +105,7 @@ export async function getCachedProducts(pharmacyId: string): Promise<CachedProdu
   }
 }
 
-/**
- * Queries the cached products using fuzzy string match or barcode search
- */
+
 export async function searchLocalCache(query: string, pharmacyId: string): Promise<CachedProduct[]> {
   const cached = await getCachedProducts(pharmacyId);
   if (!query.trim()) return [];
@@ -120,21 +114,19 @@ export async function searchLocalCache(query: string, pharmacyId: string): Promi
   const searchWords = normalizedQuery.split(/\s+/).filter(w => w.length >= 1);
 
   return cached.filter(p => {
-    // 1. Barcode match
+    
     if (p.barcode && p.barcode.toLowerCase() === normalizedQuery) return true;
     if (p.activeBatches?.some(b => b.barcode && b.barcode.toLowerCase() === normalizedQuery)) return true;
 
-    // 2. Fuzzy words match
+    
     const nameMatch = searchWords.every(word => p.name.toLowerCase().includes(word));
     const companyMatch = p.company_name && searchWords.every(word => p.company_name!.toLowerCase().includes(word));
 
     return nameMatch || companyMatch;
-  }).slice(0, 20); // Limit to top 20 matches like the database
+  }).slice(0, 20); 
 }
 
-/**
- * Look up a product in local cache directly by a single barcode
- */
+
 export async function getLocalProductByBarcode(barcode: string, pharmacyId: string): Promise<CachedProduct | null> {
   const cached = await getCachedProducts(pharmacyId);
   const normalizedBarcode = barcode.trim().toLowerCase();

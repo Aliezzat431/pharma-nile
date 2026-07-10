@@ -1,16 +1,4 @@
-/**
- * @file api-guard.ts
- * @description Composable auth/role guard for API routes.
- *
- * Usage in any API route:
- *   import { requireAuth, requireAdmin } from '@/lib/api-guard';
- *
- *   export async function POST(req: NextRequest) {
- *     const { user, errorResponse } = await requireAdmin(req);
- *     if (errorResponse) return errorResponse;
- *     // user is guaranteed non-null + admin role here
- *   }
- */
+
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
@@ -29,10 +17,7 @@ type GuardResult =
 
 const NULL_UUID = '00000000-0000-0000-0000-000000000000';
 
-/**
- * Creates a Supabase server client from a NextRequest (reads cookies).
- * Returns a client + a response object for cookie propagation.
- */
+
 function buildServerClient(req: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -54,7 +39,7 @@ function buildServerClient(req: NextRequest) {
   return { client, res };
 }
 
-/** Requires a valid authenticated session. Returns 401 otherwise. */
+
 export async function requireAuth(req: NextRequest): Promise<GuardResult> {
   const { client } = buildServerClient(req);
   const { data: { user }, error } = await client.auth.getUser();
@@ -78,7 +63,7 @@ export async function requireAuth(req: NextRequest): Promise<GuardResult> {
   };
 }
 
-/** Requires admin or developer role. Returns 403 otherwise. */
+
 export async function requireAdmin(req: NextRequest): Promise<GuardResult> {
   const result = await requireAuth(req);
   if (result.errorResponse) return result;
@@ -96,7 +81,7 @@ export async function requireAdmin(req: NextRequest): Promise<GuardResult> {
   return result;
 }
 
-/** Requires developer role only. Returns 403 otherwise. */
+
 export async function requireDeveloper(req: NextRequest): Promise<GuardResult> {
   const result = await requireAuth(req);
   if (result.errorResponse) return result;
@@ -114,19 +99,12 @@ export async function requireDeveloper(req: NextRequest): Promise<GuardResult> {
   return result;
 }
 
-/**
- * Returns a safe pharmacy_id for queries.
- * Falls back to NULL_UUID if user has no pharmacy (developer / chain_admin).
- * This prevents PostgreSQL UUID type mismatch errors on empty strings.
- */
+
 export function safePharmacyId(user: AuthedUser): string {
   return user.pharmacy_id ?? NULL_UUID;
 }
 
-/**
- * Parses and validates a JSON request body using a Zod schema.
- * Returns { data } on success or { errorResponse } on validation failure.
- */
+
 export async function parseBody<T>(
   req: NextRequest,
   schema: { safeParse: (input: unknown) => { success: boolean; data?: T; error?: any } }

@@ -25,7 +25,7 @@ export default function Pagination({
   const pageRef = useRef<HTMLSpanElement>(null);
   const prevPage = useRef(currentPage);
 
-  // Animate the page number display on change
+  
   useEffect(() => {
     if (!pageRef.current) return;
     const direction = currentPage > prevPage.current ? 1 : -1;
@@ -38,7 +38,7 @@ export default function Pagination({
     );
   }, [currentPage]);
 
-  // Entrance animation
+  
   useEffect(() => {
     if (!containerRef.current) return;
     gsap.fromTo(
@@ -76,16 +76,16 @@ export default function Pagination({
 
   return (
     <div ref={containerRef} className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`} dir="rtl">
-      {/* Items info */}
+      {}
       {totalItems != null && from != null && to != null && (
         <p className="text-sm text-gray-500 font-cairo">
           عرض <span className="text-white font-bold">{from}</span> – <span className="text-white font-bold">{to}</span> من <span className="text-[#00CED1] font-bold">{totalItems}</span> عنصر
         </p>
       )}
 
-      {/* Controls */}
+      {}
       <div className="flex items-center gap-1.5">
-        {/* First */}
+        {}
         <button
           onClick={() => handlePageChange(1)}
           disabled={currentPage === 1}
@@ -95,7 +95,7 @@ export default function Pagination({
           <ChevronsRight className="w-4 h-4" />
         </button>
 
-        {/* Prev */}
+        {}
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
@@ -105,7 +105,7 @@ export default function Pagination({
           <ChevronRight className="w-4 h-4" />
         </button>
 
-        {/* Page Numbers */}
+        {}
         {getPageNumbers().map((page, idx) =>
           page === '...' ? (
             <span key={`dot-${idx}`} className="w-9 h-9 flex items-center justify-center text-gray-600 text-sm">
@@ -133,7 +133,7 @@ export default function Pagination({
           )
         )}
 
-        {/* Next */}
+        {}
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
@@ -143,7 +143,7 @@ export default function Pagination({
           <ChevronLeft className="w-4 h-4" />
         </button>
 
-        {/* Last */}
+        {}
         <button
           onClick={() => handlePageChange(totalPages)}
           disabled={currentPage === totalPages}

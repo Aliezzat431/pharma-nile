@@ -1,4 +1,4 @@
-// app/pos/page.tsx
+
 
 'use client';
 
@@ -34,13 +34,13 @@ import { showToast } from '@/components/ui/SyncToastProvider';
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
 
-// ✅ دالة مساعدة محلية للحصول على الاسم العربي للنوع
+
 const getTypeDisplayName = (typeId: string): string => {
   const found = treatmentTypes.find(t => t.id === typeId);
   return found ? found.name : typeId;
 };
 
-// ✅ خريطة تحويل الأسماء العربية إلى المعرفات الإنجليزية
+
 const arabicToId: Record<string, string> = {
   'لبوس': 'suppository',
   'قطرات عين': 'eye_drops',
@@ -64,12 +64,12 @@ const arabicToId: Record<string, string> = {
   'مستحضرات': 'cosmetics',
 };
 
-// ✅ دالة مساعدة للحصول على الوحدات المتاحة حسب نوع المنتج
+
 const getAvailableUnits = (type: string): string[] => {
-  // 1. حاول البحث بالمعرف مباشرة
+  
   let found = treatmentTypes.find(t => t.id === type);
   
-  // 2. لو مش موجود، حاول تترجم العربي لإنجليزي
+  
   if (!found) {
     const englishId = arabicToId[type];
     if (englishId) {
@@ -77,12 +77,12 @@ const getAvailableUnits = (type: string): string[] => {
     }
   }
   
-  // 3. لو لقيته وعنده تحويل، أرجع الوحدات المتاحة
+  
   if (found && found.hasConversion && found.units) {
     return found.units;
   }
   
-  // 4. غير ذلك أرجع علبة بس
+  
   return ['علبة'];
 };
 
@@ -136,10 +136,10 @@ export default function POSTerminal() {
   const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(new Set());
   const [showRecommendations, setShowRecommendations] = useState(false);
 
-  // ✅ Debug state
+  
   const [showDebug, setShowDebug] = useState(false);
 
-  // ✅ الأنواع المتاحة في نتائج البحث
+  
   const availableTypes = useMemo(() => {
     const types = new Set<string>();
     searchResults.forEach(product => {
@@ -148,13 +148,13 @@ export default function POSTerminal() {
     return Array.from(types).sort();
   }, [searchResults]);
 
-  // ✅ فلتر المنتجات حسب النوع المختار
+  
   const filteredResults = useMemo(() => {
     if (!selectedType) return searchResults;
     return searchResults.filter(product => product.type === selectedType);
   }, [searchResults, selectedType]);
 
-  // Debug effect to log cart changes
+  
   useEffect(() => {
     if (showDebug) {
       console.log('[POS DEBUG] Cart updated:', cart);
@@ -172,7 +172,7 @@ export default function POSTerminal() {
     }
   }, [cart, total, showDebug]);
 
-  // Debug effect for search results
+  
   useEffect(() => {
     if (showDebug && searchResults.length > 0) {
       console.log('[POS DEBUG] Search results:', searchResults);
@@ -258,7 +258,7 @@ export default function POSTerminal() {
     return () => window.removeEventListener('message', handleRemoteCommand);
   }, [searchResults, cart]);
 
-  // ========== تحسين البحث وضمان وجود unit_conversion ==========
+  
   useEffect(() => {
     const fetchResults = async () => {
       if (!pharmacyId) return;
@@ -421,7 +421,7 @@ export default function POSTerminal() {
     }
   }, [pharmacyId]);
 
-  // ✅ دالة إضافة المنتج للسلة مع التأكد من unitConversion والوحدات المتاحة
+  
   const addProductToCart = (product: Product, clearSearch = true) => {
     console.log('[POS DEBUG] addProductToCart called:', product);
     if (product.current_price === undefined || product.current_price === 0) {
@@ -701,7 +701,7 @@ export default function POSTerminal() {
   return (
     <div className="w-full h-full flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500 relative">
 
-      {/* 🔍 Debug Toggle Button */}
+      {}
       <div className="fixed top-4 right-4 z-50">
         <button
           onClick={() => setShowDebug(!showDebug)}
@@ -712,7 +712,7 @@ export default function POSTerminal() {
         </button>
       </div>
 
-      {/* Debug Panel */}
+      {}
       <AnimatePresence>
         {showDebug && (
           <motion.div
@@ -795,7 +795,7 @@ export default function POSTerminal() {
             />
           </form>
 
-          {/* فلتر الأنواع */}
+          {}
           <div className="relative">
             <button
               onClick={() => setShowTypeFilter(!showTypeFilter)}
@@ -862,10 +862,10 @@ export default function POSTerminal() {
           </div>
         </div>
 
-        {/* الماسح الضوئي */}
+        {}
         <LiveScanner onScan={handleCameraScan} />
 
-        {/* قائمة المنتجات */}
+        {}
         <div className="flex-1 glass-card p-6 overflow-y-auto relative">
           <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
             <h2 className="text-lg font-medium text-gray-400 font-cairo">
@@ -963,7 +963,7 @@ export default function POSTerminal() {
         </div>
       </div>
 
-      {/* 2. اللوحة اليمنى: السلة */}
+      {}
       <div className="w-full lg:w-[450px] flex flex-col gap-6 h-[50vh] lg:h-auto lg:flex-none">
         <div className="glass-panel flex-1 p-0 overflow-hidden flex flex-col relative">
           <div className="p-6 border-b border-white/5 flex justify-between items-center">

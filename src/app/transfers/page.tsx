@@ -260,7 +260,7 @@ export default function TransfersPage() {
         </div>
       )}
 
-      {/* Transfers Table */}
+      {}
       {activeTab === 'requests' && (
         <div className="space-y-4">
           <div className="overflow-x-auto rounded-3xl border border-[var(--glass-border)] bg-[var(--glass-surface)]">

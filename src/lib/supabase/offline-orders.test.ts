@@ -4,14 +4,14 @@ import {
   syncOfflineReturns
 } from './offline-orders';
 
-// Mock IndexedDB API that offline-orders.ts uses
+
 const mockStore: Record<string, any[]> = {
   offline_orders: [],
   offline_returns: [],
   cached_orders: []
 };
 
-// We mock the DB functions in offline-orders.ts to use our simple mock database
+
 jest.mock('./offline-orders', () => {
   const actual = jest.requireActual('./offline-orders');
   return {
@@ -60,11 +60,11 @@ describe('PharmaNile Offline Queue Conflict & Synchronization Tests', () => {
 
     const totalSynced = await syncOfflineTransactions(mockProcessCheckout);
 
-    // Both transactions synced successfully
+    
     expect(totalSynced).toBe(2);
     expect(mockProcessCheckout).toHaveBeenCalledTimes(2);
     
-    // Check parameters passed to processCheckout
+    
     expect(mockProcessCheckout).toHaveBeenNthCalledWith(1, 
       [{ id: 'prod-1', name: 'Panadol', price: 15, quantity: 2, unit: undefined, costPrice: 0, batchDistributions: [] }],
       30,
@@ -90,7 +90,7 @@ describe('PharmaNile Offline Queue Conflict & Synchronization Tests', () => {
     };
     
     const mockOrder2: QueuedOrder = {
-      id: 'offline-conflict', // This one will clash (e.g. stock no longer available, price mismatch)
+      id: 'offline-conflict', 
       createdAt: new Date().toISOString(),
       cart: [{ id: 'prod-2', name: 'Bipolan', price: 40, quantity: 5 }],
       total: 200,
@@ -107,18 +107,18 @@ describe('PharmaNile Offline Queue Conflict & Synchronization Tests', () => {
 
     mockStore.offline_orders = [mockOrder1, mockOrder2, mockOrder3];
 
-    // Mock processCheckout: first succeeds, second fails with constraint conflict
+    
     const mockProcessCheckout = jest.fn()
       .mockResolvedValueOnce({ success: true })
       .mockRejectedValueOnce(new Error('CRITICAL DB ERROR: CHECK constraint violation (insufficient stock)'));
 
     const totalSynced = await syncOfflineTransactions(mockProcessCheckout);
 
-    // Only 1 transaction succeeded, and sync loop stopped immediately
-    expect(totalSynced).toBe(1);
-    expect(mockProcessCheckout).toHaveBeenCalledTimes(2); // Attempted first and second
     
-    // Remaining orders in the queue are preserved (not dequeued) so client can troubleshoot
+    expect(totalSynced).toBe(1);
+    expect(mockProcessCheckout).toHaveBeenCalledTimes(2); 
+    
+    
     const remainingQueue = mockStore.offline_orders;
     expect(remainingQueue.length).toBe(2);
     expect(remainingQueue[0].id).toBe('offline-conflict');

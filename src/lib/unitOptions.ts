@@ -32,13 +32,13 @@ export const typesWithUnits = treatmentTypes.reduce((acc: Record<string, string[
     ? type.units
     : [type.baseUnit];
   
-  // Register by both Arabic name and English ID
+  
   acc[type.name] = units;
   acc[type.id] = units;
   return acc;
 }, {});
 
-// Aliases and fallbacks for imported types from files
+
 typesWithUnits['tablet'] = ["علبة", "شريط", "قرص"];
 typesWithUnits['drops'] = ["علبة"];
 typesWithUnits['suppository'] = ["علبة", "شريط", "لبوسة"];
@@ -49,12 +49,12 @@ export const getMultiplier = (prod: any, selectedUnit: string, customPills = 10)
     const conv = Number(prod.unit_conversion || prod.unitConversion || 1);
     const baseUnit = prod.unit || "علبة";
     
-    if (!selectedUnit || selectedUnit === baseUnit) return 1; // 1 Box
+    if (!selectedUnit || selectedUnit === baseUnit) return 1; 
     
-    if (selectedUnit === "شريط") return conv; // Number of strips
+    if (selectedUnit === "شريط") return conv; 
 
     if (selectedUnit === "قرص" || selectedUnit === "كبسولة" || selectedUnit === "قطعة" || selectedUnit === "لبوسة") {
-        return conv * customPills; // Number of strips * pills per strip
+        return conv * customPills; 
     }
 
     return conv;

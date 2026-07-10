@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Setup Supabase Admin Client using service_role key
+
 const getSupabaseAdmin = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -27,15 +27,15 @@ export async function POST(request: NextRequest) {
       email,
       password,
       full_name,
-      regType, // 'join' | 'create'
-      selectedPharmacyId, // For 'join'
-      newPharmacyName, // For 'create'
-      newPharmacyAddress, // For 'create'
-      newPharmacyPhone, // For 'create'
-      createChain, // boolean
-      chainId, // For 'create' under existing chain
-      chainName, // For creating new chain
-      chainPassword, // For creating new chain or verifying existing chain before branch insertion
+      regType, 
+      selectedPharmacyId, 
+      newPharmacyName, 
+      newPharmacyAddress, 
+      newPharmacyPhone, 
+      createChain, 
+      chainId, 
+      chainName, 
+      chainPassword, 
     } = body;
 
     if (!email || !password || !full_name) {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     const adminSupabase = getSupabaseAdmin();
 
-    // 1. Check if email is already taken in auth
+    
     const { data: { users }, error: listError } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 });
     if (listError) {
       return NextResponse.json({ error: 'حدث خطأ أثناء فحص الحساب المكرر' }, { status: 500 });
@@ -57,19 +57,19 @@ export async function POST(request: NextRequest) {
     let targetPharmacyId = selectedPharmacyId;
     let targetChainId = chainId || null;
 
-    // 2. Handle Pharmacy/Chain Creation
+    
     if (regType === 'create') {
       if (!newPharmacyName?.trim()) {
         return NextResponse.json({ error: 'اسم الصيدلية الجديدة مطلوب' }, { status: 400 });
       }
 
-      // If user wants to create a new chain
+      
       if (createChain) {
         if (!chainName?.trim() || !chainPassword?.trim()) {
           return NextResponse.json({ error: 'اسم السلسلة ورمز المرور مطلوبان لإنشاء السلسلة' }, { status: 400 });
         }
 
-        // Check if chain name already exists
+        
         const { data: existingChain, error: chainCheckErr } = await adminSupabase
           .from('chains')
           .select('id')
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'اسم هذه السلسلة مسجل بالفعل بقاعدة البيانات' }, { status: 409 });
         }
 
-        // Create new chain
+        
         const { data: createdChains, error: chainCreateErr } = await adminSupabase
           .from('chains')
           .insert({
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
 
         targetChainId = newChain.id;
       } else if (targetChainId) {
-        // If creating branch in an existing chain, we MUST verify the chain password first
+        
         if (!chainPassword) {
           return NextResponse.json({ error: 'رمز مرور السلسلة مطلوب لإضافة فرع إليها' }, { status: 400 });
         }
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Create new pharmacy branch
+      
       const { data: createdPharmacies, error: pharmacyCreateErr } = await adminSupabase
         .from('pharmacies')
         .insert({
@@ -133,12 +133,12 @@ export async function POST(request: NextRequest) {
 
       targetPharmacyId = newPharmacy.id;
     } else {
-      // Joining an existing pharmacy branch
+      
       if (!targetPharmacyId) {
         return NextResponse.json({ error: 'الرجاء تحديد الصيدلية المراد الانضمام إليها' }, { status: 400 });
       }
 
-      // Automatically resolve secondary/primary chain_id for join
+      
       const { data: targetPharm, error: fetchBranchErr } = await adminSupabase
         .from('pharmacies')
         .select('chain_id')
@@ -151,12 +151,12 @@ export async function POST(request: NextRequest) {
       targetChainId = targetPharm.chain_id;
     }
 
-    // 3. Create Supabase Auth User with metadata
+    
     const userRole = regType === 'create' ? 'admin' : 'staff';
     const { data: newUser, error: createAuthErr } = await adminSupabase.auth.admin.createUser({
       email: email.trim(),
       password,
-      email_confirm: true, // Auto confirm for seamless setup
+      email_confirm: true, 
       user_metadata: {
         full_name: full_name.trim(),
         role: userRole,
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
 
     const newUserId = newUser.user.id;
 
-    // If createChain, update chain owner_id & owner_email
+    
     if (regType === 'create' && createChain && targetChainId) {
       await adminSupabase
         .from('chains')
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
         .eq('id', targetChainId);
     }
 
-    // Explicitly seed user_pharmacy_access for creators/joiners to ensure correct RLS context
+    
     await adminSupabase.from('user_pharmacy_access').insert({
       user_id: newUserId,
       pharmacy_id: targetPharmacyId,

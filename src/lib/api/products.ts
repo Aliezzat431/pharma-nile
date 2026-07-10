@@ -33,7 +33,7 @@ export interface Batch {
   pharmacy_id?: string;
 }
 
-// ✅ تم إصلاح القوس المفقود وتحسين منطق البحث مع دعم البحث الفوري المحلي عند انقطاع الاتصال
+
 export async function searchProducts(query: string, pharmacyId: string) {
   if (typeof window !== 'undefined' && !window.navigator.onLine) {
     console.log('[Offline Cache] Searching catalog offline...');
@@ -51,12 +51,12 @@ export async function searchProducts(query: string, pharmacyId: string) {
           *
         ),
         pharmacy:pharmacies(name)
-      `) // ✅ تم إغلاق القوس هنا
+      `) 
       .eq('pharmacy_id', pharmacyId)
       .eq('batches.pharmacy_id', pharmacyId);
 
     if (words.length > 0) {
-      // بناء فلتر OR للكلمات المتعددة
+      
       const filter = words.map((w) => `name.ilike.%${w}%`).join(',');
       dbQuery = dbQuery.or(filter);
     } else {
@@ -69,7 +69,7 @@ export async function searchProducts(query: string, pharmacyId: string) {
       throw error;
     }
 
-    // معالجة البيانات وإضافة الخصائص المحسوبة
+    
     const mapped = products.map((p: any) => {
       const activeBatches = (p.batches || [])
         .filter((b: Batch) => b.quantity > 0)
@@ -87,7 +87,7 @@ export async function searchProducts(query: string, pharmacyId: string) {
       };
     });
 
-    // حفظ النتائج في الكاش في الخلفية لتكون متاحة أوفلاين
+    
     if (mapped.length > 0) {
       saveProductsToCache(pharmacyId, mapped as any);
     }
@@ -127,7 +127,7 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
       .eq('barcode', barcode)
       .eq('pharmacy_id', pharmacyId)
       .gt('quantity', 0)
-      .maybeSingle(); // ✅ استخدام maybeSingle بدلاً من single لتجنب الخطأ لو مفيش نتائج
+      .maybeSingle(); 
 
     if (batchError || !batch) return null;
 
@@ -140,7 +140,7 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
       .eq('id', batch.product_id)
       .eq('pharmacy_id', pharmacyId)
       .limit(1)
-      .maybeSingle(); // ✅ safe — product may have been deleted after batch lookup
+      .maybeSingle(); 
 
     if (error || !products) return null;
 
@@ -160,7 +160,7 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
       scanned_batch_id: batch.id,
     };
 
-    // Save lookup result to cache
+    
     saveProductsToCache(pharmacyId, [result]);
 
     return result;
@@ -170,11 +170,9 @@ export async function getProductByBarcode(barcode: string, pharmacyId: string) {
   }
 }
 
-/**
- * Syncs the entire pharmacy product catalog to IndexedDB for offline read operation.
- */
+
 export async function syncProductCatalogToCache(pharmacyId: string): Promise<void> {
-  // Hard cap: fetching unlimited rows can OOM large pharmacies after years of data.
+  
   const PAGE_SIZE = 1000;
   let allProducts: any[] = [];
   let page = 0;
@@ -198,10 +196,10 @@ export async function syncProductCatalogToCache(pharmacyId: string): Promise<voi
       if (!products || products.length === 0) break;
 
       allProducts = allProducts.concat(products);
-      if (products.length < PAGE_SIZE) break; // last page
+      if (products.length < PAGE_SIZE) break; 
       page++;
 
-      // Safety: stop at 5 pages (5000 products) to prevent runaway fetches
+      
       if (page >= 5) {
         console.warn('[Cache Sync] Hit 5000-product safety cap. Stopping early.');
         break;
@@ -242,12 +240,12 @@ export async function updateBatch(batchId: string, updates: Partial<Batch>) {
     throw new Error('فشل التحقق من هوية الصيدلية. الرجاء إعادة تسجيل الدخول.');
   }
 
-  // Validations
+  
   if (updates.quantity !== undefined && updates.quantity <= 0) throw new Error('Validation Error: Quantity must be > 0');
   if (updates.purchase_price !== undefined && updates.purchase_price <= 0) throw new Error('Validation Error: Purchase price must be > 0');
   if (updates.sale_price !== undefined && updates.sale_price <= 0) throw new Error('Validation Error: Selling price must be > 0');
 
-  // Security Check
+  
   const { data: existingBatch, error: findError } = await supabase
     .from('batches')
     .select('id, pharmacy_id')
@@ -287,7 +285,7 @@ export async function createBatch(batch: Partial<Batch>) {
     .from('batches')
     .insert([payload])
     .select()
-    .maybeSingle(); // ✅ safe — avoids PGRST116 if RLS silently blocks the insert
+    .maybeSingle(); 
 
   if (error) throw error;
   if (!data) throw new Error('فشل إنشاء التشغيلة — تحقق من صلاحيات قاعدة البيانات.');

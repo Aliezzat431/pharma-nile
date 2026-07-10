@@ -23,16 +23,16 @@ interface PharmacyOption {
 export default function RegisterPage() {
   const router = useRouter();
 
-  // Basic Info
+  
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Registration Mode: Join Existing vs Create New
+  
   const [regType, setRegType] = useState<"join" | "create">("join");
 
-  // Join Mode State
+  
   const [chains, setChains] = useState<ChainOption[]>([]);
   const [selectedChainId, setSelectedChainId] = useState("");
   const [chainVerifyPassword, setChainVerifyPassword] = useState("");
@@ -40,25 +40,25 @@ export default function RegisterPage() {
   const [pharmacies, setPharmacies] = useState<PharmacyOption[]>([]);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState("");
 
-  // Create Mode Sub-Type: 'standalone' | 'new_chain' | 'existing_chain'
+  
   const [createType, setCreateType] = useState<"standalone" | "new_chain" | "existing_chain">("standalone");
 
-  // New Chain Details
+  
   const [newChainName, setNewChainName] = useState("");
   const [newChainPassword, setNewChainPassword] = useState("");
 
-  // New Pharmacy Details
+  
   const [newPharmacyName, setNewPharmacyName] = useState("");
   const [newPharmacyAddress, setNewPharmacyAddress] = useState("");
   const [newPharmacyPhone, setNewPharmacyPhone] = useState("");
 
-  // Common UX States
+  
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifyingChain, setIsVerifyingChain] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // 1. Initial Load: Retrieve all active Chains
+  
   useEffect(() => {
     async function loadChains() {
       try {
@@ -84,7 +84,7 @@ export default function RegisterPage() {
     loadChains();
   }, []);
 
-  // Reset states when changing registration tabs
+  
   const handleRegTypeChange = (type: "join" | "create") => {
     setRegType(type);
     setError("");
@@ -94,7 +94,7 @@ export default function RegisterPage() {
     setSelectedPharmacyId("");
   };
 
-  // Reset states when changing creation options
+  
   const handleCreateTypeChange = (type: "standalone" | "new_chain" | "existing_chain") => {
     setCreateType(type);
     setError("");
@@ -102,7 +102,7 @@ export default function RegisterPage() {
     setChainVerifyPassword("");
   };
 
-  // 2. Verify chain password client-side to unlock its branches
+  
   const handleVerifyChain = async () => {
     if (!selectedChainId) {
       setError("❌ الرجاء تحديد السلسلة المراد فحصها.");
@@ -126,7 +126,7 @@ export default function RegisterPage() {
 
       if (isMatch) {
         setIsChainVerified(true);
-        // Load branches of the selected chain
+        
         const { data: bData, error: bError } = await supabaseClient
           .from("pharmacies")
           .select("id, name")
@@ -157,7 +157,7 @@ export default function RegisterPage() {
 
   const BLOCKED_EMAILS = ["developer@pharma-nile.com"];
 
-  // 3. Final Submission via server API
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -172,7 +172,7 @@ export default function RegisterPage() {
       return;
     }
 
-    // Validation for Join pathway
+    
     if (regType === "join") {
       if (!isChainVerified) {
         setError("❌ يرجى التحقق من رمز مرور السلسلة أولاً.");
@@ -184,7 +184,7 @@ export default function RegisterPage() {
       }
     }
 
-    // Validation for Create pathway
+    
     if (regType === "create") {
       if (!newPharmacyName.trim()) {
         setError("❌ يرجى إدخال اسم فرع الصيدلية.");
@@ -278,7 +278,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#050505] relative selection:bg-[var(--nile-teal)] selection:text-white py-20 px-4 overflow-y-auto font-cairo text-right" dir="rtl">
-      {/* Visual Light Overlays */}
+      {}
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--nile-teal)]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[var(--royal-gold)]/5 rounded-full blur-[100px] pointer-events-none" />
 
@@ -300,7 +300,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* Tab Selection */}
+        {}
         <div className="grid grid-cols-2 gap-2 mb-6 bg-black/60 p-1 rounded-xl border border-white/5">
           <button
             type="button"
@@ -331,7 +331,7 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Section: Full Name */}
+          {}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-400 mr-1 block">الاسم بالكامل</label>
             <div className="relative">
@@ -350,7 +350,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Tab Content: JOIN */}
+          {}
           {regType === "join" && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -453,14 +453,14 @@ export default function RegisterPage() {
             </motion.div>
           )}
 
-          {/* Tab Content: CREATE */}
+          {}
           {regType === "create" && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
-              {/* Selector for createType */}
+              {}
               <div className="grid grid-cols-3 gap-1 bg-black/60 p-1 rounded-xl border border-white/5">
                 <button
                   type="button"
@@ -492,9 +492,9 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              {/* Sub-form block */}
+              {}
               <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-4">
-                {/* 1. New Chain Fields */}
+                {}
                 {createType === "new_chain" && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
@@ -535,7 +535,7 @@ export default function RegisterPage() {
                   </motion.div>
                 )}
 
-                {/* 2. Existing Chain verification fields before adding branch */}
+                {}
                 {createType === "existing_chain" && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
@@ -575,7 +575,7 @@ export default function RegisterPage() {
                   </motion.div>
                 )}
 
-                {/* Pharmacy Branch fields */}
+                {}
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">بيانات الفرع/الصيدلية</h3>
 
                 <div className="space-y-1">
@@ -633,7 +633,7 @@ export default function RegisterPage() {
             </motion.div>
           )}
 
-          {/* Account Login Details Section */}
+          {}
           <div className="border-t border-white/5 pt-5 space-y-4">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">معلومات تسجيل الدخول للحساب</h3>
 
@@ -685,7 +685,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Submission button */}
+          {}
           <button
             type="submit"
             disabled={isLoading || isVerifyingChain}

@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Timing-safe password comparison ---
+    
     const inputBuf  = Buffer.from(password ?? '');
     const secretBuf = Buffer.from(devPassword);
     const isMatch   =
@@ -40,13 +40,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Stamp role=developer via Admin API (no user-lookup needed if ID is set) ---
+    
     const adminSupabase = createClient(supabaseUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
     if (devUserId) {
-      // Fast path: use the UUID directly from env
+      
       const { error: updateError } = await adminSupabase.auth.admin.updateUserById(
         devUserId,
         { user_metadata: { role: 'developer', pharmacy_id: null, chain_id: null } }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      // Fallback: use Supabase Auth REST API directly (bypasses PostgREST schema limitation)
+      
       try {
         const resp = await fetch(
           `${supabaseUrl}/auth/v1/admin/users?page=1&per_page=1000`,
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Hint for next time
+        
         console.info(`[DevAuth] TIP: Add DEVELOPER_USER_ID=${devUser.id} to .env.local to speed up login`);
       } catch (fetchError: any) {
         console.error('[DevAuth] Fetch error:', fetchError);

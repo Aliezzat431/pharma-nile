@@ -16,7 +16,7 @@ import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
 
-const PAGE_SIZE = 12; // 3-column grid, 4 rows
+const PAGE_SIZE = 12; 
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -35,7 +35,7 @@ export default function CustomersPage() {
   const [filterDebt, setFilterDebt] = useState<'all' | 'debtors' | 'clear'>('all');
   const [isExporting, setIsExporting] = useState(false);
 
-  // GSAP page-entry
+  
   const pageRef = usePageGSAP();
 
   useEffect(() => { fetchCustomers(); }, []);
@@ -159,13 +159,13 @@ export default function CustomersPage() {
     }
   };
 
-  // Pagination
+  
   const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
     filteredCustomers,
     { pageSize: PAGE_SIZE }
   );
 
-  // GSAP list animation
+  
   const gridRef = useGSAPList<HTMLDivElement>([paginatedData]);
 
   return (
@@ -174,7 +174,7 @@ export default function CustomersPage() {
       className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 pb-12"
       dir="rtl"
     >
-      {/* Header */}
+      {}
       <header data-gsap="fade-up" className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
           <motion.h1 
@@ -220,7 +220,7 @@ export default function CustomersPage() {
         </div>
       </header>
 
-      {/* Selection bar */}
+      {}
       <AnimatePresence>
         {selectedCustomers.length > 0 && !isPaymentMode && (
           <motion.div
@@ -260,7 +260,7 @@ export default function CustomersPage() {
         )}
       </AnimatePresence>
 
-      {/* Success */}
+      {}
       <AnimatePresence>
         {paymentSuccess && (
           <motion.div
@@ -275,7 +275,7 @@ export default function CustomersPage() {
         )}
       </AnimatePresence>
 
-      {/* Filters */}
+      {}
       <div data-gsap="fade-up" className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 glass-panel p-2 flex items-center gap-3">
           <Search className="w-5 h-5 text-gray-500 mr-2" />
@@ -318,7 +318,7 @@ export default function CustomersPage() {
         </button>
       </div>
 
-      {/* Grid */}
+      {}
       {loading ? (
         <div className="flex justify-center items-center py-20">
           <Loader2 className="w-10 h-10 text-[#00CED1] animate-spin" />
@@ -342,7 +342,7 @@ export default function CustomersPage() {
                 >
                   <div className="absolute inset-0 bg-gradient-to-bl from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0 pointer-events-none" />
                   
-                  {/* Checkbox */}
+                  {}
                   <button
                     onClick={() => toggleSelect(customer.id)}
                     className={`absolute z-20 top-4 left-4 w-7 h-7 rounded-lg flex items-center justify-center transition-all border ${isSelected ? 'bg-[var(--nile-teal)] border-[var(--nile-teal)] text-black' : 'bg-white/5 border-white/20 text-transparent hover:border-[var(--nile-teal)]/50'}`}
@@ -419,7 +419,7 @@ export default function CustomersPage() {
             })}
           </div>
 
-          {/* Pagination */}
+          {}
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
@@ -435,7 +435,7 @@ export default function CustomersPage() {
         </>
       )}
 
-      {/* Modals */}
+      {}
       <BulkPaymentModal
         isOpen={isPaymentMode}
         onClose={() => setIsPaymentMode(false)}

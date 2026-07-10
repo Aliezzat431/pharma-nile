@@ -31,7 +31,7 @@ export const env = (() => {
       .join('\n');
     console.error(`❌ [ENV VALIDATION ERROR] Missing or invalid environment variables:\n${errorDetails}`);
     
-    // Throw only in production and during build to block unsafe deploys
+    
     if (process.env.NODE_ENV === 'production' || isServer) {
       throw new Error(`Environment validation failed:\n${errorDetails}`);
     }

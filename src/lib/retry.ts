@@ -1,12 +1,6 @@
-/**
- * retry.ts
- * --------
- * Provides a generic exponential back-off retry wrapper for async functions.
- * Automatically retries on transient network / Supabase errors and skips
- * retrying on business-logic errors (validation, auth, etc.).
- */
 
-/** Errors that should NEVER be retried — they are deterministic failures. */
+
+
 const NON_RETRYABLE_MESSAGES = [
   'Validation Error',
   'Unauthorized',
@@ -24,13 +18,7 @@ function isRetryable(err: unknown): boolean {
   );
 }
 
-/**
- * Retries `fn` up to `maxAttempts` times with exponential back-off.
- *
- * @param fn           — async function to retry
- * @param maxAttempts  — maximum number of total attempts (default: 3)
- * @param baseDelayMs  — initial delay in ms before first retry (default: 500)
- */
+
 export async function withRetry<T>(
   fn: () => Promise<T>,
   maxAttempts = 3,

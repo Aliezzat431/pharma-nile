@@ -50,7 +50,7 @@ export async function requestTransfer(
       status: 'pending'
     }])
     .select()
-    .maybeSingle(); // ✅ safe
+    .maybeSingle(); 
 
   if (error) {
     console.error('Error requesting transfer:', error);

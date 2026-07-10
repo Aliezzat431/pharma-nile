@@ -21,13 +21,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
     }
 
-    // ── Derive Pharmacy ID securely from Database (never trust client headers/metadata) ──
+    
     const { data: accessData } = await supabase
       .from('user_pharmacy_access')
       .select('pharmacy_id')
       .eq('user_id', user.id)
       .eq('is_primary', true)
-      .maybeSingle(); // Safe selection - prevents PGRST116 exceptions
+      .maybeSingle(); 
 
     const pharmacyId = accessData?.pharmacy_id;
 
@@ -38,11 +38,11 @@ export async function POST(req: Request) {
     let deletedCount = 0;
 
     if (type === 'audit') {
-      // Delete audit logs older than 60 days
+      
       const auditThreshold = new Date();
       auditThreshold.setDate(auditThreshold.getDate() - 60);
       
-      // Get count first
+      
       const { count } = await supabase
         .from('audit_logs')
         .select('*', { count: 'exact', head: true })
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       }
 
     } else if (type === 'orders') {
-      // Delete cancelled orders
+      
       const { count } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
@@ -80,16 +80,16 @@ export async function POST(req: Request) {
       }
 
     } else if (type === 'sessions') {
-      // Delete old sessions (older than 1 year)
+      
       const sessionThreshold = new Date();
       sessionThreshold.setFullYear(sessionThreshold.getFullYear() - 1);
       
-      // Note: Column name is 'logout_time' in our schema, not 'ended_at'
+      
       const { count } = await supabase
         .from('sessions')
         .select('*', { count: 'exact', head: true })
         .eq('pharmacy_id', pharmacyId)
-        .not('logout_time', 'is', null) // Only delete sessions that have an end time
+        .not('logout_time', 'is', null) 
         .lt('logout_time', sessionThreshold.toISOString());
 
       if (count && count > 0) {

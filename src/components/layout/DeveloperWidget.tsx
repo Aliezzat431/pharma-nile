@@ -26,7 +26,7 @@ export default function DeveloperWidget() {
   const currentChainId = user?.user_metadata?.chain_id;
   const simulatedRole = user?.user_metadata?.simulated_role || 'developer';
 
-  // Load all pharmacies/branches for the developer to impersonate
+  
   useEffect(() => {
     if (isDev && isOpen) {
       const loadBranches = async () => {
@@ -50,7 +50,7 @@ export default function DeveloperWidget() {
     }
   }, [isDev, isOpen]);
 
-  // Don't render anything if the logged-in user is not a developer
+  
   if (!isDev) return null;
 
   const currentBranchName = branches.find(b => b.id === currentPharmacyId)?.name || 'غير محدد';
@@ -118,7 +118,7 @@ export default function DeveloperWidget() {
 
   return (
     <>
-      {/* Floating Toggle Button */}
+      {}
       <div className="fixed bottom-6 left-6 z-[120]" dir="rtl">
         <motion.button
           whileHover={{ scale: 1.08 }}
@@ -136,7 +136,7 @@ export default function DeveloperWidget() {
             <Code className="w-6 h-6" />
           )}
           
-          {/* Active impersonation status indicator */}
+          {}
           {currentPharmacyId && !isOpen && (
             <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -146,7 +146,7 @@ export default function DeveloperWidget() {
         </motion.button>
       </div>
 
-      {/* Floating Impersonation Command Center Panel */}
+      {}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -157,7 +157,7 @@ export default function DeveloperWidget() {
             className="fixed bottom-24 left-6 w-96 bg-slate-950/95 border border-white/10 rounded-3xl shadow-2xl p-6 z-[130] font-cairo backdrop-blur-xl pointer-events-auto"
             dir="rtl"
           >
-            {/* Header info */}
+            {}
             <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[var(--nile-teal)] to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(20,184,166,0.25)]">
@@ -174,7 +174,7 @@ export default function DeveloperWidget() {
               </span>
             </div>
 
-            {/* Quick Simulation Stats */}
+            {}
             <div className="grid grid-cols-2 gap-3 mb-4 text-xs">
               <div className="bg-white/5 border border-white/5 rounded-xl p-3 flex flex-col gap-1">
                 <span className="text-gray-500 font-bold">زمن استجابة DB</span>
@@ -186,7 +186,7 @@ export default function DeveloperWidget() {
               </div>
             </div>
 
-            {/* Role Simulation Selector */}
+            {}
             <div className="space-y-2 mb-4">
               <label className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 text-purple-400" />
@@ -214,7 +214,7 @@ export default function DeveloperWidget() {
               </div>
             </div>
 
-            {/* Fast Branch Switcher */}
+            {}
             <div className="space-y-2 mb-4">
               <label className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-amber-500" />
@@ -237,7 +237,7 @@ export default function DeveloperWidget() {
               </select>
             </div>
 
-            {/* Impersonation Info Banner */}
+            {}
             {currentPharmacyId && (
               <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-3 mb-4 text-[11px] space-y-1">
                 <div className="flex justify-between text-gray-400">
@@ -255,7 +255,7 @@ export default function DeveloperWidget() {
               </div>
             )}
 
-            {/* Quick Actions Panel */}
+            {}
             <div className="grid grid-cols-3 gap-2 border-t border-white/5 pt-4">
               <button
                 onClick={() => {

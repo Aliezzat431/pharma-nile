@@ -33,7 +33,7 @@ export default function ChatWidget() {
 
     const msgData: ChatMessage = {
       id: Math.random().toString(36).substring(7),
-      sender: 'د. أحمد', // Hardcoded for demo
+      sender: 'د. أحمد', 
       text: input.trim(),
       timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
     };

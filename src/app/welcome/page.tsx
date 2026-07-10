@@ -23,7 +23,7 @@ export default function WelcomePage() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
 
-  // Selector Wizard State
+  
   const [phase, setPhase] = useState<'intro' | 'choose-chain' | 'verify-password' | 'choose-branch'>('intro');
   const [chains, setChains] = useState<{ id: string; name: string }[]>([]);
   const [filteredChains, setFilteredChains] = useState<{ id: string; name: string }[]>([]);
@@ -34,12 +34,12 @@ export default function WelcomePage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   
-  // Loading & Error states
+  
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [wizardError, setWizardError] = useState<string>('');
   const [passwordSuccess, setPasswordSuccess] = useState<boolean>(false);
   
-  // Debug states for UI
+  
   const [showDebug, setShowDebug] = useState<boolean>(false);
   const [debugDetails, setDebugDetails] = useState<{
     step: string;
@@ -48,7 +48,7 @@ export default function WelcomePage() {
   } | null>(null);
 
   useEffect(() => {
-    // Loading simulation for dramatic effect
+    
     const interval = setInterval(() => {
       setLoadingProgress(prev => {
         if (prev >= 100) {
@@ -80,7 +80,7 @@ export default function WelcomePage() {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
 
-      // Cinematic Reveal
+      
       tl.to(".loading-screen", { opacity: 0, duration: 1, ease: "power4.inOut" });
       
       tl.fromTo(containerRef.current, 
@@ -89,7 +89,7 @@ export default function WelcomePage() {
         "-=0.5"
       );
 
-      // Title Reveal
+      
       tl.fromTo(".char-reveal",
         { y: 100, opacity: 0, rotateX: -90 },
         { y: 0, opacity: 1, rotateX: 0, duration: 1.2, stagger: 0.05, ease: 'expo.out' },
@@ -116,7 +116,7 @@ export default function WelcomePage() {
         '-=0.5'
       );
 
-      // Infinite floating loop
+      
       gsap.to('.hero-pill', {
         y: -15,
         rotation: 10,
@@ -130,7 +130,7 @@ export default function WelcomePage() {
     return () => ctx.revert();
   }, [showContent]);
 
-  // Load chains list from DB
+  
   const loadChains = async () => {
     setIsLoading(true);
     setWizardError('');
@@ -156,7 +156,7 @@ export default function WelcomePage() {
     }
   };
 
-  // Filter chains search list
+  
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) {
@@ -192,7 +192,7 @@ export default function WelcomePage() {
     setDebugDetails(null);
     
     try {
-      // Step 1: Check if chain exists
+      
       const { data: chainExists, error: chainCheckError } = await supabase
         .from('chains')
         .select('id, name, password')
@@ -232,7 +232,7 @@ export default function WelcomePage() {
         return;
       }
 
-      // Step 2: Call RPC function
+      
       const { data: isMatch, error: rpcError } = await supabase.rpc('verify_chain_password', {
         p_chain_id: selectedChainId,
         p_password: chainPassword
@@ -251,7 +251,7 @@ export default function WelcomePage() {
           }
         });
         
-        // عرض رسالة خطأ مفصلة
+        
         let errorMessage = '❌ حدث خطأ أثناء التحقق: ';
         if (rpcError.message?.includes('function') || rpcError.message?.includes('does not exist')) {
           errorMessage += 'دالة التحقق غير موجودة في قاعدة البيانات';
@@ -267,12 +267,12 @@ export default function WelcomePage() {
         return;
       }
 
-      // Step 3: Check password match
+      
       if (isMatch) {
         setPasswordSuccess(true);
         setWizardError('');
         
-        // Fetch branches of this chain
+        
         const { data: branchData, error: bError } = await supabase
           .from('pharmacies')
           .select('id, name, address, phone')
@@ -325,7 +325,7 @@ export default function WelcomePage() {
   };
 
   const handleSelectBranch = (branchId: string) => {
-    // 1 Year Expiration cookie setting
+    
     const maxAge = 31536000;
     document.cookie = `pharma-nile-visited=true; path=/; max-age=${maxAge}; SameSite=Lax`;
     document.cookie = `pharma-nile-selected-chain-id=${selectedChainId}; path=/; max-age=${maxAge}; SameSite=Lax`;
@@ -335,7 +335,7 @@ export default function WelcomePage() {
     localStorage.setItem('selected_pharmacy_id', branchId);
     localStorage.setItem('selected_chain_id', selectedChainId);
 
-    // Fade out screen and route to login
+    
     gsap.to(containerRef.current, {
       opacity: 0,
       scale: 1.2,
@@ -360,7 +360,7 @@ export default function WelcomePage() {
       className="min-h-screen bg-[#020202] flex flex-col items-center justify-center overflow-y-auto py-10"
       dir="rtl"
     >
-      {/* Loading Phase */}
+      {}
       {!showContent && (
         <div className="loading-screen fixed inset-0 z-50 bg-[#020202] flex flex-col items-center justify-center gap-8">
           <motion.div 
@@ -381,7 +381,7 @@ export default function WelcomePage() {
         </div>
       )}
 
-      {/* Background Mesh */}
+      {}
       <div className="absolute inset-0 pointer-events-none opacity-40">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-cyan-500/10 rounded-full blur-[150px] animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -391,7 +391,7 @@ export default function WelcomePage() {
         <div className="w-full relative z-10 flex flex-col items-center justify-center min-h-[90vh] px-4 font-cairo">
           <AnimatePresence mode="wait">
             
-            {/* Phase 0: Intro */}
+            {}
             {phase === 'intro' && (
               <motion.div 
                 key="intro-phase"
@@ -401,7 +401,7 @@ export default function WelcomePage() {
                 transition={{ duration: 0.6 }}
                 className="max-w-5xl w-full flex flex-col items-center gap-10 md:gap-16"
               >
-                {/* Hero Icon */}
+                {}
                 <div className="hero-pill relative w-24 h-24 md:w-32 md:h-32">
                   <div className="absolute inset-0 bg-cyan-400/20 blur-3xl animate-pulse" />
                   <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent backdrop-blur-xl border border-white/20 rounded-[2.5rem] flex items-center justify-center shadow-2xl group hover:shadow-[0_0_40px_#22d3ee] transition-shadow">
@@ -410,7 +410,7 @@ export default function WelcomePage() {
                   </div>
                 </div>
 
-                {/* Typography */}
+                {}
                 <div className="text-center space-y-6">
                   <div className="overflow-hidden py-2">
                     <h1 className="text-7xl md:text-9xl font-black font-cairo text-white tracking-tighter flex items-center justify-center gap-0.5">
@@ -429,7 +429,7 @@ export default function WelcomePage() {
                   </p>
                 </div>
 
-                {/* Features Grid */}
+                {}
                 <div 
                   ref={featuresRef}
                   className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full"
@@ -447,7 +447,7 @@ export default function WelcomePage() {
                   ))}
                 </div>
 
-                {/* Action CTA */}
+                {}
                 <div className="flex flex-col items-center gap-6 mt-4">
                   <button
                     ref={btnRef}
@@ -468,7 +468,7 @@ export default function WelcomePage() {
               </motion.div>
             )}
 
-            {/* Phase 1: Choose Chain */}
+            {}
             {phase === 'choose-chain' && (
               <motion.div 
                 key="choose-chain-phase"
@@ -493,7 +493,7 @@ export default function WelcomePage() {
                   </div>
                 )}
 
-                {/* Search field */}
+                {}
                 <div className="relative mb-5">
                   <input
                     type="text"
@@ -505,7 +505,7 @@ export default function WelcomePage() {
                   <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 </div>
 
-                {/* Chains scrollable list */}
+                {}
                 <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1 select-none custom-scrollbar">
                   {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-3">
@@ -558,7 +558,7 @@ export default function WelcomePage() {
               </motion.div>
             )}
 
-            {/* Phase 2: Verify Password */}
+            {}
             {phase === 'verify-password' && (
               <motion.div 
                 key="verify-password-phase"
@@ -583,7 +583,7 @@ export default function WelcomePage() {
                   </div>
                 )}
 
-                {/* Debug Details Box */}
+                {}
                 {debugDetails && (
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
@@ -692,7 +692,7 @@ export default function WelcomePage() {
                     <span>رجوع لاختيار السلسلة</span>
                   </button>
                   
-                  {/* زر عرض تفاصيل إضافية */}
+                  {}
                   <button
                     type="button"
                     onClick={() => setShowDebug(!showDebug)}
@@ -705,7 +705,7 @@ export default function WelcomePage() {
               </motion.div>
             )}
 
-            {/* Phase 3: Choose Branch */}
+            {}
             {phase === 'choose-branch' && (
               <motion.div 
                 key="choose-branch-phase"
@@ -778,7 +778,7 @@ export default function WelcomePage() {
         </div>
       )}
 
-      {/* Decorative Scanline */}
+      {}
       <div className="absolute inset-x-0 h-px bg-cyan-400/20 top-0 translate-y-[-100%] animate-scan pointer-events-none" />
       
       <style jsx>{`

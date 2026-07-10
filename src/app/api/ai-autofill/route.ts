@@ -60,8 +60,8 @@ The required JSON schema layout:
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage }
       ],
-      temperature: 0.1, // درجة حرارة منخفضة جداً لضمان عدم الابتكار والالتزام بالـ JSON والأنواع المتاحة
-      response_format: { type: "json_object" } // تفعيل وضع الـ JSON الإجباري في Groq
+      temperature: 0.1, 
+      response_format: { type: "json_object" } 
     });
 
     const rawText = chatCompletion.choices[0]?.message?.content?.trim() ?? '';

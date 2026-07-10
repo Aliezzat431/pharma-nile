@@ -33,10 +33,7 @@ export function usePageGSAP<T extends HTMLElement = HTMLDivElement>(stagger = 0.
   return ref;
 }
 
-/**
- * useGSAPList – animate a list of items whenever the data changes.
- * Attach returned ref to the UL/div container wrapping list items.
- */
+
 export function useGSAPList<T extends HTMLElement = HTMLDivElement>(deps: unknown[]) {
   const ref = useRef<T>(null);
 
@@ -61,7 +58,7 @@ export function useGSAPList<T extends HTMLElement = HTMLDivElement>(deps: unknow
     }, ref);
 
     return () => ctx.revert();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, deps);
 
   return ref;

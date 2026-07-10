@@ -284,7 +284,7 @@ export default function ShortagesPage() {
         </div>
       </header>
 
-      {/* Filters */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="glass-panel p-2 flex items-center gap-3">
           <Search className="w-5 h-5 text-gray-500 mr-3" />
@@ -351,7 +351,7 @@ export default function ShortagesPage() {
         ))}
       </div>
 
-      {/* Table */}
+      {}
         <div ref={listRef}>
           {loading ? (
             <div className="space-y-4">

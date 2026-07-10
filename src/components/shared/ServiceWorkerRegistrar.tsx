@@ -2,10 +2,7 @@
 
 import { useEffect } from 'react';
 
-/**
- * Registers the PharmaNile Service Worker for PWA offline support.
- * Must be a client component mounted inside the root layout.
- */
+
 export default function ServiceWorkerRegistrar() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
@@ -26,7 +23,7 @@ export default function ServiceWorkerRegistrar() {
               newWorker.state === 'installed' &&
               navigator.serviceWorker.controller
             ) {
-              // New SW installed — silently skip waiting so it activates on next visit
+              
               newWorker.postMessage({ type: 'SKIP_WAITING' });
             }
           });

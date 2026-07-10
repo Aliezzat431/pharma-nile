@@ -13,8 +13,8 @@ import { SalesSummaryCards } from './components/SalesSummaryCards';
 import { SalesTrendChart } from './components/SalesTrendChart';
 import { PaymentMethodsChart } from './components/PaymentMethodsChart';
 import { TopProductsChart } from './components/TopProductsChart';
-import { usePagination } from '@/hooks/usePagination'; // تأكد من المسار
-import Pagination from '@/components/ui/Pagination';   // تأكد من المسار
+import { usePagination } from '@/hooks/usePagination'; 
+import Pagination from '@/components/ui/Pagination';   
 
 interface OrderItem {
   id: string;
@@ -34,14 +34,14 @@ interface Order {
   order_items: OrderItem[];
 }
 
-const PAGE_SIZE = 10; // عدد الطلبات في كل صفحة بالجدول
+const PAGE_SIZE = 10; 
 
 export default function SalesDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'all'>('month');
 
-  // GSAP page-entry
+  
   const pageRef = usePageGSAP();
   const { user } = useAuth();
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -76,7 +76,7 @@ export default function SalesDashboardPage() {
         query = query.gte('created_at', fromDate.toISOString());
       }
 
-      // Sort by date descending for the table (newest first)
+      
       query = query.order('created_at', { ascending: false });
 
       const { data, error } = await query;
@@ -90,7 +90,7 @@ export default function SalesDashboardPage() {
     }
   };
 
-  // Calculations (Based on ALL orders for accurate stats)
+  
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total), 0);
   const totalProfit = orders.reduce((sum, order) => sum + Number(order.profit_total || 0), 0);
   const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
@@ -98,7 +98,7 @@ export default function SalesDashboardPage() {
     sum + order.order_items.reduce((itemSum, item) => itemSum + Number(item.quantity), 0)
   , 0);
 
-  // Chart Data Generators
+  
   const generateTrendData = () => {
     const grouped: Record<string, { date: string, sales: number, profit: number }> = {};
     const now = new Date();
@@ -161,13 +161,13 @@ export default function SalesDashboardPage() {
   };
   const paymentData = generatePaymentData();
 
-  // Pagination Hook for the Orders Table
+  
   const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
     orders,
     { pageSize: PAGE_SIZE }
   );
 
-  // Export to CSV Function
+  
   const handleExportCSV = () => {
     const headers = ["التاريخ", "رقم الطلب", "المنتجات", "الإجمالي", "الربح", "طريقة الدفع"];
     const rows = orders.map(o => [
@@ -203,7 +203,7 @@ export default function SalesDashboardPage() {
         </div>
         
         <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
-           {/* Action Buttons */}
+           {}
            <div className="flex gap-2">
               <button 
                 onClick={() => window.print()}
@@ -221,7 +221,7 @@ export default function SalesDashboardPage() {
               </button>
            </div>
 
-           {/* Date Range Tabs */}
+           {}
            <div className="flex flex-nowrap bg-black/40 border border-white/5 rounded-xl p-1 overflow-hidden font-cairo w-full lg:w-auto overflow-x-auto snap-x">
             {[
               { id: 'today', label: 'اليوم' },
@@ -261,7 +261,7 @@ export default function SalesDashboardPage() {
             <TopProductsChart topProductsData={topProductsData} />
           </div>
 
-          {/* Detailed Sales Table with Pagination */}
+          {}
           <div className="mt-12">
             <h3 className="text-xl font-bold font-cairo mb-4 flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-[#00CED1]" />
@@ -311,7 +311,7 @@ export default function SalesDashboardPage() {
                 </table>
               </div>
               
-              {/* Pagination Component */}
+              {}
               {totalPages > 1 && (
                 <div className="p-4 border-t border-white/5">
                   <Pagination

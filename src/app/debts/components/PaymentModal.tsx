@@ -28,7 +28,7 @@ export function PaymentModal({ isOpen, onClose, selectedDebtor, onRecordPayment 
     resetPayment();
   };
 
-  // Allow passing down a reset prop manually when modal opens, or handle it higher up
+  
   React.useEffect(() => {
     if (isOpen) {
       resetPayment();

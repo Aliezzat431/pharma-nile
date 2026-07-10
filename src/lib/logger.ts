@@ -1,8 +1,4 @@
-/**
- * PharmaNile Structured Logger
- * Provides structured JSON logging in production and formatted logs in development.
- * Supports error serialization, request IDs, and category labels.
- */
+
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -29,7 +25,7 @@ class StructuredLogger {
     if (err instanceof Error) {
       return {
         message: err.message,
-        // In production, we explicitly preserve the stack trace for Sentry/Log aggregators
+        
         stack: err.stack,
         code: (err as any).code,
         details: (err as any).details || undefined
@@ -57,15 +53,15 @@ class StructuredLogger {
     };
 
     if (this.isProduction) {
-      // Production: structured single-line JSON log
+      
       console.log(JSON.stringify(payload));
     } else {
-      // Development: Dev-friendly formatted output
+      
       const colorMap = {
-        debug: '\x1b[36m%s\x1b[0m', // Cyan
-        info: '\x1b[32m%s\x1b[0m',  // Green
-        warn: '\x1b[33m%s\x1b[0m',  // Yellow
-        error: '\x1b[31m%s\x1b[0m'   // Red
+        debug: '\x1b[36m%s\x1b[0m', 
+        info: '\x1b[32m%s\x1b[0m',  
+        warn: '\x1b[33m%s\x1b[0m',  
+        error: '\x1b[31m%s\x1b[0m'   
       };
       
       const timeStr = `[${payload.timestamp.split('T')[1].substring(0, 8)}]`;

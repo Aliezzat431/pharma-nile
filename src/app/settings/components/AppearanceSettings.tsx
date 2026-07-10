@@ -35,7 +35,7 @@ export function AppearanceSettings({ theme, handleThemeChange, setIsThemeModalOp
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Dark Theme Button */}
+              {}
               <button
                 onClick={() => handleThemeChange('dark')}
                 className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${theme === 'dark'
@@ -53,7 +53,7 @@ export function AppearanceSettings({ theme, handleThemeChange, setIsThemeModalOp
                 </div>
               </button>
 
-              {/* Light Theme Button */}
+              {}
               <button
                 onClick={() => handleThemeChange('light')}
                 className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${theme === 'light'

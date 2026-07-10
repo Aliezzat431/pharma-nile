@@ -116,7 +116,7 @@ export default function CreateProduct() {
         purchase_price: data.purchase_price,
         sale_price: data.sale_price,
         unit_conversion: showUnitConversion ? data.unit_conversion : 1,
-        // pharmacy_id intentionally not passed — derived from JWT server-side
+        
       });
 
       if (success) {

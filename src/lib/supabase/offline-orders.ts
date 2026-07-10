@@ -5,7 +5,7 @@ const RETURNS_STORE_NAME = 'offline_returns';
 const CACHED_ORDERS_STORE_NAME = 'cached_orders';
 
 export interface QueuedOrder {
-  id: string; // Temp client-side transaction ID
+  id: string; 
   cart: any[];
   total: number;
   paymentMethod: 'cash' | 'debt' | 'sadqah';
@@ -14,7 +14,7 @@ export interface QueuedOrder {
 }
 
 export interface QueuedReturn {
-  id: string; // Order ID to void/return
+  id: string; 
   createdAt: string;
 }
 
@@ -44,16 +44,14 @@ function openOrdersDB(): Promise<IDBDatabase> {
   });
 }
 
-/**
- * Saves fetched orders list for offline returns access
- */
+
 export async function saveOrdersToCache(orders: any[]): Promise<void> {
   try {
     const db = await openOrdersDB();
     const transaction = db.transaction(CACHED_ORDERS_STORE_NAME, 'readwrite');
     const store = transaction.objectStore(CACHED_ORDERS_STORE_NAME);
 
-    // Clear existing cache first to avoid stale logs
+    
     store.clear();
 
     for (const order of orders) {
@@ -64,9 +62,7 @@ export async function saveOrdersToCache(orders: any[]): Promise<void> {
   }
 }
 
-/**
- * Retrieves cached orders for offline viewing / return processing
- */
+
 export async function getCachedOrdersList(): Promise<any[]> {
   try {
     const db = await openOrdersDB();
@@ -76,7 +72,7 @@ export async function getCachedOrdersList(): Promise<any[]> {
 
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
-        // Sort descending by created_at just like Postgres
+        
         const sorted = (request.result || []).sort(
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
@@ -90,9 +86,7 @@ export async function getCachedOrdersList(): Promise<any[]> {
   }
 }
 
-/**
- * Pushes a new transaction to the offline queue
- */
+
 export async function queueOfflineOrder(order: Omit<QueuedOrder, 'id' | 'createdAt'>): Promise<string> {
   const tempId = `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const payload: QueuedOrder = {
@@ -113,7 +107,7 @@ export async function queueOfflineOrder(order: Omit<QueuedOrder, 'id' | 'created
     });
   } catch (err) {
     console.error('[Offline Sync] Failed to queue order:', err);
-    // Simple LocalStorage fallback of last resort
+    
     if (typeof window !== 'undefined') {
       const fallbackList = JSON.parse(localStorage.getItem(STORE_NAME) || '[]');
       fallbackList.push(payload);
@@ -124,9 +118,7 @@ export async function queueOfflineOrder(order: Omit<QueuedOrder, 'id' | 'created
   }
 }
 
-/**
- * Returns all pending offline orders
- */
+
 export async function getQueuedOrders(): Promise<QueuedOrder[]> {
   try {
     const db = await openOrdersDB();
@@ -147,9 +139,7 @@ export async function getQueuedOrders(): Promise<QueuedOrder[]> {
   }
 }
 
-/**
- * Removes an offline order after it is successfully uploaded
- */
+
 export async function dequeueOrder(id: string): Promise<void> {
   try {
     const db = await openOrdersDB();
@@ -171,9 +161,7 @@ export async function dequeueOrder(id: string): Promise<void> {
   }
 }
 
-/**
- * Pushes an offline return request to the queue
- */
+
 export async function queueOfflineReturn(orderId: string): Promise<void> {
   const payload: QueuedReturn = {
     id: orderId,
@@ -200,9 +188,7 @@ export async function queueOfflineReturn(orderId: string): Promise<void> {
   }
 }
 
-/**
- * Returns all queued returns
- */
+
 export async function getQueuedReturns(): Promise<QueuedReturn[]> {
   try {
     const db = await openOrdersDB();
@@ -223,9 +209,7 @@ export async function getQueuedReturns(): Promise<QueuedReturn[]> {
   }
 }
 
-/**
- * Removes a return from queue after it is processed
- */
+
 export async function dequeueReturn(orderId: string): Promise<void> {
   try {
     const db = await openOrdersDB();
@@ -247,9 +231,7 @@ export async function dequeueReturn(orderId: string): Promise<void> {
   }
 }
 
-/**
- * Syncs all pending offline returns sequentially
- */
+
 export async function syncOfflineReturns(
   processReturnFn: (orderId: string) => Promise<any>
 ): Promise<number> {
@@ -273,9 +255,7 @@ export async function syncOfflineReturns(
   return successCount;
 }
 
-/**
- * Syncs all pending offline transactions sequentially using processCheckout API
- */
+
 export async function syncOfflineTransactions(
   processCheckoutFn: (cart: any[], total: number, paymentMethod: any, customerId?: string) => Promise<any>
 ): Promise<number> {
@@ -287,7 +267,7 @@ export async function syncOfflineTransactions(
 
   for (const order of queued) {
     try {
-      // Map batchDistributions appropriately
+      
       const cartItems = order.cart.map(item => ({
         id: item.id,
         name: item.name,
@@ -298,16 +278,16 @@ export async function syncOfflineTransactions(
         batchDistributions: item.batchDistributions || []
       }));
 
-      // Submit transaction
+      
       await processCheckoutFn(cartItems, order.total, order.paymentMethod, order.customerId);
       
-      // Remove from offline queue
+      
       await dequeueOrder(order.id);
       successCount++;
       console.log(`[Offline Sync] Sync success for transaction: ${order.id}`);
     } catch (err) {
       console.error(`[Offline Sync] Failed to sync transaction ${order.id}:`, err);
-      // Stop sequencing if there's database schema error to prevent looping failure
+      
       break;
     }
   }

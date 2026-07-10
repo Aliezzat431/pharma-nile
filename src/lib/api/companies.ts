@@ -2,7 +2,7 @@ import { supabase } from '../supabase';
 
 export interface Company {
   id: string;
-  pharmacy_id: string; // ✅ ربط الشركة بالصيدلية المحددة
+  pharmacy_id: string; 
   name: string;
   contact_person?: string;
   phone?: string;
@@ -20,7 +20,7 @@ export async function getCompanies(): Promise<Company[]> {
   const { data, error } = await supabase
     .from('companies')
     .select('*')
-    .eq('pharmacy_id', pharmacyId) // 🔒 حصر الجلب للـ Tenant الحالي
+    .eq('pharmacy_id', pharmacyId) 
     .order('name', { ascending: true });
 
   if (error) {
@@ -40,7 +40,7 @@ export async function addCompany(company: Omit<Company, 'id' | 'created_at' | 'p
     .from('companies')
     .insert([{ ...company, pharmacy_id: pharmacyId }])
     .select()
-    .maybeSingle(); // ✅ safe
+    .maybeSingle(); 
 
   if (error) {
     console.error('Error adding company:', error);
@@ -60,7 +60,7 @@ export async function updateCompany(id: string, updates: Partial<Omit<Company, '
     .from('companies')
     .update(updates)
     .eq('id', id)
-    .eq('pharmacy_id', pharmacyId) // 🔒 طبقة الأمان الثنائية
+    .eq('pharmacy_id', pharmacyId) 
     .select()
     .maybeSingle();
 
@@ -81,7 +81,7 @@ export async function deleteCompany(id: string): Promise<void> {
     .from('companies')
     .delete()
     .eq('id', id)
-    .eq('pharmacy_id', pharmacyId); // 🔒 ضمان عدم حذف الموظف لشركة تابعة لصيدلية أخرى
+    .eq('pharmacy_id', pharmacyId); 
 
   if (error) {
     console.error('Error deleting company:', error);

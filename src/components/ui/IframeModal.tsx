@@ -11,7 +11,7 @@ export function IframeModal() {
   const { iframes, activeIframeId } = useAppSelector((state) => state.agent);
   const [isMaximized, setIsMaximized] = useState(false);
 
-  // خذ الـ iframe النشط فقط
+  
   const activeIframe = iframes.find((f) => f.id === activeIframeId);
 
   if (!activeIframe || iframes.length === 0) return null;
@@ -81,7 +81,7 @@ export function IframeModal() {
                 backgroundColor: iframe.backgroundColor || '#0a0a0a',
               }}
             >
-              {/* Header */}
+              {}
               <div className="flex items-center justify-between px-6 py-4 bg-[#0a0a0a] border-b border-[#1a1a1a]">
                 <h3 className="text-white font-bold font-cairo">{iframe.title}</h3>
                 <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export function IframeModal() {
                 </div>
               </div>
 
-              {/* Iframe */}
+              {}
               <iframe
                 src={iframe.url}
                 className="w-full h-full"

@@ -54,16 +54,16 @@ ${this.state.errorInfo?.componentStack || this.state.error.stack || "No trace av
 
       return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[#05050a] relative overflow-hidden font-cairo text-right" dir="rtl">
-          {/* Futuristic ambient glow */}
+          {}
           <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-rose-500/5 blur-[120px] pointer-events-none" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-amber-500/5 blur-[120px] pointer-events-none" />
 
-          {/* Sci-fi background grid */}
+          {}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:40px_40px] bg-center pointer-events-none" />
 
           <div className="glass-panel w-full max-w-2xl p-8 border border-rose-500/20 shadow-[0_12px_50px_rgba(244,63,94,0.1)] flex flex-col items-center gap-6 relative z-10 animate-entrance">
             
-            {/* Pulsing Warning Icon */}
+            {}
             <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/25 shadow-[0_0_20px_rgba(244,63,94,0.15)] animate-pulse">
               <AlertTriangle className="w-8 h-8 text-rose-450" />
             </div>
@@ -75,7 +75,7 @@ ${this.state.errorInfo?.componentStack || this.state.error.stack || "No trace av
               </p>
             </div>
 
-            {/* Error Diagnostics collapsible report */}
+            {}
             {this.state.error && (
               <div className="w-full space-y-2 text-left" dir="ltr">
                 <div className="flex items-center justify-between px-2">
@@ -111,7 +111,7 @@ ${this.state.errorInfo?.componentStack || this.state.error.stack || "No trace av
               </div>
             )}
 
-            {/* Action Buttons */}
+            {}
             <div className="flex flex-wrap items-center gap-3 justify-center w-full mt-2">
               <button
                 onClick={this.handleReset}

@@ -133,7 +133,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {}
       {isMobile && !isCollapsed && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] md:hidden"
@@ -149,7 +149,7 @@ export default function Sidebar() {
         }}
         className={`bg-[var(--panel-bg)] backdrop-blur-xl border-l border-[var(--glass-border)] h-screen fixed right-0 top-0 flex flex-col z-[100] transition-all duration-500 ease-in-out`}
       >
-        {/* Header Section */}
+        {}
         <div className={`p-6 pb-2 mb-4 transition-all duration-500 ${isCollapsed ? 'px-4' : 'p-8'}`}>
           <div className={`flex items-center gap-3 bg-gradient-to-l bg-[var(--nile-teal)]/10 to-transparent p-3 rounded-2xl border-r-4 border-[var(--nile-teal)] relative group overflow-hidden`}>
             <div className="w-12 h-12 min-w-[48px] rounded-xl bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--royal-gold)] flex items-center justify-center shadow-[0_0_20px_var(--nile-teal-glow)] z-10 transition-transform group-hover:rotate-12 group-hover:scale-110">
@@ -164,7 +164,7 @@ export default function Sidebar() {
               </div>
             )}
             
-            {/* Internal Collapse Button (Visible when expanded) */}
+            {}
             {!isCollapsed && (
               <button 
                 onClick={toggleSidebar}
@@ -176,7 +176,7 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Navigation Menu */}
+        {}
         <nav className="flex-1 px-3 space-y-6 overflow-y-auto custom-scrollbar scroll-smooth py-4">
           {menuGroups.map((group) => (
             <div key={group.title} className="space-y-1">
@@ -221,14 +221,14 @@ export default function Sidebar() {
                         )}
                       </Link>
                       
-                      {/* Tooltip for Collapsed State */}
+                      {}
                       {isCollapsed && (
                         <div className="absolute left-full ml-4 px-3 py-2 bg-[var(--background)] border border-[var(--glass-border)] rounded-lg text-[var(--foreground)] text-xs font-bold font-cairo opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[200] whitespace-nowrap shadow-2xl">
                           {item.label}
                         </div>
                       )}
                       
-                      {/* Expand Window Button (Only in Expanded Mode) */}
+                      {}
                       {!isCollapsed && (
                         <button
                           onClick={(e) => {
@@ -255,10 +255,10 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        {/* Branch Switcher — only visible for chain users */}
+        {}
         <BranchSwitcher isCollapsed={isCollapsed} />
 
-        {/* Footer Section */}
+        {}
         <div className="p-4 border-t border-[var(--glass-border)] space-y-3">
           <div className={`flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${isCollapsed ? 'justify-center' : 'bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)]'}`}>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--nile-teal)] to-[var(--royal-gold)] p-[2px]">
@@ -297,7 +297,7 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* ✅ Integrated Expand Button (Inside Nav, on the left edge) */}
+        {}
         {isCollapsed && !isMobile && (
           <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 z-[101]">
             <motion.button
@@ -313,7 +313,7 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* Background Glow Effect */}
+        {}
         {!isCollapsed && (
           <div className="absolute top-[20%] -left-20 w-40 h-40 bg-[var(--nile-teal)]/5 rounded-full blur-[80px] -z-10" />
         )}

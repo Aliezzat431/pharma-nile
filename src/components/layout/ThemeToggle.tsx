@@ -43,7 +43,7 @@ export default function ThemeToggle({ align = "right" }: { align?: "left" | "rig
 
   const getDropdownClasses = () => {
     if (align === "sidebar") {
-      return "absolute bottom-10 right-full mr-4"; // Grows left and up from sidebar
+      return "absolute bottom-10 right-full mr-4"; 
     }
     return align === "left" ? "absolute left-0 mt-3" : "absolute right-0 mt-3";
   };

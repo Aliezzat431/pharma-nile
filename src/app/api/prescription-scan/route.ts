@@ -4,14 +4,14 @@ import Groq from 'groq-sdk';
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 export interface ExtractedPrescriptionItem {
-  medicine_name: string;        // الاسم الأصلي كما في الروشتة
-  medicine_name_en?: string;    // الاسم الإنجليزي إن وُجد
+  medicine_name: string;        
+  medicine_name_en?: string;    
   dosage: string;
   frequency: string;
   duration: string;
   notes?: string;
-  confidence: number;           // 0-1 مستوى الثقة
-  raw_text?: string;            // النص الخام المقروء
+  confidence: number;           
+  raw_text?: string;            
 }
 
 export async function POST(req: Request) {
@@ -161,7 +161,7 @@ NOW ANALYZE THIS PRESCRIPTION IMAGE:`;
         confidence,
         raw_text: String(item.raw_text || item.medicine_name || '').trim(),
       };
-    }).filter(med => med.medicine_name.length > 0); // Remove empty entries
+    }).filter(med => med.medicine_name.length > 0); 
 
     const lowConfidenceCount = medicines.filter(m => m.confidence < 0.5).length;
     const overallQuality = parsedData.overall_quality || 

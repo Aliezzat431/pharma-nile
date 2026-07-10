@@ -41,7 +41,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
   const isAdmin     = userRole === 'admin';
   const isDeveloper = userRole === 'developer';
 
-  // Show for users that belong to a chain, or system developers
+  
   const shouldRender = !!chainId || isDeveloper;
 
   const [chains, setChains] = useState<any[]>([]);
@@ -100,7 +100,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
       });
       setCurrentId(branch.id);
       setIsOpen(false);
-      // Ensure access record exists
+      
       await supabase
         .from('user_pharmacy_access')
         .upsert({ user_id: user!.id, pharmacy_id: branch.id, role: userRole ?? 'staff', is_primary: false },
@@ -142,7 +142,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
 
   return (
     <div className="relative mx-3 mb-2">
-      {/* ── Trigger Button ── */}
+      {}
       <button
         onClick={() => setIsOpen(o => !o)}
         className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 
@@ -165,11 +165,11 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
         )}
       </button>
 
-      {/* ── Dropdown with Opaque Background ── */}
+      {}
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* ✅ Overlay معتم */}
+            {}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -183,7 +183,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
               onClick={() => setIsOpen(false)}
             />
 
-            {/* ✅ Dropdown Content - خلفية معتمة */}
+            {}
             <motion.div
               initial={{ opacity: 0, y: -6, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -199,7 +199,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
               }}
               dir="rtl"
             >
-              {/* Header */}
+              {}
               <div className="px-4 py-3 border-b border-[#1a1a1a] flex items-center justify-between">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-cairo">
                   الفروع ({branches.length})
@@ -209,7 +209,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
                 </button>
               </div>
 
-              {/* Branch List */}
+              {}
               <div className="max-h-56 overflow-y-auto custom-scrollbar">
                 {branches.map(branch => (
                   <button
@@ -248,7 +248,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
                 ))}
               </div>
 
-              {/* Admin: Add New Branch */}
+              {}
               {isAdmin && (
                 <div className="border-t border-[#1a1a1a]">
                   {!showNewForm ? (

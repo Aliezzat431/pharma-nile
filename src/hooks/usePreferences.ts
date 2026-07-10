@@ -29,8 +29,8 @@ export const defaultPreferences: SystemPreferences = {
 };
 
 const mapDbToPrefs = (data: any): SystemPreferences => {
-  // CRITICAL: Numeric values from Postgres can arrive as strings. 
-  // We MUST parse them to numbers, ensuring 0 is treated correctly.
+  
+  
   return {
     pharmacyName: data.pharmacy_name ?? defaultPreferences.pharmacyName,
     email: data.email ?? defaultPreferences.email,
@@ -88,7 +88,7 @@ export function usePreferences() {
         console.log('[Preferences] Loaded from DB:', mapped);
         setPreferences(mapped);
       } else {
-        // No settings found, initialize them
+        
         console.log('[Preferences] No settings found, initializing...');
         const initialData = { 
           pharmacy_id: pharmacyId, 
@@ -122,7 +122,7 @@ export function usePreferences() {
           console.error('[Preferences] Local storage parse error');
         }
       }
-      // If auth is taking too long, we still mark as loaded so the UI doesn't hang
+      
       const timeout = setTimeout(() => setIsLoaded(true), 1500);
       return () => clearTimeout(timeout);
     }
@@ -131,7 +131,7 @@ export function usePreferences() {
   }, [pharmacyId, fetchPrefs]);
 
   const updatePreference = async <K extends keyof SystemPreferences>(key: K, value: SystemPreferences[K]) => {
-    // Update local state immediately for snappy UI
+    
     setPreferences(prev => {
       const updated = { ...prev, [key]: value };
       localStorage.setItem('pharma-preferences', JSON.stringify(updated));

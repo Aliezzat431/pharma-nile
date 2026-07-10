@@ -40,7 +40,7 @@ export default function ProductAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Animate dropdown ──────────────────────────────────────────────────
+  
   useEffect(() => {
     if (!dropdownRef.current) return;
     if (open && suggestions.length > 0) {
@@ -52,7 +52,7 @@ export default function ProductAutocomplete({
     }
   }, [open, suggestions.length]);
 
-  // ── Fetch suggestions on keystroke ────────────────────────────────────
+  
   const fetchSuggestions = useCallback(
     async (query: string) => {
       if (!pharmacyId || query.trim().length < 2) {
@@ -89,7 +89,7 @@ export default function ProductAutocomplete({
     debounceRef.current = setTimeout(() => fetchSuggestions(v), 200);
   };
 
-  // ── Keyboard navigation ───────────────────────────────────────────────
+  
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!open || suggestions.length === 0) return;
 
@@ -114,7 +114,7 @@ export default function ProductAutocomplete({
     setSuggestions([]);
   };
 
-  // ── Close on outside click ────────────────────────────────────────────
+  
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -137,7 +137,7 @@ export default function ProductAutocomplete({
 
   return (
     <div className={`relative ${className}`}>
-      {/* Input */}
+      {}
       <div className="relative">
         <input
           ref={inputRef}
@@ -157,7 +157,7 @@ export default function ProductAutocomplete({
         )}
       </div>
 
-      {/* Status badge */}
+      {}
       {showNewBadge && value.trim().length >= 2 && (
         <div className="absolute -top-1.5 right-2 z-10">
           {isNew ? (
@@ -172,13 +172,13 @@ export default function ProductAutocomplete({
         </div>
       )}
 
-      {/* Dropdown */}
+      {}
       {open && suggestions.length > 0 && (
         <div
           ref={dropdownRef}
           className="absolute z-50 top-full mt-1.5 right-0 left-0 bg-[#0d0d0d] border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden"
         >
-          {/* Header */}
+          {}
           <div className="px-3 py-1.5 border-b border-white/5 flex items-center gap-2">
             <Search className="w-3 h-3 text-[var(--nile-teal)]" />
             <span className="text-[10px] text-gray-500 font-cairo">
@@ -215,7 +215,7 @@ export default function ProductAutocomplete({
             </button>
           ))}
 
-          {/* "New product" option at bottom */}
+          {}
           {isNew && (
             <button
               type="button"

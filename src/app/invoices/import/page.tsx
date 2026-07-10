@@ -29,12 +29,12 @@ interface ExtractedItem {
 const TEAL = 'var(--nile-teal)';
 const GOLD = 'var(--royal-gold)';
 
-// ✅ دالة مساعدة للتحقق من الإدخال الرقمي
+
 const isValidNumberInput = (val: string): boolean => {
   return val === '' || val === '.' || /^\d*\.?\d*$/.test(val);
 };
 
-// ✅ دالة مساعدة لتحليل الأرقام
+
 const parseNumeric = (val: string): number => {
   if (!val || val.trim() === '' || val === '.') return 0;
   const parsed = parseFloat(val);
@@ -397,35 +397,7 @@ export default function InvoiceImportPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
-                />
-
-                {!selectedFile ? (
-                  <div className="flex flex-col items-center gap-4 py-8">
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center relative shadow-[0_0_40px_rgba(0,206,209,0.15)]"
-                         style={{ background: 'linear-gradient(135deg, rgba(0,206,209,0.1), rgba(212,175,55,0.1))' }}>
-                      <Upload className="w-8 h-8 text-[var(--nile-teal)] relative z-10" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-bold text-lg font-cairo text-white mb-1">
-                        اسحب وأفلت صورة الفاتورة هنا
-                      </p>
-                      <p className="text-sm font-cairo text-gray-500">
-                        أو اضغط لتصفح الملفات (PNG, JPG)
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative w-full h-[250px] rounded-2xl overflow-hidden border border-white/10 group">
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center backdrop-blur-sm">
-                      <p className="font-cairo text-white font-bold flex items-center gap-2">
-                        <Edit3 className="w-5 h-5" />
-                        تغيير الصورة
-                      </p>
-                    </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                  accept="image}
                     <img src={previewUrl!} alt="Invoice" className="w-full h-full object-contain" />
                   </div>
                 )}
@@ -607,7 +579,7 @@ export default function InvoiceImportPage() {
                             />
                           </div>
 
-                          {/* ✅ حقل الكمية - مُصحّح */}
+                          {}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">الكمية</label>
                             <input
@@ -626,7 +598,7 @@ export default function InvoiceImportPage() {
                             />
                           </div>
 
-                          {/* ✅ حقل سعر الشراء - مُصحّح */}
+                          {}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">سعر الشراء</label>
                             <input
@@ -645,7 +617,7 @@ export default function InvoiceImportPage() {
                             />
                           </div>
 
-                          {/* ✅ حقل سعر البيع - مُصحّح */}
+                          {}
                           <div>
                             <label className="text-[10px] text-gray-500 font-cairo block mb-1">سعر البيع</label>
                             <input
@@ -912,7 +884,7 @@ function ItemsPanel({
                   )}
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
-                    {/* ✅ حقل الكمية - مُصحّح */}
+                    {}
                     <div>
                       <span className="text-[9px] text-gray-500 font-cairo block">الكمية</span>
                       <input
@@ -931,7 +903,7 @@ function ItemsPanel({
                       />
                     </div>
 
-                    {/* ✅ حقل سعر الشراء - مُصحّح */}
+                    {}
                     <div>
                       <span className="text-[9px] text-gray-500 font-cairo block">سعر الشراء</span>
                       <input
@@ -950,7 +922,7 @@ function ItemsPanel({
                       />
                     </div>
 
-                    {/* ✅ حقل سعر البيع - مُصحّح */}
+                    {}
                     <div>
                       <span className="text-[9px] text-gray-500 font-cairo block">سعر البيع</span>
                       <input

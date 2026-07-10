@@ -10,14 +10,14 @@ export async function GET(req: Request) {
 
     const authHeader = req.headers.get('Authorization');
 
-    // 1. Get User Info and Authenticate
+    
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
     
     if (authError || !user) {
         return NextResponse.json({ success: false, error: 'Invalid Token' }, { status: 401 });
     }
 
-    // 2. Resolve Pharmacy ID securely from Database (never trust client headers/metadata)
+    
     let pharmacyId = null;
 
     const { data: accessData } = await supabase
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     if (accessData?.pharmacy_id) {
         pharmacyId = accessData.pharmacy_id;
     } else {
-         // Fallback: Try any access row linked to this user if no primary is found
+         
          const { data: anyAccess } = await supabase
             .from('user_pharmacy_access')
             .select('pharmacy_id')
@@ -46,7 +46,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'Could not determine Pharmacy ID' }, { status: 401 });
     }
 
-    // 3. Define Tables
+    
     const tablesToExport = [
       'products', 'batches', 'customers', 'orders', 'order_items', 
       'stock_transfers', 'pharmacy_settings', 'financial_transactions', 
@@ -57,7 +57,7 @@ export async function GET(req: Request) {
     const backupData: Record<string, any[]> = {};
     let totalRecords = 0;
 
-    // 4. Fetch Data
+    
     for (const table of tablesToExport) {
       const { data, error } = await supabase
         .from(table)
@@ -73,7 +73,7 @@ export async function GET(req: Request) {
       }
     }
 
-    // Handle user-specific tables safely
+    
     const { data: profiles } = await supabase.from('user_profiles').select('*').eq('id', user.id);
     backupData['user_profiles'] = profiles || [];
     totalRecords += (profiles || []).length;

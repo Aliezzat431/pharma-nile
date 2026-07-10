@@ -1,4 +1,4 @@
-export type ExportFormat = 'csv'; // تم قصرها على csv فقط بناءً على طلبك
+export type ExportFormat = 'csv'; 
 
 export async function exportData(
   data: any[],
@@ -32,7 +32,7 @@ export async function exportData(
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url); // تنظيف الذاكرة
+    URL.revokeObjectURL(url); 
   }
 }
 

@@ -51,12 +51,12 @@ export async function addCustomer(customer: Omit<Customer, 'id' | 'total_debt' |
     throw new Error('Validation Error: Malicious characters detected.');
   }
 
-  // Remove loyalty_points: 0 since the column does not exist in database
+  
   const { data, error } = await supabase
     .from('customers')
     .insert([{ ...customer, name: trimmedName, phone: customer.phone?.trim(), total_debt: 0, pharmacy_id: pharmacyId }])
     .select()
-    .maybeSingle(); // ✅ safe
+    .maybeSingle(); 
 
   if (error) {
     console.error('Error adding customer:', error);
@@ -71,7 +71,7 @@ export async function updateCustomer(id: string, updates: Partial<Customer>) {
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error("Unauthorized Tenant");
 
-  // Protect against non-existent loyalty_points database column
+  
   const { loyalty_points, ...cleanUpdates } = updates;
 
   const { data, error } = await supabase
@@ -120,7 +120,7 @@ export async function recordCustomerPayment(payment: Omit<CustomerPayment, 'id' 
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error("Unauthorized Tenant");
 
-  // Map customer_id to debtor_id because database has debtor_id column
+  
   const { data: paymentData, error: paymentError } = await supabase
     .from('debt_payments')
     .insert([{ 
@@ -131,7 +131,7 @@ export async function recordCustomerPayment(payment: Omit<CustomerPayment, 'id' 
       note: payment.note
     }])
     .select()
-    .maybeSingle(); // ✅ safe
+    .maybeSingle(); 
 
   if (paymentError) {
     console.error('Error recording payment:', paymentError);

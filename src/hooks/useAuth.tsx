@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
-      // Handle token refresh silently — this fires after months of idle use when JWT expires
+      
       if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
         setSession(sess);
         setUser(sess?.user ?? null);
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw profileError;
       }
 
-      void profile; // profile fetched — used for future role checks
+      void profile; 
     } catch (err) {
       console.error('[Auth] signIn error:', err instanceof Error ? err.message : err);
       throw err;

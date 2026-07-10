@@ -16,7 +16,7 @@ describe('PharmaNile RBAC Security Matrix Tests', () => {
     });
 
     test('chain_admin cannot read/write pharmacy details', () => {
-      // Chain admins manage chains, not individual branch stores
+      
       expect(hasPermission('chain_admin', 'chain:read')).toBe(true);
       expect(hasPermission('chain_admin', 'pharmacies:create')).toBe(true);
       
@@ -33,7 +33,7 @@ describe('PharmaNile RBAC Security Matrix Tests', () => {
       expect(hasPermission('admin', 'financials:read')).toBe(true);
       expect(hasPermission('admin', 'transfers:approve')).toBe(true);
       
-      // But admin does not manage chains
+      
       expect(hasPermission('admin', 'chain:write')).toBe(false);
       expect(hasPermission('admin', 'pharmacies:create')).toBe(false);
     });
@@ -46,7 +46,7 @@ describe('PharmaNile RBAC Security Matrix Tests', () => {
       
       expect(hasPermission('manager', 'pharmacy:settings')).toBe(false);
       expect(hasPermission('manager', 'pharmacy:backup')).toBe(false);
-      expect(hasPermission('manager', 'inventory:cost_price')).toBe(false); // only admin can see purchase margins
+      expect(hasPermission('manager', 'inventory:cost_price')).toBe(false); 
       expect(hasPermission('manager', 'staff:write')).toBe(false);
     });
 
@@ -57,7 +57,7 @@ describe('PharmaNile RBAC Security Matrix Tests', () => {
       
       expect(hasPermission('staff', 'inventory:write')).toBe(false);
       expect(hasPermission('staff', 'financials:read')).toBe(false);
-      expect(hasPermission('staff', 'pos:refund')).toBe(false); // manager/admin only
+      expect(hasPermission('staff', 'pos:refund')).toBe(false); 
     });
 
     test('undefined or empty role has no permissions', () => {

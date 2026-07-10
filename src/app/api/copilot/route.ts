@@ -6,7 +6,7 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// ✅ الموديل الجديد والمحدث
+
 const GROQ_MODEL = "llama-3.3-70b-versatile"; 
 
 const supabase = createClient(
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // جلب بيانات سريعة للسياق
+    
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     
@@ -45,13 +45,13 @@ export async function POST(req: Request) {
         { role: "system", content: systemPrompt },
         { role: "user", content: message }
       ],
-      model: GROQ_MODEL, // استخدام الموديل الجديد
+      model: GROQ_MODEL, 
       temperature: 0.3,
     });
 
     let aiResponse = chatCompletion.choices[0]?.message?.content || "";
     
-    // استخراج الأوامر (Actions)
+    
     const actions: any[] = [];
     const actionRegex = /\[ACTION:(\w+)\]/g;
     let match;
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       actions.push({ type: match[1].toLowerCase(), title: 'فتح الشاشة' });
     }
 
-    // تنظيف الرد
+    
     const cleanContent = aiResponse.replace(/\[ACTION:.*?\]/g, "").trim();
 
     return NextResponse.json({

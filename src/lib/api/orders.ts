@@ -1,7 +1,7 @@
 import { supabase } from '../supabase';
 
 export interface CartItem {
-  id: string; // product id
+  id: string; 
   name: string;
   price: number;
   quantity: number;
@@ -62,7 +62,7 @@ export async function processCheckout(
     
     if (item.quantity > available) {
       hasShortage = true;
-      // We allow the checkout but it will be flagged as negative stock / out of stock sale (backdoor)
+      
     }
   }
 
@@ -136,7 +136,7 @@ async function _jsCheckoutFallback(
     .from('orders')
     .insert([{ ...orderBase, pharmacy_id: pharmacyId }])
     .select()
-    .maybeSingle(); // ✅ safe — avoids PGRST116 if RLS blocks the insert
+    .maybeSingle(); 
 
   if (orderError || !order) throw new Error('Failed to create order');
 
@@ -148,7 +148,7 @@ async function _jsCheckoutFallback(
     }
   }
 
-  // Get inventory method from settings
+  
   const { data: settings } = await supabase
     .from('pharmacy_settings')
     .select('inventory_method')
@@ -196,7 +196,7 @@ async function _jsCheckoutFallback(
       }
       
       if (remainingToDeduct > 0) {
-        // Backdoor sale (out of stock tracking)
+        
         await supabase.from('order_items').insert([{ 
           order_id: order.id, 
           product_id: item.id, 
@@ -208,7 +208,7 @@ async function _jsCheckoutFallback(
           pharmacy_id: pharmacyId 
         }]);
         
-        // Mark the order as having a shortage issue for admin tracking
+        
         await supabase.from('orders').update({ notes: 'يحتوي على بيع من العجز' }).eq('id', order.id).eq('pharmacy_id', pharmacyId);
       }
     }

@@ -15,7 +15,7 @@ import Pagination from '@/components/ui/Pagination';
 
 export default function CustomerProfile() {
   const params = useParams();
-  // فك حزمة المعاملات المستلمة من الرابط بما يتوافق مع ميزات Next.js الحديثة
+  
   const customerId = params?.id as string;
   
   const [customer, setCustomer] = useState<any>(null);
@@ -95,7 +95,7 @@ export default function CustomerProfile() {
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12 text-right" dir="rtl">
-      {/* Header / Breadcrumb */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/customers" className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400">
@@ -107,7 +107,7 @@ export default function CustomerProfile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Col - Profile Summary */}
+        {}
         <div className="space-y-6">
           <div className="glass-panel p-8 flex flex-col items-center text-center">
              <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-[#D4AF37] mb-6 shadow-2xl">
@@ -150,7 +150,7 @@ export default function CustomerProfile() {
           </div>
         </div>
 
-        {/* Right Col - Details & History */}
+        {}
         <div className="lg:col-span-2 space-y-6">
            <div className="glass-panel p-2 flex gap-2">
               <button 
@@ -297,7 +297,7 @@ export default function CustomerProfile() {
         </div>
       </div>
 
-      {/* Payment Modal */}
+      {}
       <AnimatePresence>
         {isPaymentModalOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">

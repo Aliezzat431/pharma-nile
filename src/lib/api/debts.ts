@@ -26,7 +26,7 @@ export async function getDebtors(): Promise<Debtor[]> {
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) return [];
 
-  // Query customers table instead of hypothetical debtors table
+  
   const { data, error } = await supabase
     .from('customers')
     .select('*')
@@ -53,8 +53,8 @@ export async function addDebtor(debtorData: Omit<Debtor, 'id' | 'total_debt' | '
     throw new Error('Validation Error: Malicious characters detected.');
   }
 
-  // Insert into customers table instead of hypothetical debtors table
-  // Do not include loyalty_points (non-existent db column)
+  
+  
   const { data, error } = await supabase
     .from('customers')
     .insert([
@@ -62,11 +62,11 @@ export async function addDebtor(debtorData: Omit<Debtor, 'id' | 'total_debt' | '
         name: trimmedName,
         phone: debtorData.phone?.trim(),
         pharmacy_id: pharmacyId,
-        total_debt: 0, // Starts at 0
+        total_debt: 0, 
       },
     ])
     .select()
-    .maybeSingle(); // ✅ safe — avoids PGRST116 if insert is blocked
+    .maybeSingle(); 
 
   if (error) {
     console.error('Error adding debtor:', error);
@@ -101,7 +101,7 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
       },
     ])
     .select()
-    .maybeSingle(); // ✅ safe
+    .maybeSingle(); 
 
   if (paymentError) {
     console.error('Error recording debt payment:', paymentError);
@@ -109,7 +109,7 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
   }
   if (!paymentData) throw new Error('فشل تسجيل الدفعة.');
 
-  // Directly update the customer's outstanding balance in customers table (avoiding non-existent update_debtor_balance RPC)
+  
   const { data: debtor } = await supabase
     .from('customers')
     .select('total_debt')
@@ -127,7 +127,7 @@ export async function recordPayment(payment: Omit<DebtPayment, 'id' | 'payment_d
       .eq('pharmacy_id', pharmacyId);
   }
 
-  // Record a pharmacy financial transaction for bookkeeping
+  
   await supabase
     .from('financial_transactions')
     .insert([
@@ -168,7 +168,7 @@ export async function getDebtorDetails(id: string) {
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) return null;
 
-  // Fetch from customers table instead of hypothetical debtors table
+  
   const { data, error } = await supabase
     .from('customers')
     .select('*, debt_payments(*)')

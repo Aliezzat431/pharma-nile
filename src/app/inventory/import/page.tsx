@@ -20,8 +20,8 @@ interface ParsedItem {
   sale_price: number;
   purchase_price: number;
   company: string;
-  type?: string; // This will now store the ID (e.g., 'eye_drops')
-  typeName?: string; // This will store the Arabic Name (e.g., 'نقط عين')
+  type?: string; 
+  typeName?: string; 
   unit_quantity?: number;
   status: 'pending' | 'success' | 'error';
   error?: string;
@@ -57,9 +57,9 @@ export default function ImportInventoryPage() {
 
       const rawCategoryName = lines[0]; 
       let finalCategory = 'مستحضرات';
-      let defaultTypeId = 'cosmetics'; // Default fallback ID
+      let defaultTypeId = 'cosmetics'; 
 
-      // --- Smart Mapping Logic using treatmentTypes ---
+      
       const matchedType = treatmentTypes.find(t => 
         rawCategoryName.includes(t.name) || 
         rawCategoryName.toLowerCase().includes(t.id.toLowerCase())
@@ -69,7 +69,7 @@ export default function ImportInventoryPage() {
         finalCategory = matchedType.name;
         defaultTypeId = matchedType.id;
       } else {
-        // Fallback for common keywords if exact match failed
+        
         if (rawCategoryName.includes('عين')) {
             finalCategory = 'نقط عين';
             defaultTypeId = 'eye_drops';
@@ -110,8 +110,8 @@ export default function ImportInventoryPage() {
             purchase_price: Number((salePrice * 0.75).toFixed(2)),
             company: parts[4] || 'غير محدد',
             unit_quantity: parseInt(parts[5]) || 1, 
-            type: defaultTypeId, // Store the ID for DB
-            typeName: finalCategory, // Store Arabic name for UI display
+            type: defaultTypeId, 
+            typeName: finalCategory, 
             status: 'pending'
           });
         }
@@ -183,7 +183,7 @@ export default function ImportInventoryPage() {
           sale_price: item.sale_price,
           purchase_price: item.purchase_price,
           company: item.company,
-          type: item.type || 'cosmetics', // Send the ID to DB
+          type: item.type || 'cosmetics', 
           unit_quantity: item.unit_quantity || 1
         };
       });

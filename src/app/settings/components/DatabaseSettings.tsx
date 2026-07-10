@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
-// ── Toast ────────────────────────────────────────────────────────────────────
+
 type ToastType = 'success' | 'error' | 'info';
 function Toast({ msg, type, onClose }: { msg: string; type: ToastType; onClose: () => void }) {
   useEffect(() => {
@@ -36,7 +36,7 @@ function Toast({ msg, type, onClose }: { msg: string; type: ToastType; onClose: 
   );
 }
 
-// ── Types ────────────────────────────────────────────────────────────────────
+
 interface DbStats {
   database: { mbUsed: number; limitMB: number; sizePercentage: number };
   tables: Record<string, number>;
@@ -47,7 +47,7 @@ interface DbStats {
   health: number;
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+
 export function DatabaseSettings() {
   const { session, user } = useAuth();
   const [dbStats, setDbStats] = useState<DbStats | null>(null);
@@ -64,7 +64,7 @@ export function DatabaseSettings() {
     setToast({ msg, type });
   }, []);
 
-  // ── Fetch Stats ─────────────────────────────────────────────────────────────
+  
   const fetchStats = useCallback(async () => {
     if (!token) return;
     setIsLoading(true);
@@ -86,7 +86,7 @@ export function DatabaseSettings() {
     fetchStats();
   }, [fetchStats]);
 
-  // ── Cleanup ──────────────────────────────────────────────────────────────────
+  
   const handleClean = async (type: string, label: string) => {
     if (!confirm(`هل أنت متأكد من رغبتك في حذف "${label}"؟ لا يمكن التراجع عن هذه العملية.`)) return;
     setCleaningType(type);
@@ -114,7 +114,7 @@ export function DatabaseSettings() {
     }
   };
 
-  // ── Export ───────────────────────────────────────────────────────────────────
+  
   const handleExport = async () => {
     setIsExporting(true);
     try {
@@ -142,7 +142,7 @@ export function DatabaseSettings() {
     }
   };
 
-  // ── Import ───────────────────────────────────────────────────────────────────
+  
   const handleImport = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -179,7 +179,7 @@ export function DatabaseSettings() {
     input.click();
   };
 
-  // ── Derived values ────────────────────────────────────────────────────────────
+  
   const pct    = dbStats?.database.sizePercentage ?? 0;
   const radius = 60;
   const circ   = 2 * Math.PI * radius;
@@ -212,7 +212,7 @@ export function DatabaseSettings() {
         className="space-y-6"
       >
 
-        {/* ── Storage Card ────────────────────────────────────────────────────── */}
+        {}
         <div className="glass-panel p-8 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-40 h-40 bg-red-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
           <div className="flex items-center justify-between mb-6">
@@ -230,11 +230,11 @@ export function DatabaseSettings() {
             </button>
           </div>
 
-          {/* Usage donut + metrics */}
+          {}
           <div className="mb-8 p-6 rounded-2xl border border-[var(--nile-teal)]/20 bg-gradient-to-r from-[var(--nile-teal)]/5 to-transparent">
             <div className="flex flex-col md:flex-row items-center gap-8">
 
-              {/* Donut */}
+              {}
               <div className="relative group w-40 h-40 flex-shrink-0 flex items-center justify-center cursor-help">
                 <svg className="w-full h-full -rotate-90 drop-shadow-2xl transition-all duration-300 group-hover:scale-105" viewBox="0 0 140 140">
                   <circle cx="70" cy="70" r={radius} fill="transparent" stroke="currentColor" strokeWidth="6" className="text-white/5" />
@@ -256,7 +256,7 @@ export function DatabaseSettings() {
                   }
                 </div>
 
-                {/* Tooltip */}
+                {}
                 <div className="absolute top-full mt-2 w-64 bg-black/90 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
                   <h4 className="text-white font-bold font-cairo text-sm mb-3 border-b border-white/10 pb-2">قابل للتنظيف</h4>
                   <ul className="space-y-2 font-cairo text-xs text-gray-300">
@@ -273,7 +273,7 @@ export function DatabaseSettings() {
                 </div>
               </div>
 
-              {/* Metrics grid */}
+              {}
               <div className="flex-1 grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1 p-3 rounded-xl bg-black/20 border border-white/5">
                   <span className="text-[11px] text-gray-400 font-cairo">إجمالي السجلات</span>
@@ -302,7 +302,7 @@ export function DatabaseSettings() {
               </div>
             </div>
 
-            {/* Usage bar */}
+            {}
             <div className="mt-6">
               <div className="flex justify-between text-xs text-gray-400 font-cairo mb-1.5">
                 <span>المساحة المستخدمة (تقديري)</span>
@@ -319,7 +319,7 @@ export function DatabaseSettings() {
             </div>
           </div>
 
-          {/* Table breakdown */}
+          {}
           <h3 className="text-white font-bold text-base mb-4 font-cairo flex items-center gap-2">
             <BarChart2 className="w-4 h-4 text-[var(--nile-teal)]" /> توزيع السجلات حسب الجدول
           </h3>
@@ -334,7 +334,7 @@ export function DatabaseSettings() {
             ))}
           </div>
 
-          {/* ── Cleanup actions ──────────────────────────────────────────────── */}
+          {}
           <h3 className="text-white font-bold text-lg mb-4 font-cairo flex items-center gap-2">
             <Zap className="w-4 h-4 text-orange-400" /> خيارات التنظيف اليدوي
           </h3>
@@ -388,7 +388,7 @@ export function DatabaseSettings() {
             ))}
           </div>
 
-          {/* Automated note */}
+          {}
           <div className="mt-6 p-5 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-4">
             <CloudMoon className="w-7 h-7 text-[var(--nile-teal)] flex-shrink-0" />
             <div>
@@ -400,7 +400,7 @@ export function DatabaseSettings() {
           </div>
         </div>
 
-        {/* ── Backup & Restore ──────────────────────────────────────────────── */}
+        {}
         <div className="glass-panel p-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--nile-teal)]/5 rounded-full blur-3xl -z-10 pointer-events-none" />
           <h2 className="text-xl font-bold mb-2 font-cairo flex items-center gap-2">
@@ -411,7 +411,7 @@ export function DatabaseSettings() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Export */}
+            {}
             <div className="flex flex-col gap-5 p-6 rounded-2xl border border-[var(--nile-teal)]/15 bg-[var(--nile-teal)]/5 hover:bg-[var(--nile-teal)]/10 transition-all">
               <div className="flex items-start gap-3">
                 <div className="p-3 rounded-xl bg-[var(--nile-teal)]/15">
@@ -439,7 +439,7 @@ export function DatabaseSettings() {
               </button>
             </div>
 
-            {/* Import */}
+            {}
             <div className="flex flex-col gap-5 p-6 rounded-2xl border border-purple-500/15 bg-purple-500/5 hover:bg-purple-500/10 transition-all">
               <div className="flex items-start gap-3">
                 <div className="p-3 rounded-xl bg-purple-500/15">

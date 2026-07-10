@@ -19,7 +19,7 @@ export function ChainSettings() {
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isAddingPharmacy, setIsAddingPharmacy] = useState(false);
 
-  // New Pharmacy inputs
+  
   const [newPharmName, setNewPharmName] = useState("");
   const [newPharmAddress, setNewPharmAddress] = useState("");
   const [newPharmPhone, setNewPharmPhone] = useState("");
@@ -32,7 +32,7 @@ export function ChainSettings() {
     const loadChainData = async () => {
       setIsLoading(true);
       try {
-        // Fetch Chain details
+        
         const { data: chain, error: cErr } = await supabase
           .from('chains')
           .select('name, password')
@@ -45,7 +45,7 @@ export function ChainSettings() {
           setChainPassword(chain.password || "");
         }
 
-        // Fetch Pharmacies in Chain
+        
         const { data: pharms, error: phErr } = await supabase
           .from('pharmacies')
           .select('*')
@@ -120,7 +120,7 @@ export function ChainSettings() {
       setMessage({ type: 'success', text: `تمت إضافة الصيدلية "${newPharmName}" بنجاح!` });
       setPharmacies(prev => [data, ...prev]);
 
-      // Reset form
+      
       setNewPharmName("");
       setNewPharmAddress("");
       setNewPharmPhone("");
@@ -142,7 +142,7 @@ export function ChainSettings() {
 
   return (
     <div className="space-y-8 font-cairo text-right" dir="rtl">
-      {/* status banner */}
+      {}
       <AnimatePresence>
         {message && (
           <motion.div
@@ -161,7 +161,7 @@ export function ChainSettings() {
         )}
       </AnimatePresence>
 
-      {/* Chain Info Block */}
+      {}
       <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-black/40">
         <div className="flex items-center gap-4 mb-6 border-b border-white/5 pb-4">
           <Building2 className="w-8 h-8 text-[var(--nile-teal)]" />
@@ -171,7 +171,7 @@ export function ChainSettings() {
           </div>
         </div>
 
-        {/* Change Password Form */}
+        {}
         <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-md">
           <div className="space-y-1">
             <label className="text-xs font-bold text-gray-400 block mr-1">
@@ -209,7 +209,7 @@ export function ChainSettings() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Add Pharmacy Form */}
+        {}
         <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-black/40 h-fit">
           <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
             <PlusCircle className="w-6 h-6 text-[var(--nile-teal)]" />
@@ -268,7 +268,7 @@ export function ChainSettings() {
           </form>
         </div>
 
-        {/* Existing Pharmacies List */}
+        {}
         <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-black/40">
           <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
             <List className="w-6 h-6 text-[var(--nile-teal)]" />

@@ -2,19 +2,19 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
-// ── Field name aliases for smart fuzzy mapping (no AI required) ──────────────
+
 const PRODUCT_ALIASES: Record<string, string> = {
-  // name
+  
   name: 'name', drug_name: 'name', product_name: 'name', item_name: 'name',
   medicine: 'name', اسم: 'name', اسم_المنتج: 'name',
-  // barcode
+  
   barcode: 'barcode', bar_code: 'barcode', code: 'barcode', sku: 'barcode',
-  // type
+  
   type: 'type', form: 'type', dosage_form: 'type',
-  // company
+  
   company_name: 'company_name', company: 'company_name', manufacturer: 'company_name',
   brand: 'company_name', الشركة: 'company_name',
-  // price / category
+  
   price: 'price', sale_price: 'price', selling_price: 'price', selling: 'price',
   category: 'category', class: 'category',
 };
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // ── Auth ─────────────────────────────────────────────────────────────────
+    
     const authHeader = req.headers.get('Authorization');
     const { data: { user }, error: authError } = await supabase.auth.getUser(
       authHeader?.replace('Bearer ', '')
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    // ── Resolve Pharmacy ID ──────────────────────────────────────────────────
+    
     const { data: accessData } = await supabase
       .from('user_pharmacy_access')
       .select('pharmacy_id')
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ── Read File ────────────────────────────────────────────────────────────
+    
     const formData = await req.formData();
     const file = formData.get('file') as Blob | null;
 
@@ -105,12 +105,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'صيغة ملف JSON غير صالحة' }, { status: 400 });
     }
 
-    // ── Detect Format ────────────────────────────────────────────────────────
-    // Accept both our own export format { meta, data: { products, ... } }
-    // and raw flat format { products: [...], customers: [...], batches: [...] }
+    
+    
+    
     const payload = fullData?.data ?? fullData;
 
-    // ── Find arrays in payload ────────────────────────────────────────────────
+    
     const findArray = (keys: string[]): any[] | null => {
       for (const k of keys) {
         if (Array.isArray(payload[k])) return payload[k];
@@ -125,7 +125,7 @@ export async function POST(req: Request) {
     const stats = { products: 0, batches: 0, customers: 0, errors: [] as string[] };
     const CHUNK = 200;
 
-    // ── 1. Import Products ────────────────────────────────────────────────────
+    
     if (rawProducts && rawProducts.length > 0) {
       for (let i = 0; i < rawProducts.length; i += CHUNK) {
         const chunk = rawProducts.slice(i, i + CHUNK).map((row: any) => {
@@ -151,7 +151,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── 2. Import Customers ───────────────────────────────────────────────────
+    
     if (rawCustomers && rawCustomers.length > 0) {
       for (let i = 0; i < rawCustomers.length; i += CHUNK) {
         const chunk = rawCustomers.slice(i, i + CHUNK).map((row: any) => {
@@ -177,7 +177,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── 3. Import Batches (after products so FKs exist) ───────────────────────
+    
     if (rawBatches && rawBatches.length > 0) {
       for (let i = 0; i < rawBatches.length; i += CHUNK) {
         const chunk = rawBatches.slice(i, i + CHUNK);

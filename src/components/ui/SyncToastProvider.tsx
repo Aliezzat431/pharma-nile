@@ -13,7 +13,7 @@ interface Toast {
   duration?: number;
 }
 
-// Singleton event bus for showing toasts from anywhere
+
 type ToastListener = (toast: Omit<Toast, 'id'>) => void;
 const listeners: ToastListener[] = [];
 
@@ -104,17 +104,17 @@ export default function SyncToastProvider() {
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-2xl min-w-[260px] max-w-[360px] ${cfg.bgColor} ${cfg.borderColor}`}
             >
-              {/* Icon */}
+              {}
               <div className={`flex-shrink-0 ${cfg.iconColor}`}>
                 {cfg.icon}
               </div>
 
-              {/* Message */}
+              {}
               <p className="flex-1 text-sm text-white font-cairo leading-snug">
                 {toast.message}
               </p>
 
-              {/* Close */}
+              {}
               <button
                 onClick={() => removeToast(toast.id)}
                 className="flex-shrink-0 text-gray-500 hover:text-white transition-colors"
@@ -122,7 +122,7 @@ export default function SyncToastProvider() {
                 <X className="w-4 h-4" />
               </button>
 
-              {/* Progress bar */}
+              {}
               {toast.duration! > 0 && (
                 <motion.div
                   initial={{ scaleX: 1 }}

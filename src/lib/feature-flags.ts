@@ -1,7 +1,4 @@
-/**
- * Centralized Feature Flags Management for PharmaNile
- * Supports progressive rollouts and instant feature toggling via system environmental variables.
- */
+
 
 export interface FeatureFlags {
   aiFeatures: boolean;
@@ -16,13 +13,11 @@ const DEFAULT_FLAGS: FeatureFlags = {
   offlineMode: true,
   stockTransfers: true,
   realtimeSubscriptions: true,
-  advancedReports: false, // Rollout paused by default
+  advancedReports: false, 
 };
 
 export const features = {
-  /**
-   * Retrieves status for all active feature flags.
-   */
+  
   getAll(): FeatureFlags {
     return {
       aiFeatures: process.env.NEXT_PUBLIC_FLAG_AI_FEATURES !== 'false' && DEFAULT_FLAGS.aiFeatures,
@@ -33,9 +28,7 @@ export const features = {
     };
   },
 
-  /**
-   * Returns true if a specific feature is enabled.
-   */
+  
   isEnabled(feature: keyof FeatureFlags): boolean {
     const flags = this.getAll();
     return flags[feature];

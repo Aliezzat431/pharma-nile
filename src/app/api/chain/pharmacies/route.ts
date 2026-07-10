@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// POST /api/chain/pharmacies — chain admins create a new branch in their chain
+
 export async function POST(request: NextRequest) {
   try {
     const { name, address, phone } = await request.json();
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: insertError?.message ?? 'فشل إنشاء الفرع' }, { status: 500 });
     }
 
-    // ✅ التعديل هنا - استخدام upsert بدلاً من onConflict
+    
     await adminSupabase
       .from('user_pharmacy_access')
       .upsert(
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/chain/pharmacies — list all branches in the caller's chain
+
 export async function GET(request: NextRequest) {
   try {
     const adminSupabase = createClient(

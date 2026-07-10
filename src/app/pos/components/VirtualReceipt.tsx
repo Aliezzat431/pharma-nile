@@ -39,7 +39,7 @@ export function VirtualReceipt({
 
   if (!isOpen) return null;
 
-  // Handle Instant Rollback/Undo and put items back to card
+  
   const handleUndoAndEdit = async () => {
     const confirmUndo = window.confirm('هل تريد إلغاء هذه العملية وإرجاع المنتجات إلى السلة للتعديل؟');
     if (!confirmUndo) return;
@@ -47,15 +47,15 @@ export function VirtualReceipt({
     try {
       const result = await undoManager.undo();
       if (result.success) {
-        // Clear current cart just in case
+        
         dispatch(clearCart());
         
-        // Put all items back into Redux Cart
+        
         items.forEach(item => {
           dispatch(addToCart({
             id: item.id,
             name: item.name,
-            basePrice: item.price, // Keep final checkout price
+            basePrice: item.price, 
             price: item.price,
             quantity: item.quantity,
             unit: item.unit,
@@ -89,7 +89,7 @@ export function VirtualReceipt({
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto animate-in fade-in duration-300">
       
-      {/* Printable Area - Hidden on screen, shown strictly in @media print */}
+      {}
       <div id="printable-receipt" className="hidden print:block bg-white text-black p-4 w-[80mm] text-xs font-mono">
         <div className="text-center font-bold text-sm mb-1">صيدلية النيل Premium</div>
         <div className="text-center text-[10px] mb-2 font-sans">بوابة النيل للخدمات الطبية</div>
@@ -136,26 +136,26 @@ export function VirtualReceipt({
         </div>
       </div>
 
-      {/* Screen Mode Render Card */}
+      {}
       <div className="flex flex-col lg:flex-row gap-6 items-center justify-center w-full max-w-4xl relative print:hidden">
         
-        {/* Left Side: Virtual Receipt Paper Roll Simulation */}
+        {}
         <motion.div
           initial={{ y: 200, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', damping: 20, stiffness: 100 }}
           className="relative w-full max-w-[370px] bg-gradient-to-b from-[#fbfbfa] via-[#f7f7f4] to-[#f2f2ed] text-zinc-900 rounded-lg shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] border border-white/20 select-none overflow-hidden"
           style={{
-            // Tear edge saw effect (pure styled top and bottom borders helper)
+            
             clipPath: 'polygon(0% 0%, 5% 2%, 10% 0%, 15% 2%, 20% 0%, 25% 2%, 30% 0%, 35% 2%, 40% 0%, 45% 2%, 50% 0%, 55% 2%, 60% 0%, 65% 2%, 70% 0%, 75% 2%, 80% 0%, 85% 2%, 90% 0%, 95% 2%, 100% 0%, 100% 98%, 95% 100%, 90% 98%, 85% 100%, 80% 98%, 75% 100%, 70% 98%, 65% 100%, 60% 98%, 55% 100%, 50% 98%, 45% 100%, 40% 98%, 35% 100%, 30% 98%, 25% 100%, 20% 98%, 15% 100%, 10% 98%, 5% 100%, 0% 98%)',
           }}
         >
-          {/* Top Paper header ribbon */}
+          {}
           <div className="h-3 bg-gradient-to-r from-[#D4AF37] to-[#f2cd56]"></div>
           
           <div className="p-6 font-mono text-xs text-zinc-800 space-y-4">
             
-            {/* Pharmacy branding logo */}
+            {}
             <div className="text-center space-y-1">
               <h3 className="text-lg font-bold font-cairo text-zinc-950 flex items-center justify-center gap-2">
                 🩺 صيدلية النيل
@@ -164,10 +164,10 @@ export function VirtualReceipt({
               <p className="text-[9px] text-zinc-400">فرع القاهرة - الساحل</p>
             </div>
 
-            {/* Dash border separator */}
+            {}
             <div className="border-b border-dashed border-zinc-300 my-1"></div>
 
-            {/* Metadatas */}
+            {}
             <div className="space-y-1.5 font-cairo text-[11px] text-zinc-600">
               <div className="flex justify-between">
                 <span>رقم الفاتورة:</span>
@@ -185,7 +185,7 @@ export function VirtualReceipt({
 
             <div className="border-b border-dashed border-zinc-300 my-1"></div>
 
-            {/* Receipt checkout listing */}
+            {}
             <div className="space-y-3 font-cairo">
               <div className="flex justify-between font-bold text-zinc-950 text-[11px] pb-1 border-b border-zinc-200">
                 <span className="w-1/2 text-right">المنتج</span>
@@ -209,7 +209,7 @@ export function VirtualReceipt({
 
             <div className="border-b border-dashed border-zinc-300 my-1"></div>
 
-            {/* Total value info */}
+            {}
             <div className="flex justify-between items-center py-1 font-cairo">
               <span className="text-sm font-bold text-zinc-950">الإجمالي النهائي:</span>
               <span className="text-xl font-black text-emerald-700 font-sans">{total.toFixed(2)} ج.م</span>
@@ -217,7 +217,7 @@ export function VirtualReceipt({
 
             <div className="border-b border-dashed border-zinc-300 my-1"></div>
 
-            {/* Receipt footer message */}
+            {}
             <div className="text-center font-cairo text-[10px] text-zinc-400 space-y-1 py-1">
               <div className="flex items-center justify-center gap-1 text-emerald-600 font-bold">
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -228,11 +228,11 @@ export function VirtualReceipt({
             
           </div>
           
-          {/* Bottom Tear margin spacer */}
+          {}
           <div className="h-6 bg-gradient-to-t from-zinc-200 to-transparent"></div>
         </motion.div>
 
-        {/* Right Side: Interactive Action Buttons Panel */}
+        {}
         <div className="flex flex-col gap-4 w-full max-w-[320px] font-cairo">
           
           <div className="text-right space-y-2 mb-2">
@@ -244,7 +244,7 @@ export function VirtualReceipt({
             </p>
           </div>
 
-          {/* PRINT BUTTON */}
+          {}
           <button
             onClick={handlePrint}
             className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#00a2a5] text-white font-bold hover:shadow-[0_0_20px_rgba(0,206,209,0.4)] flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 group"
@@ -253,7 +253,7 @@ export function VirtualReceipt({
             <span>طباعة الفاتورة الفورية (Ctrl+P)</span>
           </button>
 
-          {/* UNDO / EDIT BUTTON */}
+          {}
           <button
             onClick={handleUndoAndEdit}
             className="w-full py-3.5 px-6 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/45 text-[#D4AF37] font-semibold hover:bg-[#D4AF37]/25 flex items-center justify-center gap-3 transition-colors"
@@ -264,7 +264,7 @@ export function VirtualReceipt({
 
           <div className="h-[1px] bg-white/10 my-1"></div>
 
-          {/* NEW SALE / CLOSE BUTTON */}
+          {}
           <button
             onClick={onClose}
             className="w-full py-3 px-6 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 flex items-center justify-center gap-2 transition-colors"
@@ -277,7 +277,7 @@ export function VirtualReceipt({
         
       </div>
 
-      {/* Global CSS injection block to isolate printable ticket layout correctly */}
+      {}
       <style jsx global>{`
         @media print {
           body * {

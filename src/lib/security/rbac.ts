@@ -1,51 +1,48 @@
-/**
- * PharmaNile Role-Based Access Control (RBAC) Definitions and Utilities
- * Implements hierarchical permissions for Chain Admin, Pharmacy Admin, Manager, and Staff.
- */
+
 
 export type UserRole = 'chain_admin' | 'admin' | 'manager' | 'staff' | 'developer';
 
 export type Permission =
-  // Chain-level permissions
+  
   | 'chain:read'
   | 'chain:write'
   | 'pharmacies:create'
   
-  // Pharmacy-level permissions
+  
   | 'pharmacy:settings'
   | 'pharmacy:backup'
   
-  // Staff management
+  
   | 'staff:read'
   | 'staff:write'
   
-  // POS & Transactions
+  
   | 'pos:checkout'
   | 'pos:refund'
   
-  // Inventory
+  
   | 'inventory:read'
   | 'inventory:write'
-  | 'inventory:cost_price' // sensitive financial information
+  | 'inventory:cost_price' 
   
-  // Supplier & Invoices
+  
   | 'invoices:read'
   | 'invoices:write'
   
-  // Financials
+  
   | 'financials:read'
   
-  // Customers & Debts
+  
   | 'customers:read'
   | 'customers:write'
   | 'customers:debt_settle'
   
-  // Stock transfers
+  
   | 'transfers:read'
   | 'transfers:write'
   | 'transfers:approve';
 
-// RBAC Authorization Matrix
+
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   developer: [
     'chain:read', 'chain:write', 'pharmacies:create', 'pharmacy:settings', 'pharmacy:backup',
@@ -57,7 +54,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'chain:read',
     'chain:write',
     'pharmacies:create',
-    'pharmacy:settings' // Only chain-level settings
+    'pharmacy:settings' 
   ],
   admin: [
     'pharmacy:settings',
@@ -102,18 +99,14 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ]
 };
 
-/**
- * Checks if a user role has the required permission.
- */
+
 export function hasPermission(role: UserRole | undefined, permission: Permission): boolean {
   if (!role) return false;
   const permissions = ROLE_PERMISSIONS[role];
   return permissions ? permissions.includes(permission) : false;
 }
 
-/**
- * Navigation items representing routes.
- */
+
 export interface NavItem {
   name: string;
   arabicName: string;
@@ -134,14 +127,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { name: 'Settings', arabicName: 'الإعدادات', path: '/settings' }
 ];
 
-/**
- * Filters navigation items based on the user's role.
- */
+
 export function getNavRoutes(role: UserRole | undefined): NavItem[] {
   if (!role) return [];
   
   if (role === 'chain_admin') {
-    // Chain admins only have access to dashboard (filtered) and settings
+    
     return [
       { name: 'Dashboard', arabicName: 'الرئيسية', path: '/' },
       { name: 'Settings', arabicName: 'إعدادات السلسلة', path: '/settings' }

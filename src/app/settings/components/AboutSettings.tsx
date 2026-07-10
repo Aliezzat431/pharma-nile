@@ -22,22 +22,22 @@ const members = [
     name: 'Ali Ezzat',
     role: 'The Architect',
     photo: '/Ali.jpg',
-    whatsapp: 'https://wa.me/201146971208',
-    facebook: 'https://www.facebook.com/ali.ezzat.5872682/',
+    whatsapp: 'https:
+    facebook: 'https:
   },
   {
     name: 'Youssef',
     role: 'The Visionary',
     photo: '/youssef.jpg',
-    whatsapp: 'https://wa.me/201102749778',
-    facebook: 'https://www.facebook.com/youssef.mahmoud.996928',
+    whatsapp: 'https:
+    facebook: 'https:
   },
   {
     name: 'Nour',
     role: 'The Guardian',
     photo: '/Nour.jpg',
-    whatsapp: 'https://wa.me/201557835159',
-    facebook: 'https://www.facebook.com/tapasko.1',
+    whatsapp: 'https:
+    facebook: 'https:
   },
 ];
 
@@ -77,7 +77,7 @@ export function AboutSettings() {
                 <div className="relative w-24 h-24 mb-2">
                   <div className="absolute inset-0 bg-gradient-to-br from-[#00CED1]/20 to-transparent rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="w-full h-full rounded-full border-2 border-white/10 group-hover:border-[#00CED1]/50 transition-all duration-500 overflow-hidden bg-white/5 flex items-center justify-center">
-                    {/* Fallback to initials if photo fails */}
+                    {}
                     <img 
                       src={member.photo} 
                       alt={member.name} 
@@ -119,7 +119,7 @@ export function AboutSettings() {
           
           <div className="flex flex-col items-center gap-6">
             <a 
-              href="https://nay-two.vercel.app/" 
+              href="https:
               className="inline-flex items-center gap-4 px-10 py-4 bg-white text-black font-black rounded-full text-lg hover:scale-105 active:scale-95 transition-all duration-300 group shadow-2xl font-cairo"
             >
              موفعنا الشخصي
@@ -127,7 +127,7 @@ export function AboutSettings() {
             </a>
             
             <a 
-              href="https://www.facebook.com/profile.php?id=61591036786773" 
+              href="https:
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-3 text-zinc-500 hover:text-white transition-colors text-sm font-bold group"

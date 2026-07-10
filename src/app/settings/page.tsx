@@ -40,7 +40,7 @@ import { Sunset } from 'lucide-react';
 
 
 const ALL_THEMES = [
-  // ── الأساسية ──────────────────────────────
+  
   { 
     id: "dark", 
     label: "الوضع الليلي", 
@@ -58,7 +58,7 @@ const ALL_THEMES = [
     category: "basic"
   },
 
-  // ─── الهادئة للعمل الطويل ──────────────────
+  
   { 
     id: "midnight", 
     label: "منتصف الليل", 
@@ -92,7 +92,7 @@ const ALL_THEMES = [
     category: "calm"
   },
 
-  // ─── المميزة والطاقة ───────────────────────
+  
   { 
     id: "ocean", 
     label: "أعماق المحيط", 
@@ -238,7 +238,7 @@ export default function Settings() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        {/* Sidebar Tabs */}
+        {}
         <div className="md:col-span-3 space-y-2">
           {tabs.map((tab) => (
             <button
@@ -263,7 +263,7 @@ export default function Settings() {
           ))}
         </div>
 
-        {/* Content Area */}
+        {}
         <div className="md:col-span-9 relative min-h-[500px]">
           <AnimatePresence mode="wait">
             {activeTab === 'general' && <GeneralSettings key="general" />}
@@ -284,7 +284,7 @@ export default function Settings() {
       </div>
 
 
-      {/* Theme Selection Modal */}
+      {}
       <AnimatePresence>
         {isThemeModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

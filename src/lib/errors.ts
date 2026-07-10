@@ -1,7 +1,4 @@
-/**
- * PharmaNile Categorized Error Definitions
- * Provides specialized error classes for API responses, logging, and metrics aggregation.
- */
+
 
 export type ErrorCategory = 'AUTH' | 'DATABASE' | 'NETWORK' | 'VALIDATION' | 'UNKNOWN';
 
@@ -19,7 +16,7 @@ export abstract class PharmaNileError extends Error {
     this.name = this.constructor.name;
     this.timestamp = new Date().toISOString();
     
-    // Preserve stack trace in modern V8 / Node environments
+    
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);
     }
@@ -48,9 +45,9 @@ export class AuthError extends PharmaNileError {
 export class DatabaseError extends PharmaNileError {
   public readonly category: ErrorCategory = 'DATABASE';
   constructor(message: string, originalError: any = null, details: any = null) {
-    // Determine status based on Postgres codes if available
+    
     const code = originalError?.code || '';
-    const status = code.startsWith('23') ? 409 : 500; // 23xxx are integrity constraint violations
+    const status = code.startsWith('23') ? 409 : 500; 
     super(message, status, details, originalError);
   }
 }
@@ -76,9 +73,7 @@ export class UnexpectedError extends PharmaNileError {
   }
 }
 
-/**
- * Helper to translate Postgres / Supabase SDK errors to PharmaNile categorized errors.
- */
+
 export function handleDatabaseError(error: any, contextMessage: string): DatabaseError {
   const code = error?.code || 'UNKNOWN_DB_CODE';
   const detail = error?.details || error?.hint || '';

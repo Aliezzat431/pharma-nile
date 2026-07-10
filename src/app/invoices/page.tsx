@@ -59,7 +59,7 @@ export default function InvoicesPage() {
   const [previewInvoice, setPreviewInvoice] = useState<Order | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
-  // GSAP page-entry
+  
   const pageRef = usePageGSAP();
 
   useEffect(() => {
@@ -162,13 +162,13 @@ export default function InvoicesPage() {
     });
   }, [orders, search, filterStatus, filterPayment, dateFrom, dateTo, sortField, sortDir]);
 
-  // Pagination
+  
   const { paginatedData: pagedOrders, currentPage, totalPages, totalItems: totalInvoices, setPage } = usePagination(
     filteredAndSortedOrders,
     { pageSize: INVOICES_PAGE_SIZE }
   );
 
-  // GSAP list animation
+  
   const listRef = useGSAPList<HTMLDivElement>([pagedOrders]);
 
   const stats = useMemo(() => {
@@ -430,7 +430,7 @@ export default function InvoicesPage() {
         ))}
       </div>
 
-      {/* Invoice list */}
+      {}
       <div ref={listRef} className="space-y-3">
         {loading ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
@@ -594,7 +594,7 @@ export default function InvoicesPage() {
         )}
       </div>
 
-      {/* Pagination */}
+      {}
       {!loading && totalPages > 1 && (
         <Pagination
           currentPage={currentPage}

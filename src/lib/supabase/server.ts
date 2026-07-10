@@ -22,14 +22,14 @@ export async function createClient() {
         try {
           cookieStore.set({ name, value, ...options });
         } catch {
-          // Server Components cannot set cookies — this is expected and safe.
+          
         }
       },
       remove(name: string, options: CookieOptions) {
         try {
           cookieStore.set({ name, value: '', ...options });
         } catch {
-          // Server Components cannot remove cookies — this is expected and safe.
+          
         }
       },
     },

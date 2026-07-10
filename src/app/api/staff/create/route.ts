@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createClient as createSupabaseClient } from '@/lib/supabase/server';
 import { staffCreateSchema } from '@/lib/validations';
 
-// ✅ إنشاء Supabase Admin Client باستخدام service_role key
+
 const getSupabaseAdmin = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -22,7 +22,7 @@ const getSupabaseAdmin = () => {
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. التحقق من جلسة المستخدم الحالي
+    
     const supabase = await createSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. جلب بيانات المستخدم الحالي والتحقق من أنه مدير
+    
     const { data: currentUserProfile, error: profileError } = await supabase
       .from('user_profiles')
       .select('pharmacy_id, role')
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. قراءة وتحليل البيانات المرسلة
+    
     const body = await request.json();
     const validation = staffCreateSchema.safeParse(body);
     
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const { email, password, full_name, role, salary, incentives } = validation.data;
 
-    // 4. إنشاء المستخدم الجديد في auth.users باستخدام service_role
+    
     const supabaseAdmin = getSupabaseAdmin();
     
     const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     const newUserId = newUser.user.id;
 
-    // 5. إنشاء ملف المستخدم في user_profiles
+    
     const { error: insertProfileError } = await supabase
       .from('user_profiles')
       .insert({
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. إضافة صلاحية الوصول للصيدلية
+    
     const { error: accessError } = await supabase
       .from('user_pharmacy_access')
       .insert({
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       console.error('Access error:', accessError);
     }
 
-    // 7. تسجيل العملية في audit_logs
+    
     await supabase.from('audit_logs').insert({
       pharmacy_id: pharmacyId,
       user_id: user.id,
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // 8. إرجاع الاستجابة الناجحة
+    
     return NextResponse.json(
       { 
         success: true, 

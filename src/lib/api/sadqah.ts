@@ -4,7 +4,7 @@ export interface SadqahEntry {
   id: string;
   amount: number;
   date: string;
-  items: string[]; // Names of products
+  items: string[]; 
 }
 
 export async function getSadqahStats() {

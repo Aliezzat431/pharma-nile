@@ -12,7 +12,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart as ReBarChart, Bar, Cell, PieChart, Pie, Legend
 } from 'recharts';
-//comment
+
 
 const COLORS = ['#00CED1', '#D4AF37', '#FF4E4E'];
 
@@ -50,7 +50,7 @@ interface Order {
   profit_total: number;
   cost_total: number;
   payment_method: string;
-  status?: string; // جعلناه اختيارياً لأنه قد لا يأتي في الـ select أحياناً
+  status?: string; 
 }
 
 export default function FinancialsPage() {
@@ -78,7 +78,7 @@ export default function FinancialsPage() {
         .eq('pharmacy_id', pharmacyId);
 
       const now = new Date();
-      // For monthly tab, we might want more data, but let's stick to range for consistency or fetch all for monthly
+      
       if (activeTab === 'daily') {
          const fromDate = new Date();
          fromDate.setDate(now.getDate() - range);
@@ -97,7 +97,7 @@ export default function FinancialsPage() {
     }
   };
 
-  // --- Calculations ---
+  
   const stats = useMemo(() => {
     const totalSales = orders.reduce((sum, o) => sum + Number(o.total), 0);
     const totalProfit = orders.reduce((sum, o) => sum + Number(o.profit_total || 0), 0);
@@ -131,8 +131,8 @@ export default function FinancialsPage() {
   }, [orders, range]);
 
   const monthlyChartData = useMemo(() => {
-    // Fetching logic for monthly usually needs all data, but here we use what's loaded or adjust fetch
-    // For simplicity in this unified code, we'll map the loaded orders by month
+    
+    
     const grouped: Record<string, any> = {};
     orders.forEach(o => {
       const d = new Date(o.created_at);
@@ -200,7 +200,7 @@ export default function FinancialsPage() {
         </div>
       ) : (
         <>
-          {/* Stats Cards */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { label: 'إجمالي المبيعات', value: stats.totalSales, icon: Wallet, color: '#00CED1' },

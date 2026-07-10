@@ -119,7 +119,7 @@ export default function DebtsPage() {
 
   return (
     <div ref={pageRef} className="px-4 md:px-8 w-full max-w-7xl mx-auto space-y-8 pb-12" dir="rtl">
-      {/* Error Message */}
+      {}
       <AnimatePresence>
         {errorMessage && (
           <motion.div 
@@ -162,7 +162,7 @@ export default function DebtsPage() {
         </button>
       </header>
 
-      {/* Stats */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="glass-panel p-6 rounded-2xl">
           <div className="flex justify-between items-center mb-2">
@@ -187,7 +187,7 @@ export default function DebtsPage() {
         </div>
       </div>
 
-      {/* Search Bar */}
+      {}
       <div className="glass-panel p-4 flex items-center gap-4 rounded-xl">
         <Search className="w-5 h-5 text-gray-500" />
         <input 
@@ -204,7 +204,7 @@ export default function DebtsPage() {
         )}
       </div>
 
-      {/* Debtors List */}
+      {}
       {loading ? (
         <div className="flex justify-center items-center py-20">
           <Loader2 className="w-12 h-12 text-[#00CED1] animate-spin" />
@@ -275,7 +275,7 @@ export default function DebtsPage() {
         </>
       )}
 
-      {/* Modals */}
+      {}
       <AddDebtorModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 

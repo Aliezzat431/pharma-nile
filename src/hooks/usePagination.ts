@@ -10,7 +10,7 @@ export function usePagination<T>(data: T[], options: UsePaginationOptions = {}) 
   const { pageSize = 15 } = options;
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Reset to page 1 whenever the underlying data changes (filter / search)
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [data.length]);

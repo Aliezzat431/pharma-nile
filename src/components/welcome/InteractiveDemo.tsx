@@ -32,7 +32,7 @@ const TOUR_STEPS = [
     subtitle: "بيعة في أقل من ثانيتين",
     description: "شاشة POS تم تصميمها لتكون الأسرع في مصر. تدعم الباركود، البحث الذكي، وتقسيم الأصناف على أكثر من تشغيلة (Batches) أتوماتيكياً حسب الأقدم.",
     features: ["دعم كامل للباركود والموازين", "نظام سحب حسب الأقدم (FEFO)", "كاش، فيزا، وآجل في نفس اللحظة"],
-    image: "/images/dashboard-preview.png", // Reuse placeholder or different one if available
+    image: "/images/dashboard-preview.png", 
     color: "var(--royal-gold)",
     icon: ShoppingBag
   },

@@ -72,9 +72,9 @@ Target JSON Layout Structure:
           ],
         },
       ],
-      temperature: 0.1, // درجة حرارة منخفضة جداً لمنع الـ Hallucinations وضمان دقة الأرقام
+      temperature: 0.1, 
       max_tokens: 2048,
-      response_format: { type: "json_object" } // إجبار الموديل على إرجاع كائن نقي بنسبة 100%
+      response_format: { type: "json_object" } 
     });
 
     const rawText = completion.choices[0]?.message?.content || '{}';

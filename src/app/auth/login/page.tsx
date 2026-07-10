@@ -12,10 +12,10 @@ export default function LoginPage() {
   const { signIn } = useAuth();
   const router = useRouter();
 
-  // Mode state
+  
   const [isDeveloperMode, setIsDeveloperMode] = useState(false);
 
-  // Normal Form State
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [adminKey, setAdminKey] = useState("");
@@ -24,16 +24,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showAdminKey, setShowAdminKey] = useState(false);
 
-  // Branch Selector Verification Context
+  
   const [hasSelection, setHasSelection] = useState(false);
   const [chainName, setChainName] = useState("");
   const [pharmacyName, setPharmacyName] = useState("");
 
-  // Developer Form State
+  
   const [devPasswordInput, setDevPasswordInput] = useState("");
   const [showDevPassword, setShowDevPassword] = useState(false);
 
-  // Common State
+  
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -92,11 +92,11 @@ export default function LoginPage() {
   }, []);
 
   const handleChangeBranch = () => {
-    // Clear cookies
+    
     document.cookie = "pharma-nile-selected-chain-id=; path=/; max-age=0";
     document.cookie = "pharma-nile-selected-pharmacy-id=; path=/; max-age=0";
     document.cookie = "pharma-nile-chain-verified=; path=/; max-age=0";
-    // Clear localStorage
+    
     localStorage.removeItem('selected_pharmacy_id');
     localStorage.removeItem('selected_chain_id');
     setHasSelection(false);
@@ -142,7 +142,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Step 1 — validate the password server-side and pre-stamp role=developer
+      
       const res = await fetch('/api/auth/developer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -154,7 +154,7 @@ export default function LoginPage() {
         throw new Error(data.error || "خطأ في تسجيل دخول المطور");
       }
 
-      // Step 2 — sign in with the validated credentials.
+      
       await signIn(data.email, devPasswordInput);
 
       router.push("/dev");
@@ -169,7 +169,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] relative selection:bg-[var(--nile-teal)] selection:text-white py-12 px-4 overflow-hidden font-cairo text-right" dir="rtl">
       
-      {/* Background Orbs */}
+      {}
       <motion.div 
         animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }} 
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
@@ -234,7 +234,7 @@ export default function LoginPage() {
             <span className="text-gray-400 text-xs">جاري التحقق من الفرع المحدد...</span>
           </div>
         ) : isDeveloperMode ? (
-          /* Developer Sign In Form */
+          
           <form onSubmit={handleDeveloperSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-purple-400 mr-1 block">
@@ -290,7 +290,7 @@ export default function LoginPage() {
             </motion.button>
           </form>
         ) : !hasSelection ? (
-          /* Selection Required Message Card */
+          
           <div className="text-center space-y-6">
             <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold flex items-center gap-3 text-sm text-right" dir="rtl">
               <AlertCircle className="w-6 h-6 shrink-0" />
@@ -308,9 +308,9 @@ export default function LoginPage() {
             </motion.button>
           </div>
         ) : (
-          /* Normal Pharmacy Sign In Form */
+          
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Show Selected Chain and Branch Info */}
+            {}
             <div className="p-4 bg-cyan-400/5 border border-cyan-400/15 rounded-2xl flex flex-col gap-2 text-sm text-right relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 rounded-full blur-xl pointer-events-none" />
               <div className="flex items-center gap-2.5 text-gray-400">
