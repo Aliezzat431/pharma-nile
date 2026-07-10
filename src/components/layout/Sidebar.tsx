@@ -186,7 +186,12 @@ export default function Sidebar() {
                 </h3>
               )}
               <div className="space-y-1">
-                {group.items.filter(item => !item.roleRequired || user?.user_metadata?.role === item.roleRequired).map((item) => {
+                {group.items.filter(item => {
+                  const realRole = user?.user_metadata?.role;
+                  const simulatedRole = user?.user_metadata?.simulated_role;
+                  const effectiveRole = simulatedRole || realRole;
+                  return !item.roleRequired || effectiveRole === item.roleRequired || (item.roleRequired === 'developer' && realRole === 'developer');
+                }).map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <div key={item.href} className="group relative flex items-center">

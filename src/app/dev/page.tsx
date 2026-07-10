@@ -221,13 +221,15 @@ export default function DevDashboard() {
 
       // --- ALL DB counts in parallel ---
       const dbStart = performance.now();
+      const prodQuery = supabase.from('products').select('*', { count: 'exact', head: true });
+      const orderQuery = supabase.from('orders').select('*', { count: 'exact', head: true });
       const [
         pharmRes, chainRes, prodRes, orderRes,
       ] = await Promise.all([
         supabase.from('pharmacies').select('*', { count: 'exact', head: true }),
         supabase.from('chains').select('*', { count: 'exact', head: true }),
-        supabase.from('products').select('*', { count: 'exact', head: true }).eq('pharmacy_id', pharmacyId),
-        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('pharmacy_id', pharmacyId),
+        user?.user_metadata?.pharmacy_id ? prodQuery.eq('pharmacy_id', user.user_metadata.pharmacy_id) : prodQuery,
+        user?.user_metadata?.pharmacy_id ? orderQuery.eq('pharmacy_id', user.user_metadata.pharmacy_id) : orderQuery,
       ]);
       const dbLatencyMs = Math.round(performance.now() - dbStart);
       setSystemLoad(prev => ({ ...prev, latencyMs: dbLatencyMs }));

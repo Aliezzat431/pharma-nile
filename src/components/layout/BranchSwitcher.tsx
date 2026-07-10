@@ -13,6 +13,7 @@ interface Branch {
   address?: string | null;
   phone?: string | null;
   is_active: boolean;
+  chain_id?: string | null;
 }
 
 interface Props {
@@ -38,20 +39,41 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
   const userRole    = user?.user_metadata?.role;
   const chainId     = user?.user_metadata?.chain_id;
   const isAdmin     = userRole === 'admin';
+  const isDeveloper = userRole === 'developer';
 
-  // Only show for users that belong to a chain
-  const shouldRender = !!chainId;
+  // Show for users that belong to a chain, or system developers
+  const shouldRender = !!chainId || isDeveloper;
+
+  const [chains, setChains] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isDeveloper) {
+      supabase
+        .from('chains')
+        .select('id, name')
+        .then(({ data }) => setChains(data ?? []));
+    }
+  }, [isDeveloper, supabase]);
 
   const fetchBranches = useCallback(async () => {
-    if (!chainId) return;
-    const { data } = await supabase
-      .from('pharmacies')
-      .select('id, name, address, phone, is_active')
-      .eq('chain_id', chainId)
-      .eq('is_active', true)
-      .order('created_at', { ascending: true });
-    setBranches(data ?? []);
-  }, [chainId, supabase]);
+    if (isDeveloper) {
+      const { data } = await supabase
+        .from('pharmacies')
+        .select('id, name, address, phone, is_active, chain_id')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+      setBranches(data ?? []);
+    } else {
+      if (!chainId) return;
+      const { data } = await supabase
+        .from('pharmacies')
+        .select('id, name, address, phone, is_active, chain_id')
+        .eq('chain_id', chainId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+      setBranches(data ?? []);
+    }
+  }, [chainId, isDeveloper, supabase]);
 
   useEffect(() => {
     fetchBranches();
@@ -65,12 +87,17 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
 
   const currentBranch = branches.find(b => b.id === currentId);
 
-  const handleSwitch = async (branch: Branch) => {
+  const handleSwitch = async (branch: Branch & { chain_id?: string | null }) => {
     if (branch.id === currentId) { setIsOpen(false); return; }
     setIsSwitching(true);
     try {
       localStorage.setItem('selected_pharmacy_id', branch.id);
-      await supabase.auth.updateUser({ data: { pharmacy_id: branch.id } });
+      await supabase.auth.updateUser({ 
+        data: { 
+          pharmacy_id: branch.id,
+          chain_id: branch.chain_id || null 
+        } 
+      });
       setCurrentId(branch.id);
       setIsOpen(false);
       // Ensure access record exists
@@ -204,11 +231,18 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
                       <p className={`text-sm font-bold truncate font-cairo ${
                         branch.id === currentId ? 'text-[var(--nile-teal)]' : 'text-white'
                       }`}>{branch.name}</p>
-                      {branch.address && (
-                        <p className="text-[10px] text-gray-500 truncate flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-2.5 h-2.5" /> {branch.address}
-                        </p>
-                      )}
+                      <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5 items-center">
+                        {isDeveloper && branch.chain_id && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 font-cairo font-bold shrink-0">
+                            {chains.find(c => c.id === branch.chain_id)?.name || 'سلسلة منفصلة'}
+                          </span>
+                        )}
+                        {branch.address && (
+                          <p className="text-[10px] text-gray-500 truncate flex items-center gap-1">
+                            <MapPin className="w-2.5 h-2.5" /> {branch.address}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </button>
                 ))}

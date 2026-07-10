@@ -156,6 +156,15 @@ export default function Settings() {
 
   const tabs: { id: Tab; label: string; icon: any }[] = userRole === 'chain_admin' 
     ? [ { id: 'chain', label: 'إدارة السلسلة والفروع', icon: Shield } ]
+    : userRole === 'developer'
+    ? [
+        { id: 'general', label: 'الإعدادات العامة', icon: Shield },
+        { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
+        { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
+        { id: 'database', label: 'إدارة البيانات والتنظيف', icon: Zap },
+        { id: 'chain', label: 'إدارة السلسلة والفروع', icon: Shield },
+        { id: 'about', label: 'عن المطورين', icon: Users },
+      ]
     : [
         { id: 'general', label: 'الإعدادات العامة', icon: Shield },
         { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },

@@ -12,6 +12,7 @@ import CommandPalette from '@/components/layout/CommandPalette';
 import { syncOfflineReturns } from '@/lib/supabase/offline-orders';
 import { processReturn } from '@/lib/api/orders';
 import { showToast } from '@/components/ui/SyncToastProvider';
+import DeveloperWidget from './DeveloperWidget';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -276,6 +277,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       </div>
       <CommandPalette isOpen={isCmdOpen} onClose={() => setIsCmdOpen(false)} />
       <ChatWidget />
+      <DeveloperWidget />
     </div>
   );
 }
