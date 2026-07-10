@@ -93,7 +93,9 @@ export function POSCartItem({
       {hasMultipleBatches && (
         <div className="px-4 pb-3 pt-1 border-t border-white/5">
           <p className="text-[10px] text-[#D4AF37] font-cairo mb-1.5 flex items-center gap-1">
-            <svg xmlns="http:
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
             تم التقسيم على أكثر من تشغيلة (كل تشغيلة بسعرها)
           </p>
           {item.batchDistributions.map((d: any, idx: number) => (
