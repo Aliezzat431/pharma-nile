@@ -6,8 +6,9 @@ import { useSearchParams } from 'next/navigation';
 // Layout utils
 import ScrollProgress from '@/components/welcome/ScrollProgress';
 import WizardModal from '@/components/welcome/WizardModal';
+import FloatingWhatsApp from '@/components/welcome/FloatingWhatsApp';
+import BackToTop from '@/components/welcome/BackToTop';
 
-// Sections
 import Navbar from '@/components/welcome/Navbar';
 import Hero from '@/components/welcome/Hero';
 import StatsBar from '@/components/welcome/StatsBar';
@@ -17,7 +18,9 @@ import Features from '@/components/welcome/Features';
 import Testimonials from '@/components/welcome/Testimonials';
 import Pricing from '@/components/welcome/Pricing';
 import FAQ from '@/components/welcome/FAQ';
+import ContactSection from '@/components/welcome/ContactSection';
 import CTASection from '@/components/welcome/CTASection';
+
 import Footer from '@/components/welcome/Footer';
 
 // Why-us section data (kept inline — small enough)
@@ -149,7 +152,10 @@ export default function WelcomePage() {
         {/* ── 10. FAQ Accordion ─────────────────────── */}
         <FAQ />
 
-        {/* ── 11. Final CTA ─────────────────────────── */}
+        {/* ── 11. Contact Section ────────────────────── */}
+        <ContactSection />
+
+        {/* ── 12. Final CTA ─────────────────────────── */}
         <CTASection onOpenWizard={openWizard} />
 
         {/* ── 12. Footer ────────────────────────────── */}
@@ -157,6 +163,12 @@ export default function WelcomePage() {
 
         {/* ── Wizard modal (overlay) ────────────────── */}
         <WizardModal isOpen={isWizardOpen} onClose={closeWizard} />
+
+        {/* ── Floating WhatsApp bubble ───────────────── */}
+        <FloatingWhatsApp />
+
+        {/* ── Back to top button ─────────────────────── */}
+        <BackToTop />
       </div>
     </>
   );
