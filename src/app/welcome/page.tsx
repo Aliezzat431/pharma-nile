@@ -1,32 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-
-// Layout utils
-import ScrollProgress from '@/components/welcome/ScrollProgress';
-import WizardModal from '@/components/welcome/WizardModal';
-import FloatingWhatsApp from '@/components/welcome/FloatingWhatsApp';
-import BackToTop from '@/components/welcome/BackToTop';
-
-import Navbar from '@/components/welcome/Navbar';
-import Hero from '@/components/welcome/Hero';
-import StatsBar from '@/components/welcome/StatsBar';
-import ProductShowcase from '@/components/welcome/ProductShowcase';
-import InteractiveDemo from '@/components/welcome/InteractiveDemo';
-import Features from '@/components/welcome/Features';
-import Testimonials from '@/components/welcome/Testimonials';
-import Pricing from '@/components/welcome/Pricing';
-import FAQ from '@/components/welcome/FAQ';
-import ContactSection from '@/components/welcome/ContactSection';
-import CTASection from '@/components/welcome/CTASection';
-
-import Footer from '@/components/welcome/Footer';
-
-// Why-us section data (kept inline — small enough)
-import { Shield, Database, Clock, RefreshCw, Zap, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Shield, Database, Clock, RefreshCw, Zap, CheckCircle2 } from 'lucide-react';
 
+// ─── Lazy-loaded components (cut initial bundle) ─────────────────────────────
+const ScrollProgress = lazy(() => import('@/components/welcome/ScrollProgress'));
+const WizardModal = lazy(() => import('@/components/welcome/WizardModal'));
+const FloatingWhatsApp = lazy(() => import('@/components/welcome/FloatingWhatsApp'));
+const BackToTop = lazy(() => import('@/components/welcome/BackToTop'));
+const Navbar = lazy(() => import('@/components/welcome/Navbar'));
+const Hero = lazy(() => import('@/components/welcome/Hero'));
+const StatsBar = lazy(() => import('@/components/welcome/StatsBar'));
+const ProductShowcase = lazy(() => import('@/components/welcome/ProductShowcase'));
+const InteractiveDemo = lazy(() => import('@/components/welcome/InteractiveDemo'));
+const Features = lazy(() => import('@/components/welcome/Features'));
+const Testimonials = lazy(() => import('@/components/welcome/Testimonials'));
+const Pricing = lazy(() => import('@/components/welcome/Pricing'));
+const FAQ = lazy(() => import('@/components/welcome/FAQ'));
+const ContactSection = lazy(() => import('@/components/welcome/ContactSection'));
+const CTASection = lazy(() => import('@/components/welcome/CTASection'));
+const Footer = lazy(() => import('@/components/welcome/Footer'));
+
+// ─── Why-us data ───────────────────────────────────────────────────────────────
 const valueProps = [
   {
     icon: Zap,
@@ -60,11 +57,23 @@ const valueProps = [
   }
 ];
 
+// ─── Loading fallback ──────────────────────────────────────────────────────────
+function SectionLoader() {
+  return (
+    <div className="w-full py-12 flex justify-center">
+      <div className="w-8 h-8 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+    </div>
+  );
+}
+
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function WelcomePage() {
   const searchParams = useSearchParams();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    setIsLoaded(true);
     const trigger = searchParams.get('wizard') === 'true' || searchParams.get('action') === 'select';
     if (trigger) setIsWizardOpen(true);
   }, [searchParams]);
@@ -74,34 +83,46 @@ export default function WelcomePage() {
 
   return (
     <>
-      {/* ── Scroll progress indicator ─────────────── */}
-      <ScrollProgress />
+      {/* ── Scroll progress ──────────────────────── */}
+      <Suspense fallback={null}>
+        <ScrollProgress />
+      </Suspense>
 
       <div
         className="min-h-screen text-[var(--text-primary)] relative overflow-x-hidden selection:bg-blue-600 selection:text-white"
         dir="rtl"
       >
-        {/* Background canvas */}
+        {/* Background */}
         <div className="fixed inset-0 pointer-events-none -z-20 bg-[#090d16]" />
         <div className="fixed top-[-10%] left-[-15%] w-[55vw] h-[55vw] rounded-full bg-blue-600/5 blur-[130px] pointer-events-none -z-10" />
         <div className="fixed bottom-[-10%] right-[10%] w-[50vw] h-[50vw] rounded-full bg-cyan-500/5 blur-[130px] pointer-events-none -z-10" />
 
-        {/* ── 1. Navigation ─────────────────────────── */}
-        <Navbar onOpenWizard={openWizard} />
+        {/* ── 1. Navbar ───────────────────────────── */}
+        <Suspense fallback={<div className="h-20" />}>
+          <Navbar onOpenWizard={openWizard} />
+        </Suspense>
 
-        {/* ── 2. Hero ───────────────────────────────── */}
-        <Hero onOpenWizard={openWizard} />
+        {/* ── 2. Hero ──────────────────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <Hero onOpenWizard={openWizard} />
+        </Suspense>
 
-        {/* ── 3. Stats counter bar ──────────────────── */}
-        <StatsBar />
+        {/* ── 3. Stats ─────────────────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <StatsBar />
+        </Suspense>
 
-        {/* ── 4. Interactive product screenshots ────── */}
-        <ProductShowcase />
+        {/* ── 4. Product Showcase ──────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <ProductShowcase />
+        </Suspense>
 
-        {/* ── 5. Guided demo tour ───────────────────── */}
-        <InteractiveDemo />
+        {/* ── 5. Interactive Demo ──────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <InteractiveDemo />
+        </Suspense>
 
-        {/* ── 6. Why Choose Us ──────────────────────── */}
+        {/* ── 6. Why Us ────────────────────────────── */}
         <section id="why-us" className="py-20 font-cairo text-right">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
             <div className="text-center space-y-3">
@@ -140,35 +161,55 @@ export default function WelcomePage() {
           </div>
         </section>
 
-        {/* ── 7. Core Features Grid ─────────────────── */}
-        <Features />
+        {/* ── 7. Features ──────────────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <Features />
+        </Suspense>
 
-        {/* ── 8. Social Proof / Testimonials ───────── */}
-        <Testimonials />
+        {/* ── 8. Testimonials ──────────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <Testimonials />
+        </Suspense>
 
-        {/* ── 9. Pricing Tiers ──────────────────────── */}
-        <Pricing onOpenWizard={openWizard} />
+        {/* ── 9. Pricing ───────────────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <Pricing onOpenWizard={openWizard} />
+        </Suspense>
 
-        {/* ── 10. FAQ Accordion ─────────────────────── */}
-        <FAQ />
+        {/* ── 10. FAQ ──────────────────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <FAQ />
+        </Suspense>
 
-        {/* ── 11. Contact Section ────────────────────── */}
-        <ContactSection />
+        {/* ── 11. Contact ──────────────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <ContactSection />
+        </Suspense>
 
-        {/* ── 12. Final CTA ─────────────────────────── */}
-        <CTASection onOpenWizard={openWizard} />
+        {/* ── 12. Final CTA ────────────────────────── */}
+        <Suspense fallback={<SectionLoader />}>
+          <CTASection onOpenWizard={openWizard} />
+        </Suspense>
 
-        {/* ── 12. Footer ────────────────────────────── */}
-        <Footer />
+        {/* ── 13. Footer ───────────────────────────── */}
+        <Suspense fallback={<div className="h-40" />}>
+          <Footer />
+        </Suspense>
 
-        {/* ── Wizard modal (overlay) ────────────────── */}
-        <WizardModal isOpen={isWizardOpen} onClose={closeWizard} />
+        {/* ── Wizard modal ─────────────────────────── */}
+        <Suspense fallback={null}>
+          <WizardModal isOpen={isWizardOpen} onClose={closeWizard} />
+        </Suspense>
 
-        {/* ── Floating WhatsApp bubble ───────────────── */}
-        <FloatingWhatsApp />
+        {/* ── Floating WhatsApp ────────────────────── */}
+        <Suspense fallback={null}>
+          <FloatingWhatsApp />
+        </Suspense>
 
-        {/* ── Back to top button ─────────────────────── */}
-        <BackToTop />
+        {/* ── Back to top ──────────────────────────── */}
+        <Suspense fallback={null}>
+          <BackToTop />
+        </Suspense>
       </div>
     </>
   );
