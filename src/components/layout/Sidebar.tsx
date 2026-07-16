@@ -205,7 +205,7 @@ export default function Sidebar() {
                           ? 'text-[var(--text-primary)] font-black drop-shadow-[0_0_10px_var(--nile-teal-glow)]' 
                           : 'text-[var(--sidebar-text-inactive)] hover:bg-[var(--glass-surface)] hover:text-[var(--text-primary)]'
                         } ${isCollapsed ? 'justify-center' : ''}`}
-                      >
+                      >    
                         {isActive && (
                           <motion.div
                             layoutId="sidebar-active"
