@@ -25,14 +25,14 @@ export default function GlassTable<T>({
   onRowClick
 }: GlassTableProps<T>) {
   return (
-    <div className="w-full overflow-x-auto glass-panel border-white/5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+    <div className="w-full overflow-x-auto glass-panel border-[var(--glass-border)] scrollbar-thin scrollbar-thumb-[var(--glass-surface-heavy)] scrollbar-track-transparent">
       <table className="w-full text-right border-collapse">
         <thead>
-          <tr className="border-b border-white/5 bg-white/[0.02]">
+          <tr className="border-b border-[var(--glass-border)] bg-[var(--glass-surface)]">
             {columns.map((col, idx) => (
               <th 
                 key={idx} 
-                className={`p-5 text-gray-500 font-bold font-cairo text-sm uppercase tracking-wider ${col.className || ''}`}
+                className={`p-5 text-muted font-bold font-cairo text-sm uppercase tracking-wider ${col.className || ''}`}
               >
                 {col.header}
               </th>
@@ -45,7 +45,7 @@ export default function GlassTable<T>({
               <tr key={i} className="animate-pulse">
                 {columns.map((_, idx) => (
                   <td key={idx} className="p-5">
-                    <div className="h-4 bg-white/5 rounded w-full"></div>
+                    <div className="h-4 bg-[var(--glass-surface)] rounded w-full"></div>
                   </td>
                 ))}
               </tr>
@@ -58,7 +58,7 @@ export default function GlassTable<T>({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: rowIdx * 0.05 }}
                 onClick={() => onRowClick?.(item)}
-                className={`transition-all duration-200 group ${onRowClick ? 'cursor-pointer hover:bg-white/[0.03]' : ''}`}
+                className={`transition-all duration-200 group ${onRowClick ? 'cursor-pointer hover:bg-[var(--glass-surface-heavy)]' : ''}`}
               >
                 {columns.map((col, colIdx) => (
                   <td key={colIdx} className={`p-5 text-sm font-medium ${col.className || ''}`}>
@@ -71,7 +71,7 @@ export default function GlassTable<T>({
             ))
           ) : (
             <tr>
-              <td colSpan={columns.length} className="p-12 text-center text-gray-500 font-cairo italic">
+              <td colSpan={columns.length} className="p-12 text-center text-muted font-cairo italic">
                 {emptyMessage}
               </td>
             </tr>

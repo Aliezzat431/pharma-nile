@@ -234,7 +234,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               <div className="flex items-center gap-4 w-full md:w-auto">
                 <button 
                   onClick={() => window.dispatchEvent(new Event('sidebar-toggle'))}
-                  className="md:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
+                  className="md:hidden p-2 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-primary)] hover:bg-[var(--glass-surface-heavy)] transition-all"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="3" y1="6" x2="21" y2="6" />
@@ -245,7 +245,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 
                 <button 
                   onClick={handleCloneToWindow}
-                  className="px-4 py-2 bg-[#111111]/80 hover:bg-[#1A1A1A] border border-white/10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[var(--nile-teal)] transition-all hover:scale-105 shadow-lg backdrop-blur-sm flex-1 md:flex-none"
+                  className="px-4 py-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[var(--nile-teal)] transition-all hover:scale-105 shadow-lg backdrop-blur-sm flex-1 md:flex-none"
                 >
                   <Maximize2 className="w-4 h-4" />
                   <span>فتح النافذة</span>
@@ -254,15 +254,15 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
               <button 
                 onClick={() => setIsCmdOpen(true)}
-                className="glass-card px-4 py-2 flex items-center gap-4 text-gray-500 hover:text-white transition-all group"
+                className="glass-card px-4 py-2 flex items-center gap-4 text-muted hover:text-[var(--text-primary)] transition-all group"
               >
                 <div className="flex items-center gap-2">
                   <Search className="w-4 h-4 group-hover:text-[var(--nile-teal)] transition-colors" />
                   <span className="text-xs font-cairo font-bold">ابحث عن أي شيء (Ctrl+K)</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px]">Ctrl</span>
-                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px]">K</span>
+                  <span className="px-1.5 py-0.5 rounded bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[10px]">Ctrl</span>
+                  <span className="px-1.5 py-0.5 rounded bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[10px]">K</span>
                 </div>
               </button>
             </div>

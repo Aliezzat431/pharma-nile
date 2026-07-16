@@ -10,6 +10,10 @@ const serverSchema = clientSchema.extend({
   GEMINI_API_KEY: z.string().min(10, "GEMINI_API_KEY is required"),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   SENTRY_DSN: z.string().url().optional(),
+  REDIS_URL: z.string().url().optional(),
+  REDIS_HOST: z.string().optional(),
+  REDIS_PORT: z.string().or(z.number()).optional(),
+  REDIS_PASSWORD: z.string().optional(),
 });
 
 export const env = (() => {

@@ -52,7 +52,7 @@ export default function Navbar({ onOpenWizard }: NavbarProps) {
     <header 
       className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-[var(--background)]/85 backdrop-blur-md border-b border-white/10 py-3 shadow-lg' 
+          ? 'bg-[var(--background)]/85 backdrop-blur-md border-b border-[var(--glass-border)] py-3 shadow-lg' 
           : 'bg-transparent py-5'
       }`}
     >
@@ -89,7 +89,7 @@ export default function Navbar({ onOpenWizard }: NavbarProps) {
           {mounted && (
             <button
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-all active:scale-95 border border-white/5"
+              className="p-2 text-muted hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--glass-surface)] transition-all active:scale-95 border border-[var(--glass-border)]"
               aria-label="Toggle Theme"
             >
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-yellow-400" />}
@@ -99,7 +99,7 @@ export default function Navbar({ onOpenWizard }: NavbarProps) {
           {/* Desktop Call to actions */}
           <button
             onClick={onOpenWizard}
-            className="hidden sm:inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10 active:scale-95 transition-all"
+            className="hidden sm:inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-[var(--text-primary)] border border-[var(--glass-border)] active:scale-95 transition-all"
           >
             دخول النظام
           </button>
@@ -135,10 +135,10 @@ export default function Navbar({ onOpenWizard }: NavbarProps) {
               {item.label}
             </a>
           ))}
-          <div className="pt-4 border-t border-white/5 flex flex-col gap-3 w-full max-w-sm">
+          <div className="pt-4 border-t border-[var(--glass-border)] flex flex-col gap-3 w-full max-w-sm">
             <button
               onClick={() => { setIsMobileMenuOpen(false); onOpenWizard(); }}
-              className="w-full py-3 rounded-xl text-sm font-bold bg-white/5 text-gray-200 border border-white/10 text-center"
+              className="w-full py-3 rounded-xl text-sm font-bold bg-[var(--glass-surface)] text-[var(--text-primary)] border border-[var(--glass-border)] text-center"
             >
               دخول النظام
             </button>

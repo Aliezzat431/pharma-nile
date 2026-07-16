@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { treatmentTypes } from '@/lib/unitOptions';
 import Groq from 'groq-sdk';
+import { getCache, setCache } from '@/lib/redis';
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -18,6 +19,14 @@ export async function POST(req: Request) {
         { error: 'Product name is required' },
         { status: 400 }
       );  
+    }
+
+    const cacheKey = `cache:product-analysis:${productName.toLowerCase().trim()}`;
+    const cachedResult = await getCache<{ choices: any[] }>(cacheKey);
+    
+    if (cachedResult) {
+      console.log(`[Cache Hit] Product analysis for "${productName}" retrieved from Redis.`);
+      return NextResponse.json(cachedResult);
     }
 
     if (!process.env.GROQ_API_KEY) {
@@ -78,27 +87,29 @@ The required JSON schema layout:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    let normalizedChoices = [];
     if (!parsed.choices || !Array.isArray(parsed.choices)) {
-      return NextResponse.json({
-        choices: [
-          {
-            name: parsed.name || productName,
-            company: parsed.company || '',
-            type: parsed.type || '',
-            unit_conversion: Number(parsed.unit_conversion) || 1,
-          }
-        ]
-      });
+      normalizedChoices = [
+        {
+          name: parsed.name || productName,
+          company: parsed.company || '',
+          type: parsed.type || '',
+          unit_conversion: Number(parsed.unit_conversion) || 1,
+        }
+      ];
+    } else {
+      normalizedChoices = parsed.choices.map((choice: any) => ({
+        name: choice.name || productName,
+        company: choice.company || '',
+        type: choice.type || '',
+        unit_conversion: Number(choice.unit_conversion) || 1,
+      }));
     }
 
-    const normalizedChoices = parsed.choices.map((choice: any) => ({
-      name: choice.name || productName,
-      company: choice.company || '',
-      type: choice.type || '',
-      unit_conversion: Number(choice.unit_conversion) || 1,
-    }));
+    const finalResult = { choices: normalizedChoices };
+    await setCache(cacheKey, finalResult, 86400); // Cache for 24 hours
 
-    return NextResponse.json({ choices: normalizedChoices });
+    return NextResponse.json(finalResult);
 
   } catch (error: any) {
     console.error('Groq Auto-fill Error:', error);

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
+import { getCache, setCache } from '@/lib/redis';
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -23,17 +24,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const { data: salesData } = await supabase
-      .from('orders')
-      .select('total')
-      .eq('pharmacy_id', pharmacyId)
-      .gte('created_at', startOfDay.toISOString());
+    const salesCacheKey = `cache:pharmacy-sales:${pharmacyId}`;
+    let totalSales = await getCache<number>(salesCacheKey);
 
-    const totalSales = salesData?.reduce((acc: number, o: any) => acc + (o.total || 0), 0) || 0;
+    if (totalSales === null) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const { data: salesData } = await supabase
+        .from('orders')
+        .select('total')
+        .eq('pharmacy_id', pharmacyId)
+        .gte('created_at', startOfDay.toISOString());
+
+      totalSales = salesData?.reduce((acc: number, o: any) => acc + (o.total || 0), 0) || 0;
+      await setCache(salesCacheKey, totalSales, 30); // cache for 30s
+    }
 
     const systemPrompt = `أنت "الدكتور محسن"، مساعد الصيدلية الذكي.
     رد بالعامية المصرية بأسلوب مهني وخفيف.

@@ -148,7 +148,7 @@ export default function ProductAutocomplete({
           onFocus={() => value.trim().length >= 2 && suggestions.length > 0 && setOpen(true)}
           placeholder={placeholder}
           autoComplete="off"
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50 font-cairo pr-8 transition-all"
+          className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--nile-teal)]/50 font-cairo pr-8 transition-all"
         />
         {loading ? (
           <Loader2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 animate-spin" />
@@ -176,10 +176,10 @@ export default function ProductAutocomplete({
       {open && suggestions.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 top-full mt-1.5 right-0 left-0 bg-[#0d0d0d] border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden"
+          className="absolute z-50 top-full mt-1.5 right-0 left-0 bg-[var(--background)] border border-[var(--glass-border)] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden"
         >
           {}
-          <div className="px-3 py-1.5 border-b border-white/5 flex items-center gap-2">
+          <div className="px-3 py-1.5 border-b border-[var(--glass-border)] flex items-center gap-2">
             <Search className="w-3 h-3 text-[var(--nile-teal)]" />
             <span className="text-[10px] text-gray-500 font-cairo">
               {suggestions.length} نتيجة مطابقة في شبكة الصيدليات
@@ -194,8 +194,8 @@ export default function ProductAutocomplete({
               onMouseEnter={() => setActiveIdx(i)}
               className={`w-full text-right flex items-center gap-3 px-3 py-2.5 transition-colors ${
                 activeIdx === i
-                  ? 'bg-[var(--nile-teal)]/10 text-white'
-                  : 'hover:bg-white/5 text-gray-200'
+                  ? 'bg-[var(--nile-teal)]/10 text-[var(--text-primary)]'
+                  : 'hover:bg-[var(--glass-surface)] text-[var(--text-secondary)]'
               }`}
             >
               <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">

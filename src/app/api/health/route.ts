@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { isRedisActive } from '@/lib/redis';
 
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function GET() {
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const start = Date.now();
   const memory = process.memoryUsage();
 
@@ -23,6 +23,10 @@ export async function GET() {
       latencyMs?: number;
       error?: string;
     };
+    redis: {
+      status: 'CONNECTED' | 'FALLBACK';
+      configured: boolean;
+    };
     environment: {
       nodeEnv: string;
       varsConfigured: boolean;
@@ -38,6 +42,10 @@ export async function GET() {
     },
     database: {
       status: 'DISCONNECTED',
+    },
+    redis: {
+      status: isRedisActive() ? 'CONNECTED' : 'FALLBACK',
+      configured: !!(process.env.REDIS_URL || (process.env.REDIS_HOST && process.env.REDIS_PORT)),
     },
     environment: {
       nodeEnv: process.env.NODE_ENV || 'production',

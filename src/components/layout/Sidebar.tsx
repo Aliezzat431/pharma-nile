@@ -202,8 +202,8 @@ export default function Sidebar() {
                         }}
                         className={`relative flex-1 flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ${
                           isActive 
-                          ? 'text-white font-black drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' 
-                          : 'text-[var(--sidebar-text-inactive)] hover:bg-white/5 hover:text-white'
+                          ? 'text-[var(--text-primary)] font-black drop-shadow-[0_0_10px_var(--nile-teal-glow)]' 
+                          : 'text-[var(--sidebar-text-inactive)] hover:bg-[var(--glass-surface)] hover:text-[var(--text-primary)]'
                         } ${isCollapsed ? 'justify-center' : ''}`}
                       >
                         {isActive && (

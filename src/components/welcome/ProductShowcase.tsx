@@ -17,23 +17,23 @@ const sidebarGroups = [
     title: 'العمليات اليومية',
     items: [
       { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-      { id: 'pos',       label: 'نقطة البيع',  icon: ShoppingCart },
+      { id: 'pos', label: 'نقطة البيع', icon: ShoppingCart },
     ]
   },
   {
     title: 'المخزن والعملاء',
     items: [
-      { id: 'inventory', label: 'المخزون',   icon: Package },
+      { id: 'inventory', label: 'المخزون', icon: Package },
       { id: 'transfers', label: 'التحويلات', icon: Box },
-      { id: 'customers', label: 'العملاء',   icon: Users },
-      { id: 'returns',   label: 'المرتجعات', icon: History },
+      { id: 'customers', label: 'العملاء', icon: Users },
+      { id: 'returns', label: 'المرتجعات', icon: History },
     ]
   },
   {
     title: 'الماليات والتقارير',
     items: [
-      { id: 'reports',   label: 'الماليات',  icon: BadgeDollarSign },
-      { id: 'invoices',  label: 'الفواتير',  icon: FileText },
+      { id: 'reports', label: 'الماليات', icon: BadgeDollarSign },
+      { id: 'invoices', label: 'الفواتير', icon: FileText },
     ]
   },
 ];
@@ -43,27 +43,27 @@ type TabId = typeof ACTIVE_TABS[number];
 
 /* ─────────────── MOCK DATA ─────────────── */
 const PRODUCTS = [
-  { name: 'Panadol Extra',     price: 32,  stock: '120 pcs', detail: 'FEFO',  low: false },
-  { name: 'Concor 5mg',        price: 42,  stock: '25 pcs',  detail: 'FEFO',  low: false },
-  { name: 'Augmentin 1g',      price: 99,  stock: '18 pcs',  detail: 'FEFO',  low: false },
-  { name: 'Ventolin Inhaler',  price: 38,  stock: '2 pcs',   detail: 'LOW!',  low: true  },
-  { name: 'Omeprazole 20mg',   price: 65,  stock: '50 pcs',  detail: 'FEFO',  low: false },
-  { name: 'Milga Tablets',     price: 55,  stock: '40 pcs',  detail: 'FEFO',  low: false },
+  { name: 'Panadol Extra', price: 32, stock: '120 pcs', detail: 'FEFO', low: false },
+  { name: 'Concor 5mg', price: 42, stock: '25 pcs', detail: 'FEFO', low: false },
+  { name: 'Augmentin 1g', price: 99, stock: '18 pcs', detail: 'FEFO', low: false },
+  { name: 'Ventolin Inhaler', price: 38, stock: '2 pcs', detail: 'LOW!', low: true },
+  { name: 'Omeprazole 20mg', price: 65, stock: '50 pcs', detail: 'FEFO', low: false },
+  { name: 'Milga Tablets', price: 55, stock: '40 pcs', detail: 'FEFO', low: false },
 ];
 
 const INVENTORY_ROWS = [
-  { name: 'Panadol Extra',    company: 'GSK',           method: 'FEFO', qty: 120, price: 32,  low: false },
-  { name: 'Concor 5mg',       company: 'Bayer',         method: 'FEFO', qty: 25,  price: 42,  low: false },
-  { name: 'Ventolin Inhaler', company: 'GSK',           method: 'FEFO', qty: 2,   price: 38,  low: true  },
-  { name: 'Augmentin 1g',     company: 'GSK',           method: 'FEFO', qty: 18,  price: 99,  low: false },
-  { name: 'Omeprazole 20mg',  company: 'Local Pharma',  method: 'FEFO', qty: 50,  price: 65,  low: false },
-  { name: 'Milga Tablets',    company: 'Minapharm',     method: 'FEFO', qty: 40,  price: 55,  low: false },
+  { name: 'Panadol Extra', company: 'GSK', method: 'FEFO', qty: 120, price: 32, low: false },
+  { name: 'Concor 5mg', company: 'Bayer', method: 'FEFO', qty: 25, price: 42, low: false },
+  { name: 'Ventolin Inhaler', company: 'GSK', method: 'FEFO', qty: 2, price: 38, low: true },
+  { name: 'Augmentin 1g', company: 'GSK', method: 'FEFO', qty: 18, price: 99, low: false },
+  { name: 'Omeprazole 20mg', company: 'Local Pharma', method: 'FEFO', qty: 50, price: 65, low: false },
+  { name: 'Milga Tablets', company: 'Minapharm', method: 'FEFO', qty: 40, price: 55, low: false },
 ];
 
 const RECENT_TX = [
   { id: '#9403', time: '2 min ago', total: '164.00 ج.م', items: '3 items', method: 'Cash' },
-  { id: '#9398', time: '15 min',    total: '85.00 ج.م',  items: '1 item',  method: 'Visa' },
-  { id: '#9395', time: '1 hr',      total: '430.50 ج.م', items: '5 items', method: 'Debt' },
+  { id: '#9398', time: '15 min', total: '85.00 ج.م', items: '1 item', method: 'Visa' },
+  { id: '#9395', time: '1 hr', total: '430.50 ج.م', items: '5 items', method: 'Debt' },
 ];
 
 const CHART_BARS = [
@@ -80,8 +80,8 @@ const CHART_BARS = [
 export default function ProductShowcase() {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [cart, setCart] = useState([
-    { id: 1, name: 'Panadol Extra',  price: 32, q: 2 },
-    { id: 2, name: 'Concor 5mg',     price: 42, q: 1 },
+    { id: 1, name: 'Panadol Extra', price: 32, q: 2 },
+    { id: 2, name: 'Concor 5mg', price: 42, q: 1 },
   ]);
   const [checkoutOk, setCheckoutOk] = useState(false);
   const cartTotal = cart.reduce((s, i) => s + i.price * i.q, 0);
@@ -105,7 +105,7 @@ export default function ProductShowcase() {
       setCheckoutOk(false);
       setCart([
         { id: 1, name: 'Panadol Extra', price: 32, q: 2 },
-        { id: 2, name: 'Concor 5mg',    price: 42, q: 1 },
+        { id: 2, name: 'Concor 5mg', price: 42, q: 1 },
       ]);
     }, 2500);
   };
@@ -114,10 +114,10 @@ export default function ProductShowcase() {
 
   const tabs = [
     { id: 'dashboard' as TabId, label: 'لوحة التحكم', icon: Laptop },
-    { id: 'pos'       as TabId, label: 'نقطة البيع (POS)', icon: ShoppingBag },
+    { id: 'pos' as TabId, label: 'نقطة البيع (POS)', icon: ShoppingBag },
     { id: 'inventory' as TabId, label: 'إدارة المخزن', icon: Boxes },
-    { id: 'reports'   as TabId, label: 'التقارير المالية', icon: BarChart3 },
-    { id: 'mobile'    as TabId, label: 'تطبيق المتابعة', icon: Smartphone },
+    { id: 'reports' as TabId, label: 'التقارير المالية', icon: BarChart3 },
+    { id: 'mobile' as TabId, label: 'تطبيق المتابعة', icon: Smartphone },
   ];
 
   return (
@@ -141,11 +141,10 @@ export default function ProductShowcase() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-300 active:scale-95 cursor-pointer ${
-                  active
+                className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-300 active:scale-95 cursor-pointer ${active
                     ? 'bg-gradient-to-r from-[#06B6D4] to-cyan-500 text-white shadow-xl shadow-[#06B6D4]/20 border border-transparent'
                     : 'bg-white/5 hover:bg-white/10 text-gray-400 border border-white/5'
-                }`}
+                  }`}
               >
                 <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-gray-400'}`} />
                 <span>{tab.label}</span>
@@ -206,13 +205,11 @@ export default function ProductShowcase() {
                                 <div
                                   key={item.id}
                                   onClick={() => canClick && setActiveTab(item.id as TabId)}
-                                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all relative ${
-                                    canClick ? 'cursor-pointer' : 'cursor-default opacity-60'
-                                  } ${
-                                    isActive
+                                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all relative ${canClick ? 'cursor-pointer' : 'cursor-default opacity-60'
+                                    } ${isActive
                                       ? 'text-white'
                                       : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                  }`}
+                                    }`}
                                 >
                                   {isActive && (
                                     <div className="absolute inset-0 bg-gradient-to-l from-[#06B6D4]/10 to-transparent border-r-2 border-[#06B6D4] rounded-xl" />
@@ -262,10 +259,10 @@ export default function ProductShowcase() {
                             {/* 4 stat cards — mirrors real dashboard */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                               {[
-                                { label: 'مبيعات اليوم',   val: '12,450 ج.م', icon: Wallet,         color: '#06B6D4', bg: 'bg-[#06B6D4]/10', sub: '+18.5% ↑' },
-                                { label: 'صافي الأرباح',   val: '3,860 ج.م',  icon: TrendingUp,     color: '#D4AF37', bg: 'bg-[#D4AF37]/10', sub: '+12.3% ↑' },
-                                { label: 'نواقص التنبيه',  val: '3 أصناف',    icon: AlertCircle,    color: '#f87171', bg: 'bg-red-500/10',   sub: 'حرجة الآن' },
-                                { label: 'صلاحية وشيكة',   val: '16 علبة',    icon: AlertTriangle,  color: '#fb923c', bg: 'bg-orange-500/10', sub: 'تنتهي قريباً' },
+                                { label: 'مبيعات اليوم', val: '12,450 ج.م', icon: Wallet, color: '#06B6D4', bg: 'bg-[#06B6D4]/10', sub: '+18.5% ↑' },
+                                { label: 'صافي الأرباح', val: '3,860 ج.م', icon: TrendingUp, color: '#D4AF37', bg: 'bg-[#D4AF37]/10', sub: '+12.3% ↑' },
+                                { label: 'نواقص التنبيه', val: '3 أصناف', icon: AlertCircle, color: '#f87171', bg: 'bg-red-500/10', sub: 'حرجة الآن' },
+                                { label: 'صلاحية وشيكة', val: '16 علبة', icon: AlertTriangle, color: '#fb923c', bg: 'bg-orange-500/10', sub: 'تنتهي قريباً' },
                               ].map((s, i) => (
                                 <div key={i} className="bg-white/[0.025] border border-white/[0.06] rounded-2xl p-4 flex items-start gap-3 relative overflow-hidden group hover:border-white/10 transition-all">
                                   <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
@@ -331,19 +328,18 @@ export default function ProductShowcase() {
                               <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">عمليات سريعة</h4>
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {[
-                                  { title: 'POS Terminal',      desc: 'ابدأ جلسة بيع فورية', to: 'pos',       highlight: true },
+                                  { title: 'POS Terminal', desc: 'ابدأ جلسة بيع فورية', to: 'pos', highlight: true },
                                   { title: 'Import Invoice AI', desc: 'استيراد بالذكاء الاصطناعي', to: 'inventory', highlight: false },
-                                  { title: 'Receive Stock',     desc: 'إضافة تشغيلة جديدة',   to: 'inventory', highlight: false },
-                                  { title: 'Low Stock Alert',   desc: 'رصد نواقص المخزون',    to: 'inventory', highlight: false },
+                                  { title: 'Receive Stock', desc: 'إضافة تشغيلة جديدة', to: 'inventory', highlight: false },
+                                  { title: 'Low Stock Alert', desc: 'رصد نواقص المخزون', to: 'inventory', highlight: false },
                                 ].map((op, i) => (
                                   <button
                                     key={i}
                                     onClick={() => setActiveTab(op.to as TabId)}
-                                    className={`p-3 rounded-xl text-right border transition-all text-xs font-bold ${
-                                      op.highlight
+                                    className={`p-3 rounded-xl text-right border transition-all text-xs font-bold ${op.highlight
                                         ? 'bg-gradient-to-br from-[#06B6D4] to-[#2563EB] text-white border-transparent hover:brightness-110'
                                         : 'bg-white/[0.02] border-white/5 text-white hover:bg-white/5 hover:border-white/15'
-                                    }`}
+                                      }`}
                                   >
                                     <span className="block font-black">{op.title}</span>
                                     <span className="block text-[8px] font-medium opacity-75 mt-0.5">{op.desc}</span>
@@ -489,9 +485,9 @@ export default function ProductShowcase() {
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                               {[
                                 { label: 'إجمالي المنتجات', val: '1,248', icon: PackageOpen, color: 'text-[#06B6D4]', bg: 'bg-[#06B6D4]/10' },
-                                { label: 'إجمالي الرصيد',   val: '18,420', icon: Tag,         color: 'text-[#D4AF37]', bg: 'bg-[#D4AF37]/10' },
-                                { label: 'نواقص المخزون',  val: '3',     icon: AlertCircle, color: 'text-red-400',   bg: 'bg-red-500/10' },
-                                { label: 'قيمة المخزن',    val: '240K ج.م', icon: DollarSign,color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                                { label: 'إجمالي الرصيد', val: '18,420', icon: Tag, color: 'text-[#D4AF37]', bg: 'bg-[#D4AF37]/10' },
+                                { label: 'نواقص المخزون', val: '3', icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
+                                { label: 'قيمة المخزن', val: '240K ج.م', icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
                               ].map((s, i) => (
                                 <div key={i} className="bg-white/[0.025] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3 group hover:border-white/10 transition-all">
                                   <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center group-hover:scale-110 transition-transform shrink-0`}>
@@ -590,10 +586,10 @@ export default function ProductShowcase() {
                             {/* 4 stat cards — mirrors financials */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                               {[
-                                { label: 'إجمالي المبيعات', val: '31,520 ج.م', icon: Wallet,         color: '#06B6D4' },
-                                { label: 'صافي الأرباح',    val: '9,860 ج.م',  icon: TrendingUp,     color: '#D4AF37' },
-                                { label: 'إجمالي التكاليف', val: '21,660 ج.م', icon: ArrowDownRight,  color: '#f87171' },
-                                { label: 'عدد العمليات',   val: '412',         icon: BarChart,       color: '#94a3b8' },
+                                { label: 'إجمالي المبيعات', val: '31,520 ج.م', icon: Wallet, color: '#06B6D4' },
+                                { label: 'صافي الأرباح', val: '9,860 ج.م', icon: TrendingUp, color: '#D4AF37' },
+                                { label: 'إجمالي التكاليف', val: '21,660 ج.م', icon: ArrowDownRight, color: '#f87171' },
+                                { label: 'عدد العمليات', val: '412', icon: BarChart, color: '#94a3b8' },
                               ].map((s, i) => (
                                 <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
                                   <div className="flex justify-between items-start mb-3">
@@ -656,9 +652,9 @@ export default function ProductShowcase() {
                                 </div>
                                 <div className="space-y-2 mt-2">
                                   {[
-                                    { name: 'نقدي',  pct: '73%', val: '23,020 ج.م', color: '#06B6D4' },
-                                    { name: 'آجل',   pct: '20%', val: '6,304 ج.م',  color: '#D4AF37' },
-                                    { name: 'فيزا',  pct: '7%',  val: '2,196 ج.م',  color: '#f87171' },
+                                    { name: 'نقدي', pct: '73%', val: '23,020 ج.م', color: '#06B6D4' },
+                                    { name: 'آجل', pct: '20%', val: '6,304 ج.م', color: '#D4AF37' },
+                                    { name: 'فيزا', pct: '7%', val: '2,196 ج.م', color: '#f87171' },
                                   ].map((p, i) => (
                                     <div key={i} className="flex items-center justify-between text-xs font-cairo">
                                       <div className="flex items-center gap-1.5">
@@ -711,10 +707,10 @@ export default function ProductShowcase() {
                         {/* Notifications */}
                         <div className="space-y-2.5 flex-1">
                           {[
-                            { title: '⚠️ Low Stock Alert',    desc: 'Ventolin Inhaler — 2 units remaining', time: '1m',  cls: 'border-red-500/20 bg-red-500/5' },
-                            { title: '🔄 Cloud Sync Done',     desc: '124 sales synced to cloud successfully', time: '5m',  cls: 'border-emerald-500/20 bg-emerald-500/5' },
-                            { title: '📦 Invoice Imported',    desc: 'Supplier invoice processed via AI', time: '10m', cls: 'border-blue-500/20 bg-blue-500/5' },
-                            { title: '💊 Expiry Warning',      desc: 'Milga Tablets batch expires Aug 2026', time: '1h',  cls: 'border-amber-500/20 bg-amber-500/5' },
+                            { title: '⚠️ Low Stock Alert', desc: 'Ventolin Inhaler — 2 units remaining', time: '1m', cls: 'border-red-500/20 bg-red-500/5' },
+                            { title: '🔄 Cloud Sync Done', desc: '124 sales synced to cloud successfully', time: '5m', cls: 'border-emerald-500/20 bg-emerald-500/5' },
+                            { title: '📦 Invoice Imported', desc: 'Supplier invoice processed via AI', time: '10m', cls: 'border-blue-500/20 bg-blue-500/5' },
+                            { title: '💊 Expiry Warning', desc: 'Milga Tablets batch expires Aug 2026', time: '1h', cls: 'border-amber-500/20 bg-amber-500/5' },
                           ].map((n, i) => (
                             <div key={i} className={`p-2.5 rounded-xl border text-[9px] ${n.cls}`}>
                               <div className="flex justify-between items-center font-bold mb-0.5">
