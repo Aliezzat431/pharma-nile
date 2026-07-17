@@ -20,14 +20,11 @@ export default function Skeleton({ className = '', count = 1 }: SkeletonProps) {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className={`bg-white/5 rounded-lg overflow-hidden relative ${className}`}
+          className={`bg-[var(--glass-surface-heavy)] rounded-lg overflow-hidden relative ${className}`}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--glass-surface-heavy)] to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
         </motion.div>
       ))}
     </>
   );
 }
-
-
-

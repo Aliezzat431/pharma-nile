@@ -52,11 +52,11 @@ export default function ThemeToggle({ align = "right" }: { align?: "left" | "rig
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 text-white transition-all group shadow-lg backdrop-blur-md w-full"
+        className="flex items-center gap-3 px-4 py-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] rounded-xl border border-[var(--glass-border)] text-[var(--foreground)] transition-all group shadow-lg backdrop-blur-md w-full"
       >
         <Palette className="w-5 h-5 text-[var(--nile-teal)] group-hover:rotate-12 transition-transform shrink-0" />
         <span className="text-xs font-bold font-cairo truncate">المظهر</span>
-        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-[var(--text-inactive)] transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       <AnimatePresence>
@@ -72,7 +72,7 @@ export default function ThemeToggle({ align = "right" }: { align?: "left" | "rig
               initial={{ opacity: 0, y: 10, x: align === "sidebar" ? 20 : 0, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, x: align === "sidebar" ? 20 : 0, scale: 0.95 }}
-              className={`${getDropdownClasses()} w-64 glass-panel border-white/10 z-50 p-2 shadow-2xl overflow-hidden`}
+              className={`${getDropdownClasses()} w-64 glass-panel border-[var(--glass-border)] z-50 p-2 shadow-2xl overflow-hidden`}
             >
               <div className="grid grid-cols-1 gap-1 max-h-[400px] overflow-y-auto custom-scrollbar">
                 {THEMES.map((t) => (
@@ -85,21 +85,21 @@ export default function ThemeToggle({ align = "right" }: { align?: "left" | "rig
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                       theme === t.id 
                       ? 'bg-[var(--nile-teal)]/10 border border-[var(--nile-teal)]/20' 
-                      : 'hover:bg-white/5'
+                      : 'hover:bg-[var(--glass-surface)]'
                     }`}
                   >
                     <div 
                       className="w-8 h-8 rounded-lg flex items-center justify-center relative overflow-hidden shadow-inner"
                       style={{ backgroundColor: t.color }}
                     >
-                      <t.icon className={`w-4 h-4 ${theme === t.id ? 'text-[var(--nile-teal)]' : 'text-gray-400'}`} />
+                      <t.icon className={`w-4 h-4 ${theme === t.id ? 'text-[var(--nile-teal)]' : 'text-[var(--text-inactive)]'}`} />
                       {theme === t.id && (
                         <div className="absolute inset-0 border-2 border-[var(--nile-teal)] rounded-lg pointer-events-none" />
                       )}
                     </div>
                     
                     <div className="flex-1 text-right">
-                      <p className={`text-xs font-bold font-cairo ${theme === t.id ? 'text-[var(--nile-teal)]' : 'text-gray-200'}`}>
+                      <p className={`text-xs font-bold font-cairo ${theme === t.id ? 'text-[var(--nile-teal)]' : 'text-[var(--text-secondary)]'}`}>
                         {t.label}
                       </p>
                     </div>
@@ -109,8 +109,8 @@ export default function ThemeToggle({ align = "right" }: { align?: "left" | "rig
                 ))}
               </div>
 
-              <div className="mt-2 p-2 border-t border-white/5">
-                <p className="text-[10px] text-center text-gray-500 font-bold opacity-50 uppercase tracking-widest">Premium Themes Pack</p>
+              <div className="mt-2 p-2 border-t border-[var(--divider)]">
+                <p className="text-[10px] text-center text-[var(--text-inactive)] font-bold opacity-50 uppercase tracking-widest">Premium Themes Pack</p>
               </div>
             </motion.div>
           </>
@@ -119,4 +119,3 @@ export default function ThemeToggle({ align = "right" }: { align?: "left" | "rig
     </div>
   );
 }
-

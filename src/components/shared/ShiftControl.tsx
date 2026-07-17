@@ -67,19 +67,25 @@ export default function ShiftControl() {
   return (
     <div className="glass-panel p-6 overflow-hidden relative group">
       <div className="absolute top-0 right-0 p-4 opacity-5">
-         <Clock className="w-20 h-20" />
+         <Clock className="w-20 h-20 text-[var(--foreground)]" />
       </div>
       
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
         <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${session ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+          <div 
+            className="w-12 h-12 rounded-full flex items-center justify-center shadow-inner"
+            style={{ 
+              backgroundColor: session ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+              color: session ? 'var(--status-success)' : 'var(--status-error)' 
+            }}
+          >
             <UserIcon className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-bold text-lg font-cairo">
+            <h3 className="font-bold text-lg font-cairo text-[var(--foreground)]">
               {session ? `أنت الآن في وردية: ${session.shift_type === 'morning' ? 'صباحية' : 'مسائية'}` : 'لم تبدأ الوردية بعد'}
             </h3>
-            <p className="text-sm text-gray-400 font-cairo">
+            <p className="text-sm text-[var(--text-muted)] font-cairo">
               {session ? `بدأت في: ${new Date(session.start_time).toLocaleTimeString()}` : 'يرجى فتح وردية لبدء عمليات البيع'}
             </p>
           </div>
@@ -94,7 +100,8 @@ export default function ShiftControl() {
               exit={{ opacity: 0, scale: 0.9 }}
               onClick={handleStartShift}
               disabled={actionLoading}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#00CED1] text-white font-bold hover:shadow-[0_0_15px_rgba(0,206,209,0.4)] transition-all disabled:opacity-50 font-cairo"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50 font-cairo shadow-lg hover:brightness-110"
+              style={{ backgroundColor: 'var(--nile-teal)', color: 'var(--background)' }}
             >
               {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
               بدء الوردية الآن
@@ -107,7 +114,12 @@ export default function ShiftControl() {
               exit={{ opacity: 0, scale: 0.9 }}
               onClick={handleEndShift}
               disabled={actionLoading}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold hover:bg-red-500/20 transition-all disabled:opacity-50 font-cairo"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl border font-bold transition-all disabled:opacity-50 font-cairo"
+              style={{ 
+                backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+                color: 'var(--status-error)', 
+                borderColor: 'rgba(239, 68, 68, 0.2)' 
+              }}
             >
               {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Square className="w-5 h-5" />}
               إغلاق الوردية الحالية
@@ -118,4 +130,3 @@ export default function ShiftControl() {
     </div>
   );
 }
-

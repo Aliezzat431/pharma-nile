@@ -78,8 +78,8 @@ export default function Pagination({
     <div ref={containerRef} className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`} dir="rtl">
       {}
       {totalItems != null && from != null && to != null && (
-        <p className="text-sm text-gray-500 font-cairo">
-          عرض <span className="text-white font-bold">{from}</span> – <span className="text-white font-bold">{to}</span> من <span className="text-[#00CED1] font-bold">{totalItems}</span> عنصر
+        <p className="text-sm text-[var(--text-muted)] font-cairo">
+          عرض <span className="text-[var(--text-primary)] font-bold">{from}</span> – <span className="text-[var(--text-primary)] font-bold">{to}</span> من <span className="text-[var(--nile-teal)] font-bold">{totalItems}</span> عنصر
         </p>
       )}
 
@@ -89,7 +89,7 @@ export default function Pagination({
         <button
           onClick={() => handlePageChange(1)}
           disabled={currentPage === 1}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-white/5 hover:border-white/20"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-inactive)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-heavy)] disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-[var(--glass-border)]"
           aria-label="الصفحة الأولى"
         >
           <ChevronsRight className="w-4 h-4" />
@@ -99,7 +99,7 @@ export default function Pagination({
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-white/5 hover:border-white/20"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-inactive)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-heavy)] disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-[var(--glass-border)]"
           aria-label="الصفحة السابقة"
         >
           <ChevronRight className="w-4 h-4" />
@@ -108,7 +108,7 @@ export default function Pagination({
         {}
         {getPageNumbers().map((page, idx) =>
           page === '...' ? (
-            <span key={`dot-${idx}`} className="w-9 h-9 flex items-center justify-center text-gray-600 text-sm">
+            <span key={`dot-${idx}`} className="w-9 h-9 flex items-center justify-center text-[var(--text-inactive)] text-sm">
               ···
             </span>
           ) : (
@@ -117,8 +117,8 @@ export default function Pagination({
               onClick={() => handlePageChange(page as number)}
               className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-all border ${
                 currentPage === page
-                  ? 'bg-[#00CED1]/15 border-[#00CED1]/50 text-[#00CED1] shadow-[0_0_12px_rgba(0,206,209,0.2)]'
-                  : 'border-white/5 text-gray-400 hover:text-white hover:bg-white/10 hover:border-white/20'
+                  ? 'bg-[var(--nile-teal-glow)] border-[var(--nile-teal)] text-[var(--nile-teal)] neon-glow-teal'
+                  : 'border-[var(--glass-border)] text-[var(--text-inactive)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-heavy)]'
               }`}
               aria-current={currentPage === page ? 'page' : undefined}
             >
@@ -137,7 +137,7 @@ export default function Pagination({
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-white/5 hover:border-white/20"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-inactive)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-heavy)] disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-[var(--glass-border)]"
           aria-label="الصفحة التالية"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -147,7 +147,7 @@ export default function Pagination({
         <button
           onClick={() => handlePageChange(totalPages)}
           disabled={currentPage === totalPages}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-white/5 hover:border-white/20"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-inactive)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-heavy)] disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-[var(--glass-border)]"
           aria-label="الصفحة الأخيرة"
         >
           <ChevronsLeft className="w-4 h-4" />

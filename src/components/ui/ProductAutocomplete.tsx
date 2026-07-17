@@ -148,12 +148,12 @@ export default function ProductAutocomplete({
           onFocus={() => value.trim().length >= 2 && suggestions.length > 0 && setOpen(true)}
           placeholder={placeholder}
           autoComplete="off"
-          className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--nile-teal)]/50 font-cairo pr-8 transition-all"
+          className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--nile-teal)]/50 font-cairo pr-8 transition-all"
         />
         {loading ? (
-          <Loader2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 animate-spin" />
+          <Loader2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-inactive)] animate-spin" />
         ) : (
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-inactive)]" />
         )}
       </div>
 
@@ -161,11 +161,17 @@ export default function ProductAutocomplete({
       {showNewBadge && value.trim().length >= 2 && (
         <div className="absolute -top-1.5 right-2 z-10">
           {isNew ? (
-            <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 font-cairo">
+            <span 
+              className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full font-cairo shadow-sm"
+              style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: 'var(--status-success)', border: '1px solid rgba(16, 185, 129, 0.2)' }}
+            >
               <BadgePlus className="w-2.5 h-2.5" /> جديد
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20 font-cairo">
+             <span 
+              className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full font-cairo shadow-sm"
+              style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+             >
               <Star className="w-2.5 h-2.5" /> موجود
             </span>
           )}
@@ -176,12 +182,12 @@ export default function ProductAutocomplete({
       {open && suggestions.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 top-full mt-1.5 right-0 left-0 bg-[var(--background)] border border-[var(--glass-border)] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden"
+          className="absolute z-50 top-full mt-1.5 right-0 left-0 bg-[var(--background)] border border-[var(--glass-border)] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden backdrop-blur-xl"
         >
           {}
           <div className="px-3 py-1.5 border-b border-[var(--glass-border)] flex items-center gap-2">
             <Search className="w-3 h-3 text-[var(--nile-teal)]" />
-            <span className="text-[10px] text-gray-500 font-cairo">
+            <span className="text-[10px] text-[var(--text-muted)] font-cairo">
               {suggestions.length} نتيجة مطابقة في شبكة الصيدليات
             </span>
           </div>
@@ -194,16 +200,19 @@ export default function ProductAutocomplete({
               onMouseEnter={() => setActiveIdx(i)}
               className={`w-full text-right flex items-center gap-3 px-3 py-2.5 transition-colors ${
                 activeIdx === i
-                  ? 'bg-[var(--nile-teal)]/10 text-[var(--text-primary)]'
+                  ? 'bg-[var(--nile-teal-glow)] text-[var(--text-primary)]'
                   : 'hover:bg-[var(--glass-surface)] text-[var(--text-secondary)]'
               }`}
             >
-              <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                <Star className="w-3.5 h-3.5 text-blue-400" />
+              <div 
+                className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
+              >
+                <Star className="w-3.5 h-3.5" style={{ color: '#60a5fa' }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold font-cairo truncate">{s.name}</p>
-                <p className="text-[10px] text-gray-500 truncate font-cairo">
+                <p className="text-sm font-bold font-cairo truncate text-[var(--foreground)]">{s.name}</p>
+                <p className="text-[10px] text-[var(--text-muted)] truncate font-cairo">
                   {[s.type, s.company, (s as any).pharmacy_name].filter(Boolean).join(' • ')}
                 </p>
               </div>
@@ -220,16 +229,20 @@ export default function ProductAutocomplete({
             <button
               type="button"
               onMouseDown={(e) => { e.preventDefault(); onSelect(null); setOpen(false); }}
-              className="w-full text-right flex items-center gap-3 px-3 py-2.5 border-t border-white/5 hover:bg-emerald-500/5 transition-colors"
+              className="w-full text-right flex items-center gap-3 px-3 py-2.5 border-t border-[var(--glass-border)] transition-colors"
+              style={{ backgroundColor: 'rgba(16, 185, 129, 0.05)' }}
             >
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                <BadgePlus className="w-3.5 h-3.5 text-emerald-400" />
+              <div 
+                className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}
+              >
+                <BadgePlus className="w-3.5 h-3.5" style={{ color: 'var(--status-success)' }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold font-cairo text-emerald-400 truncate">
+                <p className="text-sm font-bold font-cairo truncate" style={{ color: 'var(--status-success)' }}>
                   إضافة "{value}" كمنتج جديد
                 </p>
-                <p className="text-[10px] text-gray-500 font-cairo">سيتم إنشاؤه عند الحفظ</p>
+                <p className="text-[10px] text-[var(--text-muted)] font-cairo">سيتم إنشاؤه عند الحفظ</p>
               </div>
             </button>
           )}

@@ -56,7 +56,7 @@ function TestimonialCard({ testimonial, isActive }: { testimonial: typeof testim
       exit={{ opacity: 0, scale: 0.94 }}
       transition={{ duration: 0.4 }}
       className={`bg-white/[0.025] border rounded-3xl p-7 flex flex-col gap-5 text-right font-cairo transition-all duration-300 ${
-        isActive ? 'border-white/10 shadow-xl' : 'border-white/5'
+        isActive ? 'border-[var(--glass-border)] shadow-xl' : 'border-[var(--glass-border)]'
       }`}
     >
       {/* Stars */}
@@ -75,13 +75,13 @@ function TestimonialCard({ testimonial, isActive }: { testimonial: typeof testim
       </div>
 
       {/* Author */}
-      <div className="flex items-center gap-3 pt-2 border-t border-white/5">
-        <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${testimonial.color} flex items-center justify-center text-white font-black text-sm shrink-0`}>
+      <div className="flex items-center gap-3 pt-2 border-t border-[var(--glass-border)]">
+        <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${testimonial.color} flex items-center justify-center text-[var(--text-primary)] font-black text-sm shrink-0`}>
           {testimonial.initials}
         </div>
         <div>
-          <p className="text-white font-black text-sm">{testimonial.name}</p>
-          <p className="text-gray-500 text-xs font-semibold mt-0.5">{testimonial.role}</p>
+          <p className="text-[var(--text-primary)] font-black text-sm">{testimonial.name}</p>
+          <p className="text-[var(--text-inactive)] text-xs font-semibold mt-0.5">{testimonial.role}</p>
         </div>
       </div>
     </motion.div>
@@ -128,10 +128,10 @@ export default function Testimonials() {
         {/* Title */}
         <div className="text-center space-y-3">
           <p className="text-cyan-400 text-xs font-black uppercase tracking-widest">آراء صيادلتنا الفعليين</p>
-          <h2 className="text-3xl md:text-5xl font-black text-white">
+          <h2 className="text-3xl md:text-5xl font-black text-[var(--text-primary)]">
             ماذا قالوا عن فارما نايل؟
           </h2>
-          <p className="text-gray-400 max-w-xl mx-auto text-sm font-semibold">
+          <p className="text-[var(--text-muted)] max-w-xl mx-auto text-sm font-semibold">
             تجارب حقيقية من صيادلة مصر الذين حولوا صيادليهم إلى منظومة رقمية احترافية مع فارما نايل.
           </p>
         </div>
@@ -166,7 +166,7 @@ export default function Testimonials() {
         <div className="flex items-center justify-center gap-6">
           <button
             onClick={prev}
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all cursor-pointer"
+            className="w-10 h-10 rounded-full bg-[var(--glass-surface-heavy)] hover:bg-[var(--nile-teal-glow)] border border-[var(--glass-border)] flex items-center justify-center text-gray-300 hover:text-[var(--text-primary)] transition-all cursor-pointer"
             aria-label="Previous"
           >
             <ChevronRight className="w-5 h-5" />
@@ -187,7 +187,7 @@ export default function Testimonials() {
 
           <button
             onClick={next}
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all cursor-pointer"
+            className="w-10 h-10 rounded-full bg-[var(--glass-surface-heavy)] hover:bg-[var(--nile-teal-glow)] border border-[var(--glass-border)] flex items-center justify-center text-gray-300 hover:text-[var(--text-primary)] transition-all cursor-pointer"
             aria-label="Next"
           >
             <ChevronLeft className="w-5 h-5" />

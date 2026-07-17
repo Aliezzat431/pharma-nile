@@ -49,12 +49,12 @@ export default function CTASection({ onOpenWizard }: CTASectionProps) {
 
           {/* Headline */}
           <div className="space-y-4">
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white leading-[1.1] tracking-tight">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-[var(--text-primary)] leading-[1.1] tracking-tight">
               صيدليتك تستحق نظاماً
               <br />
               <span className="nile-gradient-text">يعمل بجد مثلك</span>
             </h2>
-            <p className="text-gray-400 text-base sm:text-lg font-semibold max-w-2xl mx-auto leading-relaxed">
+            <p className="text-[var(--text-muted)] text-base sm:text-lg font-semibold max-w-2xl mx-auto leading-relaxed">
               انضم إلى أكثر من 500 صيدلاني في مصر اختاروا فارما نايل لتنظيم أعمالهم. 14 يوماً تجربة مجانية كاملة — بدون بيانات بنك أو أي التزام مسبق.
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function CTASection({ onOpenWizard }: CTASectionProps) {
               onClick={onOpenWizard}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              className="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold text-base rounded-2xl shadow-2xl shadow-blue-500/20 flex items-center justify-center gap-2.5 group cursor-pointer"
+              className="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-blue-600 to-cyan-500 text-[var(--text-primary)] font-extrabold text-base rounded-2xl shadow-2xl shadow-blue-500/20 flex items-center justify-center gap-2.5 group cursor-pointer"
             >
               <span>ابدأ التجربة المجانية الآن</span>
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
@@ -75,7 +75,7 @@ export default function CTASection({ onOpenWizard }: CTASectionProps) {
               onClick={handleWhatsApp}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              className="w-full sm:w-auto px-10 py-5 bg-white/[0.04] hover:bg-white/[0.08] text-white font-extrabold text-base rounded-2xl border border-white/10 flex items-center justify-center gap-2.5 cursor-pointer transition-all"
+              className="w-full sm:w-auto px-10 py-5 bg-white/[0.04] hover:bg-white/[0.08] text-[var(--text-primary)] font-extrabold text-base rounded-2xl border border-[var(--glass-border)] flex items-center justify-center gap-2.5 cursor-pointer transition-all"
             >
               <MessageCircle className="w-5 h-5 text-emerald-400" />
               <span>تواصل واتساب مباشرة</span>
@@ -83,18 +83,18 @@ export default function CTASection({ onOpenWizard }: CTASectionProps) {
           </div>
 
           {/* Micro trust reassurance */}
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 pt-2 text-gray-500 text-xs font-semibold">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 pt-2 text-[var(--text-inactive)] text-xs font-semibold">
             {[
-              '✓ لا توجد رسوم خفية',
-              '✓ إلغاء الاشتراك في أي وقت',
-              '✓ دعم فني مستمر خلال التجربة',
+              ' لا توجد رسوم خفية',
+              ' إلغاء الاشتراك في أي وقت',
+              ' دعم فني مستمر خلال التجربة',
             ].map((t, i) => (
               <span key={i} className="whitespace-nowrap">{t}</span>
             ))}
           </div>
 
           {/* Phone direct */}
-          <div className="flex items-center justify-center gap-2 text-gray-500 text-sm pt-2">
+          <div className="flex items-center justify-center gap-2 text-[var(--text-inactive)] text-sm pt-2">
             <Phone className="w-4 h-4 text-cyan-400" />
             <span className="font-semibold">أو اتصل مباشرة:</span>
             <a

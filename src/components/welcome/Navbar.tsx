@@ -61,10 +61,10 @@ export default function Navbar({ onOpenWizard }: NavbarProps) {
         {/* Right Section: Logo */}
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-400 flex items-center justify-center shadow-lg relative group">
-            <Pill className="w-5.5 h-5.5 text-white group-hover:rotate-12 transition-transform duration-300" />
+            <Pill className="w-5.5 h-5.5 text-[var(--text-primary)] group-hover:rotate-12 transition-transform duration-300" />
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-cyan-400/10 to-transparent" />
           </div>
-          <span className="text-xl font-black text-white font-cairo tracking-tight">
+          <span className="text-xl font-black text-[var(--text-primary)] font-cairo tracking-tight">
             فارما <span className="text-cyan-400">نايل</span>
           </span>
         </div>
@@ -105,7 +105,7 @@ export default function Navbar({ onOpenWizard }: NavbarProps) {
           </button>
           <button
             onClick={onOpenWizard}
-            className="hidden sm:inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 text-white shadow-md active:scale-95 transition-all"
+            className="hidden sm:inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 text-[var(--text-primary)] shadow-md active:scale-95 transition-all"
           >
             ابدأ التجربة مجاناً
           </button>
@@ -113,7 +113,7 @@ export default function Navbar({ onOpenWizard }: NavbarProps) {
           {/* Mobile menu toggle */}
           <button
             onClick={toggleMobileMenu}
-            className="lg:hidden p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-all"
+            className="lg:hidden p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--glass-surface-heavy)] transition-all"
             aria-label="Toggle Menu"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -124,7 +124,7 @@ export default function Navbar({ onOpenWizard }: NavbarProps) {
 
       {/* Mobile Drawer menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[65px] bg-[#0c1221]/95 backdrop-blur-lg border-b border-white/10 py-6 px-4 space-y-4 shadow-2xl flex flex-col items-center">
+        <div className="lg:hidden fixed inset-x-0 top-[65px] bg-[#0c1221]/95 backdrop-blur-lg border-b border-[var(--glass-border)] py-6 px-4 space-y-4 shadow-2xl flex flex-col items-center">
           {menuItems.map((item) => (
             <a
               key={item.href}
@@ -144,7 +144,7 @@ export default function Navbar({ onOpenWizard }: NavbarProps) {
             </button>
             <button
               onClick={() => { setIsMobileMenuOpen(false); onOpenWizard(); }}
-              className="w-full py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-center shadow-md font-cairo"
+              className="w-full py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 to-cyan-500 text-[var(--text-primary)] text-center shadow-md font-cairo"
             >
               التسجيل المجاني (14 يوماً)
             </button>

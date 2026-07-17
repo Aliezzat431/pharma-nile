@@ -50,7 +50,7 @@ function AnimatedNumber({ value, suffix, decimals = 0 }: { value: number; suffix
 
 export default function StatsBar() {
   return (
-    <div className="border-y border-white/5 bg-white/[0.01] py-12 font-cairo" dir="rtl">
+    <div className="border-y border-[var(--glass-border)] bg-white/[0.01] py-12 font-cairo" dir="rtl">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((stat, idx) => (
@@ -62,10 +62,10 @@ export default function StatsBar() {
               transition={{ duration: 0.5, delay: idx * 0.1 }}
               className="text-center space-y-1"
             >
-              <p className="text-3xl md:text-4xl text-white nile-gradient-text">
+              <p className="text-3xl md:text-4xl text-[var(--text-primary)] nile-gradient-text">
                 <AnimatedNumber value={stat.value} suffix={stat.suffix} decimals={stat.decimals} />
               </p>
-              <p className="text-gray-400 text-xs font-semibold">{stat.label}</p>
+              <p className="text-[var(--text-muted)] text-xs font-semibold">{stat.label}</p>
             </motion.div>
           ))}
         </div>

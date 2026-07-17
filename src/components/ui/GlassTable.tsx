@@ -25,27 +25,27 @@ export default function GlassTable<T>({
   onRowClick
 }: GlassTableProps<T>) {
   return (
-    <div className="w-full overflow-x-auto glass-panel border-[var(--glass-border)] scrollbar-thin scrollbar-thumb-[var(--glass-surface-heavy)] scrollbar-track-transparent">
+    <div className="w-full overflow-x-auto glass-panel border-[var(--glass-border)] scrollbar-thin scrollbar-thumb-[var(--scrollbar-thumb)] hover:scrollbar-thumb-[var(--scrollbar-hover)] scrollbar-track-transparent">
       <table className="w-full text-right border-collapse">
         <thead>
           <tr className="border-b border-[var(--glass-border)] bg-[var(--glass-surface)]">
             {columns.map((col, idx) => (
               <th 
                 key={idx} 
-                className={`p-5 text-muted font-bold font-cairo text-sm uppercase tracking-wider ${col.className || ''}`}
+                className={`p-5 text-[var(--text-muted)] font-bold font-cairo text-sm uppercase tracking-wider ${col.className || ''}`}
               >
                 {col.header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/[0.03]">
+        <tbody className="divide-y divide-[var(--divider)]">
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <tr key={i} className="animate-pulse">
                 {columns.map((_, idx) => (
                   <td key={idx} className="p-5">
-                    <div className="h-4 bg-[var(--glass-surface)] rounded w-full"></div>
+                    <div className="h-4 bg-[var(--glass-surface-heavy)] rounded w-full"></div>
                   </td>
                 ))}
               </tr>
@@ -61,7 +61,7 @@ export default function GlassTable<T>({
                 className={`transition-all duration-200 group ${onRowClick ? 'cursor-pointer hover:bg-[var(--glass-surface-heavy)]' : ''}`}
               >
                 {columns.map((col, colIdx) => (
-                  <td key={colIdx} className={`p-5 text-sm font-medium ${col.className || ''}`}>
+                  <td key={colIdx} className={`p-5 text-sm font-medium text-[var(--text-primary)] ${col.className || ''}`}>
                     {typeof col.accessor === 'function' 
                       ? col.accessor(item) 
                       : (item[col.accessor] as React.ReactNode)}
@@ -71,7 +71,7 @@ export default function GlassTable<T>({
             ))
           ) : (
             <tr>
-              <td colSpan={columns.length} className="p-12 text-center text-muted font-cairo italic">
+              <td colSpan={columns.length} className="p-12 text-center text-[var(--text-muted)] font-cairo italic">
                 {emptyMessage}
               </td>
             </tr>
@@ -81,4 +81,3 @@ export default function GlassTable<T>({
     </div>
   );
 }
-

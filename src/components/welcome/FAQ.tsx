@@ -36,8 +36,8 @@ export default function FAQ() {
         
         {/* Title */}
         <div className="text-center space-y-4">
-          <h2 className="text-3xl md:text-5xl font-black text-white">الأسئلة الأكثر شيوعاً</h2>
-          <p className="text-gray-400 max-w-xl mx-auto text-sm sm:text-base font-semibold">
+          <h2 className="text-3xl md:text-5xl font-black text-[var(--text-primary)]">الأسئلة الأكثر شيوعاً</h2>
+          <p className="text-[var(--text-muted)] max-w-xl mx-auto text-sm sm:text-base font-semibold">
             إجابات شافية لأبرز الأسئلة والتفاصيل لتسهيل انتقال صيدلتك لمنظومة فارما نايل الذكية.
           </p>
         </div>
@@ -49,11 +49,11 @@ export default function FAQ() {
             return (
               <div 
                 key={index} 
-                className="bg-white/[0.015] border border-white/5 hover:border-white/10 rounded-2xl overflow-hidden transition-all duration-300"
+                className="bg-white/[0.015] border border-[var(--glass-border)] hover:border-[var(--glass-border)] rounded-2xl overflow-hidden transition-all duration-300"
               >
                 <button
                   onClick={() => setOpenIndex(isOpen ? null : index)}
-                  className="w-full px-6 py-5 flex items-center justify-between text-right font-bold text-white text-sm sm:text-base gap-4 cursor-pointer"
+                  className="w-full px-6 py-5 flex items-center justify-between text-right font-bold text-[var(--text-primary)] text-sm sm:text-base gap-4 cursor-pointer"
                 >
                   <span>{faq.q}</span>
                   <ChevronDown className={`w-5 h-5 text-cyan-400 transition-transform duration-300 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
@@ -67,7 +67,7 @@ export default function FAQ() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="px-6 pb-5 pt-1 text-gray-450 font-semibold text-xs sm:text-sm leading-relaxed border-t border-white/5">
+                      <div className="px-6 pb-5 pt-1 text-gray-450 font-semibold text-xs sm:text-sm leading-relaxed border-t border-[var(--glass-border)]">
                         {faq.a}
                       </div>
                     </motion.div>

@@ -40,18 +40,18 @@ export default function FloatingWhatsApp() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-            className="bg-[#1a2332] border border-white/10 rounded-2xl rounded-br-sm p-3.5 shadow-2xl max-w-[220px] text-right relative"
+            className="bg-[#1a2332] border border-[var(--glass-border)] rounded-2xl rounded-br-sm p-3.5 shadow-2xl max-w-[220px] text-right relative"
           >
             <button
               onClick={() => setShowBubble(false)}
-              className="absolute top-2 left-2 text-gray-500 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-2 left-2 text-[var(--text-inactive)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
             >
               <X className="w-3 h-3" />
             </button>
-            <p className="text-white text-xs font-bold leading-relaxed">
-              👋 مرحباً! كيف نساعدك في صيدليتك؟
+            <p className="text-[var(--text-primary)] text-xs font-bold leading-relaxed">
+               مرحباً! كيف نساعدك في صيدليتك؟
             </p>
-            <p className="text-gray-400 text-[10px] font-semibold mt-1">
+            <p className="text-[var(--text-muted)] text-[10px] font-semibold mt-1">
               فريق الدعم متاح الآن ◎
             </p>
           </motion.div>
@@ -66,10 +66,10 @@ export default function FloatingWhatsApp() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-            className="bg-[#111827] border border-white/10 rounded-2xl shadow-2xl overflow-hidden w-[265px]"
+            className="bg-[#111827] border border-[var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden w-[265px]"
           >
             {/* Panel header */}
-            <div className="flex items-center gap-3 p-4 bg-emerald-600 text-white">
+            <div className="flex items-center gap-3 p-4 bg-emerald-600 text-[var(--text-primary)]">
               <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                 <MessageCircle className="w-5 h-5" />
               </div>
@@ -79,17 +79,17 @@ export default function FloatingWhatsApp() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-white/70 hover:text-white cursor-pointer"
+                className="text-[var(--text-primary)]/70 hover:text-[var(--text-primary)] cursor-pointer"
               >
                 <ChevronDown className="w-4 h-4" />
               </button>
             </div>
 
             {/* Greeting bubble */}
-            <div className="p-4 border-b border-white/5">
+            <div className="p-4 border-b border-[var(--glass-border)]">
               <div className="bg-white/[0.05] rounded-2xl rounded-tr-sm p-3 text-right max-w-[200px] mr-auto">
-                <p className="text-white text-xs font-semibold leading-relaxed">
-                  مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟ اختر أحد الخيارات أدناه:
+                <p className="text-[var(--text-primary)] text-xs font-semibold leading-relaxed">
+                  مرحباً!  كيف يمكنني مساعدتك اليوم؟ اختر أحد الخيارات أدناه:
                 </p>
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function FloatingWhatsApp() {
             </div>
 
             {/* Direct number */}
-            <div className="px-4 pb-4 pt-1 flex items-center gap-2 text-gray-500 text-[10px] font-semibold">
+            <div className="px-4 pb-4 pt-1 flex items-center gap-2 text-[var(--text-inactive)] text-[10px] font-semibold">
               <Phone className="w-3 h-3 text-gray-600" />
               <a href="tel:+201050851892" dir="ltr" className="hover:text-gray-300 transition-colors">
                 +20 105 085 1892
@@ -123,7 +123,7 @@ export default function FloatingWhatsApp() {
         onClick={() => { setIsOpen(p => !p); setShowBubble(false); }}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.93 }}
-        className="relative w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 shadow-xl shadow-emerald-500/30 flex items-center justify-center text-white cursor-pointer transition-colors"
+        className="relative w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 shadow-xl shadow-emerald-500/30 flex items-center justify-center text-[var(--text-primary)] cursor-pointer transition-colors"
         aria-label="تواصل عبر واتساب"
       >
         {/* Pulse ring */}

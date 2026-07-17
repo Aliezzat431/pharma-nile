@@ -13,7 +13,6 @@ interface Toast {
   duration?: number;
 }
 
-
 type ToastListener = (toast: Omit<Toast, 'id'>) => void;
 const listeners: ToastListener[] = [];
 
@@ -23,43 +22,31 @@ export const showToast = (toast: Omit<Toast, 'id'>) => {
 
 const variantConfig: Record<
   ToastVariant,
-  { icon: React.ReactNode; borderColor: string; bgColor: string; iconColor: string }
+  { icon: React.ReactNode; colorVar: string }
 > = {
   success: {
     icon: <CheckCircle2 className="w-5 h-5" />,
-    borderColor: 'border-emerald-500/40',
-    bgColor: 'bg-emerald-500/10',
-    iconColor: 'text-emerald-400',
+    colorVar: 'var(--status-success)',
   },
   error: {
     icon: <AlertTriangle className="w-5 h-5" />,
-    borderColor: 'border-red-500/40',
-    bgColor: 'bg-red-500/10',
-    iconColor: 'text-red-400',
+    colorVar: 'var(--status-error)',
   },
   warning: {
     icon: <AlertTriangle className="w-5 h-5" />,
-    borderColor: 'border-amber-500/40',
-    bgColor: 'bg-amber-500/10',
-    iconColor: 'text-amber-400',
+    colorVar: 'var(--status-warning)',
   },
   info: {
     icon: <CloudUpload className="w-5 h-5" />,
-    borderColor: 'border-[#00CED1]/40',
-    bgColor: 'bg-[#00CED1]/10',
-    iconColor: 'text-[#00CED1]',
+    colorVar: 'var(--status-info)',
   },
   offline: {
     icon: <WifiOff className="w-5 h-5" />,
-    borderColor: 'border-amber-500/40',
-    bgColor: 'bg-amber-500/10',
-    iconColor: 'text-amber-400',
+    colorVar: 'var(--status-warning)',
   },
   online: {
     icon: <Wifi className="w-5 h-5" />,
-    borderColor: 'border-emerald-500/40',
-    bgColor: 'bg-emerald-500/10',
-    iconColor: 'text-emerald-400',
+    colorVar: 'var(--status-success)',
   },
 };
 
@@ -102,22 +89,26 @@ export default function SyncToastProvider() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 120, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-2xl min-w-[260px] max-w-[360px] ${cfg.bgColor} ${cfg.borderColor}`}
+              className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-2xl min-w-[260px] max-w-[360px]"
+              style={{
+                backgroundColor: 'var(--glass-surface-heavy)',
+                borderColor: cfg.colorVar,
+              }}
             >
               {}
-              <div className={`flex-shrink-0 ${cfg.iconColor}`}>
+              <div className="flex-shrink-0" style={{ color: cfg.colorVar }}>
                 {cfg.icon}
               </div>
 
               {}
-              <p className="flex-1 text-sm text-white font-cairo leading-snug">
+              <p className="flex-1 text-sm text-[var(--text-primary)] font-cairo leading-snug">
                 {toast.message}
               </p>
 
               {}
               <button
                 onClick={() => removeToast(toast.id)}
-                className="flex-shrink-0 text-gray-500 hover:text-white transition-colors"
+                className="flex-shrink-0 text-[var(--text-inactive)] hover:text-[var(--text-primary)] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -128,15 +119,8 @@ export default function SyncToastProvider() {
                   initial={{ scaleX: 1 }}
                   animate={{ scaleX: 0 }}
                   transition={{ duration: toast.duration! / 1000, ease: 'linear' }}
-                  className={`absolute bottom-0 left-0 h-0.5 w-full origin-left rounded-full ${
-                    toast.variant === 'success' || toast.variant === 'online'
-                      ? 'bg-emerald-400'
-                      : toast.variant === 'error'
-                      ? 'bg-red-400'
-                      : toast.variant === 'offline' || toast.variant === 'warning'
-                      ? 'bg-amber-400'
-                      : 'bg-[#00CED1]'
-                  }`}
+                  className="absolute bottom-0 left-0 h-0.5 w-full origin-left rounded-full"
+                  style={{ backgroundColor: cfg.colorVar }}
                 />
               )}
             </motion.div>

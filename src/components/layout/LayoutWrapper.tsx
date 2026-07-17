@@ -135,12 +135,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   if (pathname === '/dev' && userRole !== 'developer' && userRole !== 'admin') {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4 font-cairo" dir="rtl">
-        <AlertCircle className="w-16 h-16 text-[#FF6b6b]" />
-        <h2 className="text-2xl font-bold text-white">غير مصرح بالدخول</h2>
-        <p className="text-gray-400 max-w-md">هذه الصفحة مخصصة لمطور النظام فقط.</p>
+        <AlertCircle className="w-16 h-16 text-red-500" />
+        <h2 className="text-2xl font-bold text-[var(--foreground)]">غير مصرح بالدخول</h2>
+        <p className="text-[var(--text-muted)] max-w-md">هذه الصفحة مخصصة لمطور النظام فقط.</p>
         <button 
           onClick={() => router.push('/')}
-          className="mt-4 px-6 py-2.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)] hover:text-black font-bold text-[var(--nile-teal)] transition-all rounded-xl"
+          className="mt-4 px-6 py-2.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)] hover:text-[var(--background)] font-bold text-[var(--nile-teal)] transition-all rounded-xl"
         >
           العودة للوحة التحكم
         </button>
@@ -153,12 +153,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   if (!pharmacyId && userRole !== 'chain_admin' && userRole !== 'developer') {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4" dir="rtl">
-        <AlertCircle className="w-16 h-16 text-[#FF6b6b]" />
-        <h2 className="text-2xl font-bold font-cairo text-white">غير مصرح بالدخول للنظام (Multi-Tenant)</h2>
-        <p className="text-gray-400 font-cairo max-w-md">يرجى تسجيل الدخول بشكل صحيح كمسؤول لاستعادة هوية الصيدلية.</p>
+        <AlertCircle className="w-16 h-16 text-red-500" />
+        <h2 className="text-2xl font-bold font-cairo text-[var(--foreground)]">غير مصرح بالدخول للنظام (Multi-Tenant)</h2>
+        <p className="text-[var(--text-muted)] font-cairo max-w-md">يرجى تسجيل الدخول بشكل صحيح كمسؤول لاستعادة هوية الصيدلية.</p>
         <button 
           onClick={() => router.push('/auth/login')}
-          className="mt-4 px-6 py-2.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)] hover:text-black font-cairo font-bold text-[var(--nile-teal)] transition-all rounded-xl"
+          className="mt-4 px-6 py-2.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)] hover:text-[var(--background)] font-cairo font-bold text-[var(--nile-teal)] transition-all rounded-xl"
         >
           الذهاب لصفحة تسجيل الدخول
         </button>
@@ -182,21 +182,21 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             </div>
             
             <div className="space-y-1">
-              <h2 className="text-xl font-bold font-cairo text-white">انقطع الاتصال بالإنترنت (وضع الطوارئ)</h2>
+              <h2 className="text-xl font-bold font-cairo text-[var(--foreground)]">انقطع الاتصال بالإنترنت (وضع الطوارئ)</h2>
               <p className="text-[10px] text-[#D4AF37] font-bold tracking-wider uppercase font-sans">Cairo Local Mode Active</p>
             </div>
 
-            <p className="text-[12px] text-gray-400 font-cairo leading-relaxed">
+            <p className="text-[12px] text-[var(--text-muted)] font-cairo leading-relaxed">
               تعذر الاتصال بقاعدة البيانات السحابية. تم تعليق شاشات الإدارة مؤقتاً لحين استعادة الشبكة.
             </p>
 
-            <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-emerald-400 text-xs text-right leading-relaxed w-full font-cairo">
-              💡 <span className="font-bold underline text-white">ملاحظة:</span> نقطة البيع (POS) تعمل بالكامل دون اتصال.
+            <div className="bg-[var(--foreground)]/5 border border-[var(--foreground)]/5 rounded-xl p-3 text-emerald-500 text-xs text-right leading-relaxed w-full font-cairo">
+              💡 <span className="font-bold underline text-[var(--foreground)]">ملاحظة:</span> نقطة البيع (POS) تعمل بالكامل دون اتصال.
             </div>
 
             <button
               onClick={() => router.push('/pos')}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#f2cd56] text-black font-bold font-cairo hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all hover:scale-[1.02] active:scale-95 text-sm"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[var(--royal-gold)] to-[#f2cd56] text-[var(--background)] font-bold font-cairo hover:shadow-[0_0_20px_var(--royal-gold-glow)] transition-all hover:scale-[1.02] active:scale-95 text-sm"
             >
               الانتقال لنقطة البيع (POS Terminal)
             </button>

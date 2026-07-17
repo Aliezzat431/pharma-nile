@@ -126,8 +126,8 @@ export default function ProductShowcase() {
 
         {/* Title */}
         <div className="text-center space-y-3">
-          <h2 className="text-3xl md:text-5xl font-black text-white">واجهة حقيقية، نسخة طبق الأصل</h2>
-          <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base font-semibold">
+          <h2 className="text-3xl md:text-5xl font-black text-[var(--text-primary)]">واجهة حقيقية، نسخة طبق الأصل</h2>
+          <p className="text-[var(--text-muted)] max-w-2xl mx-auto text-sm sm:text-base font-semibold">
             ما تراه هنا هو النظام الفعلي — نفس الشاشات التي تعمل بها الصيدليات يومياً.
           </p>
         </div>
@@ -142,11 +142,11 @@ export default function ProductShowcase() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-300 active:scale-95 cursor-pointer ${active
-                    ? 'bg-gradient-to-r from-[#06B6D4] to-cyan-500 text-white shadow-xl shadow-[#06B6D4]/20 border border-transparent'
-                    : 'bg-white/5 hover:bg-white/10 text-gray-400 border border-white/5'
+                    ? 'bg-gradient-to-r from-[#06B6D4] to-cyan-500 text-[var(--text-primary)] shadow-xl shadow-[#06B6D4]/20 border border-transparent'
+                    : 'bg-[var(--glass-surface-heavy)] hover:bg-[var(--nile-teal-glow)] text-[var(--text-muted)] border border-[var(--glass-border)]'
                   }`}
               >
-                <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-gray-400'}`} />
+                <Icon className={`w-4 h-4 ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -155,16 +155,16 @@ export default function ProductShowcase() {
 
         {/* Browser window */}
         <div className="max-w-6xl mx-auto">
-          <div className="bg-[#0b101d] rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+          <div className="bg-[#0b101d] rounded-3xl border border-[var(--glass-border)] shadow-2xl overflow-hidden">
 
             {/* Browser chrome */}
-            <div className="bg-[#080d17] px-6 py-3 flex items-center justify-between border-b border-white/5">
+            <div className="bg-[#080d17] px-6 py-3 flex items-center justify-between border-b border-[var(--glass-border)]">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-red-500/80" />
                 <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
                 <span className="w-3 h-3 rounded-full bg-green-500/80" />
               </div>
-              <div className="bg-black/40 px-8 py-1.5 rounded-lg text-gray-500 text-[10px] font-mono font-bold tracking-wide select-none">
+              <div className="bg-black/40 px-8 py-1.5 rounded-lg text-[var(--text-inactive)] text-[10px] font-mono font-bold tracking-wide select-none">
                 pharma-nile.com{activePath}
               </div>
               <div className="w-16" />
@@ -187,8 +187,8 @@ export default function ProductShowcase() {
                             <Sparkles className="w-4 h-4 text-black" />
                           </div>
                           <div>
-                            <p className="text-xs font-black text-white leading-none">صيدلية النيل</p>
-                            <p className="text-[8px] text-gray-500 font-bold tracking-wider mt-0.5">Premium OS</p>
+                            <p className="text-xs font-black text-[var(--text-primary)] leading-none">صيدلية النيل</p>
+                            <p className="text-[8px] text-[var(--text-inactive)] font-bold tracking-wider mt-0.5">Premium OS</p>
                           </div>
                         </div>
                       </div>
@@ -207,8 +207,8 @@ export default function ProductShowcase() {
                                   onClick={() => canClick && setActiveTab(item.id as TabId)}
                                   className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all relative ${canClick ? 'cursor-pointer' : 'cursor-default opacity-60'
                                     } ${isActive
-                                      ? 'text-white'
-                                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                      ? 'text-[var(--text-primary)]'
+                                      : 'text-[var(--text-muted)] hover:bg-[var(--glass-surface-heavy)] hover:text-[var(--text-primary)]'
                                     }`}
                                 >
                                   {isActive && (
@@ -224,14 +224,14 @@ export default function ProductShowcase() {
                       </nav>
 
                       {/* User footer */}
-                      <div className="p-3 border-t border-white/5">
+                      <div className="p-3 border-t border-[var(--glass-border)]">
                         <div className="flex items-center gap-2 p-2 rounded-xl bg-white/[0.03]">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#2563EB] p-[1.5px] shrink-0">
-                            <div className="w-full h-full rounded-full bg-[#070b13] flex items-center justify-center text-[9px] font-black text-white">أح</div>
+                            <div className="w-full h-full rounded-full bg-[#070b13] flex items-center justify-center text-[9px] font-black text-[var(--text-primary)]">أح</div>
                           </div>
                           <div className="overflow-hidden">
-                            <p className="text-[10px] font-bold text-white truncate">د. أحمد محمد</p>
-                            <p className="text-[8px] text-gray-500">Admin Level</p>
+                            <p className="text-[10px] font-bold text-[var(--text-primary)] truncate">د. أحمد محمد</p>
+                            <p className="text-[8px] text-[var(--text-inactive)]">Admin Level</p>
                           </div>
                         </div>
                       </div>
@@ -248,10 +248,10 @@ export default function ProductShowcase() {
                             {/* Page header */}
                             <div className="flex items-start justify-between">
                               <div>
-                                <h1 className="text-2xl font-black text-white">نورت صيدليتك، د. أحمد 👋</h1>
-                                <p className="text-xs text-gray-400 mt-1">تقرير نشاط اليوم — فرع مدينة نصر الأول</p>
+                                <h1 className="text-2xl font-black text-[var(--text-primary)]">نورت صيدليتك، د. أحمد </h1>
+                                <p className="text-xs text-[var(--text-muted)] mt-1">تقرير نشاط اليوم — فرع مدينة نصر الأول</p>
                               </div>
-                              <button className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[10px] text-[#06B6D4] font-bold hover:bg-white/10 transition-all">
+                              <button className="px-3 py-1.5 rounded-xl bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] text-[10px] text-[#06B6D4] font-bold hover:bg-[var(--nile-teal-glow)] transition-all">
                                 <RefreshCw className="w-3 h-3 inline ml-1" />تحديث
                               </button>
                             </div>
@@ -264,13 +264,13 @@ export default function ProductShowcase() {
                                 { label: 'نواقص التنبيه', val: '3 أصناف', icon: AlertCircle, color: '#f87171', bg: 'bg-red-500/10', sub: 'حرجة الآن' },
                                 { label: 'صلاحية وشيكة', val: '16 علبة', icon: AlertTriangle, color: '#fb923c', bg: 'bg-orange-500/10', sub: 'تنتهي قريباً' },
                               ].map((s, i) => (
-                                <div key={i} className="bg-white/[0.025] border border-white/[0.06] rounded-2xl p-4 flex items-start gap-3 relative overflow-hidden group hover:border-white/10 transition-all">
+                                <div key={i} className="bg-white/[0.025] border border-white/[0.06] rounded-2xl p-4 flex items-start gap-3 relative overflow-hidden group hover:border-[var(--glass-border)] transition-all">
                                   <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
                                     <s.icon className="w-4.5 h-4.5" style={{ color: s.color }} />
                                   </div>
                                   <div>
-                                    <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">{s.label}</p>
-                                    <p className="text-sm font-black text-white mt-0.5 font-sans">{s.val}</p>
+                                    <p className="text-[9px] text-[var(--text-inactive)] font-bold uppercase tracking-wider">{s.label}</p>
+                                    <p className="text-sm font-black text-[var(--text-primary)] mt-0.5 font-sans">{s.val}</p>
                                     <p className="text-[9px] mt-0.5" style={{ color: s.color }}>{s.sub}</p>
                                   </div>
                                 </div>
@@ -283,21 +283,21 @@ export default function ProductShowcase() {
                               {/* Bar chart */}
                               <div className="lg:col-span-2 bg-[#080d17] border border-white/[0.06] rounded-2xl p-5">
                                 <div className="flex justify-between items-center mb-4">
-                                  <h4 className="text-xs font-bold text-white">إحصائيات المبيعات — آخر 7 أيام</h4>
+                                  <h4 className="text-xs font-bold text-[var(--text-primary)]">إحصائيات المبيعات — آخر 7 أيام</h4>
                                   <button onClick={() => setActiveTab('reports')} className="text-[10px] text-[#06B6D4] font-bold hover:underline">التقرير الكامل ←</button>
                                 </div>
-                                <div className="h-[150px] flex items-end gap-2 pb-2 border-b border-white/5 relative">
+                                <div className="h-[150px] flex items-end gap-2 pb-2 border-b border-[var(--glass-border)] relative">
                                   {[25, 50, 75].map(pct => (
                                     <div key={pct} className="absolute right-0 left-0 border-t border-dashed border-white/[0.04]" style={{ bottom: `${pct}%` }} />
                                   ))}
                                   {CHART_BARS.map((bar, i) => (
                                     <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end group">
-                                      <span className="text-[7px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity font-sans">{bar.amt}</span>
+                                      <span className="text-[7px] text-[var(--text-inactive)] opacity-0 group-hover:opacity-100 transition-opacity font-sans">{bar.amt}</span>
                                       <div
                                         className="w-full rounded-t-md transition-all hover:brightness-125"
                                         style={{ height: bar.h, background: i === 6 ? '#D4AF37' : 'linear-gradient(to top, #06B6D4, #2563EB)' }}
                                       />
-                                      <span className="text-[8px] text-gray-500 font-bold">{bar.day}</span>
+                                      <span className="text-[8px] text-[var(--text-inactive)] font-bold">{bar.day}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -305,17 +305,17 @@ export default function ProductShowcase() {
 
                               {/* Recent invoices */}
                               <div className="bg-[#080d17] border border-white/[0.06] rounded-2xl p-5 flex flex-col">
-                                <h4 className="text-xs font-bold text-white mb-3">آخر الفواتير الصادرة</h4>
+                                <h4 className="text-xs font-bold text-[var(--text-primary)] mb-3">آخر الفواتير الصادرة</h4>
                                 <div className="space-y-2 flex-1">
                                   {RECENT_TX.map((tx, i) => (
-                                    <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-white/[0.05] bg-white/[0.01] hover:border-white/10 transition-all text-xs">
+                                    <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-white/[0.05] bg-white/[0.01] hover:border-[var(--glass-border)] transition-all text-xs">
                                       <div>
-                                        <p className="font-bold text-white">Invoice {tx.id}</p>
-                                        <p className="text-[9px] text-gray-500 mt-0.5">{tx.time} • {tx.items}</p>
+                                        <p className="font-bold text-[var(--text-primary)]">Invoice {tx.id}</p>
+                                        <p className="text-[9px] text-[var(--text-inactive)] mt-0.5">{tx.time} • {tx.items}</p>
                                       </div>
                                       <div className="text-left">
                                         <span className="text-[#06B6D4] font-black font-sans block">{tx.total}</span>
-                                        <span className="text-[8px] text-gray-500 bg-white/5 px-1.5 py-0.5 rounded block mt-0.5 text-center">{tx.method}</span>
+                                        <span className="text-[8px] text-[var(--text-inactive)] bg-[var(--glass-surface-heavy)] px-1.5 py-0.5 rounded block mt-0.5 text-center">{tx.method}</span>
                                       </div>
                                     </div>
                                   ))}
@@ -325,7 +325,7 @@ export default function ProductShowcase() {
 
                             {/* Quick actions */}
                             <div>
-                              <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">عمليات سريعة</h4>
+                              <h4 className="text-[10px] font-bold text-[var(--text-inactive)] uppercase tracking-widest mb-2">عمليات سريعة</h4>
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {[
                                   { title: 'POS Terminal', desc: 'ابدأ جلسة بيع فورية', to: 'pos', highlight: true },
@@ -337,8 +337,8 @@ export default function ProductShowcase() {
                                     key={i}
                                     onClick={() => setActiveTab(op.to as TabId)}
                                     className={`p-3 rounded-xl text-right border transition-all text-xs font-bold ${op.highlight
-                                        ? 'bg-gradient-to-br from-[#06B6D4] to-[#2563EB] text-white border-transparent hover:brightness-110'
-                                        : 'bg-white/[0.02] border-white/5 text-white hover:bg-white/5 hover:border-white/15'
+                                        ? 'bg-gradient-to-br from-[#06B6D4] to-[#2563EB] text-[var(--text-primary)] border-transparent hover:brightness-110'
+                                        : 'bg-white/[0.02] border-[var(--glass-border)] text-[var(--text-primary)] hover:bg-[var(--glass-surface-heavy)] hover:border-white/15'
                                       }`}
                                   >
                                     <span className="block font-black">{op.title}</span>
@@ -355,12 +355,12 @@ export default function ProductShowcase() {
                           <motion.div key="pos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
 
                             {/* POS Header — mirrors POSHeader.tsx */}
-                            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+                            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[var(--glass-border)] pb-4">
                               <h1 className="text-2xl font-bold font-cairo">
                                 نقطة <span className="text-[#06B6D4]">البيع</span> (POS)
                               </h1>
                               <div className="flex gap-2 text-xs">
-                                <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-gray-300">
+                                <div className="bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-gray-300">
                                   <Barcode className="w-3.5 h-3.5 text-[#06B6D4]" />الماسح جاهز
                                 </div>
                                 <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-3 py-1.5 flex items-center gap-1.5 text-emerald-400">
@@ -375,8 +375,8 @@ export default function ProductShowcase() {
                               {/* Product catalog — mirrors POSProductCard.tsx */}
                               <div className="lg:col-span-2 space-y-3">
                                 <div className="relative">
-                                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                                  <input disabled placeholder="ابحث بالاسم أو امسح الباركود..." className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pr-9 pl-3 text-xs text-right text-white placeholder-gray-600 outline-none" />
+                                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-inactive)]" />
+                                  <input disabled placeholder="ابحث بالاسم أو امسح الباركود..." className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl py-2 pr-9 pl-3 text-xs text-right text-[var(--text-primary)] placeholder-gray-600 outline-none" />
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
                                   {PRODUCTS.map((p, i) => (
@@ -388,7 +388,7 @@ export default function ProductShowcase() {
                                       <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full self-start ${p.low ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
                                         {p.detail}
                                       </span>
-                                      <h5 className="text-white font-bold text-xs mt-2 group-hover:text-[#06B6D4] transition-colors">{p.name}</h5>
+                                      <h5 className="text-[var(--text-primary)] font-bold text-xs mt-2 group-hover:text-[#06B6D4] transition-colors">{p.name}</h5>
                                       <div className="flex items-center justify-between mt-2">
                                         <span className="text-[#D4AF37] font-black text-xs font-sans">{p.price} ج.م</span>
                                         <span className="text-gray-600 text-[9px]">{p.stock}</span>
@@ -403,13 +403,13 @@ export default function ProductShowcase() {
                                 {checkoutOk && (
                                   <div className="absolute inset-0 bg-[#090d16]/95 flex flex-col items-center justify-center text-center p-4 z-20 backdrop-blur-sm">
                                     <CheckCircle2 className="w-12 h-12 text-[#06B6D4] animate-bounce mb-3" />
-                                    <h4 className="text-sm font-bold text-white">تم تأكيد الفاتورة!</h4>
-                                    <p className="text-[10px] text-gray-400 mt-1">تمت المزامنة السحابية.</p>
+                                    <h4 className="text-sm font-bold text-[var(--text-primary)]">تم تأكيد الفاتورة!</h4>
+                                    <p className="text-[10px] text-[var(--text-muted)] mt-1">تمت المزامنة السحابية.</p>
                                   </div>
                                 )}
 
-                                <div className="flex justify-between items-center border-b border-white/5 pb-2 mb-3">
-                                  <h4 className="text-xs font-bold text-white">سلة البيع</h4>
+                                <div className="flex justify-between items-center border-b border-[var(--glass-border)] pb-2 mb-3">
+                                  <h4 className="text-xs font-bold text-[var(--text-primary)]">سلة البيع</h4>
                                   <span className="text-[9px] text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-0.5 rounded-lg font-bold">نقدي</span>
                                 </div>
 
@@ -417,17 +417,17 @@ export default function ProductShowcase() {
                                   {cart.length === 0
                                     ? <p className="text-center text-gray-600 text-xs py-8">السلة فارغة</p>
                                     : cart.map(item => (
-                                      <div key={item.id} className="bg-[#070b13] p-2.5 rounded-xl border border-white/5 flex items-center gap-2 relative overflow-hidden">
+                                      <div key={item.id} className="bg-[#070b13] p-2.5 rounded-xl border border-[var(--glass-border)] flex items-center gap-2 relative overflow-hidden">
                                         <div className="absolute right-0 top-0 w-0.5 h-full bg-[#06B6D4]/50" />
                                         <div className="flex-1 pl-1">
-                                          <p className="font-bold text-white text-xs">{item.name}</p>
-                                          <p className="text-[9px] text-gray-500 font-sans">{item.price} ج.م / علبة</p>
+                                          <p className="font-bold text-[var(--text-primary)] text-xs">{item.name}</p>
+                                          <p className="text-[9px] text-[var(--text-inactive)] font-sans">{item.price} ج.م / علبة</p>
                                         </div>
                                         <div className="flex items-center gap-1.5">
-                                          <div className="flex items-center bg-black/40 border border-white/10 rounded-lg">
-                                            <button onClick={() => updateQ(item.id, -1)} className="px-1.5 py-0.5 text-gray-500 hover:text-white text-xs font-bold">−</button>
+                                          <div className="flex items-center bg-black/40 border border-[var(--glass-border)] rounded-lg">
+                                            <button onClick={() => updateQ(item.id, -1)} className="px-1.5 py-0.5 text-[var(--text-inactive)] hover:text-[var(--text-primary)] text-xs font-bold">−</button>
                                             <span className="text-[#06B6D4] font-bold text-xs min-w-[20px] text-center">{item.q}</span>
-                                            <button onClick={() => updateQ(item.id, +1)} className="px-1.5 py-0.5 text-gray-500 hover:text-white text-xs font-bold">+</button>
+                                            <button onClick={() => updateQ(item.id, +1)} className="px-1.5 py-0.5 text-[var(--text-inactive)] hover:text-[var(--text-primary)] text-xs font-bold">+</button>
                                           </div>
                                           <button onClick={() => removeItem(item.id)} className="text-gray-600 hover:text-red-400 transition-colors">
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -437,15 +437,15 @@ export default function ProductShowcase() {
                                     ))}
                                 </div>
 
-                                <div className="border-t border-white/5 pt-3 mt-3 space-y-3">
-                                  <div className="flex justify-between text-xs font-bold text-white">
+                                <div className="border-t border-[var(--glass-border)] pt-3 mt-3 space-y-3">
+                                  <div className="flex justify-between text-xs font-bold text-[var(--text-primary)]">
                                     <span>المجموع المستحق</span>
                                     <span className="text-[#06B6D4] font-black font-sans text-sm">{cartTotal.toFixed(2)} ج.م</span>
                                   </div>
                                   <button
                                     onClick={checkout}
                                     disabled={cart.length === 0}
-                                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#06B6D4] to-[#2563EB] text-white text-xs font-bold hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#06B6D4] to-[#2563EB] text-[var(--text-primary)] text-xs font-bold hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
                                   >
                                     <Check className="w-3.5 h-3.5" />
                                     تأكيد وطباعة الفاتورة
@@ -463,16 +463,16 @@ export default function ProductShowcase() {
                             {/* Header — mirrors inventory/page.tsx */}
                             <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                               <div>
-                                <h1 className="text-2xl font-black text-white flex items-center gap-3">
+                                <h1 className="text-2xl font-black text-[var(--text-primary)] flex items-center gap-3">
                                   <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#06B6D4] to-[#2563EB] flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)]">
                                     <PackageOpen className="w-5 h-5 text-black" />
                                   </div>
                                   <span className="nile-gradient-text">إدارة المخزن</span>
                                 </h1>
-                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 mr-14">Tracking Products, Batches & Expirations</p>
+                                <p className="text-[10px] text-[var(--text-inactive)] font-bold uppercase tracking-widest mt-1 mr-14">Tracking Products, Batches & Expirations</p>
                               </div>
                               <div className="flex gap-2">
-                                <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white font-bold hover:bg-white/10 transition-all">
+                                <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] font-bold hover:bg-[var(--nile-teal-glow)] transition-all">
                                   <FileUp className="w-3.5 h-3.5 text-[#D4AF37]" />استيراد ملف
                                 </button>
                                 <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#06B6D4]/10 border border-[#06B6D4]/20 text-xs text-[#06B6D4] font-bold hover:bg-[#06B6D4]/20 transition-all">
@@ -489,13 +489,13 @@ export default function ProductShowcase() {
                                 { label: 'نواقص المخزون', val: '3', icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
                                 { label: 'قيمة المخزن', val: '240K ج.م', icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
                               ].map((s, i) => (
-                                <div key={i} className="bg-white/[0.025] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3 group hover:border-white/10 transition-all">
+                                <div key={i} className="bg-white/[0.025] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3 group hover:border-[var(--glass-border)] transition-all">
                                   <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center group-hover:scale-110 transition-transform shrink-0`}>
                                     <s.icon className={`w-5 h-5 ${s.color}`} />
                                   </div>
                                   <div>
-                                    <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">{s.label}</p>
-                                    <p className="text-lg font-black text-white font-sans">{s.val}</p>
+                                    <p className="text-[9px] text-[var(--text-inactive)] font-bold uppercase tracking-wider">{s.label}</p>
+                                    <p className="text-lg font-black text-[var(--text-primary)] font-sans">{s.val}</p>
                                   </div>
                                 </div>
                               ))}
@@ -504,10 +504,10 @@ export default function ProductShowcase() {
                             {/* Search + filter bar */}
                             <div className="flex gap-3">
                               <div className="flex-1 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-2 flex items-center gap-2">
-                                <Search className="w-4 h-4 text-gray-500 mr-1 shrink-0" />
-                                <input disabled placeholder="بحث بالاسم، الشركة أو الباركود..." className="flex-1 bg-transparent text-xs text-white placeholder-gray-600 outline-none" />
+                                <Search className="w-4 h-4 text-[var(--text-inactive)] mr-1 shrink-0" />
+                                <input disabled placeholder="بحث بالاسم، الشركة أو الباركود..." className="flex-1 bg-transparent text-xs text-[var(--text-primary)] placeholder-gray-600 outline-none" />
                               </div>
-                              <button className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-gray-400 flex items-center gap-1.5 hover:bg-white/10 transition-all font-bold">
+                              <button className="px-4 py-2 bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-muted)] flex items-center gap-1.5 hover:bg-[var(--nile-teal-glow)] transition-all font-bold">
                                 <Filter className="w-3.5 h-3.5" />جميع الأنواع<ChevronDown className="w-3 h-3" />
                               </button>
                             </div>
@@ -516,7 +516,7 @@ export default function ProductShowcase() {
                             <div className="bg-[#080d17] border border-white/[0.06] rounded-2xl overflow-hidden">
                               <table className="w-full text-right text-xs">
                                 <thead>
-                                  <tr className="bg-white/[0.03] border-b border-white/5 text-gray-400 text-[10px] uppercase tracking-wider">
+                                  <tr className="bg-white/[0.03] border-b border-[var(--glass-border)] text-[var(--text-muted)] text-[10px] uppercase tracking-wider">
                                     <th className="p-3 font-bold">المعلومات الأساسية</th>
                                     <th className="p-3 font-bold hidden lg:table-cell">الشركة</th>
                                     <th className="p-3 font-bold">النظام</th>
@@ -529,27 +529,27 @@ export default function ProductShowcase() {
                                     <tr key={i} className="hover:bg-white/[0.02] transition-colors cursor-pointer">
                                       <td className="p-3">
                                         <div className="flex items-center gap-3">
-                                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${row.low ? 'bg-red-500/10' : 'bg-white/5'}`}>
-                                            <Tag className={`w-4 h-4 ${row.low ? 'text-red-400' : 'text-gray-500'}`} />
+                                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${row.low ? 'bg-red-500/10' : 'bg-[var(--glass-surface-heavy)]'}`}>
+                                            <Tag className={`w-4 h-4 ${row.low ? 'text-red-400' : 'text-[var(--text-inactive)]'}`} />
                                           </div>
                                           <div>
-                                            <p className="font-bold text-white">{row.name}</p>
+                                            <p className="font-bold text-[var(--text-primary)]">{row.name}</p>
                                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${row.low ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
                                               {row.low ? 'ناقص حرج' : 'مستقر'}
                                             </span>
                                           </div>
                                         </div>
                                       </td>
-                                      <td className="p-3 text-gray-400 hidden lg:table-cell">{row.company}</td>
+                                      <td className="p-3 text-[var(--text-muted)] hidden lg:table-cell">{row.company}</td>
                                       <td className="p-3">
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 border border-white/10 px-2 py-0.5 rounded-full bg-white/5">{row.method}</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-inactive)] border border-[var(--glass-border)] px-2 py-0.5 rounded-full bg-[var(--glass-surface-heavy)]">{row.method}</span>
                                       </td>
                                       <td className="p-3 text-center">
                                         <span className={`text-base font-black font-sans ${row.low ? 'text-red-400' : 'text-emerald-400'}`}>{row.qty}</span>
                                         <p className="text-[8px] text-gray-600 uppercase">علبة</p>
                                       </td>
-                                      <td className="p-3 text-left font-bold text-white font-sans">
-                                        {row.price} <span className="text-[9px] text-gray-500 font-cairo">ج.م</span>
+                                      <td className="p-3 text-left font-bold text-[var(--text-primary)] font-sans">
+                                        {row.price} <span className="text-[9px] text-[var(--text-inactive)] font-cairo">ج.م</span>
                                       </td>
                                     </tr>
                                   ))}
@@ -565,18 +565,18 @@ export default function ProductShowcase() {
 
                             {/* Header — mirrors financials/page.tsx */}
                             <header className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                              <h1 className="text-2xl font-black text-white flex items-center gap-3">
+                              <h1 className="text-2xl font-black text-[var(--text-primary)] flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-[#06B6D4] flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
                                   <TrendingUp className="w-5 h-5 text-black" />
                                 </div>
                                 <span className="nile-gradient-text">التقارير المالية</span>
                               </h1>
                               <div className="flex gap-2 items-center">
-                                <div className="bg-white/5 border border-white/10 rounded-xl p-1 flex gap-1">
+                                <div className="bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] rounded-xl p-1 flex gap-1">
                                   <button className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#06B6D4]/25 text-[#06B6D4]">يومي</button>
-                                  <button className="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:text-white">شهري</button>
+                                  <button className="px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)]">شهري</button>
                                 </div>
-                                <select className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-400 outline-none">
+                                <select className="bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-muted)] outline-none">
                                   <option>آخر 30 يوم</option>
                                   <option>آخر 7 أيام</option>
                                 </select>
@@ -593,10 +593,10 @@ export default function ProductShowcase() {
                               ].map((s, i) => (
                                 <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
                                   <div className="flex justify-between items-start mb-3">
-                                    <p className="text-[9px] text-gray-400 font-bold">{s.label}</p>
+                                    <p className="text-[9px] text-[var(--text-muted)] font-bold">{s.label}</p>
                                     <s.icon className="w-4 h-4 opacity-40" style={{ color: s.color }} />
                                   </div>
-                                  <p className="text-xl font-black text-white font-sans">{s.val}</p>
+                                  <p className="text-xl font-black text-[var(--text-primary)] font-sans">{s.val}</p>
                                 </div>
                               ))}
                             </div>
@@ -606,7 +606,7 @@ export default function ProductShowcase() {
 
                               {/* Area chart simulation */}
                               <div className="lg:col-span-2 bg-[#080d17] border border-white/[0.06] rounded-2xl p-5">
-                                <h2 className="text-sm font-bold text-white mb-4">منحنى الدخل والأرباح</h2>
+                                <h2 className="text-sm font-bold text-[var(--text-primary)] mb-4">منحنى الدخل والأرباح</h2>
                                 <div className="h-[160px] relative">
                                   {/* SVG area chart simulation */}
                                   <svg viewBox="0 0 320 120" className="w-full h-full" preserveAspectRatio="none">
@@ -641,7 +641,7 @@ export default function ProductShowcase() {
 
                               {/* Payment distribution */}
                               <div className="bg-[#080d17] border border-white/[0.06] rounded-2xl p-5 flex flex-col">
-                                <h2 className="text-sm font-bold text-white mb-4">توزيع طرق الدفع</h2>
+                                <h2 className="text-sm font-bold text-[var(--text-primary)] mb-4">توزيع طرق الدفع</h2>
                                 {/* Donut simulation */}
                                 <div className="flex-1 flex items-center justify-center">
                                   <svg viewBox="0 0 100 100" className="w-32 h-32">
@@ -659,9 +659,9 @@ export default function ProductShowcase() {
                                     <div key={i} className="flex items-center justify-between text-xs font-cairo">
                                       <div className="flex items-center gap-1.5">
                                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.color }} />
-                                        <span className="text-gray-400">{p.name} ({p.pct})</span>
+                                        <span className="text-[var(--text-muted)]">{p.name} ({p.pct})</span>
                                       </div>
-                                      <span className="font-bold text-white font-sans text-[10px]">{p.val}</span>
+                                      <span className="font-bold text-[var(--text-primary)] font-sans text-[10px]">{p.val}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -688,42 +688,42 @@ export default function ProductShowcase() {
                     <div className="w-[260px] h-[460px] bg-black border-[3px] border-[#1f2937] rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col font-cairo">
                       {/* Dynamic island */}
                       <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-2xl z-20 flex items-center justify-center">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--nile-teal-glow)]" />
                       </div>
 
                       <div className="flex-1 bg-[#070b13] p-4 pt-10 flex flex-col gap-4" dir="rtl">
                         {/* App bar */}
-                        <div className="flex items-center justify-between text-[9px] text-gray-500">
+                        <div className="flex items-center justify-between text-[9px] text-[var(--text-inactive)]">
                           <span className="font-bold text-[#06B6D4]">PharmaNile</span>
                           <span className="font-sans">9:41 AM ●●●</span>
                         </div>
 
                         {/* Title */}
-                        <div className="text-center border-b border-white/5 pb-3">
-                          <h5 className="text-xs font-black text-white">تنبيهات الفرع الذكية</h5>
+                        <div className="text-center border-b border-[var(--glass-border)] pb-3">
+                          <h5 className="text-xs font-black text-[var(--text-primary)]">تنبيهات الفرع الذكية</h5>
                           <span className="text-[9px] text-[#06B6D4] font-bold">فرع مدينة نصر الأول</span>
                         </div>
 
                         {/* Notifications */}
                         <div className="space-y-2.5 flex-1">
                           {[
-                            { title: '⚠️ Low Stock Alert', desc: 'Ventolin Inhaler — 2 units remaining', time: '1m', cls: 'border-red-500/20 bg-red-500/5' },
-                            { title: '🔄 Cloud Sync Done', desc: '124 sales synced to cloud successfully', time: '5m', cls: 'border-emerald-500/20 bg-emerald-500/5' },
-                            { title: '📦 Invoice Imported', desc: 'Supplier invoice processed via AI', time: '10m', cls: 'border-blue-500/20 bg-blue-500/5' },
-                            { title: '💊 Expiry Warning', desc: 'Milga Tablets batch expires Aug 2026', time: '1h', cls: 'border-amber-500/20 bg-amber-500/5' },
+                            { title: '️ Low Stock Alert', desc: 'Ventolin Inhaler — 2 units remaining', time: '1m', cls: 'border-red-500/20 bg-red-500/5' },
+                            { title: ' Cloud Sync Done', desc: '124 sales synced to cloud successfully', time: '5m', cls: 'border-emerald-500/20 bg-emerald-500/5' },
+                            { title: ' Invoice Imported', desc: 'Supplier invoice processed via AI', time: '10m', cls: 'border-blue-500/20 bg-blue-500/5' },
+                            { title: ' Expiry Warning', desc: 'Milga Tablets batch expires Aug 2026', time: '1h', cls: 'border-amber-500/20 bg-amber-500/5' },
                           ].map((n, i) => (
                             <div key={i} className={`p-2.5 rounded-xl border text-[9px] ${n.cls}`}>
                               <div className="flex justify-between items-center font-bold mb-0.5">
-                                <span className="text-white">{n.title}</span>
-                                <span className="text-gray-500 font-sans font-normal">{n.time}</span>
+                                <span className="text-[var(--text-primary)]">{n.title}</span>
+                                <span className="text-[var(--text-inactive)] font-sans font-normal">{n.time}</span>
                               </div>
-                              <p className="text-gray-400 leading-relaxed">{n.desc}</p>
+                              <p className="text-[var(--text-muted)] leading-relaxed">{n.desc}</p>
                             </div>
                           ))}
                         </div>
 
                         {/* Bottom nav */}
-                        <div className="bg-black/40 border border-white/5 rounded-2xl p-2 flex items-center justify-around text-gray-500">
+                        <div className="bg-black/40 border border-[var(--glass-border)] rounded-2xl p-2 flex items-center justify-around text-[var(--text-inactive)]">
                           <Activity className="w-4 h-4 text-[#06B6D4]" />
                           <Package className="w-4 h-4" />
                           <BarChart3 className="w-4 h-4" />

@@ -77,8 +77,8 @@ export default function Features() {
         
         {/* Title */}
         <div className="text-center space-y-4">
-          <h2 className="text-3xl md:text-5xl font-black text-white">مميزات متكاملة لإدارة صيدليتك باحترافية</h2>
-          <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base font-semibold">
+          <h2 className="text-3xl md:text-5xl font-black text-[var(--text-primary)]">مميزات متكاملة لإدارة صيدليتك باحترافية</h2>
+          <p className="text-[var(--text-muted)] max-w-2xl mx-auto text-sm sm:text-base font-semibold">
             كل ما تحتاجه للتحكم الكامل بصيدليتك أو سلسلة فروعك من مكان واحد مصمم لتسهيل وتسريع عملك اليومي.
           </p>
         </div>
@@ -94,14 +94,14 @@ export default function Features() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-100px' }}
                 transition={{ duration: 0.5, delay: idx * 0.05 }}
-                className="group p-6 bg-white/[0.02] border border-white/5 hover:border-cyan-400/30 hover:bg-white/[0.04] transition-all duration-300 rounded-3xl text-right flex flex-col justify-between min-h-[220px]"
+                className="group p-6 bg-white/[0.02] border border-[var(--glass-border)] hover:border-cyan-400/30 hover:bg-white/[0.04] transition-all duration-300 rounded-3xl text-right flex flex-col justify-between min-h-[220px]"
               >
                 <div className="space-y-4">
-                  <div className={`w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center transition-colors duration-300 ${feat.bgGlow}`}>
-                    <Icon className={`w-6 h-6 text-gray-400 transition-colors duration-350 ${feat.glow}`} />
+                  <div className={`w-12 h-12 rounded-2xl bg-[var(--glass-surface-heavy)] flex items-center justify-center transition-colors duration-300 ${feat.bgGlow}`}>
+                    <Icon className={`w-6 h-6 text-[var(--text-muted)] transition-colors duration-350 ${feat.glow}`} />
                   </div>
-                  <h3 className="text-lg font-black text-white group-hover:text-cyan-400 transition-colors">{feat.title}</h3>
-                  <p className="text-gray-400 text-xs leading-relaxed font-semibold">{feat.desc}</p>
+                  <h3 className="text-lg font-black text-[var(--text-primary)] group-hover:text-cyan-400 transition-colors">{feat.title}</h3>
+                  <p className="text-[var(--text-muted)] text-xs leading-relaxed font-semibold">{feat.desc}</p>
                 </div>
               </motion.div>
             );

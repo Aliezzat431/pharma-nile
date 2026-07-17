@@ -39,7 +39,7 @@ export function IframeModal() {
                 className="px-4 py-2 bg-[var(--background)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] hover:bg-[var(--glass-surface)] transition shadow-lg flex items-center gap-2"
               >
                 <span className="text-sm font-cairo">{iframe.title}</span>
-                <span className="text-xs text-muted">(مصغر)</span>
+                <span className="text-xs text-[var(--text-muted)]">(مصغر)</span>
               </button>
             </motion.div>
           );
@@ -51,12 +51,7 @@ export function IframeModal() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-            style={{
-              background: 'rgba(0, 0, 0, 0.85)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-            }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[var(--surface-overlay)] backdrop-blur-xl"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 dispatch(closeIframe(iframe.id));
@@ -72,7 +67,7 @@ export function IframeModal() {
               }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative rounded-2xl overflow-hidden shadow-2xl"
+              className="relative rounded-2xl overflow-hidden glass-card shadow-2xl border-[var(--glass-border)]"
               style={{
                 width: isMaximized ? '100vw' : iframe.width || 1000,
                 height: isMaximized ? '100vh' : iframe.height || 750,
@@ -90,21 +85,21 @@ export function IframeModal() {
                       dispatch(focusIframe(iframe.id));
                       dispatch(toggleMinimizeIframe(iframe.id));
                     }}
-                    className="p-2 hover:bg-[var(--glass-surface)] rounded-lg text-muted hover:text-[var(--text-primary)] transition"
+                    className="p-2 hover:bg-[var(--glass-surface)] rounded-lg text-[var(--text-inactive)] hover:text-[var(--text-primary)] transition"
                     title="تصغير"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setIsMaximized(!isMaximized)}
-                    className="p-2 hover:bg-[var(--glass-surface)] rounded-lg text-muted hover:text-[var(--text-primary)] transition"
+                    className="p-2 hover:bg-[var(--glass-surface)] rounded-lg text-[var(--text-inactive)] hover:text-[var(--text-primary)] transition"
                     title={isMaximized ? 'تصغير النافذة' : 'تكبير النافذة'}
                   >
                     {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => dispatch(closeIframe(iframe.id))}
-                    className="p-2 hover:bg-red-500/20 rounded-lg text-muted hover:text-red-500 transition"
+                    className="p-2 rounded-lg text-[var(--text-inactive)] hover:bg-[var(--status-error)] hover:text-white transition"
                     title="إغلاق"
                   >
                     <X className="w-5 h-5" />

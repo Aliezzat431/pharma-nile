@@ -284,7 +284,7 @@ export default function Sidebar() {
 
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-4 px-4 py-3 text-red-400 hover:bg-red-500/10 transition-all group overflow-hidden ${
+            className={`w-full flex items-center gap-4 px-4 py-3 text-[var(--sidebar-text-inactive)] hover:bg-[var(--glass-surface)] hover:text-[#ef4444] transition-all group overflow-hidden ${
               isCollapsed ? "justify-center rounded-2xl" : "rounded-2xl"
             }`}
           >

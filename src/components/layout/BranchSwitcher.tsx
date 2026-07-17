@@ -145,8 +145,8 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
       {}
       <button
         onClick={() => setIsOpen(o => !o)}
-        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 
-          hover:bg-white/10 transition-all group ${isCollapsed ? 'justify-center' : 'justify-between'}`}
+        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] 
+          hover:bg-[var(--glass-surface-heavy)] transition-all group ${isCollapsed ? 'justify-center' : 'justify-between'}`}
         title={isCollapsed ? (currentBranch?.name ?? 'الفروع') : undefined}
       >
         <div className={`flex items-center gap-2 min-w-0 ${isCollapsed ? '' : 'flex-1'}`}>
@@ -155,13 +155,13 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
             : <Building2 className="w-4 h-4 text-[var(--nile-teal)] shrink-0" />
           }
           {!isCollapsed && (
-            <span className="text-xs font-bold text-white truncate font-cairo">
+            <span className="text-xs font-bold text-[var(--foreground)] truncate font-cairo">
               {currentBranch?.name ?? 'اختر فرعاً'}
             </span>
           )}
         </div>
         {!isCollapsed && (
-          <ChevronDown className={`w-3.5 h-3.5 text-gray-500 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-inactive)] shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         )}
       </button>
 
@@ -176,7 +176,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[199]"
               style={{
-                background: 'rgba(0, 0, 0, 0.75)',
+                background: 'var(--surface-overlay)',
                 backdropFilter: 'blur(6px)',
                 WebkitBackdropFilter: 'blur(6px)',
               }}
@@ -189,22 +189,17 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.97 }}
               transition={{ duration: 0.15 }}
-              className={`fixed z-[200] w-80 bg-[#0f0f0f] border border-[#1a1a1a] 
+              className={`fixed z-[200] w-80 bg-[var(--background)] border border-[var(--glass-border)] 
                 rounded-2xl shadow-2xl overflow-hidden
                 ${isCollapsed ? 'right-16 top-1/2 -translate-y-1/2' : 'bottom-20 right-4'}`}
-              style={{
-                backgroundColor: '#0f0f0f',
-                backdropFilter: 'none',
-                WebkitBackdropFilter: 'none',
-              }}
               dir="rtl"
             >
               {}
-              <div className="px-4 py-3 border-b border-[#1a1a1a] flex items-center justify-between">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-cairo">
+              <div className="px-4 py-3 border-b border-[var(--glass-border)] flex items-center justify-between">
+                <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest font-cairo">
                   الفروع ({branches.length})
                 </span>
-                <button onClick={() => setIsOpen(false)} className="text-gray-600 hover:text-white transition-colors">
+                <button onClick={() => setIsOpen(false)} className="text-[var(--text-inactive)] hover:text-[var(--foreground)] transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -215,21 +210,21 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
                   <button
                     key={branch.id}
                     onClick={() => handleSwitch(branch)}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#1a1a1a] transition-colors text-right group"
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--glass-surface)] transition-colors text-right group"
                   >
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${
                       branch.id === currentId
                         ? 'bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/40'
-                        : 'bg-[#1a1a1a] group-hover:bg-[#2a2a2a]'
+                        : 'bg-[var(--glass-surface)] group-hover:bg-[var(--glass-surface-heavy)]'
                     }`}>
                       {branch.id === currentId
                         ? <Check className="w-4 h-4 text-[var(--nile-teal)]" />
-                        : <Building2 className="w-4 h-4 text-gray-500" />
+                        : <Building2 className="w-4 h-4 text-[var(--text-inactive)]" />
                       }
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-bold truncate font-cairo ${
-                        branch.id === currentId ? 'text-[var(--nile-teal)]' : 'text-white'
+                        branch.id === currentId ? 'text-[var(--nile-teal)]' : 'text-[var(--foreground)]'
                       }`}>{branch.name}</p>
                       <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5 items-center">
                         {isDeveloper && branch.chain_id && (
@@ -238,7 +233,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
                           </span>
                         )}
                         {branch.address && (
-                          <p className="text-[10px] text-gray-500 truncate flex items-center gap-1">
+                          <p className="text-[10px] text-[var(--text-inactive)] truncate flex items-center gap-1">
                             <MapPin className="w-2.5 h-2.5" /> {branch.address}
                           </p>
                         )}
@@ -250,17 +245,17 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
 
               {}
               {isAdmin && (
-                <div className="border-t border-[#1a1a1a]">
+                <div className="border-t border-[var(--glass-border)]">
                   {!showNewForm ? (
                     <button
                       onClick={() => setShowNewForm(true)}
-                      className="w-full px-4 py-3 flex items-center gap-2 text-[var(--nile-teal)] hover:bg-[#1a1a1a] transition-all text-sm font-bold font-cairo"
+                      className="w-full px-4 py-3 flex items-center gap-2 text-[var(--nile-teal)] hover:bg-[var(--glass-surface)] transition-all text-sm font-bold font-cairo"
                     >
                       <Plus className="w-4 h-4" />
                       إضافة فرع جديد
                     </button>
                   ) : (
-                    <form onSubmit={handleCreateBranch} className="p-3 space-y-2 bg-[#0a0a0a]">
+                    <form onSubmit={handleCreateBranch} className="p-3 space-y-2 bg-[var(--surface-elevated)]">
                       {errorMsg && (
                         <p className="text-red-400 text-[11px] font-bold font-cairo">{errorMsg}</p>
                       )}
@@ -270,14 +265,14 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
                         onChange={e => setNewName(e.target.value)}
                         placeholder="اسم الفرع *"
                         required
-                        className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-white text-xs font-cairo focus:outline-none focus:border-[var(--nile-teal)]/50"
+                        className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-[var(--foreground)] text-xs font-cairo focus:outline-none focus:border-[var(--nile-teal)]/50"
                       />
                       <input
                         type="text"
                         value={newAddress}
                         onChange={e => setNewAddress(e.target.value)}
                         placeholder="العنوان (اختياري)"
-                        className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-white text-xs font-cairo focus:outline-none focus:border-[var(--nile-teal)]/50"
+                        className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-[var(--foreground)] text-xs font-cairo focus:outline-none focus:border-[var(--nile-teal)]/50"
                       />
                       <input
                         type="text"
@@ -285,13 +280,13 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
                         onChange={e => setNewPhone(e.target.value)}
                         placeholder="رقم الهاتف (اختياري)"
                         dir="ltr"
-                        className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-white text-xs font-sans focus:outline-none focus:border-[var(--nile-teal)]/50"
+                        className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-[var(--foreground)] text-xs font-sans focus:outline-none focus:border-[var(--nile-teal)]/50"
                       />
                       <div className="flex gap-2">
                         <button
                           type="submit"
                           disabled={isCreating}
-                          className="flex-1 py-2 bg-[var(--nile-teal)] text-black text-xs font-bold rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-1 disabled:opacity-50"
+                          className="flex-1 py-2 bg-[var(--nile-teal)] text-[var(--background)] text-xs font-bold rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-1 disabled:opacity-50"
                         >
                           {isCreating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                           إنشاء
@@ -299,7 +294,7 @@ export default function BranchSwitcher({ isCollapsed }: Props) {
                         <button
                           type="button"
                           onClick={() => { setShowNewForm(false); setErrorMsg(''); }}
-                          className="px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 text-xs rounded-lg hover:bg-[#2a2a2a] transition-all"
+                          className="px-3 py-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-muted)] text-xs rounded-lg hover:bg-[var(--glass-surface-heavy)] transition-all"
                         >
                           إلغاء
                         </button>

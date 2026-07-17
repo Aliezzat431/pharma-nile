@@ -62,28 +62,29 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-md"
+            className="fixed inset-0"
+            style={{ background: 'var(--surface-overlay)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
           />
           
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            className="w-full max-w-xl glass-card-heavy overflow-hidden shadow-2xl relative z-10 border-white/20"
+            className="w-full max-w-xl glass-card-heavy overflow-hidden shadow-2xl relative z-10 border-[var(--glass-border)]"
           >
-            <div className="p-4 border-b border-white/10 flex items-center gap-3">
-              <Search className="w-5 h-5 text-gray-500" />
+            <div className="p-4 border-b border-[var(--divider)] flex items-center gap-3">
+              <Search className="w-5 h-5 text-[var(--text-inactive)]" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="ابحث عن صفحة أو عملية... (مثلاً: بيع، عملاء)"
-                className="flex-1 bg-transparent border-none outline-none text-white text-lg font-cairo placeholder:text-gray-600"
+                className="flex-1 bg-transparent border-none outline-none text-[var(--foreground)] text-lg font-cairo placeholder:text-[var(--text-inactive)]"
               />
               <button 
                 onClick={onClose}
-                className="p-1 hover:bg-white/5 rounded-lg text-gray-500 transition-colors"
+                className="p-1 hover:bg-[var(--glass-surface)] rounded-lg text-[var(--text-inactive)] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -102,12 +103,12 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
                       onMouseEnter={() => setSelectedIndex(i)}
                       className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
                         i === selectedIndex 
-                        ? 'bg-[#00CED1]/10 text-[#00CED1] border border-[#00CED1]/20' 
-                        : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'
+                        ? 'bg-[var(--nile-teal)]/10 text-[var(--nile-teal)] border border-[var(--nile-teal)]/20' 
+                        : 'text-[var(--text-muted)] hover:bg-[var(--glass-surface)] hover:text-[var(--foreground)] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-4">
-                        <cmd.icon className={`w-5 h-5 ${i === selectedIndex ? 'text-[#00CED1]' : 'text-gray-500'}`} />
+                        <cmd.icon className={`w-5 h-5 ${i === selectedIndex ? 'text-[var(--nile-teal)]' : 'text-[var(--text-inactive)]'}`} />
                         <span className="font-cairo font-bold">{cmd.label}</span>
                       </div>
                       <div className="flex items-center gap-1 opacity-50">
@@ -119,18 +120,18 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-6 h-6 text-gray-600" />
+                  <div className="w-12 h-12 rounded-full bg-[var(--glass-surface)] flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-6 h-6 text-[var(--text-inactive)]" />
                   </div>
-                  <p className="text-gray-500 font-cairo">لم نجد أي نتائج لـ "{query}"</p>
+                  <p className="text-[var(--text-inactive)] font-cairo">لم نجد أي نتائج لـ "{query}"</p>
                 </div>
               )}
             </div>
 
-            <div className="p-4 border-t border-white/5 bg-black/20 flex items-center bg-transparent justify-between text-[10px] text-gray-600 font-bold tracking-widest uppercase">
+            <div className="p-4 border-t border-[var(--divider)] bg-transparent flex items-center justify-between text-[10px] text-[var(--text-inactive)] font-bold tracking-widest uppercase">
               <div className="flex items-center gap-4">
-                <span className="flex items-center gap-1"><span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">ESC</span> ليك</span>
-                <span className="flex items-center gap-1"><span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">ENTER</span> انتقال</span>
+                <span className="flex items-center gap-1"><span className="px-1.5 py-0.5 rounded bg-[var(--glass-surface)] border border-[var(--glass-border)]">ESC</span> ليك</span>
+                <span className="flex items-center gap-1"><span className="px-1.5 py-0.5 rounded bg-[var(--glass-surface)] border border-[var(--glass-border)]">ENTER</span> انتقال</span>
               </div>
              
             </div>
@@ -140,4 +141,3 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
     </AnimatePresence>
   );
 }
-

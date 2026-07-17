@@ -89,16 +89,16 @@ export default function Pricing({ onOpenWizard }: PricingProps) {
         {/* Title */}
         <div className="text-center space-y-4">
           <p className="text-cyan-400 text-xs font-black uppercase tracking-widest">خطط الاشتراك</p>
-          <h2 className="text-3xl md:text-5xl font-black text-white">
+          <h2 className="text-3xl md:text-5xl font-black text-[var(--text-primary)]">
             خطط أسعار واضحة تناسب حجم أعمالك
           </h2>
-          <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base font-semibold">
+          <p className="text-[var(--text-muted)] max-w-2xl mx-auto text-sm sm:text-base font-semibold">
             ابدأ صيدليتك الآن بفترة تجريبية مجانية 14 يوماً كاملة الخصائص والمميزات، دون بيانات دفع بنكية.
           </p>
 
           {/* Monthly / Yearly Toggle */}
           <div className="flex items-center justify-center gap-4 pt-4">
-            <span className={`text-sm font-bold transition-colors ${!isYearly ? 'text-white' : 'text-gray-500'}`}>
+            <span className={`text-sm font-bold transition-colors ${!isYearly ? 'text-[var(--text-primary)]' : 'text-[var(--text-inactive)]'}`}>
               شهري
             </span>
             <button
@@ -106,7 +106,7 @@ export default function Pricing({ onOpenWizard }: PricingProps) {
               className={`relative w-14 h-7 rounded-full border transition-all duration-300 focus:outline-none cursor-pointer ${
                 isYearly
                   ? 'bg-gradient-to-r from-blue-600 to-cyan-500 border-cyan-500/40'
-                  : 'bg-white/5 border-white/10'
+                  : 'bg-[var(--glass-surface-heavy)] border-[var(--glass-border)]'
               }`}
               role="switch"
               aria-checked={isYearly}
@@ -117,7 +117,7 @@ export default function Pricing({ onOpenWizard }: PricingProps) {
                 }`}
               />
             </button>
-            <span className={`text-sm font-bold transition-colors flex items-center gap-2 ${isYearly ? 'text-white' : 'text-gray-500'}`}>
+            <span className={`text-sm font-bold transition-colors flex items-center gap-2 ${isYearly ? 'text-[var(--text-primary)]' : 'text-[var(--text-inactive)]'}`}>
               سنوي
               <AnimatePresence>
                 {isYearly && (
@@ -155,7 +155,7 @@ export default function Pricing({ onOpenWizard }: PricingProps) {
                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-600 via-cyan-400 to-blue-600" />
               )}
               {plan.isPopular && (
-                <span className="absolute top-5 left-4 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-[10px] font-black rounded-xl tracking-wider uppercase select-none flex items-center gap-1.5 shadow-lg">
+                <span className="absolute top-5 left-4 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-[var(--text-primary)] text-[10px] font-black rounded-xl tracking-wider uppercase select-none flex items-center gap-1.5 shadow-lg">
                   <Star className="w-3 h-3 fill-white" />
                   الأكثر مبيعاً
                 </span>
@@ -167,8 +167,8 @@ export default function Pricing({ onOpenWizard }: PricingProps) {
                   <p className={`text-xs font-black uppercase tracking-widest mb-1 ${plan.accentColor}`}>
                     {plan.subtitle}
                   </p>
-                  <h3 className="text-xl font-black text-white">{plan.name}</h3>
-                  <p className="text-gray-400 text-xs mt-2 leading-relaxed font-semibold">{plan.desc}</p>
+                  <h3 className="text-xl font-black text-[var(--text-primary)]">{plan.name}</h3>
+                  <p className="text-[var(--text-muted)] text-xs mt-2 leading-relaxed font-semibold">{plan.desc}</p>
                 </div>
 
                 {/* Price block */}
@@ -182,20 +182,20 @@ export default function Pricing({ onOpenWizard }: PricingProps) {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 8 }}
                           transition={{ duration: 0.2 }}
-                          className="text-4xl sm:text-5xl font-black font-sans text-white"
+                          className="text-4xl sm:text-5xl font-black font-sans text-[var(--text-primary)]"
                         >
                           {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                         </motion.span>
                       </AnimatePresence>
-                      <span className="text-xs text-gray-500 font-bold">ج.م / شهرياً</span>
+                      <span className="text-xs text-[var(--text-inactive)] font-bold">ج.م / شهرياً</span>
                       {isYearly && (
-                        <span className="text-[10px] text-gray-500 line-through font-bold font-sans">
+                        <span className="text-[10px] text-[var(--text-inactive)] line-through font-bold font-sans">
                           {plan.monthlyPrice}
                         </span>
                       )}
                     </div>
                   ) : (
-                    <span className="text-3xl sm:text-4xl font-black text-white">تواصل معنا</span>
+                    <span className="text-3xl sm:text-4xl font-black text-[var(--text-primary)]">تواصل معنا</span>
                   )}
                 </div>
 
@@ -214,10 +214,10 @@ export default function Pricing({ onOpenWizard }: PricingProps) {
                 onClick={() => handlePlanClick(plan)}
                 className={`w-full py-4 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-200 active:scale-[0.97] cursor-pointer flex items-center justify-center gap-2 ${
                   plan.isPopular
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 text-white shadow-xl shadow-blue-500/20'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110 text-[var(--text-primary)] shadow-xl shadow-blue-500/20'
                     : plan.monthlyPrice === null
-                    ? 'bg-white/5 hover:bg-emerald-500/10 text-white border border-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-400'
-                    : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                    ? 'bg-[var(--glass-surface-heavy)] hover:bg-emerald-500/10 text-[var(--text-primary)] border border-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-400'
+                    : 'bg-[var(--glass-surface-heavy)] hover:bg-[var(--nile-teal-glow)] text-[var(--text-primary)] border border-[var(--glass-border)]'
                 }`}
               >
                 {plan.monthlyPrice === null && <MessageCircle className="w-4 h-4 text-emerald-400" />}
@@ -229,8 +229,8 @@ export default function Pricing({ onOpenWizard }: PricingProps) {
         </div>
 
         {/* Bottom trust note */}
-        <p className="text-center text-gray-500 text-xs font-semibold">
-          ✓ لا توجد رسوم خفية &nbsp;·&nbsp; ✓ إلغاء الاشتراك في أي وقت &nbsp;·&nbsp; ✓ 14 يوم تجربة مجانية كاملة
+        <p className="text-center text-[var(--text-inactive)] text-xs font-semibold">
+           لا توجد رسوم خفية &nbsp;·&nbsp;  إلغاء الاشتراك في أي وقت &nbsp;·&nbsp;  14 يوم تجربة مجانية كاملة
         </p>
 
       </div>
