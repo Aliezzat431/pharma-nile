@@ -120,7 +120,7 @@ export default function Dashboard() {
             animate={{ opacity: 1, x: 0 }}
             className="text-4xl md:text-5xl font-bold font-cairo tracking-tight"
           >
-            نورت صيدليتك، <span className="nile-gradient-text">{user?.user_metadata?.full_name?.split(' ')[0]} </span>👋
+            نورت صيدليتك، <span className="nile-gradient-text">{user?.user_metadata?.full_name?.split(' ')[0]} </span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, x: -20 }}
@@ -137,7 +137,7 @@ export default function Dashboard() {
             onClick={fetchDashboardData}
             className="glass-card px-6 py-2.5 flex items-center gap-3 hover:bg-white/5 active:scale-95 transition-all text-sm font-bold font-cairo"
           >
-            <RefreshCw className={`w-4 h-4 text-[#00CED1] ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 text-[var(--nile-teal)] ${loading ? 'animate-spin' : ''}`} />
             <span>تحديث البيانات</span>
           </button>
         </div>
@@ -222,7 +222,7 @@ export default function Dashboard() {
       {}
       <div className="space-y-4">
         <h2 className="text-xl font-bold font-cairo flex items-center gap-3">
-           <Activity className="w-5 h-5 text-[#00CED1]" />
+           <Activity className="w-5 h-5 text-[var(--nile-teal)]" />
            عمليات سريعة
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -237,10 +237,10 @@ export default function Dashboard() {
                 className={`p-4 rounded-2xl flex items-center justify-center gap-4 cursor-pointer transition-all border ${action.color} group shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] relative overflow-hidden`}
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${action.href === '/pos' || action.href === '/invoices/import' ? 'bg-white/20 backdrop-blur-sm' : 'bg-white/5'} transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-inner`}>
-                  <action.icon className={`w-6 h-6 ${action.href === '/pos' || action.href === '/invoices/import' ? 'text-white' : 'text-[var(--nile-teal)]'}`} />
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${action.href === '/pos' || action.href === '/invoices/import' ? 'bg-[var(--glass-surface)] backdrop-blur-sm shadow-md' : 'bg-[var(--glass-surface-heavy)]'} transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-inner`}>
+                  <action.icon className={`w-6 h-6 ${action.href === '/pos' || action.href === '/invoices/import' ? 'text-[#0f172a]' : 'text-[var(--nile-teal)]'}`} />
                 </div>
-                <span className={`font-cairo font-black text-base tracking-wide z-10 ${action.href === '/pos' || action.href === '/invoices/import' ? 'text-white' : 'text-gray-200'}`}>{action.label}</span>
+                <span className={`font-cairo font-black text-base tracking-wide z-10 ${action.href === '/pos' || action.href === '/invoices/import' ? 'text-[#0f172a]' : 'text-[var(--text-primary)]'}`}>{action.label}</span>
               </motion.div>
             </Link>
           ))}

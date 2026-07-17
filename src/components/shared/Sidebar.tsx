@@ -55,7 +55,7 @@ export function Sidebar() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-screen w-72 glass-panel m-4 border-r-[1px] border-[var(--glass-border)] rounded-2xl p-6 flex flex-col z-50">
+    <div className="fixed right-0 top-0 h-screen w-72 glass-panel m-4 rounded-2xl p-6 flex flex-col z-50 float-right shadow-2xl" dir="rtl">
       <div className="flex items-center gap-3 mb-10 px-2">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center neon-glow-teal" style={{ backgroundColor: 'var(--nile-teal)' }}>
           <PlusSquare className="text-[var(--background)] w-6 h-6" />

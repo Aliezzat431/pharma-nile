@@ -55,7 +55,7 @@
    LIGHT MODE
 ══════════════════════════════════════════ */
 [data-theme="light"] {
-  --background: #f8fafc;
+  --background: #F7F8FA;
 
   --text-primary: #0f172a;
   --text-secondary: #334155;
@@ -68,24 +68,24 @@
   --nile-teal-glow: rgba(37, 99, 235, 0.08);
   --royal-gold-glow: rgba(6, 182, 212, 0.08);
 
-  --glass-rgb: 15, 23, 42;
+  --glass-rgb: 255, 255, 255;
 
   --foreground: var(--text-primary);
-  --panel-bg: rgba(var(--glass-rgb), 0.03);
-  --glass-border: rgba(var(--glass-rgb), 0.12);
-  --glass-surface: rgba(var(--glass-rgb), 0.04);
-  --glass-surface-heavy: rgba(var(--glass-rgb), 0.08);
+  --panel-bg: rgba(var(--glass-rgb), 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-surface: rgba(var(--glass-rgb), 0.7);
+  --glass-surface-heavy: rgba(var(--glass-rgb), 0.9);
   --sidebar-text-inactive: var(--text-inactive);
 
-  --surface-elevated: rgba(0, 0, 0, 0.02);
-  --surface-overlay: rgba(0, 0, 0, 0.50);
-  --input-bg: rgba(var(--glass-rgb), 0.04);
-  --input-border: rgba(var(--glass-rgb), 0.12);
-  --divider: rgba(0, 0, 0, 0.06);
+  --surface-elevated: rgba(255, 255, 255, 0.9);
+  --surface-overlay: rgba(255, 255, 255, 0.50);
+  --input-bg: rgba(var(--glass-rgb), 0.6);
+  --input-border: var(--glass-border);
+  --divider: #E4E7EB;
 
-  --status-success: #059669;
-  --status-error: #dc2626;
-  --status-warning: #d97706;
+  --status-success: #046C4E; 
+  --status-error: #C81E1E;   
+  --status-warning: #9F580A; 
   --status-info: var(--nile-teal);
 
   --scrollbar-thumb: rgba(0, 0, 0, 0.08);
