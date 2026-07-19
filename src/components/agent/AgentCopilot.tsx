@@ -52,7 +52,56 @@ export default function AgentCopilot() {
       const data = await response.json();
       
       if (data.reply) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+        let cleanReply = data.reply;
+        
+        // Scan for stray ACTION tokens (e.g., ACTION:INVENTORY or [ACTION:INVENTORY])
+        const actionMatch = cleanReply.match(/\[?ACTION:([A-Z_]+)\]?/);
+        if (actionMatch) {
+          const rawAction = actionMatch[1].toUpperCase();
+          
+          let url = '/';
+          let title = 'شاشة';
+
+          switch (rawAction) {
+            case 'INVENTORY':
+              url = '/inventory';
+              title = 'المخزون والجرد';
+              break;
+            case 'POS':
+              url = '/pos';
+              title = 'نقطة البيع';
+              break;
+            case 'FINANCIALS':
+              url = '/financials';
+              title = 'الماليات والتقارير';
+              break;
+            case 'CUSTOMERS':
+              url = '/customers';
+              title = 'العملاء';
+              break;
+            case 'SALES_CHART':
+              url = '/orders'; // Using /orders for sales analysis
+              title = 'المبيعات';
+              break;
+            default:
+              url = `/${rawAction.toLowerCase()}`;
+              title = rawAction;
+          }
+
+          // Dispatch directly to the WorkspaceManager layout seamlessly
+          dispatch(openIframe({
+            id: `iframe-action-${Date.now()}`,
+            url,
+            title
+          }));
+
+          // Clean up the visible text to prevent hallucinated code words from rendering
+          cleanReply = cleanReply.replace(/\[?ACTION:[A-Z_]+\]?/g, '').trim();
+        }
+
+        if (cleanReply) {
+          setMessages(prev => [...prev, { role: 'assistant', content: cleanReply }]);
+        }
       }
 
       if (data.action) {
