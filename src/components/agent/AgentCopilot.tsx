@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { RootState } from '@/store';
 import { toggleChat, openIframe, setPendingApproval } from '@/store/slices/agentSlice';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,7 +15,8 @@ interface Message {
 
 export default function AgentCopilot() {
   const dispatch = useDispatch();
-  const { isChatOpen, agentPendingApproval, scrapedContext, progressLogs } = useSelector((state: RootState) => state.agent);
+  const store = useStore<RootState>();
+  const { isChatOpen, agentPendingApproval, progressLogs } = useSelector((state: RootState) => state.agent);
   
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: 'أهلاً بك! أنا المساعد الذكي لنظام فارما نايل. كيف يمكنني مساعدتك اليوم؟' }
@@ -44,7 +45,7 @@ export default function AgentCopilot() {
         body: JSON.stringify({ 
           message: userMessage,
           history: messages.slice(-5),
-          scrapedContext: scrapedContext
+          scrapedContext: store.getState().agent.scrapedContext
         })
       });
 
