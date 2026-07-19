@@ -50,8 +50,8 @@ export default function JardWizardPage() {
         barcode: row['Barcode'] || row['barcode'] || '',
         name: row['Name'] || row['الإسم'] || row['name'] || 'مجهول',
         expectedQuantity: Number(row['Expected Qty'] || row['الكمية المتوقعة'] || row['quantity']) || 0,
-        actualQuantity: '',
-        status: 'pending'
+        actualQuantity: undefined,
+        status: 'pending' as const
       }));
 
       const sessionId = await db.inventory_sessions.add({
@@ -88,12 +88,14 @@ export default function JardWizardPage() {
     const newItems = [...items];
     const index = newItems.findIndex(i => i.batchId === batchId);
     if (index !== -1) {
-      newItems[index].actualQuantity = value;
+      newItems[index].actualQuantity = value === '' ? undefined : Number(value);
       setItems(newItems);
       
       const numValue = parseInt(value);
       if (!isNaN(numValue)) {
         await db.draft_inventory.where('batchId').equals(batchId).modify({ actualQuantity: numValue });
+      } else {
+        await db.draft_inventory.where('batchId').equals(batchId).modify({ actualQuantity: undefined });
       }
     }
   };
@@ -101,7 +103,7 @@ export default function JardWizardPage() {
   const handleIntermediateSave = async () => {
     setIsProcessing(true);
     try {
-      const confirmedItems = items.filter(i => i.actualQuantity !== '' && !isNaN(parseInt(i.actualQuantity)));
+      const confirmedItems = items.filter(i => i.actualQuantity !== undefined && !isNaN(i.actualQuantity));
       
       if (confirmedItems.length === 0) {
         alert('لم تقم بتأكيد أي كميات.');
@@ -113,7 +115,7 @@ export default function JardWizardPage() {
       // Note: Ideally, would use RPC `update_inventory_batch_quantities`
       for (const item of confirmedItems) {
         if (!item.batchId.startsWith('TEMP_')) {
-          await supabase.from('batches').update({ quantity: parseInt(item.actualQuantity) }).eq('id', item.batchId);
+          await supabase.from('batches').update({ quantity: item.actualQuantity }).eq('id', item.batchId);
         }
       }
 
@@ -152,7 +154,7 @@ export default function JardWizardPage() {
         <input 
           type="number"
           placeholder="أدخل العدد"
-          value={it.actualQuantity}
+          value={it.actualQuantity !== undefined ? it.actualQuantity : ''}
           onChange={(e) => handleQuantityChange(it.batchId, e.target.value)}
           className="bg-black/50 border border-[var(--nile-teal)]/30 rounded-lg px-3 py-1 outline-none text-[var(--royal-gold)] font-bold text-center w-32"
         />
