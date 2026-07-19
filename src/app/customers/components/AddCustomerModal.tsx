@@ -41,10 +41,10 @@ export function AddCustomerModal({ isOpen, onClose, onAddCustomer }: AddCustomer
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-lg glass-panel p-8 border border-white/10 text-right z-10"
+            className="relative w-full max-w-lg glass-panel p-8 border border-[var(--glass-border)] text-right z-10"
           >
             <div className="flex items-center justify-between mb-8">
-              <button type="button" onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-white">
+              <button type="button" onClick={onClose} className="p-2 hover:bg-[var(--glass-surface)] rounded-full transition-colors text-gray-400 hover:text-white">
                 <X className="w-6 h-6" />
               </button>
               <h2 className="text-2xl font-bold font-cairo">إضافة عميل جديد</h2>
@@ -57,8 +57,8 @@ export function AddCustomerModal({ isOpen, onClose, onAddCustomer }: AddCustomer
                   type="text" 
                   {...register("name")}
                   className={cn(
-                    "w-full bg-white/5 border focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo text-lg text-right text-white",
-                    errors.name ? "border-red-500" : "border-white/10"
+                    "w-full bg-[var(--glass-surface)] border focus:border-[var(--nile-teal)]/50 outline-none rounded-2xl p-4 font-cairo text-lg text-right text-white",
+                    errors.name ? "border-red-500" : "border-[var(--glass-border)]"
                   )}
                 />
                 {errors.name && <p className="text-red-400 text-xs font-cairo">{errors.name.message}</p>}
@@ -71,8 +71,8 @@ export function AddCustomerModal({ isOpen, onClose, onAddCustomer }: AddCustomer
                     type="email" 
                     {...register("email")}
                     className={cn(
-                      "w-full bg-white/5 border focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 text-right text-white",
-                      errors.email ? "border-red-500" : "border-white/10"
+                      "w-full bg-[var(--glass-surface)] border focus:border-[var(--nile-teal)]/50 outline-none rounded-2xl p-4 text-right text-white",
+                      errors.email ? "border-red-500" : "border-[var(--glass-border)]"
                     )}
                   />
                   {errors.email && <p className="text-red-400 text-xs font-cairo">{errors.email.message}</p>}
@@ -83,8 +83,8 @@ export function AddCustomerModal({ isOpen, onClose, onAddCustomer }: AddCustomer
                     type="text" 
                     {...register("phone")}
                     className={cn(
-                      "w-full bg-white/5 border focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 text-right text-white font-sans",
-                      errors.phone ? "border-red-500" : "border-white/10"
+                      "w-full bg-[var(--glass-surface)] border focus:border-[var(--nile-teal)]/50 outline-none rounded-2xl p-4 text-right text-white font-sans",
+                      errors.phone ? "border-red-500" : "border-[var(--glass-border)]"
                     )}
                   />
                   {errors.phone && <p className="text-red-400 text-xs font-cairo">{errors.phone.message}</p>}
@@ -97,8 +97,8 @@ export function AddCustomerModal({ isOpen, onClose, onAddCustomer }: AddCustomer
                   type="text" 
                   {...register("address")}
                   className={cn(
-                    "w-full bg-white/5 border focus:border-[#00CED1]/50 outline-none rounded-2xl p-4 font-cairo text-right text-white",
-                    errors.address ? "border-red-500" : "border-white/10"
+                    "w-full bg-[var(--glass-surface)] border focus:border-[var(--nile-teal)]/50 outline-none rounded-2xl p-4 font-cairo text-right text-white",
+                    errors.address ? "border-red-500" : "border-[var(--glass-border)]"
                   )}
                 />
                 {errors.address && <p className="text-red-400 text-xs font-cairo">{errors.address.message}</p>}

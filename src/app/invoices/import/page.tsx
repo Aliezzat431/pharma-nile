@@ -326,7 +326,7 @@ export default function InvoiceImportPage() {
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-cairo font-bold text-sm transition-all ${
               mode === 'ai'
                 ? 'text-black shadow-lg'
-                : 'text-gray-400 hover:text-white bg-white/5 hover:bg-white/10'
+                : 'text-gray-400 hover:text-white bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)]'
             }`}
             style={mode === 'ai' ? {
               background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))',
@@ -341,7 +341,7 @@ export default function InvoiceImportPage() {
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-cairo font-bold text-sm transition-all ${
               mode === 'manual'
                 ? 'text-black shadow-lg'
-                : 'text-gray-400 hover:text-white bg-white/5 hover:bg-white/10'
+                : 'text-gray-400 hover:text-white bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)]'
             }`}
             style={mode === 'manual' ? {
               background: 'linear-gradient(135deg, var(--nile-teal), var(--royal-gold))',
@@ -407,7 +407,7 @@ export default function InvoiceImportPage() {
 
                 {!selectedFile ? (
                   <>
-                    <div className="w-20 h-20 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center mb-4">
+                    <div className="w-20 h-20 rounded-2xl bg-[var(--glass-surface)] border-2 border-dashed border-[var(--glass-border)] flex items-center justify-center mb-4">
                       <Upload className="w-8 h-8 text-gray-500" />
                     </div>
                     <p className="font-bold font-cairo text-white text-lg">ارفع صورة الفاتورة</p>
@@ -523,17 +523,17 @@ export default function InvoiceImportPage() {
                   <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
                     <BadgePlus className="w-3.5 h-3.5 text-emerald-400" />
                     <span className="text-emerald-400 font-bold">{newCount}</span>
-                    <span className="text-gray-500">منتج جديد</span>
+                    <span className="text-[var(--text-inactive)]">منتج جديد</span>
                   </div>
                   <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
                     <Star className="w-3.5 h-3.5" style={{ color: GOLD }} />
                     <span className="font-bold" style={{ color: GOLD }}>{items.length - newCount}</span>
-                    <span className="text-gray-500">موجود مسبقاً</span>
+                    <span className="text-[var(--text-inactive)]">موجود مسبقاً</span>
                   </div>
                   <div className="glass-card px-3 py-2 flex items-center gap-2 text-xs font-cairo">
                     <Check className="w-3.5 h-3.5 text-blue-400" />
                     <span className="text-blue-400 font-bold">{checkedCount}</span>
-                    <span className="text-gray-500">محدد للحفظ</span>
+                    <span className="text-[var(--text-inactive)]">محدد للحفظ</span>
                   </div>
                   <div className="mr-auto flex items-center gap-3">
                     <button onClick={() => toggleAll(true)} className="text-xs text-gray-400 hover:text-white font-cairo transition-colors">تحديد الكل</button>
@@ -550,7 +550,7 @@ export default function InvoiceImportPage() {
                       exit={{ opacity: 0, x: 20 }}
                       transition={{ delay: idx * 0.03 }}
                       className={`glass-card p-4 relative overflow-hidden transition-all
-                        ${item._checked ? 'border-white/10' : 'opacity-50 border-white/5'}
+                        ${item._checked ? 'border-[var(--glass-border)]' : 'opacity-50 border-[var(--glass-border)]'}
                         ${item._status === 'saved' ? 'border-emerald-500/30' : ''}
                         ${item._status === 'error' ? 'border-red-500/30' : ''}
                         ${item._status === 'saving' ? 'animate-pulse' : ''}
@@ -565,7 +565,7 @@ export default function InvoiceImportPage() {
                           className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-1 transition-all
                             ${item._checked
                               ? (item.is_new ? 'border-emerald-500 bg-emerald-500/20' : 'border-blue-500 bg-blue-500/20')
-                              : 'border-white/10 bg-white/5'}`}
+                              : 'border-[var(--glass-border)] bg-[var(--glass-surface)]'}`}
                         >
                           {item._checked && <Check className="w-4 h-4" style={{ color: item.is_new ? '#10b981' : '#3b82f6' }} />}
                         </button>
@@ -597,7 +597,7 @@ export default function InvoiceImportPage() {
                               disabled={item._status !== 'pending'}
                               placeholder="باركود الصنف..."
                               onChange={e => updateItem(idx, 'barcode', e.target.value)}
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50 font-mono"
+                              className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50 font-mono"
                             />
                           </div>
 
@@ -616,7 +616,7 @@ export default function InvoiceImportPage() {
                                 }
                               }}
                               placeholder="1"
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
+                              className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
                             />
                           </div>
 
@@ -635,7 +635,7 @@ export default function InvoiceImportPage() {
                                 }
                               }}
                               placeholder="0.00"
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
+                              className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
                             />
                           </div>
 
@@ -654,7 +654,7 @@ export default function InvoiceImportPage() {
                                 }
                               }}
                               placeholder="0.00"
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
+                              className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
                             />
                           </div>
 
@@ -665,7 +665,7 @@ export default function InvoiceImportPage() {
                               value={item.expiry_date}
                               disabled={item._status !== 'pending'}
                               onChange={e => updateItem(idx, 'expiry_date', e.target.value)}
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
+                              className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[var(--nile-teal)]/50"
                               placeholder="MM/YYYY"
                             />
                           </div>
@@ -691,7 +691,7 @@ export default function InvoiceImportPage() {
 
                 <button
                   onClick={addManualRow}
-                  className="w-full py-3 rounded-xl border border-dashed border-white/10 text-gray-500 hover:text-white hover:border-[var(--nile-teal)]/50 font-cairo text-sm flex items-center justify-center gap-2 transition-all"
+                  className="w-full py-3 rounded-xl border border-dashed border-[var(--glass-border)] text-gray-500 hover:text-white hover:border-[var(--nile-teal)]/50 font-cairo text-sm flex items-center justify-center gap-2 transition-all"
                 >
                   <Plus className="w-4 h-4" /> إضافة صنف آخر
                 </button>
@@ -734,7 +734,7 @@ export default function InvoiceImportPage() {
                 </p>
                 <button
                   onClick={resetAll}
-                  className="mt-4 px-6 py-2 rounded-xl text-xs font-bold font-cairo bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
+                  className="mt-4 px-6 py-2 rounded-xl text-xs font-bold font-cairo bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-white transition-all border border-[var(--glass-border)]"
                 >
                   بدء فاتورة جديدة
                 </button>
@@ -825,7 +825,7 @@ function ItemsPanel({
 
   return (
     <div className="glass-panel p-5 flex flex-col gap-4 order-2 lg:order-1 min-h-[500px]">
-      <div className="flex justify-between items-center border-b border-white/5 pb-3 flex-wrap gap-2">
+      <div className="flex justify-between items-center border-b border-[var(--glass-border)] pb-3 flex-wrap gap-2">
         <div>
           <h2 className="font-bold font-cairo text-white text-base">الأصناف المستخرجة ({items.length})</h2>
           <p className="text-[11px] font-cairo text-gray-500 mt-0.5">يرجى التحقق من صحة الحقول والأسعار المقروءة</p>
@@ -838,15 +838,15 @@ function ItemsPanel({
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
+        <div className="bg-white/[0.02] border border-[var(--glass-border)] rounded-xl p-2.5 text-center">
           <span className="block text-emerald-400 text-sm font-bold font-mono">{newCount}</span>
           <span className="text-[10px] text-gray-500 font-cairo">أصناف جديدة</span>
         </div>
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
+        <div className="bg-white/[0.02] border border-[var(--glass-border)] rounded-xl p-2.5 text-center">
           <span className="block text-blue-400 text-sm font-bold font-mono">{items.length - newCount}</span>
           <span className="text-[10px] text-gray-500 font-cairo">منتجات مطابقة</span>
         </div>
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-center">
+        <div className="bg-white/[0.02] border border-[var(--glass-border)] rounded-xl p-2.5 text-center">
           <span className="block text-[var(--nile-teal)] text-sm font-bold font-mono">{checkedCount}</span>
           <span className="text-[10px] text-gray-500 font-cairo">محدد للحفظ</span>
         </div>
@@ -861,7 +861,7 @@ function ItemsPanel({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: -10 }}
               className={`p-3.5 rounded-xl border relative transition-all bg-black/20
-                ${item._checked ? 'border-white/10' : 'opacity-40 border-transparent'}
+                ${item._checked ? 'border-[var(--glass-border)]' : 'opacity-40 border-transparent'}
                 ${item._status === 'saved' ? 'border-emerald-500/30 bg-emerald-500/[0.02]' : ''}
                 ${item._status === 'error' ? 'border-red-500/30 bg-red-500/[0.02]' : ''}
               `}
@@ -873,7 +873,7 @@ function ItemsPanel({
                   className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 transition-all
                     ${item._checked 
                       ? 'border-[var(--nile-teal)] bg-[var(--nile-teal)]/10 text-[var(--nile-teal)]' 
-                      : 'border-white/10'
+                      : 'border-[var(--glass-border)]'
                     }`}
                 >
                   {item._checked && <Check className="w-3.5 h-3.5" />}
@@ -920,7 +920,7 @@ function ItemsPanel({
                           }
                         }}
                         disabled={item._status === 'saved'}
-                        className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded px-1.5 py-0.5 text-xs text-white font-mono"
                         placeholder="1"
                       />
                     </div>
@@ -939,7 +939,7 @@ function ItemsPanel({
                           }
                         }}
                         disabled={item._status === 'saved'}
-                        className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded px-1.5 py-0.5 text-xs text-white font-mono"
                         placeholder="0.00"
                       />
                     </div>
@@ -958,7 +958,7 @@ function ItemsPanel({
                           }
                         }}
                         disabled={item._status === 'saved'}
-                        className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded px-1.5 py-0.5 text-xs text-white font-mono"
                         placeholder="0.00"
                       />
                     </div>
@@ -970,7 +970,7 @@ function ItemsPanel({
                         value={item.expiry_date}
                         onChange={e => onUpdateItem(idx, 'expiry_date', e.target.value)}
                         disabled={item._status === 'saved'}
-                        className="w-full bg-white/5 border border-white/5 rounded px-1.5 py-0.5 text-[11px] text-white"
+                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded px-1.5 py-0.5 text-[11px] text-white"
                         placeholder="MM/YYYY"
                       />
                     </div>
@@ -982,7 +982,7 @@ function ItemsPanel({
                     <div className="flex flex-col gap-1">
                       <button 
                         onClick={() => onUpdateItem(idx, '_editMode', !item._editMode)} 
-                        className={`p-1 rounded transition-colors ${item._editMode ? 'text-[var(--nile-teal)] bg-white/5' : 'text-gray-500 hover:text-white'}`}
+                        className={`p-1 rounded transition-colors ${item._editMode ? 'text-[var(--nile-teal)] bg-[var(--glass-surface)]' : 'text-gray-500 hover:text-white'}`}
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>

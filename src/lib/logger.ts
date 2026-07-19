@@ -54,7 +54,6 @@ class StructuredLogger {
 
     if (this.isProduction) {
       
-      console.log(JSON.stringify(payload));
     } else {
       
       const colorMap = {
@@ -68,10 +67,8 @@ class StructuredLogger {
       const reqStr = payload.requestId ? ` (Req: ${payload.requestId})` : '';
       const catStr = `[${payload.category}]`;
       
-      console.log(colorMap[level], `${timeStr} ${level.toUpperCase()} ${catStr}${reqStr}: ${message}`);
       
       if (options.metadata) {
-        console.log(JSON.stringify(options.metadata, null, 2));
       }
       if (payload.error) {
         console.error('\x1b[31m%s\x1b[0m', payload.error.stack || payload.error.message);

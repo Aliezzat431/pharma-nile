@@ -40,8 +40,6 @@ export async function GET(req: Request) {
          if (anyAccess) pharmacyId = anyAccess.pharmacy_id;
     }
 
-    console.log("Final Authorized Pharmacy ID for Export:", pharmacyId);
-
     if (!pharmacyId) {
       return NextResponse.json({ success: false, error: 'Could not determine Pharmacy ID' }, { status: 401 });
     }

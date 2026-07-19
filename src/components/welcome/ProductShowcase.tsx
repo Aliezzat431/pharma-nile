@@ -260,7 +260,7 @@ export default function ProductShowcase() {
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                               {[
                                 { label: 'مبيعات اليوم', val: '12,450 ج.م', icon: Wallet, color: '#06B6D4', bg: 'bg-[#06B6D4]/10', sub: '+18.5% ↑' },
-                                { label: 'صافي الأرباح', val: '3,860 ج.م', icon: TrendingUp, color: '#D4AF37', bg: 'bg-[#D4AF37]/10', sub: '+12.3% ↑' },
+                                { label: 'صافي الأرباح', val: '3,860 ج.م', icon: TrendingUp, color: 'var(--royal-gold)', bg: 'bg-[var(--royal-gold)]/10', sub: '+12.3% ↑' },
                                 { label: 'نواقص التنبيه', val: '3 أصناف', icon: AlertCircle, color: '#f87171', bg: 'bg-red-500/10', sub: 'حرجة الآن' },
                                 { label: 'صلاحية وشيكة', val: '16 علبة', icon: AlertTriangle, color: '#fb923c', bg: 'bg-orange-500/10', sub: 'تنتهي قريباً' },
                               ].map((s, i) => (
@@ -295,7 +295,7 @@ export default function ProductShowcase() {
                                       <span className="text-[7px] text-[var(--text-inactive)] opacity-0 group-hover:opacity-100 transition-opacity font-sans">{bar.amt}</span>
                                       <div
                                         className="w-full rounded-t-md transition-all hover:brightness-125"
-                                        style={{ height: bar.h, background: i === 6 ? '#D4AF37' : 'linear-gradient(to top, #06B6D4, #2563EB)' }}
+                                        style={{ height: bar.h, background: i === 6 ? 'var(--royal-gold)' : 'linear-gradient(to top, #06B6D4, #2563EB)' }}
                                       />
                                       <span className="text-[8px] text-[var(--text-inactive)] font-bold">{bar.day}</span>
                                     </div>
@@ -390,7 +390,7 @@ export default function ProductShowcase() {
                                       </span>
                                       <h5 className="text-[var(--text-primary)] font-bold text-xs mt-2 group-hover:text-[#06B6D4] transition-colors">{p.name}</h5>
                                       <div className="flex items-center justify-between mt-2">
-                                        <span className="text-[#D4AF37] font-black text-xs font-sans">{p.price} ج.م</span>
+                                        <span className="text-[var(--royal-gold)] font-black text-xs font-sans">{p.price} ج.م</span>
                                         <span className="text-gray-600 text-[9px]">{p.stock}</span>
                                       </div>
                                     </div>
@@ -410,7 +410,7 @@ export default function ProductShowcase() {
 
                                 <div className="flex justify-between items-center border-b border-[var(--glass-border)] pb-2 mb-3">
                                   <h4 className="text-xs font-bold text-[var(--text-primary)]">سلة البيع</h4>
-                                  <span className="text-[9px] text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-0.5 rounded-lg font-bold">نقدي</span>
+                                  <span className="text-[9px] text-[var(--royal-gold)] bg-[var(--royal-gold)]/10 px-2 py-0.5 rounded-lg font-bold">نقدي</span>
                                 </div>
 
                                 <div className="flex-1 space-y-2 overflow-y-auto max-h-[160px]">
@@ -473,7 +473,7 @@ export default function ProductShowcase() {
                               </div>
                               <div className="flex gap-2">
                                 <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] font-bold hover:bg-[var(--nile-teal-glow)] transition-all">
-                                  <FileUp className="w-3.5 h-3.5 text-[#D4AF37]" />استيراد ملف
+                                  <FileUp className="w-3.5 h-3.5 text-[var(--royal-gold)]" />استيراد ملف
                                 </button>
                                 <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#06B6D4]/10 border border-[#06B6D4]/20 text-xs text-[#06B6D4] font-bold hover:bg-[#06B6D4]/20 transition-all">
                                   <Plus className="w-3.5 h-3.5" />إضافة صنف
@@ -485,7 +485,7 @@ export default function ProductShowcase() {
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                               {[
                                 { label: 'إجمالي المنتجات', val: '1,248', icon: PackageOpen, color: 'text-[#06B6D4]', bg: 'bg-[#06B6D4]/10' },
-                                { label: 'إجمالي الرصيد', val: '18,420', icon: Tag, color: 'text-[#D4AF37]', bg: 'bg-[#D4AF37]/10' },
+                                { label: 'إجمالي الرصيد', val: '18,420', icon: Tag, color: 'text-[var(--royal-gold)]', bg: 'bg-[var(--royal-gold)]/10' },
                                 { label: 'نواقص المخزون', val: '3', icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
                                 { label: 'قيمة المخزن', val: '240K ج.م', icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
                               ].map((s, i) => (
@@ -587,7 +587,7 @@ export default function ProductShowcase() {
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                               {[
                                 { label: 'إجمالي المبيعات', val: '31,520 ج.م', icon: Wallet, color: '#06B6D4' },
-                                { label: 'صافي الأرباح', val: '9,860 ج.م', icon: TrendingUp, color: '#D4AF37' },
+                                { label: 'صافي الأرباح', val: '9,860 ج.م', icon: TrendingUp, color: 'var(--royal-gold)' },
                                 { label: 'إجمالي التكاليف', val: '21,660 ج.م', icon: ArrowDownRight, color: '#f87171' },
                                 { label: 'عدد العمليات', val: '412', icon: BarChart, color: '#94a3b8' },
                               ].map((s, i) => (
@@ -624,7 +624,7 @@ export default function ProductShowcase() {
                                     <path d="M0,90 C20,80 40,60 60,55 S100,40 120,45 S160,30 180,35 S220,20 240,25 S280,30 320,28" stroke="#06B6D4" strokeWidth="2.5" fill="none" />
                                     <path d="M0,90 C20,80 40,60 60,55 S100,40 120,45 S160,30 180,35 S220,20 240,25 S280,30 320,28 L320,120 L0,120Z" fill="url(#revGrad)" />
                                     {/* Profit dashed */}
-                                    <path d="M0,100 C20,95 40,80 60,75 S100,65 120,68 S160,55 180,58 S220,45 240,50 S280,50 320,48" stroke="#D4AF37" strokeWidth="1.5" fill="none" strokeDasharray="5,3" />
+                                    <path d="M0,100 C20,95 40,80 60,75 S100,65 120,68 S160,55 180,58 S220,45 240,50 S280,50 320,48" stroke="var(--royal-gold)" strokeWidth="1.5" fill="none" strokeDasharray="5,3" />
                                   </svg>
                                   {/* X axis labels */}
                                   <div className="flex justify-between mt-1 text-[8px] text-gray-600 font-sans">
@@ -635,7 +635,7 @@ export default function ProductShowcase() {
                                 </div>
                                 <div className="flex gap-4 mt-2">
                                   <div className="flex items-center gap-1.5 text-[10px] text-[#06B6D4]"><span className="w-5 h-0.5 bg-[#06B6D4] rounded" />إيرادات</div>
-                                  <div className="flex items-center gap-1.5 text-[10px] text-[#D4AF37]"><span className="w-5 h-0.5 bg-[#D4AF37] border-dashed border-t border-[#D4AF37] rounded" />أرباح</div>
+                                  <div className="flex items-center gap-1.5 text-[10px] text-[var(--royal-gold)]"><span className="w-5 h-0.5 bg-[var(--royal-gold)] border-dashed border-t border-[var(--royal-gold)] rounded" />أرباح</div>
                                 </div>
                               </div>
 
@@ -646,14 +646,14 @@ export default function ProductShowcase() {
                                 <div className="flex-1 flex items-center justify-center">
                                   <svg viewBox="0 0 100 100" className="w-32 h-32">
                                     <circle cx="50" cy="50" r="35" fill="none" stroke="#06B6D4" strokeWidth="14" strokeDasharray="132 18" strokeDashoffset="0" strokeLinecap="round" />
-                                    <circle cx="50" cy="50" r="35" fill="none" stroke="#D4AF37" strokeWidth="14" strokeDasharray="36 114" strokeDashoffset="-132" strokeLinecap="round" />
+                                    <circle cx="50" cy="50" r="35" fill="none" stroke="var(--royal-gold)" strokeWidth="14" strokeDasharray="36 114" strokeDashoffset="-132" strokeLinecap="round" />
                                     <circle cx="50" cy="50" r="35" fill="none" stroke="#f87171" strokeWidth="14" strokeDasharray="18 132" strokeDashoffset="-168" strokeLinecap="round" />
                                   </svg>
                                 </div>
                                 <div className="space-y-2 mt-2">
                                   {[
                                     { name: 'نقدي', pct: '73%', val: '23,020 ج.م', color: '#06B6D4' },
-                                    { name: 'آجل', pct: '20%', val: '6,304 ج.م', color: '#D4AF37' },
+                                    { name: 'آجل', pct: '20%', val: '6,304 ج.م', color: 'var(--royal-gold)' },
                                     { name: 'فيزا', pct: '7%', val: '2,196 ج.م', color: '#f87171' },
                                   ].map((p, i) => (
                                     <div key={i} className="flex items-center justify-between text-xs font-cairo">

@@ -43,11 +43,11 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, addLoading }: AddSt
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="glass-card w-full max-w-xl p-8 z-10 border-white/10 relative overflow-hidden"
+        className="glass-card w-full max-w-xl p-8 z-10 border-[var(--glass-border)] relative overflow-hidden"
       >
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-[#00CED1]/10 rounded-2xl text-[#00CED1]">
+            <div className="p-3 bg-[var(--nile-teal)]/10 rounded-2xl text-[var(--nile-teal)]">
               <UserPlus className="w-8 h-8" />
             </div>
             <div>
@@ -55,7 +55,7 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, addLoading }: AddSt
               <p className="text-gray-400 text-sm font-cairo">أنشئ حساباً جديداً لأحد أفراد العمل</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
+          <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-heavy)] rounded-xl transition-all">
             <X className="w-6 h-6 text-gray-500" />
           </button>
         </div>
@@ -128,7 +128,7 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, addLoading }: AddSt
                     <button
                       type="button"
                       onClick={() => setShowPassword(v => !v)}
-                      className="text-gray-500 hover:text-[#00CED1] transition-colors flex-shrink-0"
+                      className="text-gray-500 hover:text-[var(--nile-teal)] transition-colors flex-shrink-0"
                       tabIndex={-1}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -157,14 +157,14 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, addLoading }: AddSt
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-4 rounded-2xl border border-white/5 font-bold font-cairo text-white hover:bg-white/5 transition-all"
+              className="flex-1 py-4 rounded-2xl border border-[var(--glass-border)] font-bold font-cairo text-white hover:bg-[var(--glass-surface)] transition-all"
             >
               إلغاء
             </button>
             <button
               type="submit"
               disabled={addLoading}
-              className="flex-[2] py-4 rounded-2xl bg-[#00CED1] text-black font-bold font-cairo shadow-[0_0_20px_rgba(0,206,209,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-[2] py-4 rounded-2xl bg-[var(--nile-teal)] text-black font-bold font-cairo shadow-[0_0_20px_rgba(0,206,209,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {addLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserPlus className="w-5 h-5" />}
               إنشاء الحساب الآن
@@ -172,7 +172,7 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, addLoading }: AddSt
           </div>
         </form>
         
-        <div className="absolute top-[-100px] right-[-100px] w-64 h-64 bg-[#00CED1]/10 rounded-full blur-[80px] -z-10" />
+        <div className="absolute top-[-100px] right-[-100px] w-64 h-64 bg-[var(--nile-teal)]/10 rounded-full blur-[80px] -z-10" />
       </motion.div>
     </div>
   );

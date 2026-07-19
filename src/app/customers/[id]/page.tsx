@@ -80,14 +80,14 @@ export default function CustomerProfile() {
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-[#050505]">
-      <Loader2 className="w-10 h-10 text-[#00CED1] animate-spin" />
+      <Loader2 className="w-10 h-10 text-[var(--nile-teal)] animate-spin" />
     </div>
   );
 
   if (!customer) return (
     <div className="h-screen flex flex-col items-center justify-center text-gray-500 font-cairo bg-[#050505]" dir="rtl">
        <p className="text-lg">العميل غير موجود أو تم حذفه من النظام.</p>
-       <Link href="/customers" className="mt-4 text-[#00CED1] hover:underline flex items-center gap-1">
+       <Link href="/customers" className="mt-4 text-[var(--nile-teal)] hover:underline flex items-center gap-1">
          العودة لقائمة العملاء
        </Link>
     </div>
@@ -98,10 +98,10 @@ export default function CustomerProfile() {
       {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/customers" className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400">
+          <Link href="/customers" className="p-2 hover:bg-[var(--glass-surface)] rounded-full transition-colors text-gray-400">
             <ChevronLeft className="w-6 h-6 rotate-0" />
           </Link>
-          <h1 className="text-2xl font-bold font-cairo">ملف <span className="text-[#00CED1]">العميل</span></h1>
+          <h1 className="text-2xl font-bold font-cairo">ملف <span className="text-[var(--nile-teal)]">العميل</span></h1>
         </div>
       </div>
 
@@ -110,25 +110,25 @@ export default function CustomerProfile() {
         {}
         <div className="space-y-6">
           <div className="glass-panel p-8 flex flex-col items-center text-center">
-             <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-[#D4AF37] mb-6 shadow-2xl">
+             <div className="w-24 h-24 rounded-3xl bg-[var(--glass-surface)] border border-[var(--glass-border)] flex items-center justify-center text-[var(--royal-gold)] mb-6 shadow-2xl">
                 <User className="w-12 h-12" />
              </div>
              <h2 className="text-2xl font-bold font-cairo mb-2 text-white">{customer.name}</h2>
-             <span className="px-4 py-1 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-bold font-cairo border border-[#D4AF37]/20 mb-8">
+             <span className="px-4 py-1 rounded-full bg-[var(--royal-gold)]/10 text-[var(--royal-gold)] text-xs font-bold font-cairo border border-[var(--royal-gold)]/20 mb-8">
                 عميل مميز • {customer.loyalty_points || 0} نقطة
              </span>
 
              <div className="w-full space-y-4 text-right" dir="rtl">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                   <Phone className="w-4 h-4 text-[#00CED1]" />
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-[var(--glass-border)]">
+                   <Phone className="w-4 h-4 text-[var(--nile-teal)]" />
                    <span className="text-sm font-sans text-gray-300">{customer.phone || '—'}</span>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                   <Mail className="w-4 h-4 text-[#00CED1]" />
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-[var(--glass-border)]">
+                   <Mail className="w-4 h-4 text-[var(--nile-teal)]" />
                    <span className="text-sm text-gray-300 truncate">{customer.email || '—'}</span>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                   <MapPin className="w-4 h-4 text-[#00CED1]" />
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-[var(--glass-border)]">
+                   <MapPin className="w-4 h-4 text-[var(--nile-teal)]" />
                    <span className="text-sm font-cairo text-gray-300 truncate">{customer.address || '—'}</span>
                 </div>
              </div>
@@ -155,19 +155,19 @@ export default function CustomerProfile() {
            <div className="glass-panel p-2 flex gap-2">
               <button 
                 onClick={() => setActiveTab('invoices')}
-                className={`flex-1 py-3 rounded-xl font-cairo text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'invoices' ? 'bg-[#00CED1] text-black font-bold' : 'text-gray-400 hover:bg-white/5'}`}
+                className={`flex-1 py-3 rounded-xl font-cairo text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'invoices' ? 'bg-[var(--nile-teal)] text-black font-bold' : 'text-gray-400 hover:bg-[var(--glass-surface)]'}`}
               >
                 <ShoppingBag className="w-4 h-4" /> الفواتير
               </button>
               <button 
                 onClick={() => setActiveTab('payments')}
-                className={`flex-1 py-3 rounded-xl font-cairo text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'payments' ? 'bg-[#00CED1] text-black font-bold' : 'text-gray-400 hover:bg-white/5'}`}
+                className={`flex-1 py-3 rounded-xl font-cairo text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'payments' ? 'bg-[var(--nile-teal)] text-black font-bold' : 'text-gray-400 hover:bg-[var(--glass-surface)]'}`}
               >
                 <CreditCard className="w-4 h-4" /> المدفوعات
               </button>
               <button 
                 onClick={() => setActiveTab('history')}
-                className={`flex-1 py-3 rounded-xl font-cairo text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'history' ? 'bg-[#00CED1] text-black font-bold' : 'text-gray-400 hover:bg-white/5'}`}
+                className={`flex-1 py-3 rounded-xl font-cairo text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'history' ? 'bg-[var(--nile-teal)] text-black font-bold' : 'text-gray-400 hover:bg-[var(--glass-surface)]'}`}
               >
                 <Clock className="w-4 h-4" /> السجل الكامل
               </button>
@@ -198,7 +198,7 @@ export default function CustomerProfile() {
                           document.body.removeChild(link);
                           URL.revokeObjectURL(link.href);
                         }}
-                        className="text-sm text-[#00CED1] font-cairo flex items-center gap-2 hover:underline"
+                        className="text-sm text-[var(--nile-teal)] font-cairo flex items-center gap-2 hover:underline"
                       >
                         <Download className="w-4 h-4" /> تحميل كشف فواتير
                       </button>
@@ -206,9 +206,9 @@ export default function CustomerProfile() {
                    {paginatedOrders.length > 0 ? (
                      <>
                        {paginatedOrders.map((order: any) => (
-                         <div key={order.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors flex items-center justify-between">
+                         <div key={order.id} className="p-4 rounded-2xl bg-white/[0.02] border border-[var(--glass-border)] hover:border-[var(--glass-border)] transition-colors flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                               <div className="w-10 h-10 rounded-lg bg-[#00CED1]/10 flex items-center justify-center text-[#00CED1]">
+                               <div className="w-10 h-10 rounded-lg bg-[var(--nile-teal)]/10 flex items-center justify-center text-[var(--nile-teal)]">
                                   <ShoppingBag className="w-5 h-5" />
                                </div>
                                <div>
@@ -219,9 +219,9 @@ export default function CustomerProfile() {
                             <div className="text-left flex items-center gap-6">
                                <div>
                                   <p className="text-xs text-gray-500 font-cairo mb-1 text-left">القيمة</p>
-                                  <p className="font-bold text-[#D4AF37] font-sans">{(order.total || 0).toLocaleString()} ج.م</p>
+                                  <p className="font-bold text-[var(--royal-gold)] font-sans">{(order.total || 0).toLocaleString()} ج.م</p>
                                </div>
-                               <button className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white">
+                               <button className="p-2 hover:bg-[var(--glass-surface)] rounded-lg text-gray-400 hover:text-white">
                                   <ArrowUpRight className="w-4 h-4" />
                                </button>
                             </div>
@@ -251,7 +251,7 @@ export default function CustomerProfile() {
                    {paginatedPayments.length > 0 ? (
                      <>
                        {paginatedPayments.map((p: any) => (
-                         <div key={p.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                         <div key={p.id} className="p-4 rounded-2xl bg-white/[0.02] border border-[var(--glass-border)] flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
                                   <ArrowDownLeft className="w-5 h-5" />
@@ -263,7 +263,7 @@ export default function CustomerProfile() {
                             </div>
                             <div className="text-left">
                                {p.note && <p className="text-xs text-gray-400 font-cairo mb-1.5 italic">"{p.note}"</p>}
-                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-cairo ${p.payment_type === 'full' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-blue-500/20 text-blue-400'}`}>
+                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-cairo ${p.payment_type === 'full' ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)]' : 'bg-blue-500/20 text-blue-400'}`}>
                                   {p.payment_type === 'full' ? 'تصفية كاملة' : 'دفعة جزئية'}
                                 </span>
                             </div>
@@ -289,7 +289,7 @@ export default function CustomerProfile() {
 
               {activeTab === 'history' && (
                 <div className="py-20 text-center opacity-40 font-cairo text-gray-400 flex flex-col items-center justify-center gap-4">
-                     <HistoryIcon className="w-12 h-12 text-[#00CED1]" />
+                     <HistoryIcon className="w-12 h-12 text-[var(--nile-teal)]" />
                      <p>سيظهر هنا سجل زمني شامل يجمع بين الفواتير، الديون، والمدفوعات بترتيبها التاريخي.</p>
                 </div>
               )}
@@ -308,7 +308,7 @@ export default function CustomerProfile() {
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md glass-panel p-8 text-right border border-white/10"
+              className="relative w-full max-w-md glass-panel p-8 text-right border border-[var(--glass-border)]"
               dir="rtl"
             >
               <div className="flex items-center justify-between mb-6">
@@ -332,7 +332,7 @@ export default function CustomerProfile() {
                     step="0.01" 
                     min="0.01"
                     max={customer?.total_debt}
-                    className="w-full bg-[#050505]/60 border border-white/10 outline-none rounded-2xl p-4 text-2xl font-bold text-[#00CED1] font-sans text-right focus:border-[#00CED1]/50 disabled:opacity-50" 
+                    className="w-full bg-[#050505]/60 border border-[var(--glass-border)] outline-none rounded-2xl p-4 text-2xl font-bold text-[var(--nile-teal)] font-sans text-right focus:border-[var(--nile-teal)]/50 disabled:opacity-50" 
                     value={paymentData.amount} 
                     onChange={e => setPaymentData({...paymentData, amount: e.target.value})} 
                   />
@@ -346,7 +346,7 @@ export default function CustomerProfile() {
                       type="button" 
                       disabled={processing}
                       onClick={() => setPaymentData({...paymentData, payment_type: 'partial'})} 
-                      className={`py-4 rounded-2xl font-cairo border transition-colors ${paymentData.payment_type === 'partial' ? 'bg-[#00CED1]/10 border-[#00CED1] text-[#00CED1] font-bold' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/15'}`}
+                      className={`py-4 rounded-2xl font-cairo border transition-colors ${paymentData.payment_type === 'partial' ? 'bg-[var(--nile-teal)]/10 border-[var(--nile-teal)] text-[var(--nile-teal)] font-bold' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-gray-400 hover:bg-white/15'}`}
                     >
                       جزئي
                     </button>
@@ -354,7 +354,7 @@ export default function CustomerProfile() {
                       type="button" 
                       disabled={processing}
                       onClick={() => setPaymentData({...paymentData, payment_type: 'full', amount: (customer?.total_debt || 0).toString()})} 
-                      className={`py-4 rounded-2xl font-cairo border transition-colors ${paymentData.payment_type === 'full' ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] font-bold' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/15'}`}
+                      className={`py-4 rounded-2xl font-cairo border transition-colors ${paymentData.payment_type === 'full' ? 'bg-[var(--royal-gold)]/10 border-[var(--royal-gold)] text-[var(--royal-gold)] font-bold' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-gray-400 hover:bg-white/15'}`}
                     >
                       تصفية كاملة
                     </button>
@@ -365,7 +365,7 @@ export default function CustomerProfile() {
                   <label className="text-sm font-medium text-gray-400 font-cairo block">ملاحظات التحصيل</label>
                   <textarea 
                     disabled={processing}
-                    className="w-full bg-[#050505]/60 border border-white/10 outline-none rounded-2xl p-4 font-cairo resize-none h-24 text-right text-white focus:border-[#00CED1]/50 disabled:opacity-50" 
+                    className="w-full bg-[#050505]/60 border border-[var(--glass-border)] outline-none rounded-2xl p-4 font-cairo resize-none h-24 text-right text-white focus:border-[var(--nile-teal)]/50 disabled:opacity-50" 
                     placeholder="اكتب ملاحظة للعملية كـ (تحصيل شيك، كاش)..."
                     value={paymentData.note} 
                     onChange={e => setPaymentData({...paymentData, note: e.target.value})} 
@@ -375,7 +375,7 @@ export default function CustomerProfile() {
                 <button 
                   type="submit" 
                   disabled={processing}
-                  className="w-full nile-button py-4 font-bold font-cairo text-black bg-[#00CED1] rounded-2xl hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+                  className="w-full nile-button py-4 font-bold font-cairo text-black bg-[var(--nile-teal)] rounded-2xl hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
                 >
                   {processing ? (
                     <Loader2 className="w-5 h-5 animate-spin" />

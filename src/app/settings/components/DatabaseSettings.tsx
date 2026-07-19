@@ -223,7 +223,7 @@ export function DatabaseSettings() {
             <button
               onClick={fetchStats}
               disabled={isLoading}
-              className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+              className="p-2 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] hover:bg-[var(--glass-surface-heavy)] transition-all"
               title="تحديث الإحصائيات"
             >
               <RefreshCw className={`w-4 h-4 text-[var(--nile-teal)] ${isLoading ? 'animate-spin' : ''}`} />
@@ -258,12 +258,12 @@ export function DatabaseSettings() {
 
                 {}
                 <div className="absolute top-full mt-2 w-64 bg-black/90 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
-                  <h4 className="text-white font-bold font-cairo text-sm mb-3 border-b border-white/10 pb-2">قابل للتنظيف</h4>
+                  <h4 className="text-white font-bold font-cairo text-sm mb-3 border-b border-[var(--glass-border)] pb-2">قابل للتنظيف</h4>
                   <ul className="space-y-2 font-cairo text-xs text-gray-300">
                     <li className="flex justify-between"><span>سجلات التدقيق</span><span className="text-red-400 font-bold">{dbStats?.tables?.audit_logs ?? 0}</span></li>
                     <li className="flex justify-between"><span>الورديات</span><span className="text-orange-400 font-bold">{dbStats?.tables?.sessions ?? 0}</span></li>
                     <li className="flex justify-between"><span>طلبات ملغاة</span><span className="text-yellow-400 font-bold">{dbStats?.pendingDeleted ?? 0}</span></li>
-                    <li className="border-t border-white/10 pt-2 flex justify-between text-white">
+                    <li className="border-t border-[var(--glass-border)] pt-2 flex justify-between text-white">
                       <span>المساحة التقديرية المستردة</span>
                       <span className="font-bold text-[var(--nile-teal)]">
                         {(((dbStats?.cleanableCount ?? 0) * 900) / 1024 / 1024).toFixed(2)} MB
@@ -275,13 +275,13 @@ export function DatabaseSettings() {
 
               {}
               <div className="flex-1 grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-black/20 border border-white/5">
+                <div className="flex flex-col gap-1 p-3 rounded-xl bg-black/20 border border-[var(--glass-border)]">
                   <span className="text-[11px] text-gray-400 font-cairo">إجمالي السجلات</span>
                   <span className="text-white font-bold font-inter text-xl">
                     {isLoading ? '...' : (dbStats?.totalRecords ?? 0).toLocaleString()}
                   </span>
                 </div>
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-black/20 border border-white/5">
+                <div className="flex flex-col gap-1 p-3 rounded-xl bg-black/20 border border-[var(--glass-border)]">
                   <span className="text-[11px] text-gray-400 font-cairo">الفواتير المكتملة</span>
                   <span className="text-white font-bold font-inter text-xl">
                     {isLoading ? '...' : (dbStats?.extractedInvoices ?? 0).toLocaleString()}
@@ -308,7 +308,7 @@ export function DatabaseSettings() {
                 <span>المساحة المستخدمة (تقديري)</span>
                 <span>{isLoading ? '...' : `${dbStats?.database.mbUsed ?? 0} MB / ${dbStats?.database.limitMB ?? 500} MB`}</span>
               </div>
-              <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-2 rounded-full bg-[var(--glass-surface)] overflow-hidden">
                 <motion.div
                   className="h-full rounded-full bg-gradient-to-r from-[var(--nile-teal)] to-[var(--royal-gold)]"
                   initial={{ width: 0 }}
@@ -325,7 +325,7 @@ export function DatabaseSettings() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
             {tableHighlights.map(({ key, label, color }) => (
-              <div key={key} className="p-3 rounded-xl bg-white/3 border border-white/5 text-center hover:bg-white/5 transition-colors">
+              <div key={key} className="p-3 rounded-xl bg-white/3 border border-[var(--glass-border)] text-center hover:bg-[var(--glass-surface)] transition-colors">
                 <p className="text-[11px] text-gray-400 font-cairo mb-1">{label}</p>
                 <p className={`text-lg font-bold font-inter ${color}`}>
                   {isLoading ? '—' : (dbStats?.tables?.[key] ?? 0).toLocaleString()}
@@ -389,7 +389,7 @@ export function DatabaseSettings() {
           </div>
 
           {}
-          <div className="mt-6 p-5 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-4">
+          <div className="mt-6 p-5 rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] flex items-start gap-4">
             <CloudMoon className="w-7 h-7 text-[var(--nile-teal)] flex-shrink-0" />
             <div>
               <h4 className="text-white font-bold font-cairo mb-1">منظف البيانات التلقائي</h4>
@@ -406,7 +406,7 @@ export function DatabaseSettings() {
           <h2 className="text-xl font-bold mb-2 font-cairo flex items-center gap-2">
             <Shield className="w-5 h-5 text-[var(--nile-teal)]" /> النسخ الاحتياطي واستعادة البيانات
           </h2>
-          <p className="text-sm text-gray-400 font-cairo border-b border-white/10 pb-6 mb-6">
+          <p className="text-sm text-gray-400 font-cairo border-b border-[var(--glass-border)] pb-6 mb-6">
             قم بتصدير نسخة احتياطية كاملة من بيانات صيدليتك بصيغة JSON أو استيراد بيانات من نظام آخر بشكل آمن.
           </p>
 
@@ -452,7 +452,7 @@ export function DatabaseSettings() {
                   </p>
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-black/20 border border-white/5 text-xs text-gray-500 font-cairo space-y-1">
+              <div className="p-3 rounded-xl bg-black/20 border border-[var(--glass-border)] text-xs text-gray-500 font-cairo space-y-1">
                 <p className="text-white font-bold mb-2">التنسيقات المدعومة:</p>
                 <p>✓ تصدير Pharma-Nile (JSON)</p>
                 <p>✓ تصدير أنظمة خارجية (JSON مع حقول مشابهة)</p>

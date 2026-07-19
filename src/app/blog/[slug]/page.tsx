@@ -194,14 +194,14 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
           </div>
         </div>
 
-        <hr className="border-white/10" />
+        <hr className="border-[var(--glass-border)]" />
 
         {/* Content */}
         <article className="space-y-2">
           {renderContent(post.content)}
         </article>
 
-        <hr className="border-white/10" />
+        <hr className="border-[var(--glass-border)]" />
 
         {/* CTA */}
         <div className="text-center space-y-4 pt-4">

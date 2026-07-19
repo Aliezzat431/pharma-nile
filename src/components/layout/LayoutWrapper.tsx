@@ -178,12 +178,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         }`}>
           <div className="glass-panel w-full max-w-md p-8 border border-amber-500/20 shadow-[0_0_50px_rgba(212,175,55,0.08)] flex flex-col items-center gap-6 animate-in zoom-in duration-300">
             <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/30 animate-pulse">
-              <WifiOff className="w-8 h-8 text-[#D4AF37]" />
+              <WifiOff className="w-8 h-8 text-[var(--royal-gold)]" />
             </div>
             
             <div className="space-y-1">
               <h2 className="text-xl font-bold font-cairo text-[var(--foreground)]">انقطع الاتصال بالإنترنت (وضع الطوارئ)</h2>
-              <p className="text-[10px] text-[#D4AF37] font-bold tracking-wider uppercase font-sans">Cairo Local Mode Active</p>
+              <p className="text-[10px] text-[var(--royal-gold)] font-bold tracking-wider uppercase font-sans">Cairo Local Mode Active</p>
             </div>
 
             <p className="text-[12px] text-[var(--text-muted)] font-cairo leading-relaxed">

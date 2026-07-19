@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 
 
-const COLORS = ['#00CED1', '#D4AF37', '#FF4E4E'];
+const COLORS = ['var(--nile-teal)', 'var(--royal-gold)', '#FF4E4E'];
 
 const ARABIC_MONTHS: Record<string, string> = {
   'January':   'يناير', 'February':  'فبراير', 'March':     'مارس',
@@ -31,7 +31,7 @@ const tl = (v?: number | string | null) => {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass-card p-3 text-right min-w-[160px] bg-black/90 backdrop-blur-md border border-white/10 rounded-xl" dir="rtl">
+    <div className="glass-card p-3 text-right min-w-[160px] bg-black/90 backdrop-blur-md border border-[var(--glass-border)] rounded-xl" dir="rtl">
       <p className="text-xs font-bold text-gray-400 font-cairo mb-2">{label}</p>
       {payload.map((p: any, i: number) => (
         <div key={i} className="flex items-center justify-between gap-3 text-xs font-cairo my-1">
@@ -174,17 +174,17 @@ export default function FinancialsPage() {
         
         <div className="flex gap-3 flex-wrap">
            <div className="flex gap-2">
-              <button onClick={() => window.print()} className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all border border-white/10"><Printer className="w-5 h-5" /></button>
-              <button onClick={handleExportCSV} className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-[#00CED1] transition-all border border-white/10"><FileSpreadsheet className="w-5 h-5" /></button>
+              <button onClick={() => window.print()} className="p-2.5 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 hover:text-white transition-all border border-[var(--glass-border)]"><Printer className="w-5 h-5" /></button>
+              <button onClick={handleExportCSV} className="p-2.5 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 hover:text-[var(--nile-teal)] transition-all border border-[var(--glass-border)]"><FileSpreadsheet className="w-5 h-5" /></button>
            </div>
 
-          <div className="glass-card p-1 flex gap-1 bg-white/5 rounded-xl border border-white/10">
+          <div className="glass-card p-1 flex gap-1 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
             <button onClick={() => setActiveTab('daily')} className={`px-4 py-2 rounded-xl text-sm font-cairo font-bold transition-all ${activeTab === 'daily' ? 'bg-[var(--nile-teal)]/25 text-[color:var(--nile-teal)]' : 'text-gray-400 hover:text-white'}`}>يومي</button>
             <button onClick={() => setActiveTab('monthly')} className={`px-4 py-2 rounded-xl text-sm font-cairo font-bold transition-all ${activeTab === 'monthly' ? 'bg-[var(--royal-gold)]/25 text-[color:var(--royal-gold)]' : 'text-gray-400 hover:text-white'}`}>شهري</button>
           </div>
 
           {activeTab === 'daily' && (
-            <select value={range} onChange={(e) => setRange(Number(e.target.value))} className="glass-panel px-4 py-2 text-sm bg-transparent outline-none font-cairo border border-white/10 rounded-xl">
+            <select value={range} onChange={(e) => setRange(Number(e.target.value))} className="glass-panel px-4 py-2 text-sm bg-transparent outline-none font-cairo border border-[var(--glass-border)] rounded-xl">
               <option value={7} className="bg-[#050505]">آخر 7 أيام</option>
               <option value={30} className="bg-[#050505]">آخر 30 يوم</option>
               <option value={90} className="bg-[#050505]">آخر 3 أشهر</option>
@@ -195,7 +195,7 @@ export default function FinancialsPage() {
 
       {loading ? (
         <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3 min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-[#00CED1]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--nile-teal)]" />
           <p className="font-cairo">جاري تحليل البيانات المالية...</p>
         </div>
       ) : (
@@ -203,12 +203,12 @@ export default function FinancialsPage() {
           {}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: 'إجمالي المبيعات', value: stats.totalSales, icon: Wallet, color: '#00CED1' },
-              { label: 'صافي الأرباح', value: stats.totalProfit, icon: TrendingUp, color: '#D4AF37' },
+              { label: 'إجمالي المبيعات', value: stats.totalSales, icon: Wallet, color: 'var(--nile-teal)' },
+              { label: 'صافي الأرباح', value: stats.totalProfit, icon: TrendingUp, color: 'var(--royal-gold)' },
               { label: 'إجمالي التكاليف', value: stats.totalCost, icon: ArrowDownRight, color: '#FF4E4E' },
               { label: 'عدد العمليات', value: orders.length, icon: BarChart, color: '#94a3b8' }
             ].map((item, i) => (
-              <motion.div key={item.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="glass-panel p-6 relative overflow-hidden group border border-white/5 rounded-2xl bg-white/5">
+              <motion.div key={item.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="glass-panel p-6 relative overflow-hidden group border border-[var(--glass-border)] rounded-2xl bg-[var(--glass-surface)]">
                 <div className="flex justify-between items-start mb-4">
                    <p className="text-gray-400 font-cairo text-sm">{item.label}</p>
                    <item.icon className="w-5 h-5 opacity-40 group-hover:scale-110 transition-transform" style={{ color: item.color }} />
@@ -220,26 +220,26 @@ export default function FinancialsPage() {
 
           {activeTab === 'daily' ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 glass-panel p-8 h-[450px] border border-white/5 rounded-2xl bg-white/5">
+              <div className="lg:col-span-2 glass-panel p-8 h-[450px] border border-[var(--glass-border)] rounded-2xl bg-[var(--glass-surface)]">
                  <h2 className="text-xl font-bold font-cairo mb-8">منحنى الدخل والأرباح</h2>
                  <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={dailyChartData}>
                       <defs>
                         <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#00CED1" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#00CED1" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="var(--nile-teal)" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="var(--nile-teal)" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" />
                       <XAxis dataKey="date" stroke="#444" tick={{ fontSize: 10, fontFamily: 'Cairo' }} />
                       <YAxis stroke="#444" tick={{ fontSize: 10 }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Area type="monotone" dataKey="revenue" name="إيرادات" stroke="#00CED1" fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
-                      <Area type="monotone" dataKey="profit" name="أرباح" stroke="#D4AF37" fillOpacity={0} strokeWidth={2} strokeDasharray="5 5" />
+                      <Area type="monotone" dataKey="revenue" name="إيرادات" stroke="var(--nile-teal)" fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
+                      <Area type="monotone" dataKey="profit" name="أرباح" stroke="var(--royal-gold)" fillOpacity={0} strokeWidth={2} strokeDasharray="5 5" />
                     </AreaChart>
                  </ResponsiveContainer>
               </div>
-              <div className="glass-panel p-8 flex flex-col justify-between border border-white/5 rounded-2xl bg-white/5">
+              <div className="glass-panel p-8 flex flex-col justify-between border border-[var(--glass-border)] rounded-2xl bg-[var(--glass-surface)]">
                  <h2 className="text-xl font-bold font-cairo mb-6">توزيع طرق الدفع</h2>
                  <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
@@ -265,7 +265,7 @@ export default function FinancialsPage() {
               </div>
             </div>
           ) : (
-            <div className="glass-panel p-8 h-[420px] border border-white/5 rounded-2xl bg-white/5">
+            <div className="glass-panel p-8 h-[420px] border border-[var(--glass-border)] rounded-2xl bg-[var(--glass-surface)]">
               <h2 className="text-xl font-bold font-cairo mb-6">الأداء الشهري</h2>
               <ResponsiveContainer width="100%" height="85%">
                 <ReBarChart data={monthlyChartData}>
@@ -274,8 +274,8 @@ export default function FinancialsPage() {
                   <YAxis tick={{ fontSize: 10, fill: '#666' }} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Bar dataKey="revenue" name="الإيرادات" fill="#00CED1" radius={[4,4,0,0]} />
-                  <Bar dataKey="profit" name="الأرباح" fill="#D4AF37" radius={[4,4,0,0]} />
+                  <Bar dataKey="revenue" name="الإيرادات" fill="var(--nile-teal)" radius={[4,4,0,0]} />
+                  <Bar dataKey="profit" name="الأرباح" fill="var(--royal-gold)" radius={[4,4,0,0]} />
                 </ReBarChart>
               </ResponsiveContainer>
             </div>

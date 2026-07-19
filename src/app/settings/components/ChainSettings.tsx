@@ -162,8 +162,8 @@ export function ChainSettings() {
       </AnimatePresence>
 
       {}
-      <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-black/40">
-        <div className="flex items-center gap-4 mb-6 border-b border-white/5 pb-4">
+      <div className="glass-panel p-6 rounded-2xl border border-[var(--glass-border)] bg-black/40">
+        <div className="flex items-center gap-4 mb-6 border-b border-[var(--glass-border)] pb-4">
           <Building2 className="w-8 h-8 text-[var(--nile-teal)]" />
           <div>
             <h2 className="text-xl font-black text-white">{chainName || "سلسلة صيدليات"}</h2>
@@ -186,7 +186,7 @@ export function ChainSettings() {
                 value={chainPassword}
                 onChange={(e) => setChainPassword(e.target.value)}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-11 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm font-sans"
+                className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl py-2.5 pr-11 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm font-sans"
                 placeholder="أدخل كلمة مرور قوية"
               />
             </div>
@@ -210,8 +210,8 @@ export function ChainSettings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {}
-        <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-black/40 h-fit">
-          <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+        <div className="glass-panel p-6 rounded-2xl border border-[var(--glass-border)] bg-black/40 h-fit">
+          <div className="flex items-center gap-3 mb-6 border-b border-[var(--glass-border)] pb-4">
             <PlusCircle className="w-6 h-6 text-[var(--nile-teal)]" />
             <h3 className="text-lg font-bold text-white">إضافة فرع جديد للسلسلة</h3>
           </div>
@@ -224,7 +224,7 @@ export function ChainSettings() {
                 value={newPharmName}
                 onChange={(e) => setNewPharmName(e.target.value)}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm font-cairo"
+                className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm font-cairo"
                 placeholder="صيدلية النيل - فرع القاهرة"
               />
             </div>
@@ -235,7 +235,7 @@ export function ChainSettings() {
                 type="text"
                 value={newPharmAddress}
                 onChange={(e) => setNewPharmAddress(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm font-cairo"
+                className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm font-cairo"
                 placeholder="شارع التسعين، التجمع الخامس"
               />
             </div>
@@ -246,7 +246,7 @@ export function ChainSettings() {
                 type="text"
                 value={newPharmPhone}
                 onChange={(e) => setNewPharmPhone(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm font-sans"
+                className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm font-sans"
                 placeholder="01012345678"
               />
             </div>
@@ -269,8 +269,8 @@ export function ChainSettings() {
         </div>
 
         {}
-        <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-black/40">
-          <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+        <div className="glass-panel p-6 rounded-2xl border border-[var(--glass-border)] bg-black/40">
+          <div className="flex items-center gap-3 mb-6 border-b border-[var(--glass-border)] pb-4">
             <List className="w-6 h-6 text-[var(--nile-teal)]" />
             <h3 className="text-lg font-bold text-white">فروع الصيدليات المسجلة ({pharmacies.length})</h3>
           </div>
@@ -280,7 +280,7 @@ export function ChainSettings() {
               <p className="text-gray-400 text-sm text-center py-8">لا توجد صيدليات مضافة بعد لهذه السلسلة.</p>
             ) : (
               pharmacies.map((p) => (
-                <div key={p.id} className="p-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between hover:bg-white/10 transition-colors">
+                <div key={p.id} className="p-4 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl flex items-center justify-between hover:bg-[var(--glass-surface-heavy)] transition-colors">
                   <div className="space-y-1">
                     <h4 className="font-bold text-white text-sm">{p.name}</h4>
                     <p className="text-xs text-gray-400">{p.address || "بدون عنوان"}</p>

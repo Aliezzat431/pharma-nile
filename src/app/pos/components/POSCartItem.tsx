@@ -34,7 +34,7 @@ export function POSCartItem({
         <div className="z-10 flex-1">
           <h3 className="font-semibold text-white truncate max-w-[200px] font-cairo">{item.name}</h3>
           <div className="flex items-center gap-3 mt-1.5">
-            <div className="flex items-center gap-1 bg-[#050505]/50 border border-white/10 rounded-lg">
+            <div className="flex items-center gap-1 bg-[#050505]/50 border border-[var(--glass-border)] rounded-lg">
               <button
                 onClick={() => {
                   if (item.quantity > 1) {
@@ -43,7 +43,7 @@ export function POSCartItem({
                 }}
                 className="px-2 py-1 text-gray-400 hover:text-white transition-colors text-sm font-bold"
               >−</button>
-              <span className="text-sm text-[#00CED1] font-bold font-cairo min-w-[24px] text-center">{item.quantity}</span>
+              <span className="text-sm text-[var(--nile-teal)] font-bold font-cairo min-w-[24px] text-center">{item.quantity}</span>
               <button
                 onClick={() => {
                   if (item.quantity < totalStock) {
@@ -63,7 +63,7 @@ export function POSCartItem({
                   dispatch(updateUnit({ id: item.id, unit: newUnit }));
                 }
               }}
-              className="bg-[#050505]/50 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-white outline-none font-cairo focus:border-[#00CED1]/50"
+              className="bg-[#050505]/50 border border-[var(--glass-border)] rounded px-1.5 py-0.5 text-[10px] text-white outline-none font-cairo focus:border-[var(--nile-teal)]/50"
             >
               {item.availableUnits?.map((u: string) => (
                 <option key={u} value={u}>{u}</option>
@@ -75,24 +75,24 @@ export function POSCartItem({
           <span className="font-bold text-white text-lg font-cairo ml-2">{Number(itemTotal.toFixed(2))} ج.م</span>
           <button
             onClick={() => onShowBatchModal(item)}
-            className="text-gray-400 hover:text-[#00CED1] transition-colors bg-white/5 p-2 rounded-lg"
+            className="text-gray-400 hover:text-[var(--nile-teal)] transition-colors bg-[var(--glass-surface)] p-2 rounded-lg"
             title="توزيع التشغيلات"
           >
             <Package className="w-5 h-5" />
           </button>
           <button
             onClick={() => dispatch(removeFromCart(item.id))}
-            className="text-gray-500 hover:text-red-400 transition-colors bg-white/5 p-2 rounded-lg"
+            className="text-gray-500 hover:text-red-400 transition-colors bg-[var(--glass-surface)] p-2 rounded-lg"
           >
             <Trash2 className="w-5 h-5" />
           </button>
         </div>
-        <div className="absolute left-0 top-0 w-1 h-full bg-[#00CED1] opacity-50"></div>
+        <div className="absolute left-0 top-0 w-1 h-full bg-[var(--nile-teal)] opacity-50"></div>
       </div>
 
       {hasMultipleBatches && (
-        <div className="px-4 pb-3 pt-1 border-t border-white/5">
-          <p className="text-[10px] text-[#D4AF37] font-cairo mb-1.5 flex items-center gap-1">
+        <div className="px-4 pb-3 pt-1 border-t border-[var(--glass-border)]">
+          <p className="text-[10px] text-[var(--royal-gold)] font-cairo mb-1.5 flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
             </svg>
@@ -100,15 +100,15 @@ export function POSCartItem({
           </p>
           {item.batchDistributions.map((d: any, idx: number) => (
             <div key={d.batchId} className="flex items-center justify-between text-[11px] font-cairo py-1 px-2 rounded-md mb-0.5" style={{background: idx === 0 ? 'rgba(0,206,209,0.08)' : 'rgba(212,175,55,0.06)'}}>
-              <span className="text-gray-400">
+              <span className="text-[var(--text-muted)]">
                 تشغيلة {idx + 1}
                 <span className="text-gray-600 mx-1">•</span>
-                <span className="text-gray-500">{new Date(d.expiry).toLocaleDateString('ar-EG')}</span>
+                <span className="text-[var(--text-inactive)]">{new Date(d.expiry).toLocaleDateString('ar-EG')}</span>
               </span>
               <span dir="ltr" className="font-mono">
-                <span className={idx === 0 ? 'text-[#00CED1]' : 'text-[#D4AF37]'}>{d.quantity}</span>
+                <span className={idx === 0 ? 'text-[var(--nile-teal)]' : 'text-[var(--royal-gold)]'}>{d.quantity}</span>
                 <span className="text-gray-600"> × </span>
-                <span className={idx === 0 ? 'text-[#00CED1]' : 'text-[#D4AF37]'}>{d.price}</span>
+                <span className={idx === 0 ? 'text-[var(--nile-teal)]' : 'text-[var(--royal-gold)]'}>{d.price}</span>
                 <span className="text-gray-600"> = </span>
                 <span className="text-white font-bold">{Number((d.quantity * d.price).toFixed(2))}</span>
               </span>

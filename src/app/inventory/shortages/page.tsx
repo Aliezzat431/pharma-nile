@@ -107,7 +107,7 @@ export default function ShortagesPage() {
         <button 
           onClick={fetchShortages}
           disabled={loading || !pharmacyId}
-          className="glass-card px-5 py-2.5 flex items-center justify-center gap-3 hover:bg-white/5 transition-colors font-cairo disabled:opacity-50"
+          className="glass-card px-5 py-2.5 flex items-center justify-center gap-3 hover:bg-[var(--glass-surface)] transition-colors font-cairo disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
           تحديث القائمة
@@ -124,9 +124,9 @@ export default function ShortagesPage() {
             <p className="text-gray-400 text-sm font-cairo mb-2">أصناف تحت حد الطلب (&lt; 10)</p>
             <p className="text-3xl font-bold text-yellow-400">{stats.warning} صنف</p>
          </div>
-         <div className="glass-panel p-6 border-[#00CED1]/20 bg-[#00CED1]/5">
+         <div className="glass-panel p-6 border-[var(--nile-teal)]/20 bg-[var(--nile-teal)]/5">
             <p className="text-gray-400 text-sm font-cairo mb-2">إجمالي الأصناف المتأثرة</p>
-            <p className="text-3xl font-bold text-[#00CED1]">{stats.total} صنف</p>
+            <p className="text-3xl font-bold text-[var(--nile-teal)]">{stats.total} صنف</p>
          </div>
       </div>
 
@@ -153,11 +153,11 @@ export default function ShortagesPage() {
       )}
 
       {}
-      <div className="glass-panel overflow-hidden border-white/5">
+      <div className="glass-panel overflow-hidden border-[var(--glass-border)]">
          <div className="overflow-x-auto">
             <table className="w-full text-right border-collapse">
                <thead>
-                  <tr className="border-b border-white/10 bg-white/5 font-cairo text-gray-400">
+                  <tr className="border-b border-[var(--glass-border)] bg-[var(--glass-surface)] font-cairo text-gray-400">
                      <th className="p-5 font-semibold">اسم الصنف</th>
                      <th className="p-5 font-semibold">الكمية الحالية</th>
                      <th className="p-5 font-semibold">السعر الحالي</th>
@@ -169,7 +169,7 @@ export default function ShortagesPage() {
                   {loading && shortages.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-20 text-center text-gray-500 font-cairo">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#00CED1]" />
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[var(--nile-teal)]" />
                         جاري تحميل البيانات...
                       </td>
                     </tr>
@@ -186,7 +186,7 @@ export default function ShortagesPage() {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(i * 0.04, 0.3) }}
-                        className="border-b border-white/5 hover:bg-white/5 transition-colors group"
+                        className="border-b border-[var(--glass-border)] hover:bg-[var(--glass-surface)] transition-colors group"
                       >
                          <td className="p-5 font-bold text-white font-cairo group-hover:text-red-400 transition-colors">
                            {item.name}
@@ -219,7 +219,7 @@ export default function ShortagesPage() {
                                <Link 
                                  href={`/inventory/${item.product_id}`} 
                                  title="عرض تفاصيل التشغيلات"
-                                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                                 className="p-2 rounded-lg bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 hover:text-white transition-colors"
                                >
                                   <ArrowLeftRight className="w-4 h-4" />
                                </Link>
@@ -234,7 +234,7 @@ export default function ShortagesPage() {
          
          {}
          {!loading && filteredShortages.length > 0 && (
-            <div className="p-4 border-t border-white/5">
+            <div className="p-4 border-t border-[var(--glass-border)]">
                <Pagination
                  currentPage={currentPage}
                  totalPages={totalPages}

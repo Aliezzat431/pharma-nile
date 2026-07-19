@@ -11,7 +11,7 @@ export function TopProductsChart({ topProductsData }: TopProductsChartProps) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="lg:col-span-3 glass-panel p-6 h-[400px] flex flex-col">
       <h2 className="text-lg font-bold font-cairo mb-4 flex items-center gap-2">
-        <BarChart3 className="w-5 h-5 text-[#00CED1]" /> المنتجات الأكثر مبيعاً
+        <BarChart3 className="w-5 h-5 text-[var(--nile-teal)]" /> المنتجات الأكثر مبيعاً
       </h2>
       <div className="flex-1 w-full min-h-0">
         {topProductsData.length > 0 ? (
@@ -25,9 +25,9 @@ export function TopProductsChart({ topProductsData }: TopProductsChartProps) {
                 cursor={{fill: '#ffffff05'}}
                 formatter={(val: any) => [val + " علبة/قطعة", "الكمية المباعة"]}
               />
-              <Bar dataKey="qty" fill="#00CED1" radius={[0, 4, 4, 0]} barSize={24}>
+              <Bar dataKey="qty" fill="var(--nile-teal)" radius={[0, 4, 4, 0]} barSize={24}>
                 {topProductsData.map((entry, index) => (
-                   <Cell key={`cell-${index}`} fill={index === 0 ? '#00CED1' : '#D4AF37'} opacity={1 - index * 0.15} />
+                   <Cell key={`cell-${index}`} fill={index === 0 ? 'var(--nile-teal)' : 'var(--royal-gold)'} opacity={1 - index * 0.15} />
                 ))}
               </Bar>
             </BarChart>

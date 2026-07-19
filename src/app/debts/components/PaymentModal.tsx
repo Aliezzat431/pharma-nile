@@ -46,10 +46,10 @@ export function PaymentModal({ isOpen, onClose, selectedDebtor, onRecordPayment 
       />
       <motion.div 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-        className="relative w-full max-w-md glass-panel p-8 bg-[#0a0a0a] border border-white/10 rounded-2xl z-10 text-right"
+        className="relative w-full max-w-md glass-panel p-8 bg-[#0a0a0a] border border-[var(--glass-border)] rounded-2xl z-10 text-right"
       >
         <h2 className="text-2xl font-bold font-cairo mb-1 text-white">تسجيل عملية سداد</h2>
-        <p className="text-gray-400 font-cairo text-sm mb-6">العميل: <span className="text-[#00CED1] font-bold">{selectedDebtor.name}</span></p>
+        <p className="text-gray-400 font-cairo text-sm mb-6">العميل: <span className="text-[var(--nile-teal)] font-bold">{selectedDebtor.name}</span></p>
         
         <form onSubmit={handleSubmitPayment(onSubmit)} className="space-y-6">
            <div className="space-y-2">
@@ -60,8 +60,8 @@ export function PaymentModal({ isOpen, onClose, selectedDebtor, onRecordPayment 
                 step="0.01" 
                 {...registerPayment('amount')}
                 className={cn(
-                  "w-full bg-white/5 border outline-none rounded-xl p-3 pr-4 pl-12 text-2xl font-bold text-[#00CED1] font-sans text-left",
-                  errorsPayment.amount ? "border-red-500" : "border-white/10"
+                  "w-full bg-[var(--glass-surface)] border outline-none rounded-xl p-3 pr-4 pl-12 text-2xl font-bold text-[var(--nile-teal)] font-sans text-left",
+                  errorsPayment.amount ? "border-red-500" : "border-[var(--glass-border)]"
                 )}
                 placeholder="0.00" 
               />
@@ -76,7 +76,7 @@ export function PaymentModal({ isOpen, onClose, selectedDebtor, onRecordPayment 
               <button 
                 type="button"
                 onClick={() => setPaymentValue('payment_type', 'partial')}
-                className={`py-3 rounded-xl font-cairo text-sm border transition-all ${currentPaymentType === 'partial' ? 'bg-[#00CED1]/10 border-[#00CED1] text-[#00CED1] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                className={`py-3 rounded-xl font-cairo text-sm border transition-all ${currentPaymentType === 'partial' ? 'bg-[var(--nile-teal)]/10 border-[var(--nile-teal)] text-[var(--nile-teal)] font-bold' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-gray-400'}`}
               >سداد جزئي</button>
               <button 
                 type="button"
@@ -84,7 +84,7 @@ export function PaymentModal({ isOpen, onClose, selectedDebtor, onRecordPayment 
                   setPaymentValue('payment_type', 'full');
                   setPaymentValue('amount', selectedDebtor.total_debt);
                 }}
-                className={`py-3 rounded-xl font-cairo text-sm border transition-all ${currentPaymentType === 'full' ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] font-bold' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                className={`py-3 rounded-xl font-cairo text-sm border transition-all ${currentPaymentType === 'full' ? 'bg-[var(--royal-gold)]/10 border-[var(--royal-gold)] text-[var(--royal-gold)] font-bold' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-gray-400'}`}
               >كلي (تصفية الحساب)</button>
             </div>
             {errorsPayment.payment_type && <p className="text-red-400 text-xs font-cairo">{errorsPayment.payment_type.message}</p>}
@@ -95,8 +95,8 @@ export function PaymentModal({ isOpen, onClose, selectedDebtor, onRecordPayment 
             <textarea 
               {...registerPayment('note')}
               className={cn(
-                "w-full bg-white/5 border outline-none rounded-xl p-3 font-cairo resize-none h-20 text-white focus:border-[#00CED1] text-sm",
-                errorsPayment.note ? "border-red-500" : "border-white/10"
+                "w-full bg-[var(--glass-surface)] border outline-none rounded-xl p-3 font-cairo resize-none h-20 text-white focus:border-[var(--nile-teal)] text-sm",
+                errorsPayment.note ? "border-red-500" : "border-[var(--glass-border)]"
               )}
               placeholder="مثال: استلام نقدي بموجب إيصال" 
             />
@@ -104,8 +104,8 @@ export function PaymentModal({ isOpen, onClose, selectedDebtor, onRecordPayment 
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="submit" className="flex-1 bg-[#00CED1] text-black py-3 rounded-xl font-bold font-cairo hover:bg-[#00CED1]/90 transition-colors">تأكيد السداد</button>
-            <button type="button" onClick={onClose} className="px-4 bg-white/5 border border-white/10 text-white rounded-xl font-cairo hover:bg-white/10">إلغاء</button>
+            <button type="submit" className="flex-1 bg-[var(--nile-teal)] text-black py-3 rounded-xl font-bold font-cairo hover:bg-[var(--nile-teal)]/90 transition-colors">تأكيد السداد</button>
+            <button type="button" onClick={onClose} className="px-4 bg-[var(--glass-surface)] border border-[var(--glass-border)] text-white rounded-xl font-cairo hover:bg-[var(--glass-surface-heavy)]">إلغاء</button>
           </div>
         </form>
       </motion.div>

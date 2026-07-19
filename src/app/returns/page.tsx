@@ -245,7 +245,7 @@ export default function ReturnsPage() {
             Sales Returns · Last {preferences?.returnDaysLimit || 14} Days
           </motion.p>
         </div>
-        <div className="glass-card px-5 py-3 flex items-center gap-3 font-cairo border border-white/10 hover:border-white/20 transition-all">
+        <div className="glass-card px-5 py-3 flex items-center gap-3 font-cairo border border-[var(--glass-border)] hover:border-white/20 transition-all">
           <Calendar className="w-4 h-4 text-[var(--royal-gold)]" />
           <span className="text-sm text-[var(--text-secondary)]">آخر {preferences?.returnDaysLimit || 14} يوم</span>
           <span className="text-xl font-black text-white">{orders.length}</span>
@@ -265,7 +265,7 @@ export default function ReturnsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: stat.delay }}
             whileHover={{ y: -6, scale: 1.02 }}
-            className="glass-card p-6 flex items-center gap-5 relative overflow-hidden group border border-white/10 hover:border-white/20 transition-all hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]"
+            className="glass-card p-6 flex items-center gap-5 relative overflow-hidden group border border-[var(--glass-border)] hover:border-white/20 transition-all hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className={`w-14 h-14 rounded-2xl ${stat.glow} ${stat.color} flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-6 shadow-xl relative z-10`}>
@@ -294,7 +294,7 @@ export default function ReturnsPage() {
       <div ref={listRef} className="space-y-3">
         {loading ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--royal-gold)]" />
             <p className="font-cairo">جاري تحميل الفواتير...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
@@ -314,15 +314,15 @@ export default function ReturnsPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="glass-card overflow-hidden transition-all border-white/5"
+                className="glass-card overflow-hidden transition-all border-[var(--glass-border)]"
               >
                 <div
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                  className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
+                  className="p-5 flex items-center justify-between cursor-pointer hover:bg-[var(--glass-surface)] transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#D4AF37]/10">
-                      <ShoppingBag className="w-6 h-6 text-[#D4AF37]" />
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[var(--royal-gold)]/10">
+                      <ShoppingBag className="w-6 h-6 text-[var(--royal-gold)]" />
                     </div>
                     <div>
                       <div className="flex items-center gap-3">
@@ -331,7 +331,7 @@ export default function ReturnsPage() {
                       <p className="text-xs text-gray-500 font-cairo mt-1 flex items-center gap-2">
                         <Calendar className="w-3 h-3" />
                         {new Date(order.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        <span className="text-[#00CED1]"> • {getTimeAgo(order.created_at)}</span>
+                        <span className="text-[var(--nile-teal)]"> • {getTimeAgo(order.created_at)}</span>
                       </p>
                     </div>
                   </div>
@@ -339,11 +339,11 @@ export default function ReturnsPage() {
                   <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
                     <div className="text-left">
                       <p className="text-[10px] text-gray-500 font-cairo mb-0.5">الإجمالي</p>
-                      <p className="text-lg font-bold font-cairo text-[#D4AF37]" dir="ltr">
+                      <p className="text-lg font-bold font-cairo text-[var(--royal-gold)]" dir="ltr">
                         {Number(order.total).toLocaleString('ar-EG')} ج.م
                       </p>
                     </div>
-                    <div className="text-gray-400">
+                    <div className="text-[var(--text-muted)]">
                       <span className="text-[10px] font-cairo">{order.order_items.length} أصناف</span>
                     </div>
                   </div>
@@ -358,13 +358,13 @@ export default function ReturnsPage() {
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="border-t border-white/5 bg-black/5">
+                      <div className="border-t border-[var(--glass-border)] bg-black/5">
                         <div className="p-5">
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {order.order_items.map((item) => (
                               <div key={item.id} className="glass-card p-4 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-[#00CED1]/10 flex items-center justify-center shrink-0">
-                                  <Package className="w-5 h-5 text-[#00CED1]" />
+                                <div className="w-10 h-10 rounded-lg bg-[var(--nile-teal)]/10 flex items-center justify-center shrink-0">
+                                  <Package className="w-5 h-5 text-[var(--nile-teal)]" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-bold text-foreground truncate font-cairo">{item.name}</p>

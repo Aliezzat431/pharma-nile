@@ -185,7 +185,7 @@ export default function LoginPage() {
         initial={{ opacity: 0, y: 50, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
-        className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 border border-white/10 bg-black/60 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
+        className="w-full max-w-md p-8 glass-panel rounded-3xl relative z-10 border border-[var(--glass-border)] bg-black/60 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
       >
         <div className="text-center mb-10">
           <motion.div 
@@ -347,7 +347,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   dir="ltr"
-                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-11 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
+                  className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl py-2.5 pr-11 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
                   placeholder="admin@pharmacy.com"
                 />
               </div>
@@ -368,7 +368,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   dir="ltr"
-                  className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pr-11 pl-11 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
+                  className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl py-2.5 pr-11 pl-11 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans disabled:opacity-50"
                   placeholder="••••••••"
                 />
                 <button
@@ -436,11 +436,11 @@ export default function LoginPage() {
           </form>
         )}
 
-        <div className="mt-8 pt-6 border-t border-white/5 text-center flex flex-col gap-3">
+        <div className="mt-8 pt-6 border-t border-[var(--glass-border)] text-center flex flex-col gap-3">
           {isDeveloperMode ? (
             <button
               onClick={() => setIsDeveloperMode(false)}
-              className="w-full py-3 rounded-2xl font-bold bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 transition-all text-sm flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-2xl font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] text-gray-300 hover:bg-[var(--glass-surface-heavy)] transition-all text-sm flex items-center justify-center gap-2"
             >
               العودة لتسجيل دخول الموظفين
             </button>
@@ -450,7 +450,7 @@ export default function LoginPage() {
                 <p className="text-sm text-gray-400 mb-2">ليس لديك حساب؟</p>
                 <Link
                   href="/auth/register"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[var(--nile-teal)] font-medium hover:bg-white/10 transition-all text-sm"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--nile-teal)] font-medium hover:bg-[var(--glass-surface-heavy)] transition-all text-sm"
                 >
                   <UserPlus className="w-4 h-4" />
                   إنشاء حساب جديد

@@ -151,7 +151,7 @@ export function VirtualReceipt({
           }}
         >
           {}
-          <div className="h-3 bg-gradient-to-r from-[#D4AF37] to-[#f2cd56]"></div>
+          <div className="h-3 bg-gradient-to-r from-[var(--royal-gold)] to-[#f2cd56]"></div>
           
           <div className="p-6 font-mono text-xs text-zinc-800 space-y-4">
             
@@ -237,7 +237,7 @@ export function VirtualReceipt({
           
           <div className="text-right space-y-2 mb-2">
             <h2 className="text-2xl font-bold text-white flex items-center justify-start gap-2">
-              <ShieldCheck className="w-7 h-7 text-[#00CED1]" /> تم تسجيل الفاتورة!
+              <ShieldCheck className="w-7 h-7 text-[var(--nile-teal)]" /> تم تسجيل الفاتورة!
             </h2>
             <p className="text-zinc-400 text-sm">
               تم إرسال الطلب بنجاح إلى النظام السحابي وتحديث الأرصدة والتشغيلات. اختر إجراء لمتابعة العمل.
@@ -247,7 +247,7 @@ export function VirtualReceipt({
           {}
           <button
             onClick={handlePrint}
-            className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#00a2a5] text-white font-bold hover:shadow-[0_0_20px_rgba(0,206,209,0.4)] flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 group"
+            className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-[var(--nile-teal)] to-[#00a2a5] text-white font-bold hover:shadow-[0_0_20px_rgba(0,206,209,0.4)] flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 group"
           >
             <Printer className="w-5 h-5 group-hover:animate-bounce" />
             <span>طباعة الفاتورة الفورية (Ctrl+P)</span>
@@ -256,18 +256,18 @@ export function VirtualReceipt({
           {}
           <button
             onClick={handleUndoAndEdit}
-            className="w-full py-3.5 px-6 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/45 text-[#D4AF37] font-semibold hover:bg-[#D4AF37]/25 flex items-center justify-center gap-3 transition-colors"
+            className="w-full py-3.5 px-6 rounded-xl bg-[var(--royal-gold)]/15 border border-[var(--royal-gold)]/45 text-[var(--royal-gold)] font-semibold hover:bg-[var(--royal-gold)]/25 flex items-center justify-center gap-3 transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             <span>إلغاء البيع وإرجاع المنتجات للسلة</span>
           </button>
 
-          <div className="h-[1px] bg-white/10 my-1"></div>
+          <div className="h-[1px] bg-[var(--glass-surface-heavy)] my-1"></div>
 
           {}
           <button
             onClick={onClose}
-            className="w-full py-3 px-6 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 flex items-center justify-center gap-2 transition-colors"
+            className="w-full py-3 px-6 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] text-white font-medium hover:bg-[var(--glass-surface-heavy)] flex items-center justify-center gap-2 transition-colors"
           >
             <span>متابعة معاملة جديدة</span>
             <ChevronLeft className="w-4 h-4" />

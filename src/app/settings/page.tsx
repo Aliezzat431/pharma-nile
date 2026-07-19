@@ -246,18 +246,18 @@ export default function Settings() {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full text-right px-4 py-3.5 rounded-xl font-medium flex items-center gap-3 font-cairo transition-all duration-300 relative overflow-hidden group
                 ${activeTab === tab.id
-                  ? 'bg-white/10 text-white border border-white/20 shadow-lg'
-                  : 'text-gray-400 hover:bg-white/5 border border-transparent hover:text-gray-200'
+                  ? 'bg-[var(--glass-surface-heavy)] text-white border border-white/20 shadow-lg'
+                  : 'text-gray-400 hover:bg-[var(--glass-surface)] border border-transparent hover:text-gray-200'
                 }
               `}
             >
               {activeTab === tab.id && (
                 <motion.div 
                   layoutId="activeTabIndicator" 
-                  className="absolute left-0 top-0 bottom-0 w-1 bg-[#00CED1] rounded-r" 
+                  className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--nile-teal)] rounded-r" 
                 />
               )}
-              <tab.icon className={`w-5 h-5 transition-colors ${activeTab === tab.id ? 'text-[#00CED1]' : 'group-hover:text-[#00CED1]/70'}`} />
+              <tab.icon className={`w-5 h-5 transition-colors ${activeTab === tab.id ? 'text-[var(--nile-teal)]' : 'group-hover:text-[var(--nile-teal)]/70'}`} />
               {tab.label}
             </button>
           ))}
@@ -300,16 +300,16 @@ export default function Settings() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-4xl bg-[#111] border border-white/10 rounded-2xl p-6 shadow-2xl overflow-hidden"
+              className="relative w-full max-w-4xl bg-[#111] border border-[var(--glass-border)] rounded-2xl p-6 shadow-2xl overflow-hidden"
             >
-              <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+              <div className="flex items-center justify-between mb-6 border-b border-[var(--glass-border)] pb-4">
                 <h2 className="text-2xl font-bold font-cairo flex items-center gap-3">
-                  <Palette className="w-6 h-6 text-[#00CED1]" />
+                  <Palette className="w-6 h-6 text-[var(--nile-teal)]" />
                   مكتبة الأنماط المتقدمة
                 </h2>
                 <button 
                   onClick={() => setIsThemeModalOpen(false)} 
-                  className="text-gray-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-xl"
+                  className="text-gray-400 hover:text-white transition-colors bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] p-2 rounded-xl"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -322,19 +322,19 @@ export default function Settings() {
                     onClick={() => handleThemeChange(themeItem.id)}
                     className={`flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all group ${
                       theme === themeItem.id
-                        ? 'border-[#00CED1] bg-[#00CED1]/10'
-                        : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'
+                        ? 'border-[var(--nile-teal)] bg-[var(--nile-teal)]/10'
+                        : 'border-[var(--glass-border)] bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] hover:border-white/20'
                     }`}
                   >
-                    <div className={`w-full h-24 rounded-xl border flex flex-col gap-2 p-3 ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-gray-100 border-gray-300' : 'bg-[#050505] border-white/10'}`}>
-                      <div className={`w-full h-3 rounded ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-black/20' : 'bg-white/20'}`} />
+                    <div className={`w-full h-24 rounded-xl border flex flex-col gap-2 p-3 ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-gray-100 border-gray-300' : 'bg-[#050505] border-[var(--glass-border)]'}`}>
+                      <div className={`w-full h-3 rounded ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-[var(--surface-overlay)]' : 'bg-white/20'}`} />
                       <div className={`w-2/3 h-3 rounded ${themeItem.color}`} />
-                      <div className={`w-1/2 h-2 rounded mt-auto ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-black/10' : 'bg-white/10'}`} />
+                      <div className={`w-1/2 h-2 rounded mt-auto ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-black/10' : 'bg-[var(--glass-surface-heavy)]'}`} />
                     </div>
 
                     <div className="flex flex-col items-center gap-1 text-center">
-                      <div className={`flex items-center gap-2 font-bold font-cairo ${theme === themeItem.id ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
-                        <themeItem.icon className={`w-5 h-5 ${theme === themeItem.id ? 'text-[#00CED1]' : 'text-gray-400 group-hover:text-[#00CED1]'}`} />
+                      <div className={`flex items-center gap-2 font-bold font-cairo ${theme === themeItem.id ? 'text-[var(--text-primary)]' : 'text-gray-300 group-hover:text-white'}`}>
+                        <themeItem.icon className={`w-5 h-5 ${theme === themeItem.id ? 'text-[var(--nile-teal)]' : 'text-gray-400 group-hover:text-[var(--nile-teal)]'}`} />
                         {themeItem.label}
                       </div>
                       <span className="text-xs text-gray-500 font-cairo">{themeItem.desc}</span>

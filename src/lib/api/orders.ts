@@ -35,6 +35,8 @@ export async function processCheckout(
     throw new Error('Validation Error: Total order amount must be a valid positive number.');
   }
 
+  let calculatedSafeTotal = 0;
+
   for (const item of cart) {
     if (item.quantity <= 0 || !Number.isInteger(item.quantity)) {
       throw new Error(`Validation Error: Quantity for '${item.name}' must be a valid whole number greater than zero.`);
@@ -50,22 +52,34 @@ export async function processCheckout(
   const productIds = [...new Set(cart.map(i => i.id))];
   const { data: allBatches } = await supabase
     .from('batches')
-    .select('product_id, quantity')
+    .select('id, product_id, quantity, sale_price')
     .eq('pharmacy_id', pharmacyId)
     .in('product_id', productIds);
 
-  let hasShortage = false;
   for (const item of cart) {
-    const available = (allBatches || [])
-      .filter(b => b.product_id === item.id)
-      .reduce((sum, b) => sum + Number(b.quantity), 0);
+    const productBatches = (allBatches || []).filter(b => b.product_id === item.id);
+    const available = productBatches.reduce((sum, b) => sum + Number(b.quantity), 0);
     
     if (item.quantity > available) {
-      hasShortage = true;
-      
+      throw new Error(`خطأ أمني: الرصيد المسجل للمنتج ${item.name} غير كافي. تم إيقاف المعاملة لتجنب إفساد المخزون.`);
     }
+
+    
+    const validPrices = productBatches.map(b => b.sale_price);
+    if (validPrices.length > 0 && !validPrices.includes(item.price)) {
+      if (item.price === 0 && paymentMethod === 'sadqah') {
+        
+      } else {
+        throw new Error(`تلاعب في الأسعار (Tamper Alert): السعر المرسل للمنتج ${item.name} لا يطابق أي تسعيرة موثقة بالخوادم.`);
+      }
+    }
+
+    calculatedSafeTotal += (item.price * item.quantity);
   }
 
+  if (Math.abs(calculatedSafeTotal - total) > 0.1 && paymentMethod !== 'sadqah') {
+    throw new Error('تلاعب في الإجمالي: تم حظر تمرير الفاتورة بسبب تفاوت إجمالي السلة عن البيانات المعتمدة.');
+  }
 
   const rpcCart = cart.map(item => ({
     product_id: item.id,
@@ -82,140 +96,24 @@ export async function processCheckout(
     }))
   }));
 
+  
   const { data: rpcResult, error: rpcError } = await supabase.rpc('fast_checkout', {
     p_pharmacy_id:    pharmacyId,
     p_user_id:        user.id,
     p_cart:           rpcCart,
-    p_total:          total,
+    p_total:          calculatedSafeTotal,
     p_payment_method: paymentMethod,
     p_customer_id:    customerId || null,
   });
 
   if (rpcError) {
-    console.error('fast_checkout RPC failed, falling back to JS checkout:', rpcError);
-    return await _jsCheckoutFallback(cart, total, paymentMethod, customerId, pharmacyId);
+    console.error('[ACID CHECKOUT FAILED]', rpcError);
+    throw new Error(`فشل تام في المعاملة: حدث خطأ في الخوادم ولم يتم تسجيل الفاتورة لتجنب تلف المخزون.`);
   }
 
   return { id: rpcResult.order_id, total: rpcResult.total };
 }
 
-
-async function _jsCheckoutFallback(
-  cart: CartItem[],
-  total: number,
-  paymentMethod: 'cash' | 'debt' | 'sadqah',
-  customerId: string | undefined,
-  pharmacyId: string
-) {
-  let costTotal = 0;
-  let revenueTotal = 0;
-  for (const item of cart) {
-    if (item.batchDistributions && item.batchDistributions.length > 0) {
-      for (const dist of item.batchDistributions) {
-        costTotal    += (dist.purchasePrice || 0) * dist.quantity;
-        revenueTotal += dist.price * dist.quantity;
-      }
-    } else {
-      costTotal    += (item.costPrice || 0) * item.quantity;
-      revenueTotal += item.price * item.quantity;
-    }
-  }
-  const finalTotal  = revenueTotal > 0 ? revenueTotal : total;
-  const profitTotal = finalTotal - costTotal;
-
-  const orderBase = {
-    total: finalTotal,
-    cost_total: costTotal,
-    profit_total: profitTotal,
-    customer_id: customerId || null,
-    payment_method: paymentMethod,
-    status: 'completed'
-  };
-
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .insert([{ ...orderBase, pharmacy_id: pharmacyId }])
-    .select()
-    .maybeSingle(); 
-
-  if (orderError || !order) throw new Error('Failed to create order');
-
-  if (paymentMethod === 'debt' && customerId) {
-    const { data: customer } = await supabase.from('customers').select('total_debt').eq('id', customerId).eq('pharmacy_id', pharmacyId).maybeSingle();
-    if (customer) {
-      const safeDebt = Math.max(0, Number(customer.total_debt || 0) + finalTotal);
-      await supabase.from('customers').update({ total_debt: safeDebt }).eq('id', customerId).eq('pharmacy_id', pharmacyId);
-    }
-  }
-
-  
-  const { data: settings } = await supabase
-    .from('pharmacy_settings')
-    .select('inventory_method')
-    .eq('pharmacy_id', pharmacyId)
-    .maybeSingle();
-  
-  const method = settings?.inventory_method || 'FEFO';
-
-  for (const item of cart) {
-    let remainingToDeduct = item.quantity;
-
-    if (item.batchDistributions && item.batchDistributions.length > 0) {
-      for (const dist of item.batchDistributions) {
-        if (dist.quantity <= 0 || remainingToDeduct <= 0) continue;
-        const deduction = Math.min(dist.quantity, remainingToDeduct);
-        const { data: explicitBatch } = await supabase.from('batches').select('id, quantity').eq('id', dist.batchId).eq('pharmacy_id', pharmacyId).maybeSingle();
-        if (explicitBatch) {
-          await supabase.from('order_items').insert([{ order_id: order.id, product_id: item.id, batch_id: explicitBatch.id, name: item.name, price: dist.price, quantity: deduction, unit: item.unit, pharmacy_id: pharmacyId }]);
-          await supabase.from('batches').update({ quantity: explicitBatch.quantity - deduction }).eq('id', explicitBatch.id).eq('pharmacy_id', pharmacyId);
-          remainingToDeduct -= deduction;
-        }
-      }
-    }
-
-    if (remainingToDeduct > 0) {
-      let query = supabase.from('batches').select('*').eq('product_id', item.id).eq('pharmacy_id', pharmacyId).gt('quantity', 0);
-      
-      if (method === 'FEFO') {
-        query = query.order('expiry_date', { ascending: true });
-      } else if (method === 'FIFO') {
-        query = query.order('created_at', { ascending: true });
-      } else if (method === 'LIFO') {
-        query = query.order('created_at', { ascending: false });
-      }
-
-      const { data: batches } = await query;
-      if (batches) {
-        for (const batch of batches) {
-          if (remainingToDeduct <= 0) break;
-          const deduction = Math.min(batch.quantity, remainingToDeduct);
-          await supabase.from('order_items').insert([{ order_id: order.id, product_id: item.id, batch_id: batch.id, name: item.name, price: item.price, quantity: deduction, unit: item.unit, pharmacy_id: pharmacyId }]);
-          await supabase.from('batches').update({ quantity: batch.quantity - deduction }).eq('id', batch.id).eq('pharmacy_id', pharmacyId);
-          remainingToDeduct -= deduction;
-        }
-      }
-      
-      if (remainingToDeduct > 0) {
-        
-        await supabase.from('order_items').insert([{ 
-          order_id: order.id, 
-          product_id: item.id, 
-          batch_id: null, 
-          name: item.name + ' (بيع عجز صفري)', 
-          price: item.price, 
-          quantity: remainingToDeduct, 
-          unit: item.unit, 
-          pharmacy_id: pharmacyId 
-        }]);
-        
-        
-        await supabase.from('orders').update({ notes: 'يحتوي على بيع من العجز' }).eq('id', order.id).eq('pharmacy_id', pharmacyId);
-      }
-    }
-  }
-
-  return order;
-}
 
 export async function getRecentOrders(days: number = 15, pharmacyId: string) {
   const cutoff = new Date();
@@ -244,67 +142,16 @@ export async function processReturn(orderId: string) {
   const pharmacyId = user?.user_metadata?.pharmacy_id;
   if (!pharmacyId) throw new Error('Unauthorized');
 
-  const { data: order, error: fetchError } = await supabase
-    .from('orders')
-    .select('*, order_items(*)')
-    .eq('id', orderId)
-    .eq('pharmacy_id', pharmacyId)
-    .maybeSingle();
+  
+  const { data: result, error: rpcError } = await supabase.rpc('process_return_atomic', {
+    p_order_id: orderId,
+    p_pharmacy_id: pharmacyId
+  });
 
-  if (fetchError || !order) {
-    throw new Error('Order not found or access denied');
+  if (rpcError) {
+    console.error('Atomic Return Failed:', rpcError);
+    throw new Error(`فشل تنفيذ المرتجع بأمان: ${rpcError.message}`);
   }
 
-  if (order.status === 'returned') {
-    throw new Error('This order has already been returned');
-  }
-
-  for (const item of order.order_items) {
-    if (item.batch_id) {
-      const { data: batch } = await supabase
-        .from('batches')
-        .select('quantity')
-        .eq('id', item.batch_id)
-        .eq('pharmacy_id', pharmacyId)
-        .maybeSingle();
-      
-      if (batch) {
-        await supabase
-          .from('batches')
-          .update({ quantity: (batch.quantity || 0) + (item.quantity || 0) })
-          .eq('id', item.batch_id)
-          .eq('pharmacy_id', pharmacyId);
-      }
-    }
-  }
-
-  if (order.payment_method === 'debt' && order.customer_id) {
-    const { data: customer } = await supabase
-      .from('customers')
-      .select('total_debt')
-      .eq('id', order.customer_id)
-      .eq('pharmacy_id', pharmacyId)
-      .maybeSingle();
-
-    if (customer) {
-      const newDebt = Math.max(0, (customer.total_debt || 0) - (order.total || 0));
-      await supabase
-        .from('customers')
-        .update({ total_debt: newDebt })
-        .eq('id', order.customer_id)
-        .eq('pharmacy_id', pharmacyId);
-    }
-  }
-
-  const { error: updateError } = await supabase
-    .from('orders')
-    .update({ status: 'returned' })
-    .eq('id', orderId)
-    .eq('pharmacy_id', pharmacyId);
-
-  if (updateError) {
-    console.error('Error updating order status:', updateError);
-    throw updateError;
-  }
+  return true;
 }
-

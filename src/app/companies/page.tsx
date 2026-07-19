@@ -104,7 +104,7 @@ export default function CompaniesPage() {
       <header className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            شركات <span className="nile-gradient-text text-[#00CED1]">الأدوية</span>
+            شركات <span className="nile-gradient-text text-[var(--nile-teal)]">الأدوية</span>
           </h1>
           <p className="text-gray-400 mt-2 text-lg font-cairo">إدارة الموردين والشركات المصنعة للأدوية.</p>
         </div>
@@ -114,7 +114,7 @@ export default function CompaniesPage() {
             setFormData({ name: '', contact_person: '', phone: '', email: '', address: '' });
             setIsModalOpen(true);
           }}
-          className="nile-button flex items-center gap-2 bg-[#00CED1] text-black px-5 py-3 rounded-xl font-bold font-cairo hover:opacity-90 transition-all shadow-[0_0_20px_rgba(0,206,209,0.15)]"
+          className="nile-button flex items-center gap-2 bg-[var(--nile-teal)] text-black px-5 py-3 rounded-xl font-bold font-cairo hover:opacity-90 transition-all shadow-[0_0_20px_rgba(0,206,209,0.15)]"
         >
           <Plus className="w-5 h-5" />
           <span>إضافة شركة جديدة</span>
@@ -122,7 +122,7 @@ export default function CompaniesPage() {
       </header>
 
       {}
-      <div className="glass-panel p-4 flex items-center gap-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+      <div className="glass-panel p-4 flex items-center gap-4 bg-white/[0.02] border border-[var(--glass-border)] rounded-2xl">
         <Search className="w-5 h-5 text-gray-500" />
         <input 
           type="text" 
@@ -135,7 +135,7 @@ export default function CompaniesPage() {
 
       {loading ? (
         <div className="flex justify-center items-center py-20">
-          <Loader2 className="w-10 h-10 text-[#00CED1] animate-spin" />
+          <Loader2 className="w-10 h-10 text-[var(--nile-teal)] animate-spin" />
         </div>
       ) : (
         <>
@@ -147,15 +147,15 @@ export default function CompaniesPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="glass-panel p-6 border border-white/5 hover:border-[#00CED1]/30 transition-all group relative flex flex-col justify-between min-h-[220px]"
+                  className="glass-panel p-6 border border-[var(--glass-border)] hover:border-[var(--nile-teal)]/30 transition-all group relative flex flex-col justify-between min-h-[220px]"
                 >
                   <div>
                     <div className="flex justify-between items-start mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-[#00CED1]/10 flex items-center justify-center text-[#00CED1] group-hover:scale-110 transition-transform border border-[#00CED1]/10">
+                      <div className="w-12 h-12 rounded-xl bg-[var(--nile-teal)]/10 flex items-center justify-center text-[var(--nile-teal)] group-hover:scale-110 transition-transform border border-[var(--nile-teal)]/10">
                         <Building2 className="w-6 h-6" />
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => handleEdit(company)} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors" title="تعديل">
+                        <button onClick={() => handleEdit(company)} className="p-2 hover:bg-[var(--glass-surface)] rounded-lg text-gray-400 hover:text-white transition-colors" title="تعديل">
                           <Edit className="w-4 h-4" />
                         </button>
                         <button onClick={() => handleDelete(company.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors" title="حذف">
@@ -165,25 +165,25 @@ export default function CompaniesPage() {
                     </div>
 
                     <h3 className="text-xl font-bold font-cairo text-white mb-1 truncate">{company.name}</h3>
-                    <p className="text-[#D4AF37] text-sm font-cairo mb-4 truncate">{company.contact_person || 'لا يوجد مندوب مسجل'}</p>
+                    <p className="text-[var(--royal-gold)] text-sm font-cairo mb-4 truncate">{company.contact_person || 'لا يوجد مندوب مسجل'}</p>
                   </div>
 
-                  <div className="space-y-2 pt-2 border-t border-white/5">
+                  <div className="space-y-2 pt-2 border-t border-[var(--glass-border)]">
                     {company.phone && (
                       <div className="flex items-center gap-2 text-sm text-gray-400">
-                        <Phone className="w-4 h-4 text-[#00CED1]/70 flex-shrink-0" />
+                        <Phone className="w-4 h-4 text-[var(--nile-teal)]/70 flex-shrink-0" />
                         <span className="font-sans truncate">{company.phone}</span>
                       </div>
                     )}
                     {company.email && (
                       <div className="flex items-center gap-2 text-sm text-gray-400">
-                        <Mail className="w-4 h-4 text-[#00CED1]/70 flex-shrink-0" />
+                        <Mail className="w-4 h-4 text-[var(--nile-teal)]/70 flex-shrink-0" />
                         <span className="truncate font-sans">{company.email}</span>
                       </div>
                     )}
                     {company.address && (
                       <div className="flex items-center gap-2 text-sm text-gray-400">
-                        <MapPin className="w-4 h-4 text-[#00CED1]/70 flex-shrink-0" />
+                        <MapPin className="w-4 h-4 text-[var(--nile-teal)]/70 flex-shrink-0" />
                         <span className="truncate font-cairo">{company.address}</span>
                       </div>
                     )}

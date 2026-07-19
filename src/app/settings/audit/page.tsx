@@ -52,7 +52,7 @@ export default function AuditLogsPage() {
 
   if (authLoading || isAdmin === null) return (
     <div className="h-screen flex items-center justify-center">
-      <Loader2 className="w-10 h-10 text-[#00CED1] animate-spin" />
+      <Loader2 className="w-10 h-10 text-[var(--nile-teal)] animate-spin" />
     </div>
   );
 
@@ -70,7 +70,7 @@ export default function AuditLogsPage() {
             <p className="text-gray-400 mt-1 text-sm font-cairo">لمراقبة كافة العمليات الحساسة التي تتم في الصيدلية.</p>
           </div>
         </div>
-        <button className="glass-card px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/5 transition-colors font-cairo">
+        <button className="glass-card px-4 py-2 text-sm flex items-center gap-2 hover:bg-[var(--glass-surface)] transition-colors font-cairo">
           <Download className="w-4 h-4" /> تحميل نسخة كاملة
         </button>
       </header>
@@ -107,23 +107,23 @@ export default function AuditLogsPage() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.02 }}
-                className="glass-panel p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors border border-white/5"
+                className="glass-panel p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors border border-[var(--glass-border)]"
               >
                 <div className="flex items-center gap-6">
-                   <div className="flex flex-col items-center justify-center text-gray-500 border-r border-white/10 pr-6">
+                   <div className="flex flex-col items-center justify-center text-gray-500 border-r border-[var(--glass-border)] pr-6">
                       <Calendar className="w-4 h-4 mb-1" />
                       <span className="text-[10px] font-sans">{new Date(log.created_at).toLocaleTimeString()}</span>
                    </div>
                    
                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
+                      <div className="w-8 h-8 rounded-full bg-[var(--glass-surface)] flex items-center justify-center text-gray-400">
                          <User className="w-4 h-4" />
                       </div>
                       <span className="font-bold text-sm text-white font-cairo">{log.username}</span>
                    </div>
 
-                   <div className="flex items-center gap-2 px-3 py-1 rounded bg-white/5 text-[11px] font-cairo text-gray-300">
-                      <Activity className="w-3 h-3 text-[#00CED1]" />
+                   <div className="flex items-center gap-2 px-3 py-1 rounded bg-[var(--glass-surface)] text-[11px] font-cairo text-gray-300">
+                      <Activity className="w-3 h-3 text-[var(--nile-teal)]" />
                       {log.action}
                    </div>
                 </div>
@@ -132,7 +132,7 @@ export default function AuditLogsPage() {
                    <div className="text-left font-mono text-[10px] text-gray-600">
                       {log.target_type} {log.target_id?.slice(0, 8)}
                    </div>
-                   <button className="p-2 hover:bg-white/5 rounded-lg text-gray-500 transition-colors">
+                   <button className="p-2 hover:bg-[var(--glass-surface)] rounded-lg text-gray-500 transition-colors">
                       <ArrowRight className="w-4 h-4" />
                    </button>
                 </div>

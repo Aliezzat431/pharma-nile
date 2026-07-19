@@ -205,7 +205,7 @@ export default function CustomersPage() {
           <button
             onClick={handleExportReport}
             disabled={isExporting}
-            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all border border-white/10 font-cairo hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] group disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-white font-bold transition-all border border-[var(--glass-border)] font-cairo hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] group disabled:opacity-50"
           >
             {isExporting ? <Loader2 className="w-5 h-5 animate-spin text-[var(--nile-teal)]" /> : <Download className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />}
             {isExporting ? 'جاري التصدير...' : 'تصدير التقرير'}
@@ -228,11 +228,11 @@ export default function CustomersPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="glass-card p-4 flex items-center justify-between border border-[#00CED1]/30"
+            className="glass-card p-4 flex items-center justify-between border border-[var(--nile-teal)]/30"
           >
             <div className="flex items-center gap-4 font-cairo">
-              <div className="w-10 h-10 rounded-xl bg-[#00CED1]/10 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-[#00CED1]" />
+              <div className="w-10 h-10 rounded-xl bg-[var(--nile-teal)]/10 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-[var(--nile-teal)]" />
               </div>
               <div>
                 <p className="text-foreground font-bold">تم تحديد {selectedCustomers.length} عميل</p>
@@ -244,7 +244,7 @@ export default function CustomersPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedIds(new Set())}
-                className="px-4 py-2.5 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10 text-sm"
+                className="px-4 py-2.5 rounded-xl font-cairo text-gray-400 hover:bg-[var(--glass-surface)] transition-colors border border-[var(--glass-border)] text-sm"
               >
                 إلغاء التحديد
               </button>
@@ -301,7 +301,7 @@ export default function CustomersPage() {
             <button
               key={f.key}
               onClick={() => setFilterDebt(f.key)}
-              className={`glass-panel px-5 flex items-center gap-2 transition-colors font-cairo text-sm ${filterDebt === f.key ? 'border-[#00CED1]/50 text-[#00CED1]' : 'text-gray-400 hover:text-white'}`}
+              className={`glass-panel px-5 flex items-center gap-2 transition-colors font-cairo text-sm ${filterDebt === f.key ? 'border-[var(--nile-teal)]/50 text-[var(--nile-teal)]' : 'text-gray-400 hover:text-white'}`}
             >
               {f.label}
             </button>
@@ -321,10 +321,10 @@ export default function CustomersPage() {
       {}
       {loading ? (
         <div className="flex justify-center items-center py-20">
-          <Loader2 className="w-10 h-10 text-[#00CED1] animate-spin" />
+          <Loader2 className="w-10 h-10 text-[var(--nile-teal)] animate-spin" />
         </div>
       ) : filteredCustomers.length === 0 ? (
-        <div className="glass-panel p-12 text-center space-y-3 border border-white/5">
+        <div className="glass-panel p-12 text-center space-y-3 border border-[var(--glass-border)]">
           <AlertCircle className="w-12 h-12 text-gray-500 mx-auto" />
           <p className="text-gray-400 font-cairo text-lg">لم يتم العثور على أي عملاء يطابقون خيارات البحث والفلترة الحالية.</p>
         </div>
@@ -338,31 +338,31 @@ export default function CustomersPage() {
                   key={customer.id}
                   whileHover={{ y: -5, scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className={`glass-panel p-6 border transition-all group relative overflow-hidden z-10 ${isSelected ? 'border-[var(--nile-teal)]/50 bg-[var(--nile-teal)]/5 shadow-[0_0_20px_var(--nile-teal-glow)]' : 'border-white/10 hover:border-white/20 hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]'}`}
+                  className={`glass-panel p-6 border transition-all group relative overflow-hidden z-10 ${isSelected ? 'border-[var(--nile-teal)]/50 bg-[var(--nile-teal)]/5 shadow-[0_0_20px_var(--nile-teal-glow)]' : 'border-[var(--glass-border)] hover:border-white/20 hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]'}`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-bl from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0 pointer-events-none" />
                   
                   {}
                   <button
                     onClick={() => toggleSelect(customer.id)}
-                    className={`absolute z-20 top-4 left-4 w-7 h-7 rounded-lg flex items-center justify-center transition-all border ${isSelected ? 'bg-[var(--nile-teal)] border-[var(--nile-teal)] text-black' : 'bg-white/5 border-white/20 text-transparent hover:border-[var(--nile-teal)]/50'}`}
+                    className={`absolute z-20 top-4 left-4 w-7 h-7 rounded-lg flex items-center justify-center transition-all border ${isSelected ? 'bg-[var(--nile-teal)] border-[var(--nile-teal)] text-black' : 'bg-[var(--glass-surface)] border-white/20 text-transparent hover:border-[var(--nile-teal)]/50'}`}
                   >
                     <Check className="w-4 h-4" />
                   </button>
 
                   <div className="flex justify-between items-start mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#D4AF37] border border-white/10 group-hover:border-[#D4AF37]/50 transition-colors">
+                    <div className="w-12 h-12 rounded-2xl bg-[var(--glass-surface)] flex items-center justify-center text-[var(--royal-gold)] border border-[var(--glass-border)] group-hover:border-[var(--royal-gold)]/50 transition-colors">
                       <Users className="w-6 h-6" />
                     </div>
                     <div className="text-left h-auto py-1">
                       <p className="text-xs text-gray-500 font-cairo mb-1 uppercase">نقاط الولاء</p>
-                      <p className="text-lg font-bold text-[#D4AF37] leading-tight">
+                      <p className="text-lg font-bold text-[var(--royal-gold)] leading-tight">
                         {customer.loyalty_points || 0} <span className="text-[10px] font-normal">نقطة</span>
                       </p>
                     </div>
                   </div>
 
-                  <h2 className="text-xl font-bold font-cairo text-white mb-4 group-hover:text-[#00CED1] transition-colors text-right">
+                  <h2 className="text-xl font-bold font-cairo text-white mb-4 group-hover:text-[var(--nile-teal)] transition-colors text-right">
                     {customer.name}
                   </h2>
 
@@ -381,7 +381,7 @@ export default function CustomersPage() {
                     )}
                   </div>
 
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between mb-6">
+                  <div className="p-4 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] flex items-center justify-between mb-6">
                     <div className="text-right">
                       <p className="text-[10px] text-gray-500 font-cairo mb-1.5 uppercase">إجمالي الدين</p>
                       <p className={`text-xl font-bold ${customer.total_debt > 0 ? 'text-red-400' : 'text-green-400'}`}>
@@ -395,7 +395,7 @@ export default function CustomersPage() {
                      <div className="flex gap-2 relative z-20">
                     <Link
                       href={`/customers/${customer.id}`}
-                      className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white font-cairo group/btn hover:bg-[var(--nile-teal)]/10 hover:border-[var(--nile-teal)]/30 transition-all font-bold text-sm hover:shadow-[0_0_15px_var(--nile-teal-glow)]"
+                      className="flex-1 py-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] flex items-center justify-center gap-2 text-white font-cairo group/btn hover:bg-[var(--nile-teal)]/10 hover:border-[var(--nile-teal)]/30 transition-all font-bold text-sm hover:shadow-[0_0_15px_var(--nile-teal-glow)]"
                     >
                       الملف الشخصي
                       <ChevronRight className="w-5 h-5 group-hover/btn:-translate-x-1.5 transition-transform rotate-180" />

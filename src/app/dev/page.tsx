@@ -540,7 +540,7 @@ export default function DevDashboard() {
 
       {}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6
-                         bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl relative overflow-hidden
+                         bg-slate-900/40 backdrop-blur-md border border-[var(--glass-border)] rounded-3xl relative overflow-hidden
                          shadow-[0_4px_30px_rgba(0,0,0,0.2)]">
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--nile-teal)]/5 to-purple-500/5 pointer-events-none" />
 
@@ -560,15 +560,15 @@ export default function DevDashboard() {
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 relative z-10">
           {}
-          <div className="hidden xl:flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5 text-[11px] text-gray-400 font-mono">
+          <div className="hidden xl:flex items-center gap-3 bg-[var(--glass-surface)] px-4 py-2 rounded-2xl border border-[var(--glass-border)] text-[11px] text-gray-400 font-mono">
             <span className="flex items-center gap-1.5"><Cpu   className="w-3.5 h-3.5 text-purple-400" />CPU: {systemLoad.cpu}%</span>
-            <span className="w-px h-3 bg-white/10" />
+            <span className="w-px h-3 bg-[var(--glass-surface-heavy)]" />
             <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5 text-amber-400" />RAM: {systemLoad.memory}%</span>
-            <span className="w-px h-3 bg-white/10" />
+            <span className="w-px h-3 bg-[var(--glass-surface-heavy)]" />
             <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-[var(--nile-teal)]" />DB: {systemLoad.latencyMs}ms</span>
           </div>
 
-          <div className="text-[11px] text-gray-400 flex items-center gap-2 bg-white/5 px-3 py-2 border border-white/5 rounded-2xl">
+          <div className="text-[11px] text-gray-400 flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-2 border border-[var(--glass-border)] rounded-2xl">
             <Clock className="w-3.5 h-3.5 text-[var(--nile-teal)]" />
             <span className="font-mono text-white font-bold">{lastRefresh.toLocaleTimeString('ar-EG')}</span>
           </div>
@@ -594,15 +594,15 @@ export default function DevDashboard() {
       <ErrorBanner errors={fetchErrors} onDismiss={() => setFetchErrors([])} />
 
       {}
-      <div className="flex flex-wrap gap-1.5 sm:gap-2 border-b border-white/5 pb-2 overflow-x-auto">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 border-b border-[var(--glass-border)] pb-2 overflow-x-auto">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-3 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap ${
               activeTab === tab.id
-                ? 'text-white bg-white/5 border border-white/10'
-                : 'text-gray-500 border border-transparent hover:text-white hover:bg-white/5'
+                ? 'text-white bg-[var(--glass-surface)] border border-[var(--glass-border)]'
+                : 'text-gray-500 border border-transparent hover:text-white hover:bg-[var(--glass-surface)]'
             }`}
           >
             {activeTab === tab.id && (
@@ -627,7 +627,7 @@ export default function DevDashboard() {
             {}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               {}
-              <div className="glass-panel p-6 rounded-3xl border border-white/5 flex items-center justify-between gap-5 relative overflow-hidden bg-slate-950/20">
+              <div className="glass-panel p-6 rounded-3xl border border-[var(--glass-border)] flex items-center justify-between gap-5 relative overflow-hidden bg-slate-950/20">
                 <div className="absolute right-0 top-0 w-20 h-20 bg-[var(--nile-teal)]/5 blur-3xl rounded-full" />
                 <div className="space-y-2 min-w-0">
                   <h3 className="text-base font-black text-white">مؤشر أمان النظام</h3>
@@ -658,7 +658,7 @@ export default function DevDashboard() {
               </div>
 
               {}
-              <div className="glass-panel p-6 rounded-3xl border border-white/5 bg-slate-950/20 col-span-1 lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-5 relative overflow-hidden">
+              <div className="glass-panel p-6 rounded-3xl border border-[var(--glass-border)] bg-slate-950/20 col-span-1 lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-5 relative overflow-hidden">
                 {[
                   { label: 'حمل المعالج (CPU)', value: systemLoad.cpu, max: 100, color: 'bg-purple-500' },
                   { label: 'الذاكرة (RAM)',      value: systemLoad.memory, max: 100, color: 'bg-amber-400' },
@@ -669,7 +669,7 @@ export default function DevDashboard() {
                       <span className="text-[11px] font-bold text-gray-400 block">{label}</span>
                       <span className="text-xl font-black text-white font-sans mt-1 block">{display ?? `${value}%`}</span>
                     </div>
-                    <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-[var(--glass-surface)] rounded-full h-1.5 overflow-hidden">
                       <motion.div animate={{ width: `${value / max * 100}%` }} className={`${color} h-full rounded-full`} />
                     </div>
                   </div>
@@ -686,7 +686,7 @@ export default function DevDashboard() {
             </div>
 
             {}
-            <div className="p-5 sm:p-6 bg-slate-900/30 border border-white/5 rounded-3xl backdrop-blur-md">
+            <div className="p-5 sm:p-6 bg-slate-900/30 border border-[var(--glass-border)] rounded-3xl backdrop-blur-md">
               <div className="flex items-center gap-2 mb-4">
                 <Info className="w-4 h-4 text-[var(--nile-teal)]" />
                 <h3 className="text-base font-black text-white">معلومات البيئة</h3>
@@ -702,7 +702,7 @@ export default function DevDashboard() {
                   { k: 'Chain ID',           v: user?.user_metadata?.chain_id       ?? '—' },
                   { k: 'Email',              v: user?.email                          ?? '—' },
                 ].map(({ k, v }) => (
-                  <div key={k} className="flex justify-between items-center p-3 bg-slate-950/20 border border-white/5 rounded-xl hover:bg-white/5 transition-all">
+                  <div key={k} className="flex justify-between items-center p-3 bg-slate-950/20 border border-[var(--glass-border)] rounded-xl hover:bg-[var(--glass-surface)] transition-all">
                     <span className="text-gray-400 font-bold text-[11px]">{k}</span>
                     <div className="flex items-center gap-2">
                       <code className="text-white text-[11px] select-all truncate max-w-[160px]">{v}</code>
@@ -720,18 +720,18 @@ export default function DevDashboard() {
         {}
         {activeTab === 'db' && (
           <motion.div key="db" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.18 }} className="space-y-5">
-            <div className="bg-slate-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-md">
-              <div className="p-4 sm:p-5 border-b border-white/5 flex items-center justify-between flex-wrap gap-2">
+            <div className="bg-slate-900/30 border border-[var(--glass-border)] rounded-3xl overflow-hidden backdrop-blur-md">
+              <div className="p-4 sm:p-5 border-b border-[var(--glass-border)] flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <Database className="w-4.5 h-4.5 text-[var(--nile-teal)]" />
                   <h3 className="font-black text-white text-base">إحصائيات الجداول (RLS)</h3>
                 </div>
-                <span className="text-[10px] text-gray-500 font-bold bg-white/5 px-2.5 py-1 rounded-lg">حجم تقديري: {dbSize}</span>
+                <span className="text-[10px] text-gray-500 font-bold bg-[var(--glass-surface)] px-2.5 py-1 rounded-lg">حجم تقديري: {dbSize}</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-right text-sm min-w-[480px]">
                   <thead>
-                    <tr className="border-b border-white/5 text-[11px] text-gray-500 font-bold">
+                    <tr className="border-b border-[var(--glass-border)] text-[11px] text-gray-500 font-bold">
                       <th className="py-3 px-5">الجدول</th>
                       <th className="py-3 px-5">السجلات</th>
                       <th className="py-3 px-5">حالة RLS</th>
@@ -739,7 +739,7 @@ export default function DevDashboard() {
                   </thead>
                   <tbody>
                     {tableStats.map(s => (
-                      <tr key={s.table} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <tr key={s.table} className="border-b border-[var(--glass-border)] hover:bg-[var(--glass-surface)] transition-colors">
                         <td className="py-3.5 px-5 font-mono text-[var(--nile-teal)] text-xs">{s.table}</td>
                         <td className="py-3.5 px-5 text-white font-bold font-sans">
                           {s.rows === -1 ? <span className="text-rose-400 text-xs">DENIED</span> : s.rows.toLocaleString()}
@@ -757,13 +757,13 @@ export default function DevDashboard() {
         {}
         {activeTab === 'logs' && (
           <motion.div key="logs" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.18 }}>
-            <div className="bg-slate-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-md">
-              <div className="p-4 sm:p-5 border-b border-white/5 flex items-center justify-between">
+            <div className="bg-slate-900/30 border border-[var(--glass-border)] rounded-3xl overflow-hidden backdrop-blur-md">
+              <div className="p-4 sm:p-5 border-b border-[var(--glass-border)] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Activity className="w-4.5 h-4.5 text-[var(--nile-teal)] animate-pulse" />
                   <h3 className="font-black text-white text-base">سجل العمليات — AI Agent</h3>
                 </div>
-                <span className="text-[10px] text-gray-500 bg-white/5 px-2.5 py-1 rounded-lg font-bold">{agentLogs.length} سجل</span>
+                <span className="text-[10px] text-gray-500 bg-[var(--glass-surface)] px-2.5 py-1 rounded-lg font-bold">{agentLogs.length} سجل</span>
               </div>
               {agentLogs.length === 0 ? (
                 <div className="p-12 text-center text-gray-500 text-sm">لا توجد عمليات مسجلة بعد.</div>
@@ -789,7 +789,7 @@ export default function DevDashboard() {
                             { label: 'الحالة الجديدة',  val: log.output, cls: 'text-emerald-300' }].map(({ label, val, cls }) => (
                             <div key={label} className="space-y-1.5">
                               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">{label}</span>
-                              <pre className={`bg-black/70 border border-white/5 rounded-xl p-3.5 font-mono text-[10.5px] ${cls} overflow-auto max-h-40 select-all leading-relaxed`}>
+                              <pre className={`bg-black/70 border border-[var(--glass-border)] rounded-xl p-3.5 font-mono text-[10.5px] ${cls} overflow-auto max-h-40 select-all leading-relaxed`}>
                                 {val ?? '—'}
                               </pre>
                             </div>
@@ -807,8 +807,8 @@ export default function DevDashboard() {
         {}
         {activeTab === 'system' && (
           <motion.div key="system" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.18 }} className="space-y-5">
-            <div className="bg-slate-900/30 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-md">
-              <div className="p-4 sm:p-5 border-b border-white/5 flex items-center gap-2">
+            <div className="bg-slate-900/30 border border-[var(--glass-border)] rounded-3xl overflow-hidden backdrop-blur-md">
+              <div className="p-4 sm:p-5 border-b border-[var(--glass-border)] flex items-center gap-2">
                 <Shield className="w-4.5 h-4.5 text-[var(--nile-teal)]" />
                 <h3 className="font-black text-white text-base">نتائج فحص الاتصال والأمان</h3>
               </div>
@@ -817,7 +817,7 @@ export default function DevDashboard() {
               ) : (
                 <div className="divide-y divide-white/5">
                   {systemChecks.map(c => (
-                    <div key={c.label} className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5 hover:bg-white/5 transition-all">
+                    <div key={c.label} className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5 hover:bg-[var(--glass-surface)] transition-all">
                       <div className="flex items-center gap-3">
                         <StatusBadge status={c.status} />
                         <div>
@@ -825,7 +825,7 @@ export default function DevDashboard() {
                           <span className="text-[10px] text-gray-500 font-bold">[{c.category}]</span>
                         </div>
                       </div>
-                      <span className="text-[11px] text-gray-400 font-mono bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 select-all">{c.detail}</span>
+                      <span className="text-[11px] text-gray-400 font-mono bg-[var(--glass-surface)] px-3 py-1.5 rounded-xl border border-[var(--glass-border)] select-all">{c.detail}</span>
                     </div>
                   ))}
                 </div>
@@ -833,7 +833,7 @@ export default function DevDashboard() {
             </div>
 
             {}
-            <div className="p-5 sm:p-6 bg-slate-900/30 border border-white/5 rounded-3xl backdrop-blur-md space-y-4">
+            <div className="p-5 sm:p-6 bg-slate-900/30 border border-[var(--glass-border)] rounded-3xl backdrop-blur-md space-y-4">
               <h3 className="font-black text-white flex items-center gap-2">
                 <Bug className="w-5 h-5 text-amber-400" /> المشكلات الشائعة والحلول
               </h3>
@@ -853,7 +853,7 @@ export default function DevDashboard() {
             </div>
 
             {}
-            <div className="p-5 sm:p-6 bg-slate-900/30 border border-white/5 rounded-3xl backdrop-blur-md space-y-3">
+            <div className="p-5 sm:p-6 bg-slate-900/30 border border-[var(--glass-border)] rounded-3xl backdrop-blur-md space-y-3">
               <h3 className="font-black text-white flex items-center gap-2">
                 <Key className="w-5 h-5 text-[var(--nile-teal)]" /> متغيرات البيئة
               </h3>
@@ -864,7 +864,7 @@ export default function DevDashboard() {
                   { key: 'SUPABASE_SERVICE_ROLE_KEY',     status: false, note: 'server-only'                    },
                   { key: 'GEMINI_API_KEY',                status: false, note: 'server-only'                    },
                 ].map(({ key, status, note }) => (
-                  <div key={key} className="flex items-center justify-between p-3 bg-slate-950/20 border border-white/5 rounded-xl">
+                  <div key={key} className="flex items-center justify-between p-3 bg-slate-950/20 border border-[var(--glass-border)] rounded-xl">
                     <code className="text-[11px] text-[var(--nile-teal)] select-all truncate mr-2">{key}</code>
                     <div className="flex items-center gap-2 shrink-0">
                       {note && <span className="text-[9px] text-gray-500">{note}</span>}

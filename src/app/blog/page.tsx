@@ -44,7 +44,7 @@ export default function BlogPage() {
 
         {/* Header */}
         <div className="space-y-4 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 text-cyan-400 text-xs font-black">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] text-cyan-400 text-xs font-black">
             <BookOpen className="w-3.5 h-3.5" />
             مدونة فارما نايل
           </div>
@@ -77,7 +77,7 @@ export default function BlogPage() {
                 </p>
               </div>
 
-              <div className="flex items-center justify-between text-gray-500 text-[10px] pt-3 border-t border-white/5">
+              <div className="flex items-center justify-between text-gray-500 text-[10px] pt-3 border-t border-[var(--glass-border)]">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-3 h-3" />
                   {post.date}

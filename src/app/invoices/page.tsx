@@ -210,7 +210,7 @@ export default function InvoicesPage() {
       <style>
         body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:16px;font-size:12px;color:#333}
         .header{text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:12px}
-        .logo{font-size:20px;font-weight:bold;color:#00CED1}
+        .logo{font-size:20px;font-weight:bold;color:var(--nile-teal)}
         table{width:100%;border-collapse:collapse;margin:12px 0}
         th{padding:6px 2px;text-align:right;border-bottom:2px solid #000;font-size:11px}
         .total-row{border-top:2px solid #000;font-weight:bold;font-size:14px;padding-top:8px;margin-top:8px}
@@ -289,7 +289,7 @@ export default function InvoicesPage() {
           className={`flex items-center gap-2 px-5 py-3 rounded-xl font-cairo text-sm font-bold transition-all border group ${
             showFilters
               ? 'bg-[var(--nile-teal)]/10 border-[var(--nile-teal)]/40 text-[color:var(--nile-teal)] shadow-[0_0_15px_var(--nile-teal-glow)]'
-              : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+              : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-gray-400 hover:text-white hover:bg-[var(--glass-surface-heavy)]'
           }`}
         >
           <Filter className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -303,7 +303,7 @@ export default function InvoicesPage() {
           { label: 'إجمالي الإيرادات', value: `${stats.totalRevenue.toLocaleString('ar-EG')} ج.م`, icon: DollarSign, color: 'text-[var(--royal-gold)]', glow: 'bg-[var(--royal-gold)]/10', delay: 0 },
           { label: 'صافي الربح', value: `${stats.totalProfit.toLocaleString('ar-EG')} ج.م`, icon: TrendingUp, color: 'text-emerald-400', glow: 'bg-emerald-500/10', delay: 0.05 },
           { label: 'عدد الفواتير', value: filteredAndSortedOrders.length, icon: FileText, color: 'text-[var(--nile-teal)]', glow: 'bg-[var(--nile-teal)]/10', delay: 0.1 },
-          { label: 'نقدي / آجل', value: `${stats.cashCount} / ${stats.debtCount}`, icon: Wallet, color: 'text-gray-400', glow: 'bg-white/5', delay: 0.15 },
+          { label: 'نقدي / آجل', value: `${stats.cashCount} / ${stats.debtCount}`, icon: Wallet, color: 'text-[var(--text-muted)]', glow: 'bg-[var(--glass-surface)]', delay: 0.15 },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -311,7 +311,7 @@ export default function InvoicesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: stat.delay }}
             whileHover={{ y: -6, scale: 1.02 }}
-            className="glass-card p-5 relative overflow-hidden group border border-white/10 hover:border-white/20 transition-all hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]"
+            className="glass-card p-5 relative overflow-hidden group border border-[var(--glass-border)] hover:border-white/20 transition-all hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)]"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="flex items-start justify-between relative z-10">
@@ -344,7 +344,7 @@ export default function InvoicesPage() {
                   type="date" 
                   value={dateFrom} 
                   onChange={e => setDateFrom(e.target.value)}
-                  className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm"
+                  className="w-full bg-[#050505]/50 border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[var(--nile-teal)]/50 text-sm"
                 />
               </div>
               <div>
@@ -353,7 +353,7 @@ export default function InvoicesPage() {
                   type="date" 
                   value={dateTo} 
                   onChange={e => setDateTo(e.target.value)}
-                  className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm"
+                  className="w-full bg-[#050505]/50 border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[var(--nile-teal)]/50 text-sm"
                 />
               </div>
               <div>
@@ -361,7 +361,7 @@ export default function InvoicesPage() {
                 <select 
                   value={filterStatus}
                   onChange={e => setFilterStatus(e.target.value as FilterStatus)}
-                  className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm animate-none"
+                  className="w-full bg-[#050505]/50 border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[var(--nile-teal)]/50 text-sm animate-none"
                 >
                   <option value="all">الكل</option>
                   <option value="completed">مكتمل</option>
@@ -373,7 +373,7 @@ export default function InvoicesPage() {
                 <select 
                   value={filterPayment}
                   onChange={e => setFilterPayment(e.target.value as FilterPayment)}
-                  className="w-full bg-[#050505]/50 border border-white/10 rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[#00CED1]/50 text-sm animate-none"
+                  className="w-full bg-[#050505]/50 border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-foreground outline-none focus:border-[var(--nile-teal)]/50 text-sm animate-none"
                 >
                   <option value="all">الكل</option>
                   <option value="cash">نقدي</option>
@@ -422,7 +422,7 @@ export default function InvoicesPage() {
           <button 
             key={s.key}
             onClick={() => toggleSort(s.key)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all border ${sortField === s.key ? 'bg-[#00CED1]/10 border-[#00CED1]/30 text-[#00CED1]' : 'border-white/5 hover:bg-white/5'}`}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all border ${sortField === s.key ? 'bg-[var(--nile-teal)]/10 border-[var(--nile-teal)]/30 text-[var(--nile-teal)]' : 'border-[var(--glass-border)] hover:bg-[var(--glass-surface)]'}`}
           >
             {s.label}
             {sortField === s.key && <ArrowUpDown className="w-3 h-3" />}
@@ -434,7 +434,7 @@ export default function InvoicesPage() {
       <div ref={listRef} className="space-y-3">
         {loading ? (
           <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--royal-gold)]" />
             <p className="font-cairo">جاري تحميل الفواتير...</p>
           </div>
         ) : filteredAndSortedOrders.length === 0 ? (
@@ -454,16 +454,16 @@ export default function InvoicesPage() {
             return (
               <div
                 key={order.id}
-                className={`glass-card overflow-hidden transition-all ${order.status === 'returned' ? 'opacity-60 border-red-500/20' : 'border-white/5'}`}
+                className={`glass-card overflow-hidden transition-all ${order.status === 'returned' ? 'opacity-60 border-red-500/20' : 'border-[var(--glass-border)]'}`}
               >
                 {}
                 <div
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                  className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-white/5 transition-colors gap-4 sm:gap-0"
+                  className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-[var(--glass-surface)] transition-colors gap-4 sm:gap-0"
                 >
                   <div className="flex items-start md:items-center gap-3 md:gap-4">
-                    <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-xl flex items-center justify-center bg-[#D4AF37]/10">
-                      <FileText className="w-5 h-5 md:w-6 md:h-6 text-[#D4AF37]" />
+                    <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-xl flex items-center justify-center bg-[var(--royal-gold)]/10">
+                      <FileText className="w-5 h-5 md:w-6 md:h-6 text-[var(--royal-gold)]" />
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-2 md:gap-3">
@@ -481,7 +481,7 @@ export default function InvoicesPage() {
                           <Calendar className="w-3 h-3" />
                           {new Date(order.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <span className="text-[#00CED1] whitespace-nowrap">• {getTimeAgo(order.created_at)}</span>
+                        <span className="text-[var(--nile-teal)] whitespace-nowrap">• {getTimeAgo(order.created_at)}</span>
                         {customerName && (
                           <span className="text-orange-400 whitespace-nowrap">• {customerName}</span>
                         )}
@@ -489,10 +489,10 @@ export default function InvoicesPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 md:gap-6 border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0">
+                  <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 md:gap-6 border-t sm:border-t-0 border-[var(--glass-border)] pt-3 sm:pt-0">
                     <div className="text-left">
                       <p className="text-[10px] md:text-xs text-gray-500 font-cairo">الإجمالي</p>
-                      <p className={`text-base md:text-xl font-bold font-cairo ${order.status === 'returned' ? 'text-red-400 line-through' : 'text-[#D4AF37]'}`}>
+                      <p className={`text-base md:text-xl font-bold font-cairo ${order.status === 'returned' ? 'text-red-400 line-through' : 'text-[var(--royal-gold)]'}`}>
                         {Number(order.total).toLocaleString('ar-EG')} ج.م
                       </p>
                     </div>
@@ -504,7 +504,7 @@ export default function InvoicesPage() {
                         </p>
                       </div>
                     )}
-                    <div className="text-gray-400">
+                    <div className="text-[var(--text-muted)]">
                       <span className="text-[10px] md:text-xs font-cairo">{order.order_items.length} أصناف</span>
                     </div>
                     {isExpanded ? <ChevronUp className="w-4 h-4 md:w-5 md:h-5 text-gray-500" /> : <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />}
@@ -520,11 +520,11 @@ export default function InvoicesPage() {
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="border-t border-white/5 bg-black/5">
+                      <div className="border-t border-[var(--glass-border)] bg-black/5">
                         <div className="p-5">
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm text-right font-cairo">
-                              <thead className="text-xs text-gray-500 bg-white/5">
+                              <thead className="text-xs text-gray-500 bg-[var(--glass-surface)]">
                                 <tr>
                                   <th className="px-4 py-3 rounded-tr-lg">#</th>
                                   <th className="px-4 py-3">اسم الصنف</th>
@@ -536,20 +536,20 @@ export default function InvoicesPage() {
                               </thead>
                               <tbody>
                                 {order.order_items.map((item, idx) => (
-                                  <tr key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors text-foreground">
+                                  <tr key={item.id} className="border-b border-[var(--glass-border)] hover:bg-[var(--glass-surface)] transition-colors text-foreground">
                                     <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
                                     <td className="px-4 py-3 font-bold">{item.name}</td>
                                     <td className="px-4 py-3">{item.quantity}</td>
                                     <td className="px-4 py-3 text-gray-400">{item.unit}</td>
                                     <td className="px-4 py-3">{item.price} ج.م</td>
-                                    <td className="px-4 py-3 font-bold text-[#D4AF37]">{(item.quantity * item.price).toFixed(2)} ج.م</td>
+                                    <td className="px-4 py-3 font-bold text-[var(--royal-gold)]">{(item.quantity * item.price).toFixed(2)} ج.م</td>
                                   </tr>
                                 ))}
                               </tbody>
                               <tfoot>
-                                <tr className="bg-white/5 font-bold text-foreground">
+                                <tr className="bg-[var(--glass-surface)] font-bold text-foreground">
                                   <td className="px-4 py-3 rounded-br-lg" colSpan={5}>الإجمالي الكلي</td>
-                                  <td className="px-4 py-3 rounded-bl-lg text-[#D4AF37] text-lg">{Number(order.total).toFixed(2)} ج.م</td>
+                                  <td className="px-4 py-3 rounded-bl-lg text-[var(--royal-gold)] text-lg">{Number(order.total).toFixed(2)} ج.م</td>
                                 </tr>
                               </tfoot>
                             </table>
@@ -570,14 +570,14 @@ export default function InvoicesPage() {
                           <div className="flex w-full md:w-auto gap-2 mt-2 md:mt-0">
                             <button
                               onClick={(e) => { e.stopPropagation(); setPreviewInvoice(order); }}
-                              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00CED1]/10 text-[#00CED1] border border-[#00CED1]/20 font-bold hover:bg-[#00CED1]/20 transition-all font-cairo text-sm"
+                              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--nile-teal)]/10 text-[var(--nile-teal)] border border-[var(--nile-teal)]/20 font-bold hover:bg-[var(--nile-teal)]/20 transition-all font-cairo text-sm"
                             >
                               <Eye className="w-4 h-4" />
                               معاينة
                             </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); handlePrint(order); }}
-                              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 font-bold hover:bg-[#D4AF37]/20 transition-all font-cairo text-sm"
+                              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--royal-gold)]/10 text-[var(--royal-gold)] border border-[var(--royal-gold)]/20 font-bold hover:bg-[var(--royal-gold)]/20 transition-all font-cairo text-sm"
                             >
                               <Printer className="w-4 h-4" />
                               طباعة
@@ -617,10 +617,10 @@ export default function InvoicesPage() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-card w-full max-w-lg overflow-hidden relative border border-[#D4AF37]/30 shadow-[0_0_40px_rgba(212,175,55,0.15)]"
+              className="glass-card w-full max-w-lg overflow-hidden relative border border-[var(--royal-gold)]/30 shadow-[0_0_40px_rgba(212,175,55,0.15)]"
             >
-              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#D4AF37]/5">
-                <h2 className="text-xl font-bold font-cairo text-[#D4AF37] flex items-center gap-2">
+              <div className="p-6 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--royal-gold)]/5">
+                <h2 className="text-xl font-bold font-cairo text-[var(--royal-gold)] flex items-center gap-2">
                   <FileText className="w-5 h-5" /> معاينة الفاتورة
                 </h2>
                 <button 
@@ -633,25 +633,25 @@ export default function InvoicesPage() {
 
               <div ref={printRef} className="p-6 max-h-[70vh] overflow-y-auto">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-[#00CED1] font-cairo">PharmaNile</h3>
+                  <h3 className="text-2xl font-bold text-[var(--nile-teal)] font-cairo">PharmaNile</h3>
                   <p className="text-xs text-gray-500 mt-1 font-cairo">صيدلية النيل - نظام الفواتير</p>
-                  <div className="w-16 h-0.5 bg-[#D4AF37]/50 mx-auto mt-3"></div>
+                  <div className="w-16 h-0.5 bg-[var(--royal-gold)]/50 mx-auto mt-3"></div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm font-cairo mb-6">
-                  <div className="bg-white/5 p-3 rounded-lg">
+                  <div className="bg-[var(--glass-surface)] p-3 rounded-lg">
                     <span className="text-gray-500 block text-xs">رقم الفاتورة</span>
                     <span className="font-bold text-foreground font-mono">#{previewInvoice.id.slice(0, 8)}</span>
                   </div>
-                  <div className="bg-white/5 p-3 rounded-lg">
+                  <div className="bg-[var(--glass-surface)] p-3 rounded-lg">
                     <span className="text-gray-500 block text-xs">التاريخ</span>
                     <span className="font-bold text-foreground">{new Date(previewInvoice.created_at).toLocaleDateString('ar-EG')}</span>
                   </div>
-                  <div className="bg-white/5 p-3 rounded-lg">
+                  <div className="bg-[var(--glass-surface)] p-3 rounded-lg">
                     <span className="text-gray-500 block text-xs">طريقة الدفع</span>
                     <span className={`font-bold ${paymentLabel(previewInvoice.payment_method).color}`}>{paymentLabel(previewInvoice.payment_method).text}</span>
                   </div>
-                  <div className="bg-white/5 p-3 rounded-lg">
+                  <div className="bg-[var(--glass-surface)] p-3 rounded-lg">
                     <span className="text-gray-500 block text-xs">العميل</span>
                     <span className="font-bold text-foreground">{previewInvoice.customers?.[0]?.name || 'عميل عام'}</span>
                   </div>

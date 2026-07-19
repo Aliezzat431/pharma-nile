@@ -11,7 +11,7 @@ export function PaymentMethodsChart({ paymentData }: PaymentMethodsChartProps) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-panel p-6 h-[400px] flex flex-col">
       <h2 className="text-lg font-bold font-cairo mb-4 flex items-center gap-2">
-        <PieChartIcon className="w-5 h-5 text-[#D4AF37]" /> طرق الدفع
+        <PieChartIcon className="w-5 h-5 text-[var(--royal-gold)]" /> طرق الدفع
       </h2>
       <div className="flex-1 w-full flex items-center justify-center min-h-0">
         {paymentData.length > 0 ? (

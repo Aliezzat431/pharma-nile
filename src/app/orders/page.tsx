@@ -154,8 +154,8 @@ export default function SalesDashboardPage() {
     });
 
     return [
-      { name: 'نقدي', value: paymentSums['cash'], color: '#00CED1' },
-      { name: 'آجل / ديون', value: paymentSums['debt'], color: '#D4AF37' },
+      { name: 'نقدي', value: paymentSums['cash'], color: 'var(--nile-teal)' },
+      { name: 'آجل / ديون', value: paymentSums['debt'], color: 'var(--royal-gold)' },
       { name: 'صدقة', value: paymentSums['sadqah'], color: '#ec4899' },
     ].filter(d => d.value > 0);
   };
@@ -196,8 +196,8 @@ export default function SalesDashboardPage() {
       <header data-gsap="fade-up" className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo text-foreground">
-            <TrendingUp className="text-[#00CED1]" />
-            تحليلات <span className="text-[#00CED1]">المبيعات</span>
+            <TrendingUp className="text-[var(--nile-teal)]" />
+            تحليلات <span className="text-[var(--nile-teal)]">المبيعات</span>
           </h1>
           <p className="text-gray-400 mt-2 font-cairo">نظرة شاملة على أداء المبيعات والأرباح لمتجرك</p>
         </div>
@@ -207,14 +207,14 @@ export default function SalesDashboardPage() {
            <div className="flex gap-2">
               <button 
                 onClick={() => window.print()}
-                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all border border-white/10"
+                className="p-2.5 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 hover:text-white transition-all border border-[var(--glass-border)]"
                 title="طباعة التقرير"
               >
                 <Printer className="w-5 h-5" />
               </button>
               <button 
                 onClick={handleExportCSV}
-                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-[#00CED1] transition-all border border-white/10"
+                className="p-2.5 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 hover:text-[var(--nile-teal)] transition-all border border-[var(--glass-border)]"
                 title="تصدير Excel"
               >
                 <FileSpreadsheet className="w-5 h-5" />
@@ -222,7 +222,7 @@ export default function SalesDashboardPage() {
            </div>
 
            {}
-           <div className="flex flex-nowrap bg-black/40 border border-white/5 rounded-xl p-1 overflow-hidden font-cairo w-full lg:w-auto overflow-x-auto snap-x">
+           <div className="flex flex-nowrap bg-black/40 border border-[var(--glass-border)] rounded-xl p-1 overflow-hidden font-cairo w-full lg:w-auto overflow-x-auto snap-x">
             {[
               { id: 'today', label: 'اليوم' },
               { id: 'week', label: 'هذا الأسبوع' },
@@ -232,7 +232,7 @@ export default function SalesDashboardPage() {
                 <button
                   key={tab.id}
                   onClick={() => setDateRange(tab.id as any)}
-                  className={"flex-1 lg:flex-none px-4 py-2 text-sm rounded-lg transition-all whitespace-nowrap snap-center " + (dateRange === tab.id ? "bg-[#00CED1]/20 text-[#00CED1] font-bold" : "text-gray-400 hover:text-white")}
+                  className={"flex-1 lg:flex-none px-4 py-2 text-sm rounded-lg transition-all whitespace-nowrap snap-center " + (dateRange === tab.id ? "bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] font-bold" : "text-gray-400 hover:text-white")}
                 >
                   {tab.label}
                 </button>
@@ -243,7 +243,7 @@ export default function SalesDashboardPage() {
 
       {loading ? (
         <div className="glass-panel p-16 flex flex-col items-center justify-center text-gray-500 gap-3 min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-[#00CED1]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--nile-teal)]" />
           <p className="font-cairo">جاري تحليل البيانات...</p>
         </div>
       ) : (
@@ -264,15 +264,15 @@ export default function SalesDashboardPage() {
           {}
           <div className="mt-12">
             <h3 className="text-xl font-bold font-cairo mb-4 flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-[#00CED1]" />
+              <ShoppingBag className="w-5 h-5 text-[var(--nile-teal)]" />
               تفاصيل العمليات الأخيرة
             </h3>
             
-            <div className="glass-panel overflow-hidden border-white/5">
+            <div className="glass-panel overflow-hidden border-[var(--glass-border)]">
               <div className="overflow-x-auto">
                 <table className="w-full text-right border-collapse">
                   <thead>
-                    <tr className="border-b border-white/10 bg-white/5 font-cairo text-gray-400 text-sm">
+                    <tr className="border-b border-[var(--glass-border)] bg-[var(--glass-surface)] font-cairo text-gray-400 text-sm">
                       <th className="p-4 font-semibold">رقم العملية</th>
                       <th className="p-4 font-semibold">التاريخ</th>
                       <th className="p-4 font-semibold">طريقة الدفع</th>
@@ -283,7 +283,7 @@ export default function SalesDashboardPage() {
                   </thead>
                   <tbody>
                     {paginatedData.map((order) => (
-                      <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <tr key={order.id} className="border-b border-[var(--glass-border)] hover:bg-[var(--glass-surface)] transition-colors">
                         <td className="p-4 font-mono text-xs text-gray-500">#{order.id.slice(0, 8)}</td>
                         <td className="p-4 text-sm text-gray-300">
                           {new Date(order.created_at).toLocaleDateString('ar-EG')} 
@@ -313,7 +313,7 @@ export default function SalesDashboardPage() {
               
               {}
               {totalPages > 1 && (
-                <div className="p-4 border-t border-white/5">
+                <div className="p-4 border-t border-[var(--glass-border)]">
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}

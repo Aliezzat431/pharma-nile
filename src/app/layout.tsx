@@ -18,10 +18,42 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' });
 
 export const metadata: Metadata = {
-  title: 'PharmaNile - Pharmacy Stock Management System',
-  description: 'نظام إدارة صيدلية متكامل مع نقطة بيع تعمل بدون إنترنت',
+  metadataBase: new URL('https://pharma-nile.vercel.app'),
+  title: {
+    default: 'PharmaNile — Premium Medical OS & Pharmacy Management',
+    template: '%s | PharmaNile',
+  },
+  description: 'نظام إدارة صيدلية متكامل مع نقطة بيع تعمل بدون إنترنت، استيراد فواتير بالذكاء الاصطناعي، وإدارة شاملة للمخزون والعمليات الطبية. Advanced POS, AI bill importing, and medical operations.',
+  keywords: ['PharmaNile', 'فارما نايل', 'إدارة الصيدليات', 'Pharmacy Software', 'Medical OS', 'POS صيدلية'],
+  openGraph: {
+    title: 'PharmaNile — Premium Medical OS & Pharmacy Management',
+    description: 'نظام إدارة الفواتير والمخزون الطبي المتطور - PharmaNile',
+    type: 'website',
+    locale: 'ar_EG',
+    siteName: 'PharmaNile',
+    url: 'https://pharma-nile.vercel.app',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'PharmaNile Dashboard',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PharmaNile — Premium Medical OS',
+    description: 'نظام إدارة الفواتير والمخزون الطبي المتطور',
+    images: ['/og-image.png'],
+  },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/shortcut-icon.png',
+    apple: '/apple-icon.png',
+  },
   manifest: '/manifest.json',
-  themeColor: '#00CED1',
+  themeColor: '#0891B2',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

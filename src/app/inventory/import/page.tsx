@@ -39,13 +39,11 @@ export default function ImportInventoryPage() {
 
   const parseFile = async (file: File) => {
     console.group('📂 [File Parsing]');
-    console.log('File:', file.name, 'Size:', file.size);
     setIsParsing(true);
     
     try {
       const text = await file.text();
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      console.log(`Lines found: ${lines.length}`);
       
       if (lines.length < 2) {
         console.warn('File too short, aborting.');
@@ -86,8 +84,6 @@ export default function ImportInventoryPage() {
       }
       
       setCategory(finalCategory);
-      console.log('Mapped Category:', finalCategory, '| Type ID:', defaultTypeId);
-
       const parsed: ParsedItem[] = [];
 
       for (let i = 1; i < lines.length; i++) {
@@ -117,8 +113,7 @@ export default function ImportInventoryPage() {
         }
       }
 
-      console.log(`✅ Parsed ${parsed.length} items successfully`);
-      if (parsed.length > 0) console.log('Sample item:', parsed[0]);
+      if (parsed.length > 0) 
       setItems(parsed);
     } catch (err) {
       console.error('❌ Parse error:', err);
@@ -188,8 +183,6 @@ export default function ImportInventoryPage() {
         };
       });
 
-      console.log(`📦 Sending ${formattedItems.length} items to RPC`);
-
       const { data, error } = await supabase.rpc('bulk_import_inventory', {
         p_pharmacy_id: pharmacyId,
         p_category: category,
@@ -223,7 +216,6 @@ export default function ImportInventoryPage() {
         setImportProgress(100);
         
         setTimeout(() => {
-          console.log('Redirecting to /inventory...');
           router.push('/inventory');
         }, 1500);
       }
@@ -251,7 +243,7 @@ export default function ImportInventoryPage() {
       header: 'الحالة', 
       accessor: (it: ParsedItem) => (
         <div className="flex flex-col">
-          <span className={it.status === 'success' ? 'text-green-400' : it.status === 'error' ? 'text-red-400' : 'text-gray-400'}>
+          <span className={it.status === 'success' ? 'text-green-400' : it.status === 'error' ? 'text-red-400' : 'text-[var(--text-muted)]'}>
             {it.status === 'success' ? 'تم بنجاح' : it.status === 'error' ? 'خطأ في الإدخال' : 'بانتظار البدء'}
           </span>
           {it.error && <span className="text-[10px] text-red-500/80 max-w-[150px] truncate">{it.error}</span>}
@@ -278,7 +270,7 @@ export default function ImportInventoryPage() {
         {items.length > 0 && !isImporting && (
           <button 
             onClick={startImport}
-            className="px-8 py-3 bg-[#00CED1] text-black rounded-2xl font-bold font-cairo flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#00CED1]/20"
+            className="px-8 py-3 bg-[var(--nile-teal)] text-black rounded-2xl font-bold font-cairo flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[var(--nile-teal)]/20"
           >
             <Plus className="w-5 h-5" />
             <span>بدء الاستيراد ({items.length} صنف)</span>
@@ -291,7 +283,7 @@ export default function ImportInventoryPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className={`relative border-2 border-dashed rounded-3xl p-20 flex flex-col items-center justify-center gap-6 transition-all cursor-pointer
-            ${dragActive ? 'border-[#00CED1] bg-[#00CED1]/5 scale-[1.02]' : 'border-white/10 hover:border-white/20 bg-white/[0.02]'}
+            ${dragActive ? 'border-[var(--nile-teal)] bg-[var(--nile-teal)]/5 scale-[1.02]' : 'border-[var(--glass-border)] hover:border-white/20 bg-white/[0.02]'}
           `}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -300,7 +292,7 @@ export default function ImportInventoryPage() {
           onClick={() => document.getElementById('file-upload')?.click()}
         >
           <input type="file" id="file-upload" className="hidden" accept=".txt" onChange={handleFileChange} />
-          <div className="p-6 rounded-full bg-[#00CED1]/10 text-[#00CED1]">
+          <div className="p-6 rounded-full bg-[var(--nile-teal)]/10 text-[var(--nile-teal)]">
             <Upload className="w-12 h-12" />
           </div>
           <div className="text-center space-y-2">
@@ -311,20 +303,20 @@ export default function ImportInventoryPage() {
       ) : (
         <div className="space-y-6">
           {isImporting && (
-            <div className="glass-card p-6 border-[#00CED1]/10">
+            <div className="glass-card p-6 border-[var(--nile-teal)]/10">
               <div className="space-y-4">
                 <div className="flex justify-between items-center font-cairo">
                   <span className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#00CED1]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[var(--nile-teal)]" />
                     جاري الاستيراد...
                   </span>
                   <span className="font-bold">{importProgress}%</span>
                 </div>
-                <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-3 w-full bg-[var(--glass-surface)] rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${importProgress}%` }}
-                    className="h-full bg-gradient-to-r from-[#00CED1] to-[#D4AF37]"
+                    className="h-full bg-gradient-to-r from-[var(--nile-teal)] to-[var(--royal-gold)]"
                   />
                 </div>
               </div>
@@ -349,20 +341,20 @@ export default function ImportInventoryPage() {
 
       {!items.length && (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-            <div className="glass-card p-6 border-white/5">
+            <div className="glass-card p-6 border-[var(--glass-border)]">
                 <h4 className="font-bold font-cairo mb-4 flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-green-400" />
                     التنسيق المطلوب للملف
                 </h4>
-                <div className="space-y-2 text-sm text-gray-500 font-mono bg-black/20 p-4 rounded-xl border border-white/5">
+                <div className="space-y-2 text-sm text-gray-500 font-mono bg-black/20 p-4 rounded-xl border border-[var(--glass-border)]">
                     <p>الفئة (مثلاً: اللبوس)</p>
                     <p>الاسم،الباركود،التاريخ،السعر،الشركة،عدد_الشرائط</p>
                     <p>Panadol,6221032...,10/2026,45.00,GSK,10</p>
                 </div>
             </div>
-            <div className="glass-card p-6 border-white/5">
+            <div className="glass-card p-6 border-[var(--glass-border)]">
                 <h4 className="font-bold font-cairo mb-4 flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-[#D4AF37]" />
+                    <AlertCircle className="w-5 h-5 text-[var(--royal-gold)]" />
                     ملاحظات هامة
                 </h4>
                 <ul className="space-y-2 text-sm text-gray-500 font-cairo list-disc list-inside">

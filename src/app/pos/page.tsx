@@ -157,8 +157,6 @@ export default function POSTerminal() {
   
   useEffect(() => {
     if (showDebug) {
-      console.log('[POS DEBUG] Cart updated:', cart);
-      console.log('[POS DEBUG] Total:', total);
       console.table(cart.map(item => ({
         name: item.name,
         unit: item.unit,
@@ -175,7 +173,6 @@ export default function POSTerminal() {
   
   useEffect(() => {
     if (showDebug && searchResults.length > 0) {
-      console.log('[POS DEBUG] Search results:', searchResults);
     }
   }, [searchResults, showDebug]);
 
@@ -236,7 +233,6 @@ export default function POSTerminal() {
         );
         if (product) {
           addProductToCart(product);
-          console.log(`AI Agent added ${product.name} to cart`);
         }
       } else if (command === 'OPEN_WINDOW') {
         setAgentWindows(prev => [
@@ -423,7 +419,6 @@ export default function POSTerminal() {
 
   
   const addProductToCart = (product: Product, clearSearch = true) => {
-    console.log('[POS DEBUG] addProductToCart called:', product);
     if (product.current_price === undefined || product.current_price === 0) {
       showToast({
         variant: 'error',
@@ -435,9 +430,6 @@ export default function POSTerminal() {
 
     const units = getAvailableUnits(product.type);
     const unitConversion = product.unit_conversion ?? 1;
-
-    console.log('[POS DEBUG] addProductToCart - unitConversion:', unitConversion);
-    console.log('[POS DEBUG] addProductToCart - availableUnits:', units);
 
     dispatch(addToCart({
       id: product.id,
@@ -501,38 +493,47 @@ export default function POSTerminal() {
   };
 
   const executeCheckoutProcess = async (cartToProcess: any[], totalToProcess: number) => {
-    console.log('[POS DEBUG] executeCheckoutProcess called:', { totalToProcess, cartToProcess });
     if (totalToProcess < 0) {
       showToast({ variant: 'error', message: "خطأ: الإجمالي لا يمكن أن يكون قيمة سالبة." });
       return;
     }
+
+    setIsProcessing(true);
+    const idempotencyKey = crypto.randomUUID(); 
+
+    // 1. Floating-Point Precision Enforced
+    const safeTotal = Number(Number(totalToProcess).toFixed(2));
+
     for (const item of cartToProcess) {
       if (item.quantity <= 0) {
         showToast({ variant: 'error', message: `خطأ: الكمية للمنتج ${item.name} يجب أن تكون أكبر من صفر.` });
+        setIsProcessing(false);
         return;
       }
       if (item.price < 0 || item.basePrice <= 0) {
         showToast({ variant: 'error', message: `خطأ: السعر للمنتج ${item.name} غير صالح.` });
+        setIsProcessing(false);
         return;
       }
 
+      // 2. Exact Stock Invariants 
       const stockAvailable = item.activeBatches?.reduce((sum: number, b: any) => sum + Number(b.quantity), 0) || 0;
       if (item.quantity > stockAvailable) {
-        console.warn('[POS DEBUG] Stock warning:', { item: item.name, stockAvailable, requested: item.quantity });
-        if (!window.confirm(`تنبيه (منفذ الإدارة): الرصيد المسجل للمنتج ${item.name} هو (${stockAvailable}) فقط، وأنت تحاول بيع (${item.quantity}). هل تريد الاستمرار وتسجيل بيع بالسالب (عجز) ليتم مراجعته لاحقاً؟`)) {
-          setIsProcessing(false);
-          return;
-        }
+        showToast({ 
+          variant: 'error', 
+          message: `خطأ نقص مخزون: الرصيد المسجل للمنتج ${item.name} هو (${stockAvailable}) فقط. العملية مرفوضة لتجنب إفساد المخزون.`,
+          duration: 6000
+        });
+        setIsProcessing(false);
+        return;
       }
     }
 
-    setIsProcessing(true);
     try {
       if (!isOnline) {
-        console.log('[POS DEBUG] Offline mode - queueing order');
         const offlineId = await queueOfflineOrder({
           cart: cartToProcess,
-          total: totalToProcess,
+          total: safeTotal,
           paymentMethod,
           customerId: paymentMethod === 'debt' ? selectedCustomerId : undefined
         });
@@ -576,10 +577,9 @@ export default function POSTerminal() {
         batchDistributions: item.batchDistributions || [],
       }));
 
-      console.log('[POS DEBUG] Processing checkout online:', itemsWithCost);
       const result = await processCheckout(
         itemsWithCost,
-        totalToProcess,
+        safeTotal,
         paymentMethod,
         paymentMethod === 'debt' ? selectedCustomerId : undefined
       );
@@ -593,7 +593,6 @@ export default function POSTerminal() {
           },
           timestamp: Date.now()
         });
-        console.log('[POS DEBUG] Checkout successful, orderId:', result.id);
       }
 
       let customerName = undefined;
@@ -638,7 +637,6 @@ export default function POSTerminal() {
   };
 
   const handleCheckoutWithTotal = async (totalToProcess: number) => {
-    console.log('[POS DEBUG] handleCheckoutWithTotal called:', totalToProcess);
     if (cart.length === 0) return;
     if (paymentMethod === 'debt' && !selectedCustomerId) {
       showToast({ variant: 'error', message: "يرجى اختيار العميل لتسجيل عملية الدين." });
@@ -691,7 +689,7 @@ export default function POSTerminal() {
   if (!pharmacyId) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-center">
-        <Loader2 className="w-10 h-10 animate-spin text-[#00CED1]" />
+        <Loader2 className="w-10 h-10 animate-spin text-[var(--nile-teal)]" />
         <h2 className="text-xl font-bold font-cairo">جاري جلب بيانات الصيدلية (Tenant Scope)...</h2>
         <p className="text-gray-500 font-cairo">يرجى تسجيل الدخول بشكل صحيح إذا لم يتم التحميل.</p>
       </div>
@@ -705,7 +703,7 @@ export default function POSTerminal() {
       <div className="fixed top-4 right-4 z-50">
         <button
           onClick={() => setShowDebug(!showDebug)}
-          className="p-2 rounded-full bg-[#00CED1]/20 hover:bg-[#00CED1]/40 text-[#00CED1] transition-all shadow-lg"
+          className="p-2 rounded-full bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)]/40 text-[var(--nile-teal)] transition-all shadow-lg"
           title="تفعيل وضع التصحيح"
         >
           <Bug className="w-5 h-5" />
@@ -719,45 +717,45 @@ export default function POSTerminal() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-20 right-4 z-50 w-96 max-h-[80vh] overflow-auto bg-black/90 border border-[#00CED1]/30 rounded-2xl shadow-2xl p-4 text-xs font-mono text-gray-300 backdrop-blur-xl"
+            className="fixed top-20 right-4 z-50 w-96 max-h-[80vh] overflow-auto bg-black/90 border border-[var(--nile-teal)]/30 rounded-2xl shadow-2xl p-4 text-xs font-mono text-gray-300 backdrop-blur-xl"
           >
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-[#00CED1] font-bold font-cairo">🔍 POS Debug</h3>
-              <span className="text-gray-500">Cart: {cart.length}</span>
+              <h3 className="text-[var(--nile-teal)] font-bold font-cairo">🔍 POS Debug</h3>
+              <span className="text-[var(--text-inactive)]">Cart: {cart.length}</span>
             </div>
             <div className="space-y-2">
-              <div className="bg-white/5 p-2 rounded">
-                <div className="text-gray-400">Pharmacy ID:</div>
+              <div className="bg-[var(--glass-surface)] p-2 rounded">
+                <div className="text-[var(--text-muted)]">Pharmacy ID:</div>
                 <div className="text-white truncate">{pharmacyId || 'N/A'}</div>
               </div>
-              <div className="bg-white/5 p-2 rounded">
-                <div className="text-gray-400">Total:</div>
-                <div className="text-[#D4AF37]">{total.toFixed(2)} ج.م</div>
+              <div className="bg-[var(--glass-surface)] p-2 rounded">
+                <div className="text-[var(--text-muted)]">Total:</div>
+                <div className="text-[var(--royal-gold)]">{total.toFixed(2)} ج.م</div>
               </div>
-              <div className="bg-white/5 p-2 rounded">
-                <div className="text-gray-400">Payment Method:</div>
-                <div className="text-white">{paymentMethod}</div>
+              <div className="bg-[var(--glass-surface)] p-2 rounded">
+                <div className="text-[var(--text-muted)]">Payment Method:</div>
+                <div className="text-[var(--text-primary)]">{paymentMethod}</div>
               </div>
-              <div className="bg-white/5 p-2 rounded">
-                <div className="text-gray-400">Online:</div>
-                <div className="text-white">{isOnline ? '✅' : '❌'}</div>
+              <div className="bg-[var(--glass-surface)] p-2 rounded">
+                <div className="text-[var(--text-muted)]">Online:</div>
+                <div className="text-[var(--text-primary)]">{isOnline ? '✅' : '❌'}</div>
               </div>
-              <div className="bg-white/5 p-2 rounded">
-                <div className="text-gray-400">Search Query:</div>
-                <div className="text-white">{searchInput || '(empty)'}</div>
+              <div className="bg-[var(--glass-surface)] p-2 rounded">
+                <div className="text-[var(--text-muted)]">Search Query:</div>
+                <div className="text-[var(--text-primary)]">{searchInput || '(empty)'}</div>
               </div>
-              <div className="bg-white/5 p-2 rounded">
-                <div className="text-gray-400">Search Results:</div>
-                <div className="text-white">{searchResults.length}</div>
+              <div className="bg-[var(--glass-surface)] p-2 rounded">
+                <div className="text-[var(--text-muted)]">Search Results:</div>
+                <div className="text-[var(--text-primary)]">{searchResults.length}</div>
               </div>
-              <div className="bg-white/5 p-2 rounded max-h-40 overflow-y-auto">
+              <div className="bg-[var(--glass-surface)] p-2 rounded max-h-40 overflow-y-auto">
                 <div className="text-gray-400 mb-1">Cart Items:</div>
                 {cart.length === 0 ? (
-                  <div className="text-gray-500">(empty)</div>
+                  <div className="text-[var(--text-inactive)]">(empty)</div>
                 ) : (
                   cart.map((item, idx) => (
-                    <div key={idx} className="text-white border-b border-white/5 py-1">
-                      <span className="text-[#00CED1]">{item.name}</span>
+                    <div key={idx} className="text-white border-b border-[var(--glass-border)] py-1">
+                      <span className="text-[var(--nile-teal)]">{item.name}</span>
                       <span className="text-gray-500 ml-2">qty: {item.quantity}</span>
                       <span className="text-gray-500 ml-2">unit: {item.unit}</span>
                       <span className="text-gray-500 ml-2">conv: {item.unitConversion}</span>
@@ -777,7 +775,7 @@ export default function POSTerminal() {
         <div className="flex flex-col sm:flex-row gap-3">
           <form onSubmit={handleBarcodeSubmit} className="flex-1 glass-panel p-2 flex items-center gap-3 relative">
             <div className="pl-3 text-gray-400">
-              {isSearching ? <Loader2 className="w-5 h-5 animate-spin text-[#00CED1]" /> : <Search className="w-5 h-5" />}
+              {isSearching ? <Loader2 className="w-5 h-5 animate-spin text-[var(--nile-teal)]" /> : <Search className="w-5 h-5" />}
             </div>
             <input
               type="text"
@@ -800,7 +798,7 @@ export default function POSTerminal() {
             <button
               onClick={() => setShowTypeFilter(!showTypeFilter)}
               className={`glass-panel px-4 py-2 flex items-center justify-center gap-2 transition-all font-cairo h-full min-h-[52px] ${
-                selectedType ? 'text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/10' : 'text-gray-400'
+                selectedType ? 'text-[var(--royal-gold)] border-[var(--royal-gold)]/30 bg-[var(--royal-gold)]/10' : 'text-[var(--text-muted)]'
               }`}
             >
               <Filter className="w-4 h-4" />
@@ -816,7 +814,7 @@ export default function POSTerminal() {
                   initial={{ opacity: 0, y: -10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[300px] overflow-y-auto"
+                  className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a] border border-[var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[300px] overflow-y-auto"
                 >
                   <div className="p-2">
                     <button
@@ -825,7 +823,7 @@ export default function POSTerminal() {
                         setShowTypeFilter(false);
                       }}
                       className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
-                        !selectedType ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                        !selectedType ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)]' : 'text-gray-400 hover:bg-[var(--glass-surface)] hover:text-white'
                       }`}
                     >
                       <X className="w-4 h-4" />
@@ -847,7 +845,7 @@ export default function POSTerminal() {
                             setShowTypeFilter(false);
                           }}
                           className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
-                            selectedType === type ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                            selectedType === type ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)]' : 'text-gray-400 hover:bg-[var(--glass-surface)] hover:text-white'
                           }`}
                         >
                           <Tag className="w-4 h-4" />
@@ -867,7 +865,7 @@ export default function POSTerminal() {
 
         {}
         <div className="flex-1 glass-card p-6 overflow-y-auto relative">
-          <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+          <div className="flex justify-between items-center mb-4 border-b border-[var(--glass-border)] pb-2">
             <h2 className="text-lg font-medium text-gray-400 font-cairo">
               {searchInput.length >= 2 ? 'نتائج البحث' : 'قائمة المنتجات'}
             </h2>
@@ -892,7 +890,7 @@ export default function POSTerminal() {
               <button
                 onClick={handleAskAI}
                 disabled={isAiLoading}
-                className="mt-4 px-6 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#f2cd56] text-black font-bold font-cairo flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50 shadow-lg"
+                className="mt-4 px-6 py-2 rounded-xl bg-gradient-to-r from-[var(--royal-gold)] to-[#f2cd56] text-black font-bold font-cairo flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50 shadow-lg"
               >
                 {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
                 {isAiLoading ? 'جاري استشارة د. محسن...' : 'اسأل د. محسن عن هذا المنتج'}
@@ -900,11 +898,11 @@ export default function POSTerminal() {
 
               {aiSuggestions.length > 0 && (
                 <div className="w-full max-w-md mt-6 space-y-3">
-                  <h3 className="text-[#D4AF37] font-bold font-cairo text-center mb-2 flex items-center justify-center gap-2">
+                  <h3 className="text-[var(--royal-gold)] font-bold font-cairo text-center mb-2 flex items-center justify-center gap-2">
                     <Bot className="w-4 h-4" /> اقتراحات د. محسن
                   </h3>
                   {aiSuggestions.map((choice, idx) => (
-                    <div key={idx} className="bg-white/5 border border-[#D4AF37]/30 rounded-xl p-4 text-right">
+                    <div key={idx} className="bg-[var(--glass-surface)] border border-[var(--royal-gold)]/30 rounded-xl p-4 text-right">
                       <h4 className="text-white font-bold font-cairo">{choice.name}</h4>
                       <p className="text-xs text-gray-400 font-cairo mt-1">{choice.company} • {getTypeDisplayName(choice.type)}</p>
                       <p className="text-xs text-gray-500 font-cairo mt-1">تحويل الوحدة: {choice.unit_conversion}</p>
@@ -915,7 +913,7 @@ export default function POSTerminal() {
                           placeholder="السعر"
                           defaultValue={0}
                           id={`ai-price-${idx}`}
-                          className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#00CED1]/50"
+                          className="flex-1 bg-black/40 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[var(--nile-teal)]/50"
                         />
                         <button
                           onClick={() => {
@@ -927,7 +925,7 @@ export default function POSTerminal() {
                             }
                             handleAddAiSuggestion(choice, price);
                           }}
-                          className="px-4 py-2 rounded-lg bg-[#00CED1]/20 text-[#00CED1] border border-[#00CED1]/50 hover:bg-[#00CED1]/30 transition-colors font-cairo text-sm font-bold flex items-center gap-2 whitespace-nowrap"
+                          className="px-4 py-2 rounded-lg bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] border border-[var(--nile-teal)]/50 hover:bg-[var(--nile-teal)]/30 transition-colors font-cairo text-sm font-bold flex items-center gap-2 whitespace-nowrap"
                         >
                           <ShoppingCart className="w-4 h-4" />
                           إضافة
@@ -966,7 +964,7 @@ export default function POSTerminal() {
       {}
       <div className="w-full lg:w-[450px] flex flex-col gap-6 h-[50vh] lg:h-auto lg:flex-none">
         <div className="glass-panel flex-1 p-0 overflow-hidden flex flex-col relative">
-          <div className="p-6 border-b border-white/5 flex justify-between items-center">
+          <div className="p-6 border-b border-[var(--glass-border)] flex justify-between items-center">
             <h2 className="text-xl font-bold font-cairo">طلب البيع الحالي</h2>
             {cart.length > 0 && (
               <button
@@ -1071,21 +1069,21 @@ export default function POSTerminal() {
             )}
           </div>
 
-          <div className="p-6 bg-[#050505]/80 border-t border-white/10 backdrop-blur-md">
+          <div className="p-6 bg-[#050505]/80 border-t border-[var(--glass-border)] backdrop-blur-md">
             <div className="mb-6 space-y-3">
               <label className="text-xs text-gray-500 font-cairo block mr-1">طريقة الدفع</label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setPaymentMethod('cash')}
-                  className={`py-2 rounded-lg text-xs font-cairo border transition-all ${paymentMethod === 'cash' ? 'bg-[#00CED1]/20 border-[#00CED1] text-[#00CED1]' : 'border-white/5 bg-white/5 text-gray-400'}`}
+                  className={`py-2 rounded-lg text-xs font-cairo border transition-all ${paymentMethod === 'cash' ? 'bg-[var(--nile-teal)]/20 border-[var(--nile-teal)] text-[var(--nile-teal)]' : 'border-[var(--glass-border)] bg-[var(--glass-surface)] text-gray-400'}`}
                 >نقدي</button>
                 <button
                   onClick={() => setPaymentMethod('debt')}
-                  className={`py-2 rounded-lg text-xs font-cairo border transition-all ${paymentMethod === 'debt' ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37]' : 'border-white/5 bg-white/5 text-gray-400'}`}
+                  className={`py-2 rounded-lg text-xs font-cairo border transition-all ${paymentMethod === 'debt' ? 'bg-[var(--royal-gold)]/20 border-[var(--royal-gold)] text-[var(--royal-gold)]' : 'border-[var(--glass-border)] bg-[var(--glass-surface)] text-gray-400'}`}
                 >دين</button>
                 <button
                   onClick={() => setPaymentMethod('sadqah')}
-                  className={`py-2 rounded-lg text-xs font-cairo border transition-all ${paymentMethod === 'sadqah' ? 'bg-[#FF69B4]/20 border-[#FF69B4] text-[#FF69B4]' : 'border-white/5 bg-white/5 text-gray-400'}`}
+                  className={`py-2 rounded-lg text-xs font-cairo border transition-all ${paymentMethod === 'sadqah' ? 'bg-[#FF69B4]/20 border-[#FF69B4] text-[#FF69B4]' : 'border-[var(--glass-border)] bg-[var(--glass-surface)] text-gray-400'}`}
                 >صدقة</button>
               </div>
             </div>
@@ -1102,7 +1100,7 @@ export default function POSTerminal() {
                     <label className="text-xs text-gray-500 font-cairo block mr-1">اختر أو أضف عميل</label>
                     <button
                       onClick={() => setIsAddingCustomer(!isAddingCustomer)}
-                      className="text-xs flex items-center gap-1 text-[#D4AF37] hover:text-[#f2cd56] transition-colors font-cairo"
+                      className="text-xs flex items-center gap-1 text-[var(--royal-gold)] hover:text-[#f2cd56] transition-colors font-cairo"
                     >
                       {isAddingCustomer ? <X className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
                       {isAddingCustomer ? 'إلغاء' : 'إضافة عميل جديد'}
@@ -1115,7 +1113,7 @@ export default function POSTerminal() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="bg-[#D4AF37]/5 border border-[#D4AF37]/20 p-3 rounded-xl mb-3"
+                        className="bg-[var(--royal-gold)]/5 border border-[var(--royal-gold)]/20 p-3 rounded-xl mb-3"
                       >
                         <form onSubmit={handleSubmitCustomer(onAddCustomer)} className="space-y-3">
                           <div>
@@ -1124,8 +1122,8 @@ export default function POSTerminal() {
                               placeholder="اسم العميل"
                               {...registerCustomer('name')}
                               className={cn(
-                                "w-full bg-black/40 border rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50",
-                                customerErrors.name ? "border-red-500" : "border-white/10"
+                                "w-full bg-black/40 border rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[var(--royal-gold)]/50",
+                                customerErrors.name ? "border-red-500" : "border-[var(--glass-border)]"
                               )}
                             />
                             {customerErrors.name && <p className="text-red-400 text-xs mt-1 font-cairo">{customerErrors.name.message}</p>}
@@ -1136,8 +1134,8 @@ export default function POSTerminal() {
                               placeholder="رقم الهاتف (اختياري)"
                               {...registerCustomer('phone')}
                               className={cn(
-                                "w-full bg-black/40 border rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50",
-                                customerErrors.phone ? "border-red-500" : "border-white/10"
+                                "w-full bg-black/40 border rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[var(--royal-gold)]/50",
+                                customerErrors.phone ? "border-red-500" : "border-[var(--glass-border)]"
                               )}
                             />
                             {customerErrors.phone && <p className="text-red-400 text-xs mt-1 font-cairo">{customerErrors.phone.message}</p>}
@@ -1145,7 +1143,7 @@ export default function POSTerminal() {
                           <button
                             type="submit"
                             disabled={isSavingCustomer}
-                            className="w-full py-2 rounded-lg bg-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/30 border border-[#D4AF37]/30 flex items-center justify-center gap-2 font-bold font-cairo disabled:opacity-50 transition-colors"
+                            className="w-full py-2 rounded-lg bg-[var(--royal-gold)]/20 text-[var(--royal-gold)] hover:bg-[var(--royal-gold)]/30 border border-[var(--royal-gold)]/30 flex items-center justify-center gap-2 font-bold font-cairo disabled:opacity-50 transition-colors"
                           >
                             {isSavingCustomer ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             حفظ وتحديد
@@ -1156,7 +1154,7 @@ export default function POSTerminal() {
                       <select
                         value={selectedCustomerId}
                         onChange={(e) => setSelectedCustomerId(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white outline-none font-cairo focus:border-[#D4AF37]/50"
+                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl p-3 text-sm text-white outline-none font-cairo focus:border-[var(--royal-gold)]/50"
                       >
                         <option value="" className="bg-[#050505]">-- اختر العميل --</option>
                         {customers.map(c => (
@@ -1171,7 +1169,7 @@ export default function POSTerminal() {
 
             <div className="flex justify-between items-center mb-6 font-cairo">
               <span className="text-gray-400 text-lg">الإجمالي النهائي</span>
-              <span className={`text-4xl font-bold ${paymentMethod === 'sadqah' ? 'text-[#FF69B4]' : 'text-[#D4AF37]'}`}>
+              <span className={`text-4xl font-bold ${paymentMethod === 'sadqah' ? 'text-[#FF69B4]' : 'text-[var(--royal-gold)]'}`}>
                 {total.toFixed(2)} ج.م
               </span>
             </div>
@@ -1184,7 +1182,7 @@ export default function POSTerminal() {
               className={`relative w-full py-5 rounded-2xl font-bold text-xl transition-all flex items-center justify-center gap-3 font-cairo overflow-hidden group
                 ${cart.length > 0 && !isProcessing
                   ? 'text-black shadow-[0_15px_35px_-10px_var(--nile-teal-glow)] hover:shadow-[0_20px_45px_-10px_var(--royal-gold-glow)] hover:-translate-y-1'
-                  : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/10'
+                  : 'bg-[var(--glass-surface)] text-gray-500 cursor-not-allowed border border-[var(--glass-border)]'
                 }
               `}
             >
@@ -1248,7 +1246,7 @@ export default function POSTerminal() {
 
       <button
         onClick={() => setIsCopilotOpen(!isCopilotOpen)}
-        className="fixed bottom-6 right-6 p-4 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#f2cd56] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-110 transition-transform z-50 flex items-center justify-center font-bold"
+        className="fixed bottom-6 right-6 p-4 rounded-full bg-gradient-to-r from-[var(--royal-gold)] to-[#f2cd56] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-110 transition-transform z-50 flex items-center justify-center font-bold"
         title="المساعد الذكي (Copilot)"
       >
         {isCopilotOpen ? <X className="w-8 h-8" /> : <Bot className="w-8 h-8" />}
@@ -1260,10 +1258,10 @@ export default function POSTerminal() {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-6 w-[calc(100vw-2rem)] sm:w-[400px] h-[600px] max-h-[80vh] bg-[#050505]/95 border border-[#D4AF37]/30 rounded-2xl shadow-2xl overflow-hidden z-[60] flex flex-col backdrop-blur-xl"
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-6 w-[calc(100vw-2rem)] sm:w-[400px] h-[600px] max-h-[80vh] bg-[#050505]/95 border border-[var(--royal-gold)]/30 rounded-2xl shadow-2xl overflow-hidden z-[60] flex flex-col backdrop-blur-xl"
           >
-            <div className="bg-[#D4AF37]/10 border-b border-[#D4AF37]/20 px-4 py-3 flex items-center justify-between">
-              <h3 className="font-bold font-cairo text-[#D4AF37] flex items-center gap-2"><Bot className="w-5 h-5" /> المساعد الذكي</h3>
+            <div className="bg-[var(--royal-gold)]/10 border-b border-[var(--royal-gold)]/20 px-4 py-3 flex items-center justify-between">
+              <h3 className="font-bold font-cairo text-[var(--royal-gold)] flex items-center gap-2"><Bot className="w-5 h-5" /> المساعد الذكي</h3>
               <button onClick={() => setIsCopilotOpen(false)} className="text-gray-400 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -1286,12 +1284,12 @@ export default function POSTerminal() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1, x: win.x, y: win.y }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed top-20 left-1/4 w-[600px] h-[500px] bg-[#050505]/95 border border-[#00CED1]/50 shadow-[0_0_30px_rgba(0,206,209,0.2)] rounded-xl overflow-hidden z-[55] flex flex-col backdrop-blur-xl"
+            className="fixed top-20 left-1/4 w-[600px] h-[500px] bg-[#050505]/95 border border-[var(--nile-teal)]/50 shadow-[0_0_30px_rgba(0,206,209,0.2)] rounded-xl overflow-hidden z-[55] flex flex-col backdrop-blur-xl"
             style={{ position: 'fixed' }}
           >
-            <div className="bg-[#00CED1]/10 border-b border-[#00CED1]/20 px-4 py-3 flex items-center justify-between cursor-move grab-active">
+            <div className="bg-[var(--nile-teal)]/10 border-b border-[var(--nile-teal)]/20 px-4 py-3 flex items-center justify-between cursor-move grab-active">
               <h3 className="font-bold font-cairo text-white flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-[#00CED1] animate-pulse"></div>
+                <div className="w-2 h-2 rounded-full bg-[var(--nile-teal)] animate-pulse"></div>
                 {win.title}
               </h3>
               <button

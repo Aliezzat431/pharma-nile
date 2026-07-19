@@ -191,7 +191,7 @@ export default function SadqahPage() {
       <div className="glass-panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right">
-            <thead className="bg-white/5 font-cairo text-gray-400 text-sm">
+            <thead className="bg-[var(--glass-surface)] font-cairo text-gray-400 text-sm">
               <tr>
                 <th className="px-6 py-4 font-medium">
                   رقم العملية
@@ -278,7 +278,7 @@ export default function SadqahPage() {
           </table>
         </div>
         {totalPages > 1 && (
-          <div className="p-4 border-t border-white/5">
+          <div className="p-4 border-t border-[var(--glass-border)]">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}

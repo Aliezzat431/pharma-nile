@@ -140,7 +140,7 @@ export default function StaffManagement() {
       <header data-gsap="fade-up" className="flex flex-col md:flex-row items-center justify-between gap-6 mb-4">
         <div>
           <h1 className="text-4xl font-bold flex items-center gap-3 font-cairo">
-             <UsersIcon className="text-[#00CED1] w-10 h-10" />
+             <UsersIcon className="text-[var(--nile-teal)] w-10 h-10" />
              إدارة <span className="nile-gradient-text">فريق العمل</span>
           </h1>
           <p className="text-gray-400 mt-2 font-cairo text-lg">إدارة صلاحيات الموظفين، تتبع النشاط، وإضافة حسابات جديدة.</p>
@@ -160,7 +160,7 @@ export default function StaffManagement() {
       {}
       {isAdmin && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-8 flex flex-col gap-4 border-white/5 relative overflow-hidden group">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-8 flex flex-col gap-4 border-[var(--glass-border)] relative overflow-hidden group">
                <div className="flex justify-between items-center z-10">
                    <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">الموظفين النشطين</h3>
                    <div className="p-3 bg-green-500/10 rounded-xl text-green-400">
@@ -171,18 +171,18 @@ export default function StaffManagement() {
                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-green-500/5 rounded-full blur-3xl group-hover:bg-green-500/10 transition-all" />
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-8 flex flex-col gap-4 border-[#00CED1]/20 neon-glow-teal relative overflow-hidden group">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-8 flex flex-col gap-4 border-[var(--nile-teal)]/20 neon-glow-teal relative overflow-hidden group">
                <div className="flex justify-between items-center z-10">
                    <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">إجمالي الفريق</h3>
-                   <div className="p-3 bg-[#00CED1]/10 rounded-xl text-[#00CED1]">
+                   <div className="p-3 bg-[var(--nile-teal)]/10 rounded-xl text-[var(--nile-teal)]">
                       <UsersIcon className="w-6 h-6" />
                    </div>
                </div>
                <p className="text-5xl font-bold z-10">{staffList.length}</p>
-               <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-[#00CED1]/5 rounded-full blur-3xl group-hover:bg-[#00CED1]/10 transition-all" />
+               <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-[var(--nile-teal)]/5 rounded-full blur-3xl group-hover:bg-[var(--nile-teal)]/10 transition-all" />
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card p-8 flex flex-col gap-4 border-white/5 relative overflow-hidden group">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card p-8 flex flex-col gap-4 border-[var(--glass-border)] relative overflow-hidden group">
                <div className="flex justify-between items-center z-10">
                    <h3 className="text-gray-400 font-bold font-cairo text-sm uppercase tracking-widest">آخر نشاط</h3>
                    <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
@@ -201,7 +201,7 @@ export default function StaffManagement() {
         {}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center gap-4 mb-2">
-            <div className="flex-1 glass-panel p-1 flex items-center gap-3 group focus-within:border-[#00CED1]/50 transition-all">
+            <div className="flex-1 glass-panel p-1 flex items-center gap-3 group focus-within:border-[var(--nile-teal)]/50 transition-all">
               <Search className="w-5 h-5 text-gray-500 mr-3" />
               <input 
                 type="text" 
@@ -213,11 +213,11 @@ export default function StaffManagement() {
             </div>
           </div>
 
-          <div className="glass-panel overflow-hidden border-white/5">
+          <div className="glass-panel overflow-hidden border-[var(--glass-border)]">
             <div className="overflow-x-auto">
               <table className="w-full text-right border-collapse">
                 <thead>
-                  <tr className="border-b border-white/10 bg-white/5 font-cairo">
+                  <tr className="border-b border-[var(--glass-border)] bg-[var(--glass-surface)] font-cairo">
                     <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">الموظف</th>
                     <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">الدور</th>
                     <th className="p-6 whitespace-nowrap font-bold text-gray-400 text-right uppercase tracking-wider text-xs">الراتب</th>
@@ -227,7 +227,7 @@ export default function StaffManagement() {
                 </thead>
                 <tbody ref={listRef} className="divide-y divide-white/5">
                   {loading ? (
-                    <tr><td colSpan={5} className="p-20 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-[#00CED1]" /></td></tr>
+                    <tr><td colSpan={5} className="p-20 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-[var(--nile-teal)]" /></td></tr>
                   ) : paginatedData.length === 0 ? (
                     <tr><td colSpan={5} className="p-20 text-center text-gray-500 font-cairo text-lg">لا يوجد موظفين بهذا الاسم</td></tr>
                   ) : (
@@ -238,11 +238,11 @@ export default function StaffManagement() {
                       >
                         <td className="p-6 whitespace-nowrap">
                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00CED1]/20 to-[#D4AF37]/20 flex items-center justify-center font-bold text-[#00CED1] border border-white/10 group-hover:scale-110 transition-transform">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--nile-teal)]/20 to-[var(--royal-gold)]/20 flex items-center justify-center font-bold text-[var(--nile-teal)] border border-[var(--glass-border)] group-hover:scale-110 transition-transform">
                                  {staff.full_name?.substring(0, 2) || 'ST'}
                               </div>
                               <div>
-                                <p className="font-bold text-white font-cairo group-hover:text-[#00CED1] transition-colors">{staff.full_name}</p>
+                                <p className="font-bold text-white font-cairo group-hover:text-[var(--nile-teal)] transition-colors">{staff.full_name}</p>
                                 <p className="text-[10px] text-gray-500 font-bold uppercase mt-0.5 tracking-tighter">ID: {staff.id.slice(0, 8)}</p>
                               </div>
                            </div>
@@ -267,7 +267,7 @@ export default function StaffManagement() {
                            <div className="flex items-center justify-center gap-2">
                              {isAdmin && (
                                <>
-                                 <button className="p-2.5 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5" title="تعديل">
+                                 <button className="p-2.5 rounded-xl bg-[var(--glass-surface)] text-gray-400 hover:text-white hover:bg-[var(--glass-surface-heavy)] transition-all border border-[var(--glass-border)]" title="تعديل">
                                     <Shield className="w-4 h-4" />
                                  </button>
                                  <button className="p-2.5 rounded-xl bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all border border-red-500/10" title="حذف">
@@ -299,27 +299,27 @@ export default function StaffManagement() {
         {}
         <div className="space-y-6">
           <h2 className="text-xl font-bold font-cairo flex items-center gap-3 px-2">
-            <Clock className="w-5 h-5 text-[#D4AF37]" />
+            <Clock className="w-5 h-5 text-[var(--royal-gold)]" />
             أحدث النشاطات
           </h2>
-          <div className="glass-panel p-6 space-y-5 border-white/5">
+          <div className="glass-panel p-6 space-y-5 border-[var(--glass-border)]">
             {sessions.length > 0 ? (
               sessions.map((session, i) => (
-                <div key={session.id} className="relative pr-6 border-r border-white/10 space-y-1">
-                  <div className={`absolute top-0 right-[-5px] w-[10px] h-[10px] rounded-full ${session.status === 'active' ? 'bg-[#00CED1] shadow-[0_0_10px_#00CED1]' : 'bg-gray-600'}`} />
+                <div key={session.id} className="relative pr-6 border-r border-[var(--glass-border)] space-y-1">
+                  <div className={`absolute top-0 right-[-5px] w-[10px] h-[10px] rounded-full ${session.status === 'active' ? 'bg-[var(--nile-teal)] shadow-[0_0_10px_var(--nile-teal)]' : 'bg-gray-600'}`} />
                   <p className="text-sm font-bold text-white font-cairo">{session.username}</p>
                   <p className="text-[10px] text-gray-500 font-bold uppercase">
                     {session.shift_type === 'Morning' ? 'صباحية' : 'مسائية'} • {new Date(session.start_time).toLocaleTimeString('ar-EG')}
                   </p>
                   {session.status === 'active' && (
-                    <span className="inline-block mt-2 px-2 py-0.5 rounded bg-[#00CED1]/10 text-[#00CED1] text-[10px] font-bold">نشط الآن</span>
+                    <span className="inline-block mt-2 px-2 py-0.5 rounded bg-[var(--nile-teal)]/10 text-[var(--nile-teal)] text-[10px] font-bold">نشط الآن</span>
                   )}
                 </div>
               ))
             ) : (
               <p className="text-center text-gray-500 py-10 font-cairo">لا يوجد نشاط مسجل</p>
             )}
-            <button className="w-full py-4 rounded-xl bg-white/5 text-gray-400 font-bold text-xs hover:bg-white/10 transition-all font-cairo border border-dashed border-white/10">
+            <button className="w-full py-4 rounded-xl bg-[var(--glass-surface)] text-gray-400 font-bold text-xs hover:bg-[var(--glass-surface-heavy)] transition-all font-cairo border border-dashed border-[var(--glass-border)]">
               عرض كل سجلات الدخول
             </button>
           </div>

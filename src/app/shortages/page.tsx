@@ -142,7 +142,7 @@ export default function ShortagesPage() {
 
     const content = `
       <div dir="rtl" style="font-family: Arial, sans-serif; padding: 40px;">
-        <h1 style="text-align: center; color: #00CED1;">طلب توريد أدوية - PharmaNile</h1>
+        <h1 style="text-align: center; color: var(--nile-teal);">طلب توريد أدوية - PharmaNile</h1>
         <p style="text-align: center; color: #666;">التاريخ: ${new Date().toLocaleDateString('ar-EG')}</p>
         <hr style="border: 1px solid #eee; margin: 20px 0;" />
         
@@ -193,7 +193,7 @@ export default function ShortagesPage() {
           type="checkbox" 
           checked={selectedIds.has(item.id)} 
           onChange={() => toggleSelect(item.id)}
-          className="w-4 h-4 rounded border-white/10 bg-white/5 accent-[#00CED1] cursor-pointer"
+          className="w-4 h-4 rounded border-[var(--glass-border)] bg-[var(--glass-surface)] accent-[var(--nile-teal)] cursor-pointer"
         />
       ),
       className: 'w-[50px] text-center'
@@ -296,7 +296,7 @@ export default function ShortagesPage() {
           className={`px-5 py-2.5 rounded-2xl flex items-center gap-2 font-bold font-cairo transition-all shadow-xl text-sm
             ${selectedIds.size > 0
               ? 'bg-gradient-to-r from-[var(--nile-teal)] to-[var(--royal-gold)] text-black shadow-[0_0_20px_var(--nile-teal-glow)] hover:scale-105'
-              : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5'}
+              : 'bg-[var(--glass-surface)] text-gray-500 cursor-not-allowed border border-[var(--glass-border)]'}
           `}
         >
           <Printer className="w-4 h-4" />
@@ -307,7 +307,7 @@ export default function ShortagesPage() {
       {/* Stats Cards */}
       <div data-gsap="fade-up" className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'إجمالي النواقص', value: items.length, icon: Package, color: 'text-gray-400', glow: 'bg-white/5' },
+          { label: 'إجمالي النواقص', value: items.length, icon: Package, color: 'text-[var(--text-muted)]', glow: 'bg-[var(--glass-surface)]' },
           { label: 'أولوية عالية', value: items.filter(i => i.priority === 'عالي').length, icon: AlertCircle, color: 'text-red-400', glow: 'bg-red-500/10' },
           { label: 'شركات', value: new Set(items.map(i => i.company_name)).size, icon: Building2, color: 'text-[var(--royal-gold)]', glow: 'bg-[var(--royal-gold)]/10' },
           { label: 'مختار للطلب', value: selectedIds.size, icon: CheckCircle2, color: 'text-[var(--nile-teal)]', glow: 'bg-[var(--nile-teal)]/10' },
@@ -316,7 +316,7 @@ export default function ShortagesPage() {
             key={i}
             whileHover={{ y: -3, scale: 1.01 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="glass-card p-4 flex items-center gap-4 relative overflow-hidden group border border-white/5 hover:border-white/15 transition-all"
+            className="glass-card p-4 flex items-center gap-4 relative overflow-hidden group border border-[var(--glass-border)] hover:border-white/15 transition-all"
           >
             <div className={`w-10 h-10 rounded-xl ${stat.glow} ${stat.color} flex items-center justify-center transition-all group-hover:scale-110 relative z-10 shrink-0`}>
               <stat.icon className="w-4 h-4" />
@@ -333,7 +333,7 @@ export default function ShortagesPage() {
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         {/* Search */}
-        <div className="glass-panel p-2 flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl">
+        <div className="glass-panel p-2 flex items-center gap-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl">
           <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" />
           <input 
             type="text" 
@@ -350,7 +350,7 @@ export default function ShortagesPage() {
         </div>
 
         {/* Company Filter */}
-        <div className="glass-panel p-2 flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl">
+        <div className="glass-panel p-2 flex items-center gap-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl">
           <Building2 className="w-4 h-4 text-[var(--royal-gold)] mr-2 shrink-0" />
           <select 
             value={filterCompany}
@@ -365,7 +365,7 @@ export default function ShortagesPage() {
         </div>
 
         {/* Priority Filter */}
-        <div className="glass-panel p-2 flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl">
+        <div className="glass-panel p-2 flex items-center gap-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl">
           <Filter className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
           <select 
             value={filterPriority}
@@ -384,7 +384,7 @@ export default function ShortagesPage() {
           {(searchTerm || filterCompany !== 'all' || filterPriority !== 'all') && (
             <button 
               onClick={clearFilters}
-              className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-all text-sm font-cairo flex items-center gap-2 flex-1 justify-center"
+              className="px-4 py-2.5 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] text-gray-400 hover:text-white hover:bg-[var(--glass-surface-heavy)] transition-all text-sm font-cairo flex items-center gap-2 flex-1 justify-center"
             >
               <X className="w-4 h-4" />
               <span>مسح الفلاتر</span>
@@ -407,7 +407,7 @@ export default function ShortagesPage() {
       {(searchTerm || filterCompany !== 'all' || filterPriority !== 'all') && (
         <div className="flex flex-wrap gap-2">
           {searchTerm && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--glass-surface)] border border-[var(--glass-border)] text-xs text-gray-300">
               بحث: {searchTerm}
               <button onClick={() => setSearchTerm('')} className="hover:text-white">
                 <X className="w-3 h-3" />
@@ -415,7 +415,7 @@ export default function ShortagesPage() {
             </span>
           )}
           {filterCompany !== 'all' && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--glass-surface)] border border-[var(--glass-border)] text-xs text-gray-300">
               الشركة: {filterCompany}
               <button onClick={() => setFilterCompany('all')} className="hover:text-white">
                 <X className="w-3 h-3" />

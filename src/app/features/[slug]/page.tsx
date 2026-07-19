@@ -119,7 +119,7 @@ export default async function FeaturePage({ params }: { params: Promise<Params> 
         </div>
 
         {/* CTA */}
-        <div className="text-center space-y-4 pt-8 border-t border-white/5">
+        <div className="text-center space-y-4 pt-8 border-t border-[var(--glass-border)]">
           <h3 className="text-2xl font-black text-white">جاهز لتجربة {feature.title}؟</h3>
           <Link
             href="/welcome"

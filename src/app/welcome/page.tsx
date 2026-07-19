@@ -145,7 +145,7 @@ export default function WelcomePage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: idx * 0.07 }}
-                    className="p-5 bg-white/[0.015] border border-white/5 hover:border-cyan-400/20 rounded-3xl transition-all duration-300 flex gap-4"
+                    className="p-5 bg-white/[0.015] border border-[var(--glass-border)] hover:border-cyan-400/20 rounded-3xl transition-all duration-300 flex gap-4"
                   >
                     <div className="w-11 h-11 rounded-2xl bg-cyan-400/10 flex items-center justify-center shrink-0 border border-cyan-400/10">
                       <Icon className="w-5 h-5 text-cyan-400" />

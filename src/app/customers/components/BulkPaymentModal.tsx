@@ -41,7 +41,7 @@ export function BulkPaymentModal({
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className="glass-card w-full max-w-2xl overflow-hidden relative border border-green-500/30 shadow-[0_0_40px_rgba(34,197,94,0.1)] text-right z-10 flex flex-col max-h-[90vh]"
           >
-            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-green-500/5 shrink-0">
+            <div className="p-6 border-b border-[var(--glass-border)] flex justify-between items-center bg-green-500/5 shrink-0">
               <button 
                  onClick={onClose}
                  className="text-gray-400 hover:text-white transition-colors"
@@ -63,7 +63,7 @@ export function BulkPaymentModal({
                 const isFull = currentAmount === customer.total_debt;
 
                 return (
-                  <div key={customer.id} className="bg-white/5 border border-white/10 rounded-xl p-5">
+                  <div key={customer.id} className="bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl p-5">
                     <div className="flex items-center justify-between mb-4">
                       <div className="text-right">
                         <p className="text-xs text-gray-500 font-cairo">الدين الحالي</p>
@@ -74,8 +74,8 @@ export function BulkPaymentModal({
                           <h3 className="font-bold text-white font-cairo">{customer.name}</h3>
                           <p className="text-xs text-gray-500 font-sans">{customer.phone || 'بدون رقم'}</p>
                         </div>
-                        <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-[#D4AF37]" />
+                        <div className="w-10 h-10 rounded-xl bg-[var(--royal-gold)]/10 flex items-center justify-center">
+                          <Users className="w-5 h-5 text-[var(--royal-gold)]" />
                         </div>
                       </div>
                     </div>
@@ -88,7 +88,7 @@ export function BulkPaymentModal({
                           value={paymentNotes[customer.id] || ''}
                           placeholder="مثال: دفعة أولى..."
                           onChange={e => setPaymentNotes(prev => ({ ...prev, [customer.id]: e.target.value }))}
-                          className="w-full bg-[#050505]/50 border border-white/20 rounded-xl px-4 py-3 text-white outline-none focus:border-[#00CED1]/50 font-cairo text-sm text-right"
+                          className="w-full bg-[#050505]/50 border border-white/20 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--nile-teal)]/50 font-cairo text-sm text-right"
                         />
                       </div>
                       <div className="text-right">
@@ -128,7 +128,7 @@ export function BulkPaymentModal({
                       !isValid && currentAmount > 0 ? 'bg-red-500/10 border-red-500/20 text-red-400' :
                       isFull ? 'bg-green-500/10 border-green-500/20 text-green-400' :
                       currentAmount > 0 ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
-                      'bg-white/5 border-white/10 text-gray-500'
+                      'bg-[var(--glass-surface)] border-[var(--glass-border)] text-gray-500'
                     }`}>
                       <span className="font-sans">المتبقي: {Math.max(0, customer.total_debt - currentAmount).toLocaleString()} ج.م</span>
                       <span>
@@ -141,10 +141,10 @@ export function BulkPaymentModal({
             </div>
 
             {}
-            <div className="p-4 border-t border-white/10 bg-[#050505]/50 shrink-0">
+            <div className="p-4 border-t border-[var(--glass-border)] bg-[#050505]/50 shrink-0">
               <div className="flex items-center justify-between mb-4 font-cairo text-sm">
                 <span className="text-2xl font-bold text-green-400 font-sans">{totalPaymentAmount.toLocaleString()} ج.م</span>
-                <span className="text-gray-400">إجمالي المبالغ المسددة</span>
+                <span className="text-[var(--text-muted)]">إجمالي المبالغ المسددة</span>
               </div>
               <div className="flex gap-3">
                  <button 
@@ -161,7 +161,7 @@ export function BulkPaymentModal({
                  </button>
                  <button 
                    onClick={onClose}
-                   className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10"
+                   className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-[var(--glass-surface)] transition-colors border border-[var(--glass-border)]"
                  >
                    إلغاء
                  </button>

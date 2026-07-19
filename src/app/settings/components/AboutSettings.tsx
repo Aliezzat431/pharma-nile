@@ -63,8 +63,8 @@ export function AboutSettings() {
       ref={container} 
       className="space-y-8"
     >
-      <div className="contact-card glass-panel rounded-[2rem] p-8 md:p-12 text-center relative overflow-hidden border border-white/5">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#00CED1]/10 to-transparent opacity-30" />
+      <div className="contact-card glass-panel rounded-[2rem] p-8 md:p-12 text-center relative overflow-hidden border border-[var(--glass-border)]">
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--nile-teal)]/10 to-transparent opacity-30" />
         
         <div className="relative z-10">
           <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 bg-gradient-to-b from-white to-zinc-500 bg-clip-text text-transparent leading-tight font-cairo">
@@ -73,17 +73,17 @@ export function AboutSettings() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 mb-12">
             {members.map((member) => (
-              <div key={member.name} className="flex flex-col items-center gap-4 p-6 glass-card rounded-[2rem] border border-white/5 hover:border-[#00CED1]/30 transition-all duration-500 group">
+              <div key={member.name} className="flex flex-col items-center gap-4 p-6 glass-card rounded-[2rem] border border-[var(--glass-border)] hover:border-[var(--nile-teal)]/30 transition-all duration-500 group">
                 <div className="relative w-24 h-24 mb-2">
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#00CED1]/20 to-transparent rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="w-full h-full rounded-full border-2 border-white/10 group-hover:border-[#00CED1]/50 transition-all duration-500 overflow-hidden bg-white/5 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--nile-teal)]/20 to-transparent rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="w-full h-full rounded-full border-2 border-[var(--glass-border)] group-hover:border-[var(--nile-teal)]/50 transition-all duration-500 overflow-hidden bg-[var(--glass-surface)] flex items-center justify-center">
                     {/* Fallback to initials if photo fails */}
                     <img 
                       src={member.photo} 
                       alt={member.name} 
                       onError={(e) => {
                         (e.target as any).style.display = 'none';
-                        (e.target as any).parentElement.innerHTML = `<span class="text-xl font-bold font-cairo text-[#00CED1]">${member.name.substring(0, 2)}</span>`;
+                        (e.target as any).parentElement.innerHTML = `<span class="text-xl font-bold font-cairo text-[var(--nile-teal)]">${member.name.substring(0, 2)}</span>`;
                       }}
                       className="w-full h-full object-cover"
                     />

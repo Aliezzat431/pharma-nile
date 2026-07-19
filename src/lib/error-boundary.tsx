@@ -86,7 +86,7 @@ ${this.state.errorInfo?.componentStack || this.state.error.stack || "No trace av
                   
                   <button
                     onClick={this.handleCopyReport}
-                    className="flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/5 hover:bg-white/10 rounded-lg text-xs font-bold text-gray-300 transition-all font-sans cursor-pointer active:scale-95"
+                    className="flex items-center gap-1.5 px-3 py-1 bg-[var(--glass-surface)] border border-[var(--glass-border)] hover:bg-[var(--glass-surface-heavy)] rounded-lg text-xs font-bold text-gray-300 transition-all font-sans cursor-pointer active:scale-95"
                   >
                     {this.state.copied ? (
                       <>
@@ -102,7 +102,7 @@ ${this.state.errorInfo?.componentStack || this.state.error.stack || "No trace av
                   </button>
                 </div>
 
-                <div className="bg-black/70 border border-white/5 rounded-2xl p-4 font-mono text-[11px] text-rose-300/90 overflow-auto max-h-52 scrollbar-thin select-all leading-relaxed shadow-inner">
+                <div className="bg-black/70 border border-[var(--glass-border)] rounded-2xl p-4 font-mono text-[11px] text-rose-300/90 overflow-auto max-h-52 scrollbar-thin select-all leading-relaxed shadow-inner">
                   <span className="text-gray-550 block font-bold mb-1">[ERROR_REF: RUNTIME_EXCEPTION]</span>
                   {this.state.error.toString()}
                   {"\n"}
@@ -123,7 +123,7 @@ ${this.state.errorInfo?.componentStack || this.state.error.stack || "No trace av
 
               <button
                 onClick={() => window.location.reload()}
-                className="flex items-center gap-2 px-6 py-3 bg-slate-900 border border-white/5 hover:bg-slate-800 text-gray-300 font-bold text-sm rounded-xl transition-all hover:scale-102 active:scale-98 cursor-pointer"
+                className="flex items-center gap-2 px-6 py-3 bg-slate-900 border border-[var(--glass-border)] hover:bg-slate-800 text-gray-300 font-bold text-sm rounded-xl transition-all hover:scale-102 active:scale-98 cursor-pointer"
               >
                 <RefreshCw className="w-4 h-4 text-rose-400" />
                 <span>إعادة تحميل الصفحة</span>

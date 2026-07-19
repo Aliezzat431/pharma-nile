@@ -45,7 +45,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <Package className="w-4 h-4" />,
     label: 'جرد المخزون',
     prompt: 'اعمل جرد للمخزون وعرض الأصناف الناقصة',
-    color: '#00CED1'
+    color: 'var(--nile-teal)'
   },
   {
     icon: <TrendingUp className="w-4 h-4" />,
@@ -57,7 +57,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <Users className="w-4 h-4" />,
     label: 'العملاء المتأخرون',
     prompt: 'اعرض العملاء اللي عليهم متأخرات',
-    color: '#D4AF37'
+    color: 'var(--royal-gold)'
   },
   {
     icon: <AlertCircle className="w-4 h-4" />,
@@ -378,13 +378,13 @@ export default function CopilotPage() {
       
       {}
       <div className="w-full lg:w-[480px] flex flex-col h-full gap-4 order-last lg:order-first">
-        <div className="flex-1 glass-panel flex flex-col overflow-hidden relative border border-white/5 bg-background/50 backdrop-blur-xl">
+        <div className="flex-1 glass-panel flex flex-col overflow-hidden relative border border-[var(--glass-border)] bg-background/50 backdrop-blur-xl">
           
           {}
-          <div className="p-4 border-b border-white/5 bg-gradient-to-l from-[#00CED1]/5 to-transparent flex items-center justify-between">
+          <div className="p-4 border-b border-[var(--glass-border)] bg-gradient-to-l from-[var(--nile-teal)]/5 to-transparent flex items-center justify-between">
              <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00CED1] to-[#00CED1]/60 flex items-center justify-center shadow-lg">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/60 flex items-center justify-center shadow-lg">
                     <Sparkles className="w-5 h-5 text-black" />
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
@@ -398,7 +398,7 @@ export default function CopilotPage() {
              <div className="flex items-center gap-1">
                <button 
                  onClick={exportChat}
-                 className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-all"
+                 className="p-2 hover:bg-[var(--glass-surface)] rounded-lg text-gray-400 hover:text-white transition-all"
                  title="تصدير المحادثة"
                >
                  <Download className="w-4 h-4" />
@@ -428,19 +428,19 @@ export default function CopilotPage() {
                   <div className={`relative max-w-[85%] ${msg.role === 'user' ? '' : ''}`}>
                     <div className={`p-4 rounded-2xl font-cairo text-sm leading-relaxed shadow-lg text-right ${
                       msg.role === 'user' 
-                        ? 'bg-gradient-to-br from-white/10 to-white/5 text-white border border-white/10 rounded-br-sm' 
-                        : 'bg-gradient-to-br from-[#00CED1]/10 to-[#00CED1]/5 text-gray-100 border border-[#00CED1]/20 rounded-bl-sm'
+                        ? 'bg-gradient-to-br from-white/10 to-white/5 text-white border border-[var(--glass-border)] rounded-br-sm' 
+                        : 'bg-gradient-to-br from-[var(--nile-teal)]/10 to-[var(--nile-teal)]/5 text-gray-100 border border-[var(--nile-teal)]/20 rounded-bl-sm'
                     }`}>
                       {msg.role === 'assistant' ? (
                         <div className="prose prose-invert prose-sm max-w-none">
                           <ReactMarkdown
                             components={{
                               p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                              strong: ({ children }) => <strong className="text-[#00CED1] font-bold">{children}</strong>,
+                              strong: ({ children }) => <strong className="text-[var(--nile-teal)] font-bold">{children}</strong>,
                               ul: ({ children }) => <ul className="list-disc list-inside space-y-1 my-2">{children}</ul>,
                               li: ({ children }) => <li className="text-gray-200">{children}</li>,
                               code: ({ children }) => (
-                                <code className="bg-black/30 px-1.5 py-0.5 rounded text-[#00CED1] text-xs font-mono">
+                                <code className="bg-black/30 px-1.5 py-0.5 rounded text-[var(--nile-teal)] text-xs font-mono">
                                   {children}
                                 </code>
                               )
@@ -459,7 +459,7 @@ export default function CopilotPage() {
                       <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => copyToClipboard(msg.content, msg.id)}
-                          className="p-1.5 hover:bg-white/5 rounded-lg text-gray-500 hover:text-white transition-all"
+                          className="p-1.5 hover:bg-[var(--glass-surface)] rounded-lg text-gray-500 hover:text-white transition-all"
                           title="نسخ"
                         >
                           {msg.copied ? (
@@ -478,7 +478,7 @@ export default function CopilotPage() {
                           <button
                             key={idx}
                             onClick={() => addTab(action.type, action.title)}
-                            className="px-3 py-1.5 bg-[#00CED1]/10 hover:bg-[#00CED1]/20 border border-[#00CED1]/30 rounded-lg text-[#00CED1] text-xs font-cairo transition-all flex items-center gap-1.5"
+                            className="px-3 py-1.5 bg-[var(--nile-teal)]/10 hover:bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/30 rounded-lg text-[var(--nile-teal)] text-xs font-cairo transition-all flex items-center gap-1.5"
                           >
                             <Zap className="w-3 h-3" />
                             {action.title}
@@ -497,11 +497,11 @@ export default function CopilotPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex justify-end"
               >
-                <div className="bg-gradient-to-br from-[#00CED1]/10 to-[#00CED1]/5 p-4 rounded-2xl flex items-center gap-3 border border-[#00CED1]/20">
+                <div className="bg-gradient-to-br from-[var(--nile-teal)]/10 to-[var(--nile-teal)]/5 p-4 rounded-2xl flex items-center gap-3 border border-[var(--nile-teal)]/20">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-[#00CED1] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-[#00CED1] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-[#00CED1] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-2 h-2 bg-[var(--nile-teal)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-[var(--nile-teal)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-[var(--nile-teal)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                   </div>
                   <span className="text-xs text-gray-400 font-cairo">محسن يفكر...</span>
                 </div>
@@ -512,9 +512,9 @@ export default function CopilotPage() {
 
           {}
           {messages.length <= 1 && (
-            <div className="p-4 border-t border-white/5 bg-white/[0.02]">
+            <div className="p-4 border-t border-[var(--glass-border)] bg-white/[0.02]">
               <div className="flex items-center gap-2 mb-3">
-                <Lightbulb className="w-4 h-4 text-[#D4AF37]" />
+                <Lightbulb className="w-4 h-4 text-[var(--royal-gold)]" />
                 <span className="text-xs text-gray-400 font-cairo">اقتراحات سريعة</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -525,7 +525,7 @@ export default function CopilotPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.1 }}
                     onClick={() => handleQuickAction(action)}
-                    className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all text-right group"
+                    className="p-3 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] hover:border-white/20 rounded-xl transition-all text-right group"
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <div style={{ color: action.color }}>{action.icon}</div>
@@ -538,14 +538,14 @@ export default function CopilotPage() {
           )}
 
           {}
-          <div className="p-4 bg-background/50 border-t border-white/5">
+          <div className="p-4 bg-background/50 border-t border-[var(--glass-border)]">
             <div className="relative flex items-center gap-2">
               <button
                 onClick={toggleListening}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                   isListening 
                     ? 'bg-red-500 text-white animate-pulse' 
-                    : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white'
+                    : 'bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 hover:text-white'
                 }`}
                 title={isListening ? 'إيقاف الاستماع' : 'إدخال صوتي'}
               >
@@ -565,13 +565,13 @@ export default function CopilotPage() {
                 }}
                 placeholder={isListening ? 'جاري الاستماع...' : 'اسأل محسن عن أي حاجة...'} 
                 disabled={isListening}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:border-[#00CED1]/50 outline-none transition-all font-cairo text-right disabled:opacity-50"
+                className="flex-1 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:border-[var(--nile-teal)]/50 outline-none transition-all font-cairo text-right disabled:opacity-50"
               />
               
               <button 
                 onClick={() => handleSend()}
                 disabled={loading || !input.trim()}
-                className="absolute left-2 w-9 h-9 rounded-lg bg-gradient-to-br from-[#00CED1] to-[#00CED1]/80 text-black flex items-center justify-center hover:shadow-lg hover:shadow-[#00CED1]/20 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                className="absolute left-2 w-9 h-9 rounded-lg bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/80 text-black flex items-center justify-center hover:shadow-lg hover:shadow-[var(--nile-teal)]/20 transition-all disabled:opacity-30 disabled:pointer-events-none"
               >
                 <Send className="w-4 h-4 transform rotate-180" />
               </button>
@@ -581,10 +581,10 @@ export default function CopilotPage() {
       </div>
 
       {}
-      <div className="flex-1 flex flex-col glass-panel overflow-hidden border border-white/5 bg-background/50 backdrop-blur-xl h-full">
+      <div className="flex-1 flex flex-col glass-panel overflow-hidden border border-[var(--glass-border)] bg-background/50 backdrop-blur-xl h-full">
         
         {}
-        <div className="flex items-center gap-1 p-2 bg-white/5 border-b border-white/5 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10">
+        <div className="flex items-center gap-1 p-2 bg-[var(--glass-surface)] border-b border-[var(--glass-border)] overflow-x-auto scrollbar-thin scrollbar-thumb-white/10">
            <AnimatePresence>
              {tabs.map((tab) => {
                const isActive = activeTabId === tab.id;
@@ -598,8 +598,8 @@ export default function CopilotPage() {
                    onClick={() => setActiveTabId(tab.id)}
                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-cairo whitespace-nowrap group relative border ${
                      isActive 
-                       ? 'text-[#00CED1] bg-[#00CED1]/10 border-[#00CED1]/30 font-bold shadow-lg shadow-[#00CED1]/5' 
-                       : 'text-gray-500 border-transparent hover:bg-white/5 hover:text-gray-300'
+                       ? 'text-[var(--nile-teal)] bg-[var(--nile-teal)]/10 border-[var(--nile-teal)]/30 font-bold shadow-lg shadow-[var(--nile-teal)]/5' 
+                       : 'text-gray-500 border-transparent hover:bg-[var(--glass-surface)] hover:text-gray-300'
                    }`}
                  >
                    <span className="text-sm">{tab.title}</span>
@@ -612,7 +612,7 @@ export default function CopilotPage() {
                    {isActive && (
                      <motion.div 
                        layoutId="activeTabIndicator" 
-                       className="absolute bottom-[-9px] left-2 right-2 h-[2px] bg-gradient-to-r from-transparent via-[#00CED1] to-transparent" 
+                       className="absolute bottom-[-9px] left-2 right-2 h-[2px] bg-gradient-to-r from-transparent via-[var(--nile-teal)] to-transparent" 
                      />
                    )}
                  </motion.button>
@@ -644,7 +644,7 @@ export default function CopilotPage() {
                          transition={{ type: 'spring', duration: 0.8 }}
                          className="relative"
                        >
-                         <div className="w-32 h-32 rounded-[2rem] bg-gradient-to-br from-[#00CED1] to-[#00CED1]/40 flex items-center justify-center shadow-[0_0_50px_rgba(0,206,209,0.3)]">
+                         <div className="w-32 h-32 rounded-[2rem] bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/40 flex items-center justify-center shadow-[0_0_50px_rgba(0,206,209,0.3)]">
                             <Sparkles className="w-16 h-16 text-black" />
                          </div>
                          <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#FF69B4] rounded-full flex items-center justify-center animate-bounce">
@@ -661,9 +661,9 @@ export default function CopilotPage() {
                        
                        <div className="grid grid-cols-2 gap-3 w-full max-w-md mt-4">
                          {[
-                           { icon: <Package className="w-5 h-5" />, label: 'المخزون', color: '#00CED1' },
+                           { icon: <Package className="w-5 h-5" />, label: 'المخزون', color: 'var(--nile-teal)' },
                            { icon: <Users className="w-5 h-5" />, label: 'العملاء', color: '#FF69B4' },
-                           { icon: <TrendingUp className="w-5 h-5" />, label: 'المبيعات', color: '#D4AF37' },
+                           { icon: <TrendingUp className="w-5 h-5" />, label: 'المبيعات', color: 'var(--royal-gold)' },
                            { icon: <ShieldCheck className="w-5 h-5" />, label: 'التقارير', color: '#9370DB' }
                          ].map((item, idx) => (
                            <motion.div
@@ -671,7 +671,7 @@ export default function CopilotPage() {
                              initial={{ opacity: 0, y: 20 }}
                              animate={{ opacity: 1, y: 0 }}
                              transition={{ delay: idx * 0.1 }}
-                             className="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
+                             className="p-4 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl hover:bg-[var(--glass-surface-heavy)] transition-all cursor-pointer"
                            >
                              <div style={{ color: item.color }}>{item.icon}</div>
                              <p className="text-white text-sm font-cairo mt-2">{item.label}</p>
@@ -693,16 +693,16 @@ export default function CopilotPage() {
                   {tab.type === 'sales_chart' && (
                     <div className="p-8 w-full h-full flex flex-col text-right">
                        <h3 className="text-xl font-bold font-cairo text-white mb-6">التحليلات والمخططات</h3>
-                       <div className="glass-panel p-8 flex-1 flex items-end justify-between gap-3 border border-white/5 bg-white/[0.02]">
+                       <div className="glass-panel p-8 flex-1 flex items-end justify-between gap-3 border border-[var(--glass-border)] bg-white/[0.02]">
                          {[35, 80, 50, 95, 65, 75, 45].map((h, i) => (
                            <motion.div 
                              key={i} 
                              initial={{ height: 0 }}
                              animate={{ height: `${h}%` }}
                              transition={{ delay: i * 0.1, duration: 0.5 }}
-                             className="flex-1 bg-gradient-to-t from-[#00CED1]/20 to-[#00CED1]/5 border border-[#00CED1]/30 rounded-xl hover:from-[#00CED1]/30 hover:to-[#00CED1]/10 transition-all cursor-pointer group relative" 
+                             className="flex-1 bg-gradient-to-t from-[var(--nile-teal)]/20 to-[var(--nile-teal)]/5 border border-[var(--nile-teal)]/30 rounded-xl hover:from-[var(--nile-teal)]/30 hover:to-[var(--nile-teal)]/10 transition-all cursor-pointer group relative" 
                            >
-                             <div className="absolute top-[-35px] left-1/2 -translate-x-1/2 bg-background border border-white/10 text-[#00CED1] font-sans px-2 py-0.5 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
+                             <div className="absolute top-[-35px] left-1/2 -translate-x-1/2 bg-background border border-[var(--glass-border)] text-[var(--nile-teal)] font-sans px-2 py-0.5 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
                                1,{h}50 ج.م
                              </div>
                            </motion.div>

@@ -16,13 +16,13 @@ export function POSSettings() {
       className="space-y-6"
     >
       <div className="glass-panel p-8">
-        <h2 className="text-xl font-bold mb-6 border-b border-white/10 pb-4 font-cairo flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-[#00CED1]" /> إعدادات نقاط البيع (POS)
+        <h2 className="text-xl font-bold mb-6 border-b border-[var(--glass-border)] pb-4 font-cairo flex items-center gap-2">
+          <CreditCard className="w-5 h-5 text-[var(--nile-teal)]" /> إعدادات نقاط البيع (POS)
         </h2>
 
         <div className="space-y-4">
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-[var(--glass-border)] bg-white/[0.02] hover:bg-white/[0.04] transition-colors gap-4">
             <div>
               <h3 className="text-white font-medium font-cairo flex items-center gap-2"><Printer className="w-4 h-4 text-gray-400" /> مقاس طابعة الفواتير الحرارية</h3>
               <p className="text-sm text-gray-400 font-cairo mt-1">ضبط المقاس الحراري لعرض الفاتورة عند الطباعة المباشرة.</p>
@@ -30,7 +30,7 @@ export function POSSettings() {
             <select 
               value={preferences.printerSize}
               onChange={e => updatePreference('printerSize', e.target.value as any)}
-              className="bg-black/80 border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#00CED1] font-cairo min-w-[200px] cursor-pointer"
+              className="bg-black/80 border border-[var(--glass-border)] rounded-lg px-4 py-2.5 text-white outline-none focus:border-[var(--nile-teal)] font-cairo min-w-[200px] cursor-pointer"
             >
               <option value="80mm">80mm (قياسي)</option>
               <option value="58mm">58mm (صغير)</option>
@@ -38,7 +38,7 @@ export function POSSettings() {
             </select>
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-[var(--glass-border)] bg-white/[0.02] hover:bg-white/[0.04] transition-colors gap-4">
             <div>
               <h3 className="text-white font-medium font-cairo">فترة السماح بالمرتجعات (بالأيام)</h3>
               <p className="text-sm text-gray-400 font-cairo mt-1">الحد الأقصى للأيام المسموح خلالها بإرجاع فاتورة للعميل.</p>
@@ -50,7 +50,7 @@ export function POSSettings() {
                 const val = parseInt(e.target.value);
                 updatePreference('returnDaysLimit', isNaN(val) ? 0 : val);
               }}
-              className="w-full md:w-32 bg-black/80 border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-[#00CED1] transition-colors" 
+              className="w-full md:w-32 bg-black/80 border border-[var(--glass-border)] rounded-lg px-4 py-2.5 text-white outline-none focus:border-[var(--nile-teal)] transition-colors" 
             />
           </div>
         </div>

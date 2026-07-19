@@ -155,7 +155,7 @@ export function SaleTerminal() {
                     onClick={() => addToCart(item)}
                     className="flex flex-col items-center justify-center p-4 rounded-2xl glass-card hover:bg-nile-teal/10 hover:border-nile-teal/30 focus:neon-glow-teal transition-all group gap-2 text-center"
                   >
-                    <div className="w-12 h-12 rounded-full bg-black/40 border border-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-full bg-black/40 border border-[var(--glass-border)] flex items-center justify-center group-hover:scale-110 transition-transform">
                       <ShoppingCart className="w-5 h-5 text-nile-teal" />
                     </div>
                     <div className="flex flex-col gap-1 w-full">
@@ -183,7 +183,7 @@ export function SaleTerminal() {
             <div className="text-center py-20 text-foreground/20">السلة فاضية</div>
           ) : (
             cart.map(item => (
-              <div key={item.id} className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/5">
+              <div key={item.id} className="flex justify-between items-center bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                 <button 
                   onClick={() => setCart(cart.filter(i => i.id !== item.id))}
                   className="text-red-500/50 hover:text-red-500 transition-colors"
@@ -202,7 +202,7 @@ export function SaleTerminal() {
           )}
         </div>
 
-        <div className="mt-8 pt-8 border-t border-white/5 space-y-6">
+        <div className="mt-8 pt-8 border-t border-[var(--glass-border)] space-y-6">
           <div className="flex justify-between items-end">
             <span className="text-4xl font-black text-royal-gold neon-glow-gold">{total}</span>
             <span className="text-lg font-bold text-foreground/40">الإجمالي (ج.م)</span>
@@ -215,7 +215,7 @@ export function SaleTerminal() {
               "w-full py-6 rounded-2xl font-black text-2xl flex items-center justify-center gap-3 transition-all",
               cart.length > 0 
                 ? "bg-nile-teal text-obsidian neon-glow-teal hover:scale-[1.02]" 
-                : "bg-white/5 text-foreground/20 cursor-not-allowed"
+                : "bg-[var(--glass-surface)] text-foreground/20 cursor-not-allowed"
             )}
           >
             {isProcessing ? "جاري الحفظ..." : "إتمام البيع الآن"}

@@ -154,10 +154,10 @@ export default function CreateProduct() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-[#050505] border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative"
+              className="bg-[#050505] border border-[var(--glass-border)] rounded-2xl p-6 w-full max-w-lg shadow-2xl relative"
             >
               <h3 className="text-xl font-bold font-cairo mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#00CED1]" />
+                <Sparkles className="w-5 h-5 text-[var(--nile-teal)]" />
                 اختر المنتج المناسب
               </h3>
               <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
@@ -171,14 +171,14 @@ export default function CreateProduct() {
                       if (choice.unit_conversion) setValue('unit_conversion', choice.unit_conversion);
                       setShowChoices(false);
                     }}
-                    className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-[#00CED1]/10 hover:border-[#00CED1]/30 cursor-pointer transition-all text-right group"
+                    className="p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] hover:bg-[var(--nile-teal)]/10 hover:border-[var(--nile-teal)]/30 cursor-pointer transition-all text-right group"
                   >
-                    <div className="font-bold text-lg font-cairo text-white group-hover:text-[#00CED1] transition-colors">{choice.name}</div>
+                    <div className="font-bold text-lg font-cairo text-white group-hover:text-[var(--nile-teal)] transition-colors">{choice.name}</div>
                     <div className="text-sm text-gray-400 font-cairo mt-1">الشركة: {choice.company || 'غير محدد'}</div>
                     <div className="flex gap-2 mt-2">
-                      <span className="text-xs px-2 py-1 bg-white/10 rounded-md text-gray-300 font-cairo">{choice.type}</span>
+                      <span className="text-xs px-2 py-1 bg-[var(--glass-surface-heavy)] rounded-md text-gray-300 font-cairo">{choice.type}</span>
                       {choice.unit_conversion > 1 && (
-                        <span className="text-xs px-2 py-1 bg-white/10 rounded-md text-gray-300 font-cairo">تحويل: {choice.unit_conversion}</span>
+                        <span className="text-xs px-2 py-1 bg-[var(--glass-surface-heavy)] rounded-md text-gray-300 font-cairo">تحويل: {choice.unit_conversion}</span>
                       )}
                     </div>
                   </div>
@@ -188,7 +188,7 @@ export default function CreateProduct() {
                 <button 
                   type="button"
                   onClick={() => setShowChoices(false)}
-                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-cairo transition-colors"
+                  className="px-4 py-2 rounded-lg bg-[var(--glass-surface-heavy)] hover:bg-white/20 text-white font-cairo transition-colors"
                 >
                   إلغاء
                 </button>
@@ -201,13 +201,13 @@ export default function CreateProduct() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.back()}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-colors"
+            className="p-2 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3 font-cairo">
-              إضافة <span className="text-[#D4AF37]">صنف جديد</span>
+              إضافة <span className="text-[var(--royal-gold)]">صنف جديد</span>
             </h1>
             <p className="text-gray-400 mt-1 font-cairo">سجل منتجاً جديداً وحدد رصيد أول المدة (التشغيلة الأولى).</p>
           </div>
@@ -217,7 +217,7 @@ export default function CreateProduct() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         
         <div className="glass-panel p-8 space-y-6 relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-1 h-full bg-[#00CED1]"></div>
+           <div className="absolute top-0 right-0 w-1 h-full bg-[var(--nile-teal)]"></div>
            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 font-cairo">
               <Tag className="w-5 h-5 text-gray-400" />
               البيانات الأساسية للصنف
@@ -231,7 +231,7 @@ export default function CreateProduct() {
                     {...register('name')}
                     className={cn(
                       "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo text-right",
-                      errors.name ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                      errors.name ? "border-red-500 focus:border-red-500" : "border-[var(--glass-border)] focus:border-[var(--nile-teal)]"
                     )}
                     placeholder="مثال: بانادول إكسترا 500 مجم"
                   />
@@ -254,7 +254,7 @@ export default function CreateProduct() {
                 </label>
                 <input 
                   {...register('company')}
-                  className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#00CED1] transition-colors font-cairo text-right"
+                  className="w-full bg-[#050505] border border-[var(--glass-border)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--nile-teal)] transition-colors font-cairo text-right"
                   placeholder="مثال: فاركو أو GSK"
                 />
               </div>
@@ -265,7 +265,7 @@ export default function CreateProduct() {
                   {...register('type')}
                   className={cn(
                     "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors appearance-none font-cairo",
-                    errors.type ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    errors.type ? "border-red-500 focus:border-red-500" : "border-[var(--glass-border)] focus:border-[var(--nile-teal)]"
                   )}
                 >
                   {treatmentTypes.map(t => (
@@ -286,7 +286,7 @@ export default function CreateProduct() {
                     {...register('unit_conversion')}
                     className={cn(
                       "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
-                      errors.unit_conversion ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                      errors.unit_conversion ? "border-red-500 focus:border-red-500" : "border-[var(--glass-border)] focus:border-[var(--nile-teal)]"
                     )}
                   />
                   {errors.unit_conversion && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.unit_conversion.message}</p>}
@@ -298,7 +298,7 @@ export default function CreateProduct() {
         </div>
 
         <div className="glass-panel p-8 space-y-6 relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-1 h-full bg-[#D4AF37]"></div>
+           <div className="absolute top-0 right-0 w-1 h-full bg-[var(--royal-gold)]"></div>
            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 font-cairo">
               <ListOrdered className="w-5 h-5 text-gray-400" />
               بيانات أول تشغيلة (Initial Batch)
@@ -314,7 +314,7 @@ export default function CreateProduct() {
                   {...register('barcode')}
                   className={cn(
                     "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
-                    errors.barcode ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    errors.barcode ? "border-red-500" : "border-[var(--glass-border)] focus:border-[var(--nile-teal)]"
                   )}
                   placeholder="امسح أو اكتب الباركود..."
                 />
@@ -330,7 +330,7 @@ export default function CreateProduct() {
                   {...register('expiry_date')}
                   className={cn(
                     "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
-                    errors.expiry_date ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    errors.expiry_date ? "border-red-500" : "border-[var(--glass-border)] focus:border-[var(--nile-teal)]"
                   )}
                   placeholder="مثال: 05/2027 أو 15/05/2027"
                 />
@@ -345,7 +345,7 @@ export default function CreateProduct() {
                   {...register('quantity')}
                   className={cn(
                     "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
-                    errors.quantity ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    errors.quantity ? "border-red-500" : "border-[var(--glass-border)] focus:border-[var(--nile-teal)]"
                   )}
                 />
                 {errors.quantity && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.quantity.message}</p>}
@@ -362,7 +362,7 @@ export default function CreateProduct() {
                   {...register('purchase_price')}
                   className={cn(
                     "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
-                    errors.purchase_price ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    errors.purchase_price ? "border-red-500" : "border-[var(--glass-border)] focus:border-[var(--nile-teal)]"
                   )}
                 />
                 {errors.purchase_price && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.purchase_price.message}</p>}
@@ -379,7 +379,7 @@ export default function CreateProduct() {
                   {...register('sale_price')}
                   className={cn(
                     "w-full bg-[#050505] border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors font-cairo",
-                    errors.sale_price ? "border-red-500" : "border-white/10 focus:border-[#00CED1]"
+                    errors.sale_price ? "border-red-500" : "border-[var(--glass-border)] focus:border-[var(--nile-teal)]"
                   )}
                 />
                 {errors.sale_price && <p className="text-red-400 text-xs mt-1 font-cairo">{errors.sale_price.message}</p>}
@@ -392,7 +392,7 @@ export default function CreateProduct() {
           <button 
             disabled={loading}
             type="submit" 
-            className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-white font-bold hover:shadow-[0_0_15px_rgba(0,206,209,0.4)] transition-all disabled:opacity-50 font-cairo"
+            className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[var(--nile-teal)] to-[#009b9e] text-white font-bold hover:shadow-[0_0_15px_rgba(0,206,209,0.4)] transition-all disabled:opacity-50 font-cairo"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
             {loading ? 'جاري الحفظ...' : 'تسجيل الصنف والتشغيلة'}

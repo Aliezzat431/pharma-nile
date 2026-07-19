@@ -158,8 +158,8 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
     <div className="p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isAddingMode ? (
-          <div className="glass-card p-5 border-[#00CED1]/50 bg-[#00CED1]/5 relative shadow-[0_0_15px_rgba(0,206,209,0.1)]">
-            <h4 className="text-sm font-bold text-[#00CED1] mb-3 flex items-center gap-2 font-cairo">
+          <div className="glass-card p-5 border-[var(--nile-teal)]/50 bg-[var(--nile-teal)]/5 relative shadow-[0_0_15px_rgba(0,206,209,0.1)]">
+            <h4 className="text-sm font-bold text-[var(--nile-teal)] mb-3 flex items-center gap-2 font-cairo">
               <Plus className="w-4 h-4" /> إضافة تشغيلة جديدة
             </h4>
             <div className="space-y-3">
@@ -167,7 +167,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                 <div className="flex-1">
                   <label className="text-[10px] text-gray-400 block mb-1 font-cairo">الباركود</label>
                   <input 
-                    className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                     value={newBatchForm.barcode}
                     onChange={(e) => setNewBatchForm({...newBatchForm, barcode: e.target.value})}
                   />
@@ -176,7 +176,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                   <label className="text-[10px] text-gray-400 block mb-1 font-cairo">الكمية</label>
                   <input 
                     type="number"
-                    className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                     value={newBatchForm.quantity}
                     onChange={(e) => setNewBatchForm({...newBatchForm, quantity: e.target.value})}
                   />
@@ -187,7 +187,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                   <label className="text-[10px] text-gray-400 block mb-1 font-cairo">سعر الشراء</label>
                   <input 
                     type="number"
-                    className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                     value={newBatchForm.purchase_price}
                     onChange={(e) => setNewBatchForm({...newBatchForm, purchase_price: e.target.value})}
                   />
@@ -196,7 +196,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                   <label className="text-[10px] text-gray-400 block mb-1 font-cairo">سعر البيع</label>
                   <input 
                     type="number"
-                    className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                     value={newBatchForm.sale_price}
                     onChange={(e) => setNewBatchForm({...newBatchForm, sale_price: e.target.value})}
                   />
@@ -206,7 +206,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                 <label className="text-[10px] text-gray-400 block mb-1 font-cairo">تاريخ الانتهاء</label>
                 <input 
                   type="text"
-                  className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                  className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                   value={newBatchForm.expiry_date}
                   onChange={(e) => setNewBatchForm({...newBatchForm, expiry_date: e.target.value})}
                   placeholder="MM/YYYY أو DD/MM/YYYY"
@@ -215,14 +215,14 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
               <div className="flex gap-2 justify-end pt-2">
                 <button 
                   onClick={() => setIsAddingMode(false)}
-                  className="px-3 py-1.5 rounded bg-white/5 border border-white/10 text-white hover:bg-white/10 font-cairo text-sm"
+                  className="px-3 py-1.5 rounded bg-[var(--glass-surface)] border border-[var(--glass-border)] text-white hover:bg-[var(--glass-surface-heavy)] font-cairo text-sm"
                 >
                   إلغاء
                 </button>
                 <button 
                   disabled={addingBatch}
                   onClick={handleCreateBatch}
-                  className="px-3 py-1.5 rounded bg-gradient-to-r from-[#00CED1] to-[#00CED1]/80 text-black hover:opacity-90 font-bold font-cairo text-sm flex items-center gap-2 disabled:opacity-50"
+                  className="px-3 py-1.5 rounded bg-gradient-to-r from-[var(--nile-teal)] to-[var(--nile-teal)]/80 text-black hover:opacity-90 font-bold font-cairo text-sm flex items-center gap-2 disabled:opacity-50"
                 >
                   {addingBatch ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                   حفظ
@@ -233,21 +233,21 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
         ) : (
           <button 
             onClick={startAddingBatch}
-            className="glass-card p-5 border-dashed border-white/20 hover:border-[#00CED1]/50 hover:bg-[#00CED1]/5 transition-all text-[#00CED1] font-cairo flex flex-col items-center justify-center gap-3 min-h-[160px]"
+            className="glass-card p-5 border-dashed border-white/20 hover:border-[var(--nile-teal)]/50 hover:bg-[var(--nile-teal)]/5 transition-all text-[var(--nile-teal)] font-cairo flex flex-col items-center justify-center gap-3 min-h-[160px]"
           >
             <Plus className="w-8 h-8" />
             <span className="font-bold">إضافة تشغيلة جديدة</span>
           </button>
         )}
         {item.batches.map((batch) => (
-          <div key={batch.id} className="glass-card p-5 border-white/10 relative group hover:border-[#D4AF37]/30 transition-all">
+          <div key={batch.id} className="glass-card p-5 border-[var(--glass-border)] relative group hover:border-[var(--royal-gold)]/30 transition-all">
             {editingBatchId === batch.id ? (
               <div className="space-y-4">
                 <div className="flex justify-between gap-4">
                   <div className="flex-1">
                     <label className="text-[10px] text-gray-500 block mb-1 font-cairo">الباركود</label>
                     <input 
-                      className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                      className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                       value={editForm.barcode}
                       onChange={(e) => setEditForm({...editForm, barcode: e.target.value})}
                     />
@@ -256,7 +256,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                     <label className="text-[10px] text-gray-500 block mb-1 font-cairo">الكمية</label>
                     <input 
                       type="number"
-                      className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                      className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                       value={editForm.quantity}
                       onChange={(e) => setEditForm({...editForm, quantity: e.target.value})}
                     />
@@ -267,7 +267,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                     <label className="text-[10px] text-gray-500 block mb-1 font-cairo">سعر الشراء</label>
                     <input 
                       type="number"
-                      className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                      className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                       value={editForm.purchase_price}
                       onChange={(e) => setEditForm({...editForm, purchase_price: e.target.value})}
                     />
@@ -276,7 +276,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                     <label className="text-[10px] text-gray-500 block mb-1 font-cairo">سعر البيع</label>
                     <input 
                       type="number"
-                      className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                      className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                       value={editForm.sale_price}
                       onChange={(e) => setEditForm({...editForm, sale_price: e.target.value})}
                     />
@@ -286,7 +286,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                   <label className="text-[10px] text-gray-500 block mb-1 font-cairo">تاريخ الانتهاء</label>
                   <input 
                     type="text"
-                    className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-sm outline-none focus:border-[#00CED1]"
+                    className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
                     value={editForm.expiry_date}
                     onChange={(e) => setEditForm({...editForm, expiry_date: e.target.value})}
                     placeholder="MM/YYYY"
@@ -312,7 +312,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
               <>
                 <button 
                   onClick={() => startEditing(batch)}
-                  className="absolute top-4 left-4 p-2 rounded-lg bg-white/5 text-gray-500 opacity-0 group-hover:opacity-100 transition-all hover:text-[#00CED1] hover:bg-[#00CED1]/10"
+                  className="absolute top-4 left-4 p-2 rounded-lg bg-[var(--glass-surface)] text-gray-500 opacity-0 group-hover:opacity-100 transition-all hover:text-[var(--nile-teal)] hover:bg-[var(--nile-teal)]/10"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
@@ -321,7 +321,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                     <Hash className="w-3 h-3" />
                     {batch.barcode}
                   </div>
-                  <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${new Date(batch.expiry_date) < new Date() ? 'bg-red-500/20 text-red-400' : 'bg-[#00CED1]/10 text-[#00CED1]'}`}>
+                  <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${new Date(batch.expiry_date) < new Date() ? 'bg-red-500/20 text-red-400' : 'bg-[var(--nile-teal)]/10 text-[var(--nile-teal)]'}`}>
                     {new Date(batch.expiry_date) < new Date() ? 'منتهي' : 'صالح'}
                   </div>
                 </div>
@@ -344,7 +344,7 @@ export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }:
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-[10px] text-gray-500 font-cairo">سعر البيع</p>
-                      <p className="font-bold text-[#D4AF37] font-cairo text-sm" dir="ltr">{batch.sale_price} ج.م</p>
+                      <p className="font-bold text-[var(--royal-gold)] font-cairo text-sm" dir="ltr">{batch.sale_price} ج.م</p>
                     </div>
                   </div>
                 </div>

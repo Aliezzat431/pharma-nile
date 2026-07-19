@@ -188,7 +188,7 @@ function InventoryBatchPanel({
   };
 
   return (
-    <div className="p-6 bg-white/[0.02] border-t border-white/5">
+    <div className="p-6 bg-white/[0.02] border-t border-[var(--glass-border)]">
       <div className="flex justify-between items-center mb-4">
         <h4 className="text-sm font-bold text-gray-400 font-cairo">التشغيلات المتاحة</h4>
         <div className="flex gap-2">
@@ -196,7 +196,7 @@ function InventoryBatchPanel({
             <>
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#00CED1]/10 hover:bg-[#00CED1]/20 text-[#00CED1] text-xs font-bold font-cairo transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--nile-teal)]/10 hover:bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] text-xs font-bold font-cairo transition-all"
               >
                 <Plus className="w-3.5 h-3.5" /> إضافة تشغيلة
               </button>
@@ -217,9 +217,9 @@ function InventoryBatchPanel({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="mb-8 border border-[#00CED1]/20 bg-[#00CED1]/5 rounded-2xl p-6 overflow-hidden"
+            className="mb-8 border border-[var(--nile-teal)]/20 bg-[var(--nile-teal)]/5 rounded-2xl p-6 overflow-hidden"
           >
-            <h5 className="text-sm font-bold text-[#00CED1] mb-4 font-cairo">إضافة تشغيلة (Batch) جديدة</h5>
+            <h5 className="text-sm font-bold text-[var(--nile-teal)] mb-4 font-cairo">إضافة تشغيلة (Batch) جديدة</h5>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] text-gray-400 font-cairo px-1">الباركود</label>
@@ -229,7 +229,7 @@ function InventoryBatchPanel({
                     type="text"
                     value={newBatch.barcode}
                     onChange={(e) => setNewBatch({ ...newBatch, barcode: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
                     placeholder="باركود التشغيلة..."
                   />
                 </div>
@@ -242,7 +242,7 @@ function InventoryBatchPanel({
                   min="1"
                   value={newBatch.quantity}
                   onChange={(e) => setNewBatch({ ...newBatch, quantity: Number(e.target.value) })}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                  className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
                 />
               </div>
 
@@ -254,7 +254,7 @@ function InventoryBatchPanel({
                     type="text"
                     value={newBatch.expiry_date}
                     onChange={(e) => setNewBatch({ ...newBatch, expiry_date: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
                     placeholder="DD/MM/YYYY أو MM/YYYY"
                   />
                 </div>
@@ -269,7 +269,7 @@ function InventoryBatchPanel({
                     step="0.01"
                     value={newBatch.purchase_price}
                     onChange={(e) => setNewBatch({ ...newBatch, purchase_price: Number(e.target.value) })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
                   />
                 </div>
               </div>
@@ -283,7 +283,7 @@ function InventoryBatchPanel({
                     step="0.01"
                     value={newBatch.sale_price}
                     onChange={(e) => setNewBatch({ ...newBatch, sale_price: Number(e.target.value) })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[#00CED1] outline-none transition-all"
+                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
                   />
                 </div>
               </div>
@@ -291,13 +291,13 @@ function InventoryBatchPanel({
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowAddForm(false)}
-                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-cairo transition-all"
+                className="px-4 py-2 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 text-xs font-cairo transition-all"
               >
                 إلغاء
               </button>
               <button
                 onClick={handleAddBatch}
-                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#00CED1] to-[#01AFB2] text-white text-xs font-bold font-cairo transition-all shadow-lg shadow-[#00CED1]/20 hover:scale-[1.02] active:scale-95"
+                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[var(--nile-teal)] to-[#01AFB2] text-white text-xs font-bold font-cairo transition-all shadow-lg shadow-[var(--nile-teal)]/20 hover:scale-[1.02] active:scale-95"
               >
                 حفظ التشغيلة
               </button>
@@ -318,8 +318,8 @@ function InventoryBatchPanel({
                 key={batch.id}
                 className={`p-5 rounded-2xl border transition-all ${
                   isEditing 
-                    ? 'bg-[#00CED1]/5 border-[#00CED1]/30 shadow-lg shadow-[#00CED1]/5' 
-                    : 'bg-white/5 border-white/5 hover:border-white/20'
+                    ? 'bg-[var(--nile-teal)]/5 border-[var(--nile-teal)]/30 shadow-lg shadow-[var(--nile-teal)]/5' 
+                    : 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-white/20'
                 }`}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -331,7 +331,7 @@ function InventoryBatchPanel({
                         type="text"
                         value={currentBatch.barcode}
                         onChange={(e) => setEditingBatch({ ...currentBatch, barcode: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none"
+                        className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none"
                       />
                     ) : (
                       <p className="text-sm font-mono text-gray-300">{batch.barcode || '---'}</p>
@@ -346,10 +346,10 @@ function InventoryBatchPanel({
                         type="number"
                         value={currentBatch.quantity}
                         onChange={(e) => setEditingBatch({ ...currentBatch, quantity: Number(e.target.value) })}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none"
+                        className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none"
                       />
                     ) : (
-                      <p className={`text-sm font-bold ${batch.quantity < 10 ? 'text-orange-400' : 'text-[#00CED1]'}`}>
+                      <p className={`text-sm font-bold ${batch.quantity < 10 ? 'text-orange-400' : 'text-[var(--nile-teal)]'}`}>
                         {batch.quantity}
                       </p>
                     )}
@@ -363,7 +363,7 @@ function InventoryBatchPanel({
                         type="date"
                         value={currentBatch.expiry_date}
                         onChange={(e) => setEditingBatch({ ...currentBatch, expiry_date: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none [color-scheme:dark]"
+                        className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none [color-scheme:dark]"
                       />
                     ) : (
                       <p className="text-sm text-gray-300">
@@ -381,7 +381,7 @@ function InventoryBatchPanel({
                         step="0.01"
                         value={currentBatch.purchase_price}
                         onChange={(e) => setEditingBatch({ ...currentBatch, purchase_price: Number(e.target.value) })}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none"
+                        className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none"
                       />
                     ) : (
                       <p className="text-sm text-gray-300">{batch.purchase_price} ج.م</p>
@@ -397,26 +397,26 @@ function InventoryBatchPanel({
                         step="0.01"
                         value={currentBatch.sale_price}
                         onChange={(e) => setEditingBatch({ ...currentBatch, sale_price: Number(e.target.value) })}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white focus:border-[#00CED1] outline-none"
+                        className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none"
                       />
                     ) : (
-                      <p className="text-sm text-[#D4AF37] font-bold">{batch.sale_price} ج.م</p>
+                      <p className="text-sm text-[var(--royal-gold)] font-bold">{batch.sale_price} ج.م</p>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-white/5 flex justify-end gap-3">
+                <div className="mt-4 pt-4 border-t border-[var(--glass-border)] flex justify-end gap-3">
                   {isEditing ? (
                     <>
                       <button
                         onClick={handleUpdateBatch}
-                        className="px-4 py-2 bg-gradient-to-r from-[#00CED1] to-[#01AFB2] text-white rounded-xl text-[10px] font-bold font-cairo transition-all hover:scale-105 active:scale-95"
+                        className="px-4 py-2 bg-gradient-to-r from-[var(--nile-teal)] to-[#01AFB2] text-white rounded-xl text-[10px] font-bold font-cairo transition-all hover:scale-105 active:scale-95"
                       >
                         حفظ التعديلات
                       </button>
                       <button
                         onClick={() => setEditingBatch(null)}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl text-[10px] font-cairo transition-all"
+                        className="px-4 py-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 rounded-xl text-[10px] font-cairo transition-all"
                       >
                         إلغاء
                       </button>
@@ -425,7 +425,7 @@ function InventoryBatchPanel({
                     <>
                       <button
                         onClick={() => setEditingBatch({...batch})}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl text-[10px] font-bold font-cairo transition-all"
+                        className="px-4 py-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 hover:text-white rounded-xl text-[10px] font-bold font-cairo transition-all"
                       >
                         تعديل
                       </button>
@@ -646,9 +646,9 @@ export default function InventoryDashboard() {
         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
           <Link
             href="/inventory/import"
-            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all border border-white/10 font-cairo hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] group"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-white font-bold transition-all border border-[var(--glass-border)] font-cairo hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] group"
           >
-            <FileUp className="w-5 h-5 text-[#D4AF37] group-hover:-translate-y-1 transition-transform" /> استيراد ملف
+            <FileUp className="w-5 h-5 text-[var(--royal-gold)] group-hover:-translate-y-1 transition-transform" /> استيراد ملف
           </Link>
           <Link
             href="/products/create"
@@ -668,8 +668,8 @@ export default function InventoryDashboard() {
       {}
       <div data-gsap="fade-up" className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'إجمالي المنتجات', value: items.length, icon: PackageOpen, color: 'text-[#00CED1]', glow: 'bg-[#00CED1]/10' },
-          { label: 'إجمالي الرصيد', value: items.reduce((acc, item) => acc + item.total_quantity, 0), icon: Tag, color: 'text-[#D4AF37]', glow: 'bg-[#D4AF37]/10' },
+          { label: 'إجمالي المنتجات', value: items.length, icon: PackageOpen, color: 'text-[var(--nile-teal)]', glow: 'bg-[var(--nile-teal)]/10' },
+          { label: 'إجمالي الرصيد', value: items.reduce((acc, item) => acc + item.total_quantity, 0), icon: Tag, color: 'text-[var(--royal-gold)]', glow: 'bg-[var(--royal-gold)]/10' },
           { label: 'نواقص المخزون', value: items.filter(i => i.total_quantity < 10).length, icon: AlertCircle, color: 'text-red-400', glow: 'bg-red-500/10' },
           { 
             label: 'قيمة المخزن (تكلفة)', 
@@ -685,7 +685,7 @@ export default function InventoryDashboard() {
             key={i} 
             whileHover={{ y: -8, scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="glass-card p-6 flex items-start gap-5 relative overflow-hidden group border border-white/10 hover:border-white/20 transition-all hover:shadow-[0_15px_35px_-10px_rgba(0,0,0,0.5)] z-10"
+            className="glass-card p-6 flex items-start gap-5 relative overflow-hidden group border border-[var(--glass-border)] hover:border-white/20 transition-all hover:shadow-[0_15px_35px_-10px_rgba(0,0,0,0.5)] z-10"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0" />
             <div className={`w-14 h-14 rounded-2xl ${stat.glow} ${stat.color} flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-xl relative z-10`}>
@@ -718,7 +718,7 @@ export default function InventoryDashboard() {
           <button
             onClick={() => setShowTypeFilter(!showTypeFilter)}
             className={`glass-card px-5 py-3 flex items-center justify-center gap-2 transition-all font-cairo w-full md:w-auto ${
-              selectedType ? 'text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/10' : 'text-gray-400'
+              selectedType ? 'text-[var(--royal-gold)] border-[var(--royal-gold)]/30 bg-[var(--royal-gold)]/10' : 'text-[var(--text-muted)]'
             }`}
           >
             <Filter className="w-4 h-4" />
@@ -732,7 +732,7 @@ export default function InventoryDashboard() {
                 initial={{ opacity: 0, y: -10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[300px] overflow-y-auto"
+                className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a] border border-[var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[300px] overflow-y-auto"
               >
                 <div className="p-2">
                   {}
@@ -742,7 +742,7 @@ export default function InventoryDashboard() {
                       setShowTypeFilter(false);
                     }}
                     className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
-                      !selectedType ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      !selectedType ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)]' : 'text-gray-400 hover:bg-[var(--glass-surface)] hover:text-white'
                     }`}
                   >
                     <XCircle className="w-4 h-4" />
@@ -760,7 +760,7 @@ export default function InventoryDashboard() {
                           setShowTypeFilter(false);
                         }}
                         className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
-                          selectedType === type ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                          selectedType === type ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)]' : 'text-gray-400 hover:bg-[var(--glass-surface)] hover:text-white'
                         }`}
                       >
                         <Tag className="w-4 h-4" />
@@ -777,7 +777,7 @@ export default function InventoryDashboard() {
         <button
           onClick={fetchInventory}
           disabled={loading}
-          className="glass-card px-6 py-3 flex items-center justify-center gap-2 text-[#00CED1] hover:bg-[#00CED1]/10 transition-all font-cairo disabled:opacity-50 w-full md:w-auto"
+          className="glass-card px-6 py-3 flex items-center justify-center gap-2 text-[var(--nile-teal)] hover:bg-[var(--nile-teal)]/10 transition-all font-cairo disabled:opacity-50 w-full md:w-auto"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           تحديث
@@ -790,11 +790,11 @@ export default function InventoryDashboard() {
       </div>
 
       {}
-      <div data-gsap="fade-up" className="glass-panel overflow-hidden border border-white/5 rounded-2xl">
+      <div data-gsap="fade-up" className="glass-panel overflow-hidden border border-[var(--glass-border)] rounded-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-right border-collapse">
             <thead>
-              <tr className="border-b border-white/5 bg-white/5 font-cairo text-gray-400 text-[11px] uppercase tracking-wider">
+              <tr className="border-b border-[var(--glass-border)] bg-[var(--glass-surface)] font-cairo text-gray-400 text-[11px] uppercase tracking-wider">
                 <th className="p-5 font-bold text-right">المعلومات الأساسية</th>
                 <th className="p-5 font-bold text-right hidden lg:table-cell">الشركة المصنعة</th>
                 <th className="p-5 font-bold text-right">النظام</th>
@@ -824,20 +824,20 @@ export default function InventoryDashboard() {
                   <React.Fragment key={item.id}>
                     <tr
                       onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                      className={`border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-all ${expandedId === item.id ? 'bg-white/[0.03]' : ''}`}
+                      className={`border-b border-[var(--glass-border)] hover:bg-white/[0.03] cursor-pointer transition-all ${expandedId === item.id ? 'bg-white/[0.03]' : ''}`}
                     >
                       <td className="p-5">
                         <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform ${expandedId === item.id ? 'bg-[#00CED1]/20 rotate-6 shadow-[0_0_15px_rgba(0,206,209,0.2)]' : 'bg-white/5'}`}>
-                            <Tag className={`w-5 h-5 ${expandedId === item.id ? 'text-[#00CED1]' : 'text-gray-500'}`} />
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform ${expandedId === item.id ? 'bg-[var(--nile-teal)]/20 rotate-6 shadow-[0_0_15px_rgba(0,206,209,0.2)]' : 'bg-[var(--glass-surface)]'}`}>
+                            <Tag className={`w-5 h-5 ${expandedId === item.id ? 'text-[var(--nile-teal)]' : 'text-[var(--text-inactive)]'}`} />
                           </div>
                           <div>
-                            <p className="font-bold text-white font-cairo text-base group-hover:text-[#00CED1] transition-colors">{item.name}</p>
+                            <p className="font-bold text-white font-cairo text-base group-hover:text-[var(--nile-teal)] transition-colors">{item.name}</p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] text-gray-500 font-cairo bg-white/5 px-2 py-0.5 rounded-md">
+                              <span className="text-[10px] text-gray-500 font-cairo bg-[var(--glass-surface)] px-2 py-0.5 rounded-md">
                                 {getTypeDisplayName(item.type) || item.type}
                               </span>
-                              <span className={`text-[10px] font-bold font-cairo px-2 py-0.5 rounded-md ${item.pharmacy_id === pharmacyId ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[#D4AF37]/10 text-[#D4AF37]'}`}>
+                              <span className={`text-[10px] font-bold font-cairo px-2 py-0.5 rounded-md ${item.pharmacy_id === pharmacyId ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[var(--royal-gold)]/10 text-[var(--royal-gold)]'}`}>
                                 {item.pharmacy_name}
                               </span>
                             </div>
@@ -851,7 +851,7 @@ export default function InventoryDashboard() {
                         </div>
                       </td>
                       <td className="p-5">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 border border-white/10 px-2.5 py-1 rounded-full bg-white/5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 border border-[var(--glass-border)] px-2.5 py-1 rounded-full bg-[var(--glass-surface)]">
                           {item.inventory_method || 'FEFO'}
                         </span>
                       </td>
@@ -961,14 +961,14 @@ export default function InventoryDashboard() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-[#050505] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl relative overflow-hidden"
+              className="bg-[#050505] border border-[var(--glass-border)] rounded-2xl w-full max-w-2xl shadow-2xl relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-1 h-full bg-[#D4AF37]"></div>
+              <div className="absolute top-0 right-0 w-1 h-full bg-[var(--royal-gold)]"></div>
               
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <div className="p-6 border-b border-[var(--glass-border)] flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-bold font-cairo flex items-center gap-2">
-                    <PlusCircle className="w-5 h-5 text-[#D4AF37]" />
+                    <PlusCircle className="w-5 h-5 text-[var(--royal-gold)]" />
                     توريد كمية جديدة
                   </h3>
                   <p className="text-xs text-gray-400 font-cairo mt-1">أضف تشغيلة جديدة لصنف موجود بالفعل في نظامك</p>
@@ -978,7 +978,7 @@ export default function InventoryDashboard() {
                     setIsQuickAddOpen(false);
                     setSelectedProduct(null);
                   }}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
+                  className="p-2 rounded-lg bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -995,7 +995,7 @@ export default function InventoryDashboard() {
                         placeholder="ابحث باسم المنتج أو الباركود..."
                         value={quickAddSearch}
                         onChange={handleQuickBatchAddBySearch}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pr-12 pl-4 text-white focus:border-[#D4AF37] outline-none transition-all font-cairo"
+                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl py-4 pr-12 pl-4 text-white focus:border-[var(--royal-gold)] outline-none transition-all font-cairo"
                       />
                     </div>
 
@@ -1004,11 +1004,11 @@ export default function InventoryDashboard() {
                         <div 
                           key={p.id}
                           onClick={() => handleSelectProductForBatch(p)}
-                          className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/30 cursor-pointer transition-all flex items-center justify-between group"
+                          className="p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)] hover:bg-[var(--royal-gold)]/10 hover:border-[var(--royal-gold)]/30 cursor-pointer transition-all flex items-center justify-between group"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#D4AF37]/20 transition-colors">
-                              <Tag className="w-5 h-5 text-gray-400 group-hover:text-[#D4AF37]" />
+                            <div className="w-10 h-10 rounded-lg bg-[var(--glass-surface)] flex items-center justify-center group-hover:bg-[var(--royal-gold)]/20 transition-colors">
+                              <Tag className="w-5 h-5 text-gray-400 group-hover:text-[var(--royal-gold)]" />
                             </div>
                             <div>
                                 <p className="font-bold text-white font-cairo">{p.name}</p>
@@ -1016,7 +1016,7 @@ export default function InventoryDashboard() {
                             </div>
                           </div>
                           <div className="text-left">
-                            <p className="text-sm font-bold text-[#D4AF37]">{p.total_quantity} قطعة</p>
+                            <p className="text-sm font-bold text-[var(--royal-gold)]">{p.total_quantity} قطعة</p>
                             <p className="text-[10px] text-gray-500 font-cairo">الرصيد الحالي</p>
                           </div>
                         </div>
@@ -1030,12 +1030,12 @@ export default function InventoryDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    <div className="p-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-between">
+                    <div className="p-4 rounded-xl bg-[var(--royal-gold)]/10 border border-[var(--royal-gold)]/20 flex items-center justify-between">
                        <div className="flex items-center gap-3">
-                          <Tag className="w-5 h-5 text-[#D4AF37]" />
+                          <Tag className="w-5 h-5 text-[var(--royal-gold)]" />
                           <div>
                             <p className="font-bold text-white font-cairo">{selectedProduct.name}</p>
-                            <p className="text-xs text-[#D4AF37]/80 font-cairo">{getTypeDisplayName(selectedProduct.type)} - {selectedProduct.company}</p>
+                            <p className="text-xs text-[var(--royal-gold)]/80 font-cairo">{getTypeDisplayName(selectedProduct.type)} - {selectedProduct.company}</p>
                           </div>
                        </div>
                        <button 
@@ -1053,7 +1053,7 @@ export default function InventoryDashboard() {
                             type="text"
                             value={quickBatch.barcode}
                             onChange={(e) => setQuickBatch({...quickBatch, barcode: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-white focus:border-[var(--royal-gold)] outline-none"
                           />
                        </div>
                        <div className="space-y-2">
@@ -1062,7 +1062,7 @@ export default function InventoryDashboard() {
                             type="number"
                             value={quickBatch.quantity}
                             onChange={(e) => setQuickBatch({...quickBatch, quantity: Number(e.target.value)})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-white focus:border-[var(--royal-gold)] outline-none"
                           />
                        </div>
                        <div className="space-y-2">
@@ -1072,7 +1072,7 @@ export default function InventoryDashboard() {
                             step="0.01"
                             value={quickBatch.purchase_price}
                             onChange={(e) => setQuickBatch({...quickBatch, purchase_price: Number(e.target.value)})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-white focus:border-[var(--royal-gold)] outline-none"
                           />
                        </div>
                        <div className="space-y-2">
@@ -1082,7 +1082,7 @@ export default function InventoryDashboard() {
                             step="0.01"
                             value={quickBatch.sale_price}
                             onChange={(e) => setQuickBatch({...quickBatch, sale_price: Number(e.target.value)})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-white focus:border-[var(--royal-gold)] outline-none"
                           />
                        </div>
                        <div className="col-span-2 space-y-2">
@@ -1091,14 +1091,14 @@ export default function InventoryDashboard() {
                             type="date"
                             value={quickBatch.expiry_date}
                             onChange={(e) => setQuickBatch({...quickBatch, expiry_date: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-[#D4AF37] outline-none [color-scheme:dark]"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-white focus:border-[var(--royal-gold)] outline-none [color-scheme:dark]"
                           />
                        </div>
                     </div>
 
                     <button 
                       onClick={submitQuickBatch}
-                      className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-black font-cairo rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all active:scale-[0.98]"
+                      className="w-full py-4 bg-gradient-to-r from-[var(--royal-gold)] to-[#B8860B] text-black font-black font-cairo rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all active:scale-[0.98]"
                     >
                       تسجيل الكمية في المخزن
                     </button>

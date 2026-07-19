@@ -85,11 +85,9 @@ export function usePreferences() {
 
       if (data) {
         const mapped = mapDbToPrefs(data);
-        console.log('[Preferences] Loaded from DB:', mapped);
         setPreferences(mapped);
       } else {
         
-        console.log('[Preferences] No settings found, initializing...');
         const initialData = { 
           pharmacy_id: pharmacyId, 
           pharmacy_name: user?.user_metadata?.pharmacy_name || defaultPreferences.pharmacyName 
@@ -141,13 +139,11 @@ export function usePreferences() {
     if (pharmacyId) {
       try {
         const dbUpdate = mapPrefsToDb({ [key]: value });
-        console.log(`[Preferences] Syncing ${key} = ${value} to DB...`);
         const { error } = await supabase
           .from('pharmacy_settings')
           .upsert({ pharmacy_id: pharmacyId, ...dbUpdate }, { onConflict: 'pharmacy_id' });
         
         if (error) throw error;
-        console.log(`[Preferences] ${key} synced successfully.`);
       } catch (e) {
         console.error(`[Preferences] Failed to sync ${key}:`, e);
       }

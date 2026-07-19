@@ -36,7 +36,6 @@ if (redisUrl || (redisHost && redisPort)) {
 
     if (redisInstance) {
       redisInstance.on('connect', () => {
-        console.log('✅ Redis connected successfully.');
         isRedisAvailable = true;
       });
 
@@ -64,7 +63,6 @@ if (redisUrl || (redisHost && redisPort)) {
     isRedisAvailable = false;
   }
 } else {
-  console.log('📝 Redis environment variables not configured. Caching and rate limiting will run in memory/fallback mode.');
 }
 
 export const redisClient = redisInstance;

@@ -264,7 +264,7 @@ export default function RegisterPage() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505] font-cairo" dir="rtl">
-        <div className="w-full max-w-md p-8 glass-panel rounded-3xl text-center border border-white/5 bg-background/50">
+        <div className="w-full max-w-md p-8 glass-panel rounded-3xl text-center border border-[var(--glass-border)] bg-background/50">
           <div className="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/30">
             <UserPlus className="w-10 h-10 text-green-400 animate-pulse" />
           </div>
@@ -282,7 +282,7 @@ export default function RegisterPage() {
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--nile-teal)]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[var(--royal-gold)]/5 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="w-full max-w-xl p-8 glass-panel rounded-3xl relative z-10 border border-white/5 bg-background/50 animate-in fade-in zoom-in duration-700">
+      <div className="w-full max-w-xl p-8 glass-panel rounded-3xl relative z-10 border border-[var(--glass-border)] bg-background/50 animate-in fade-in zoom-in duration-700">
         <div className="text-center mb-8">
           <div className="w-20 h-20 mx-auto bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--nile-teal)]/20 rounded-[2rem] flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,206,209,0.2)] border border-[var(--nile-teal)]/20">
             <UserPlus className="w-10 h-10 text-white" />
@@ -301,7 +301,7 @@ export default function RegisterPage() {
         )}
 
         {}
-        <div className="grid grid-cols-2 gap-2 mb-6 bg-black/60 p-1 rounded-xl border border-white/5">
+        <div className="grid grid-cols-2 gap-2 mb-6 bg-black/60 p-1 rounded-xl border border-[var(--glass-border)]">
           <button
             type="button"
             disabled={isLoading}
@@ -344,7 +344,7 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-right disabled:opacity-50"
+                className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-right disabled:opacity-50"
                 placeholder="د. أحمد محمد"
               />
             </div>
@@ -355,7 +355,7 @@ export default function RegisterPage() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-4 p-4 bg-white/[0.02] border border-white/5 rounded-2xl"
+              className="space-y-4 p-4 bg-white/[0.02] border border-[var(--glass-border)] rounded-2xl"
             >
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-[var(--nile-teal)] mr-1 block">اختر السلسلة التابعة لها الصيدلية</label>
@@ -370,7 +370,7 @@ export default function RegisterPage() {
                       setSelectedChainId(e.target.value);
                       setIsChainVerified(false);
                     }}
-                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm appearance-none cursor-pointer text-right disabled:opacity-50"
+                    className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm appearance-none cursor-pointer text-right disabled:opacity-50"
                   >
                     <option value="" disabled>-- اختر السلسلة --</option>
                     {chains.map((chain) => (
@@ -383,7 +383,7 @@ export default function RegisterPage() {
               </div>
 
               {!isChainVerified ? (
-                <div className="space-y-3 p-3 bg-black/60 rounded-xl border border-white/5 transition-all">
+                <div className="space-y-3 p-3 bg-black/60 rounded-xl border border-[var(--glass-border)] transition-all">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-amber-400/80 mr-1 block">رمز مرور السلسلة الأمن</label>
                     <div className="relative">
@@ -395,7 +395,7 @@ export default function RegisterPage() {
                         value={chainVerifyPassword}
                         onChange={(e) => setChainVerifyPassword(e.target.value)}
                         placeholder="••••••"
-                        className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-amber-500/50 transition-all text-sm font-sans text-left"
+                        className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-amber-500/50 transition-all text-sm font-sans text-left"
                       />
                     </div>
                   </div>
@@ -434,7 +434,7 @@ export default function RegisterPage() {
                         value={selectedPharmacyId}
                         onChange={(e) => setSelectedPharmacyId(e.target.value)}
                         required={regType === "join"}
-                        className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm appearance-none cursor-pointer text-right"
+                        className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm appearance-none cursor-pointer text-right"
                       >
                         {pharmacies.length === 0 ? (
                           <option value="">لا يوجد فروع مسجلة لهذه السلسلة بعد</option>
@@ -461,7 +461,7 @@ export default function RegisterPage() {
               className="space-y-4"
             >
               {}
-              <div className="grid grid-cols-3 gap-1 bg-black/60 p-1 rounded-xl border border-white/5">
+              <div className="grid grid-cols-3 gap-1 bg-black/60 p-1 rounded-xl border border-[var(--glass-border)]">
                 <button
                   type="button"
                   onClick={() => handleCreateTypeChange("standalone")}
@@ -493,13 +493,13 @@ export default function RegisterPage() {
               </div>
 
               {}
-              <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-4">
+              <div className="p-4 bg-white/[0.02] border border-[var(--glass-border)] rounded-2xl space-y-4">
                 {}
                 {createType === "new_chain" && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
-                    className="space-y-3 border-b border-white/5 pb-4"
+                    className="space-y-3 border-b border-[var(--glass-border)] pb-4"
                   >
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-[var(--royal-gold)] mr-1 block">اسم سلسلة الصيدليات الجديدة *</label>
@@ -512,7 +512,7 @@ export default function RegisterPage() {
                           value={newChainName}
                           onChange={(e) => setNewChainName(e.target.value)}
                           placeholder="مثال: مجموعة صيدليات الشفاء"
-                          className="w-full bg-[#0a0a0a] border border-[#d4af37]/20 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--royal-gold)]/50 transition-all text-sm text-right"
+                          className="w-full bg-[#0a0a0a] border border-[var(--royal-gold)]/20 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--royal-gold)]/50 transition-all text-sm text-right"
                         />
                       </div>
                     </div>
@@ -528,7 +528,7 @@ export default function RegisterPage() {
                           value={newChainPassword}
                           onChange={(e) => setNewChainPassword(e.target.value)}
                           placeholder="هذا الرمز ستحتاجه لإضافة فروع لاحقاً أو موظفين"
-                          className="w-full bg-[#0a0a0a] border border-[#d4af37]/20 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--royal-gold)]/50 transition-all text-sm font-sans text-left"
+                          className="w-full bg-[#0a0a0a] border border-[var(--royal-gold)]/20 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--royal-gold)]/50 transition-all text-sm font-sans text-left"
                         />
                       </div>
                     </div>
@@ -540,14 +540,14 @@ export default function RegisterPage() {
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
-                    className="space-y-3 border-b border-white/5 pb-4"
+                    className="space-y-3 border-b border-[var(--glass-border)] pb-4"
                   >
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-[var(--royal-gold)] mr-1 block">اختر السلسلة المراد إضافة الفرع إليها *</label>
                       <select
                         value={selectedChainId}
                         onChange={(e) => setSelectedChainId(e.target.value)}
-                        className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-[var(--royal-gold)]/50 transition-all text-sm appearance-none cursor-pointer text-right"
+                        className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 px-4 text-white focus:outline-none focus:border-[var(--royal-gold)]/50 transition-all text-sm appearance-none cursor-pointer text-right"
                       >
                         {chains.map((chain) => (
                           <option key={chain.id} value={chain.id}>
@@ -568,7 +568,7 @@ export default function RegisterPage() {
                           value={chainVerifyPassword}
                           onChange={(e) => setChainVerifyPassword(e.target.value)}
                           placeholder="رمز المرور الحالي الخاص بالسلسلة"
-                          className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--royal-gold)]/50 transition-all text-sm font-sans text-left"
+                          className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--royal-gold)]/50 transition-all text-sm font-sans text-left"
                         />
                       </div>
                     </div>
@@ -590,7 +590,7 @@ export default function RegisterPage() {
                       disabled={isLoading}
                       onChange={(e) => setNewPharmacyName(e.target.value)}
                       required={regType === "create"}
-                      className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-right"
+                      className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-right"
                       placeholder="صيدلية النيل - الفرع الرئيسي"
                     />
                   </div>
@@ -607,7 +607,7 @@ export default function RegisterPage() {
                       value={newPharmacyAddress}
                       disabled={isLoading}
                       onChange={(e) => setNewPharmacyAddress(e.target.value)}
-                      className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-right"
+                      className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-right"
                       placeholder="العنوان التفصيلي للفرع"
                     />
                   </div>
@@ -624,7 +624,7 @@ export default function RegisterPage() {
                       value={newPharmacyPhone}
                       disabled={isLoading}
                       onChange={(e) => setNewPharmacyPhone(e.target.value)}
-                      className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans"
+                      className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans"
                       placeholder="01xxxxxxxxx"
                     />
                   </div>
@@ -634,7 +634,7 @@ export default function RegisterPage() {
           )}
 
           {}
-          <div className="border-t border-white/5 pt-5 space-y-4">
+          <div className="border-t border-[var(--glass-border)] pt-5 space-y-4">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">معلومات تسجيل الدخول للحساب</h3>
 
             <div className="space-y-1">
@@ -650,7 +650,7 @@ export default function RegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   dir="ltr"
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans"
+                  className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-4 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans"
                   placeholder="name@pharma-nile.com"
                 />
               </div>
@@ -670,7 +670,7 @@ export default function RegisterPage() {
                   required
                   minLength={6}
                   dir="ltr"
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 pr-10 pl-11 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans"
+                  className="w-full bg-[#0a0a0a] border border-[var(--glass-border)] rounded-xl py-3 pr-10 pl-11 text-white focus:outline-none focus:border-[var(--nile-teal)]/50 transition-all text-sm text-left font-sans"
                   placeholder="••••••••"
                 />
                 <button

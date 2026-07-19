@@ -95,23 +95,23 @@ export default function Dashboard() {
   }, []);
 
   const statCards = [
-    { label: "مبيعات اليوم", value: stats?.todaySales || 'ج.م 0', icon: TrendingUp, color: 'text-[#00CED1]', glow: 'bg-[#00CED1]/10' },
-    { label: "صافي الأرباح", value: stats?.todayProfit || 'ج.م 0', icon: DollarSign, color: 'text-[#D4AF37]', glow: 'bg-[#D4AF37]/10' },
+    { label: "مبيعات اليوم", value: stats?.todaySales || 'ج.م 0', icon: TrendingUp, color: 'text-[var(--nile-teal)]', glow: 'bg-[var(--nile-teal)]/10' },
+    { label: "صافي الأرباح", value: stats?.todayProfit || 'ج.م 0', icon: DollarSign, color: 'text-[var(--royal-gold)]', glow: 'bg-[var(--royal-gold)]/10' },
     { label: "نواقص المخزون", value: stats?.lowStockItems || '0', icon: AlertCircle, color: 'text-red-400', glow: 'bg-red-500/10' },
     { label: "صلاحيات قريبة", value: stats?.expiringSoon || '0', icon: History, color: 'text-orange-400', glow: 'bg-orange-500/10' },
   ];
 
   const quickActions = [
-    { label: 'يلا نبيع (POS)', icon: ShoppingBag, href: '/pos', color: 'bg-gradient-to-br from-[#00CED1] to-[#00CED1]/70' },
-    { label: 'استيراد فاتورة AI', icon: Sparkles, href: '/invoices/import', color: 'bg-gradient-to-br from-[#D4AF37]/80 to-[#D4AF37]/40' },
-    { label: 'استلام بضاعة', icon: Boxes, href: '/inventory', color: 'bg-white/5 border-white/10' },
-    { label: 'عميل جديد', icon: UserPlus, href: '/customers', color: 'bg-white/5 border-white/10' },
+    { label: 'يلا نبيع (POS)', icon: ShoppingBag, href: '/pos', color: 'bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/70' },
+    { label: 'استيراد فاتورة AI', icon: Sparkles, href: '/invoices/import', color: 'bg-gradient-to-br from-[var(--royal-gold)]/80 to-[var(--royal-gold)]/40' },
+    { label: 'استلام بضاعة', icon: Boxes, href: '/inventory', color: 'bg-[var(--glass-surface)] border-[var(--glass-border)]' },
+    { label: 'عميل جديد', icon: UserPlus, href: '/customers', color: 'bg-[var(--glass-surface)] border-[var(--glass-border)]' },
   ];
 
   const weeklyData = stats?.weeklyData || [];
 
   return (
-    <div className="w-full max-w-full mx-auto space-y-10">
+    <main className="w-full max-w-full mx-auto space-y-10">
       {}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
@@ -135,7 +135,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <button 
             onClick={fetchDashboardData}
-            className="glass-card px-6 py-2.5 flex items-center gap-3 hover:bg-white/5 active:scale-95 transition-all text-sm font-bold font-cairo"
+            className="glass-card px-6 py-2.5 flex items-center gap-3 hover:bg-[var(--glass-surface)] active:scale-95 transition-all text-sm font-bold font-cairo"
           >
             <RefreshCw className={`w-4 h-4 text-[var(--nile-teal)] ${loading ? 'animate-spin' : ''}`} />
             <span>تحديث البيانات</span>
@@ -153,7 +153,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -8, scale: 1.02 }}
               transition={{ delay: i * 0.1, type: "spring", stiffness: 300, damping: 20 }}
-              className="glass-card p-6 flex items-start gap-5 relative overflow-hidden group border border-white/10 hover:border-[var(--nile-teal)]/30 cursor-pointer hover:shadow-[0_20px_40px_-15px_var(--nile-teal-glow)] z-10"
+              className="glass-card p-6 flex items-start gap-5 relative overflow-hidden group border border-[var(--glass-border)] hover:border-[var(--nile-teal)]/30 cursor-pointer hover:shadow-[0_20px_40px_-15px_var(--nile-teal-glow)] z-10"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className={`w-14 h-14 rounded-2xl ${stat.glow} flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-xl relative z-10`}>
@@ -186,10 +186,10 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <CalendarDays className="w-5 h-5 text-[#D4AF37]" />
+              <CalendarDays className="w-5 h-5 text-[var(--royal-gold)]" />
               <h2 className="font-bold font-cairo text-base">ملخص الشهر الحالي</h2>
             </div>
-            <Link href="/financials" className="text-[10px] font-bold text-[#00CED1] uppercase hover:underline font-cairo">
+            <Link href="/financials" className="text-[10px] font-bold text-[var(--nile-teal)] uppercase hover:underline font-cairo">
               تقرير مفصل
             </Link>
           </div>
@@ -200,8 +200,8 @@ export default function Dashboard() {
           ) : monthSummary ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: 'إجمالي المبيعات', value: monthSummary.total_revenue, color: '#00CED1' },
-                { label: 'صافي الربح',       value: monthSummary.total_profit,  color: '#D4AF37' },
+                { label: 'إجمالي المبيعات', value: monthSummary.total_revenue, color: 'var(--nile-teal)' },
+                { label: 'صافي الربح',       value: monthSummary.total_profit,  color: 'var(--royal-gold)' },
                 { label: 'إجمالي الطلبات',   value: monthSummary.total_orders,  color: '#a78bfa', isCount: true },
                 { label: 'مبيعات نقدية',      value: monthSummary.cash_revenue,  color: '#10b981' },
               ].map(m => (
@@ -257,8 +257,8 @@ export default function Dashboard() {
               <p className="text-gray-500 text-sm font-cairo">مقارنة السيولة بالديون — آخر 7 أيام</p>
             </div>
             <div className="flex gap-4">
-               <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase"><div className="w-2 h-2 rounded-full bg-[#00CED1]" /> كاش</div>
-               <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase"><div className="w-2 h-1 bg-[#D4AF37] rounded-full" /> آجل</div>
+               <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase"><div className="w-2 h-2 rounded-full bg-[var(--nile-teal)]" /> كاش</div>
+               <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase"><div className="w-2 h-1 bg-[var(--royal-gold)] rounded-full" /> آجل</div>
             </div>
           </div>
           
@@ -275,12 +275,12 @@ export default function Dashboard() {
                 <AreaChart data={weeklyData} margin={{ top: 5, right: 5, bottom: 5, left: 10 }}>
                   <defs>
                     <linearGradient id="chartTeal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#00CED1" stopOpacity={0.25}/>
-                      <stop offset="95%" stopColor="#00CED1" stopOpacity={0}/>
+                      <stop offset="5%"  stopColor="var(--nile-teal)" stopOpacity={0.25}/>
+                      <stop offset="95%" stopColor="var(--nile-teal)" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="chartGold" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#D4AF37" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#D4AF37" stopOpacity={0}/>
+                      <stop offset="5%"  stopColor="var(--royal-gold)" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="var(--royal-gold)" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
@@ -299,30 +299,30 @@ export default function Dashboard() {
                     tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}
                     width={40}
                   />
-                  <Tooltip content={<ArabicTooltip />} cursor={{ stroke: '#00CED1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                  <Tooltip content={<ArabicTooltip />} cursor={{ stroke: 'var(--nile-teal)', strokeWidth: 1, strokeDasharray: '4 4' }} />
                   <Area 
                     type="monotone" 
                     dataKey="sales" 
                     name="المبيعات"
-                    stroke="#00CED1" 
+                    stroke="var(--nile-teal)" 
                     strokeWidth={3}
                     fillOpacity={1} 
                     fill="url(#chartTeal)" 
                     animationDuration={1500}
-                    dot={{ fill: '#00CED1', strokeWidth: 0, r: 4 }}
-                    activeDot={{ r: 6, fill: '#00CED1', stroke: '#fff', strokeWidth: 2 }}
+                    dot={{ fill: 'var(--nile-teal)', strokeWidth: 0, r: 4 }}
+                    activeDot={{ r: 6, fill: 'var(--nile-teal)', stroke: '#fff', strokeWidth: 2 }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="debts" 
                     name="الديون"
-                    stroke="#D4AF37" 
+                    stroke="var(--royal-gold)" 
                     strokeWidth={2}
                     strokeDasharray="6 6"
                     fillOpacity={1}
                     fill="url(#chartGold)"
-                    dot={{ fill: '#D4AF37', strokeWidth: 0, r: 3 }}
-                    activeDot={{ r: 5, fill: '#D4AF37', stroke: '#fff', strokeWidth: 2 }}
+                    dot={{ fill: 'var(--royal-gold)', strokeWidth: 0, r: 3 }}
+                    activeDot={{ r: 5, fill: 'var(--royal-gold)', stroke: '#fff', strokeWidth: 2 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -334,7 +334,7 @@ export default function Dashboard() {
         <div className="glass-panel p-6 flex flex-col space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold font-cairo">آخر العمليات</h2>
-            <Link href="/orders" className="text-[10px] font-bold text-[#00CED1] uppercase hover:underline">عرض الكل</Link>
+            <Link href="/orders" className="text-[10px] font-bold text-[var(--nile-teal)] uppercase hover:underline">عرض الكل</Link>
           </div>
           
           <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-1">
@@ -342,7 +342,7 @@ export default function Dashboard() {
                <Skeleton count={5} className="h-16 w-full mb-3" />
              ) : recentTrans.length > 0 ? (
                recentTrans.map((tx, idx) => (
-                 <div key={idx} className="flex items-center gap-4 p-3 pb-6 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5 group">
+                 <div key={idx} className="flex items-center gap-4 p-3 pb-6 rounded-xl hover:bg-[var(--glass-surface)] transition-colors border border-transparent hover:border-[var(--glass-border)] group">
                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tx.total > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                      <ArrowRightLeft className="w-5 h-5" />
                    </div>
@@ -351,28 +351,28 @@ export default function Dashboard() {
                      <p className="text-[10px] text-gray-500 font-bold">{new Date(tx.created_at).toLocaleTimeString('ar-EG')}</p>
                    </div>
                    <div className="text-right">
-                     <p className="text-sm font-bold text-[#00CED1]">{tx.total} ج.م</p>
+                     <p className="text-sm font-bold text-[var(--nile-teal)]">{tx.total} ج.م</p>
                      <p className="text-[10px] text-gray-500 uppercase tracking-tighter">{tx.payment_method}</p>
                    </div>
                  </div>
                ))
              ) : (
-               <div className="flex-1 flex flex-col items-center justify-center text-center opacity-40 py-10">
+               <div className="empty-state">
                  <History className="w-12 h-12 mb-3" />
                  <p className="text-sm font-cairo">لا توجد مبيعات مؤخراً</p>
                </div>
              )}
           </div>
           
-          <div className="pt-4 border-t border-white/5">
-             <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 font-cairo leading-relaxed bg-[#00CED1]/5 p-3 rounded-xl border border-[#00CED1]/10">
-               <span className="text-[#00CED1]">تنبيه:</span>
+          <div className="pt-4 border-t border-[var(--glass-border)]">
+             <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 font-cairo leading-relaxed bg-[var(--nile-teal)]/5 p-3 rounded-xl border border-[var(--nile-teal)]/10">
+               <span className="text-[var(--nile-teal)]">تنبيه:</span>
                <span>تابع تحصيل الديون المتأخرة لتحسين السيولة.</span>
              </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

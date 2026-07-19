@@ -37,7 +37,7 @@ export default function WorkspaceManager() {
               drag={!iframe.isMinimized}
               dragMomentum={false}
               className={`fixed overflow-hidden bg-[#0A0A0A] shadow-2xl flex flex-col border transition-all duration-200 ${
-                isActive ? 'border-[#00CED1] ring-1 ring-[#00CED1]/30' : 'border-[#00CED1]/20'
+                isActive ? 'border-[var(--nile-teal)] ring-1 ring-[var(--nile-teal)]/30' : 'border-[var(--nile-teal)]/20'
               }`}
               style={{
                 width: iframe.isMinimized ? '200px' : (iframe.width || 800) + 'px',
@@ -53,8 +53,8 @@ export default function WorkspaceManager() {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-[#00CED1] neon-glow-teal' : 'bg-gray-600'}`}></div>
-                  <span className={`font-cairo text-sm font-bold max-w-[120px] truncate ${isActive ? 'text-white' : 'text-gray-400'}`}>
+                  <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-[var(--nile-teal)] neon-glow-teal' : 'bg-gray-600'}`}></div>
+                  <span className={`font-cairo text-sm font-bold max-w-[120px] truncate ${isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
                     {iframe.title}
                   </span>
                 </div>
@@ -62,7 +62,7 @@ export default function WorkspaceManager() {
                   <button 
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); dispatch(toggleMinimizeIframe(iframe.id)); }}
-                    className="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+                    className="p-1 hover:bg-[var(--glass-surface-heavy)] rounded-lg text-gray-400 hover:text-white transition-colors"
                   >
                     {iframe.isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                   </button>

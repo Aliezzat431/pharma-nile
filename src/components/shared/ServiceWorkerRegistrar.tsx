@@ -29,7 +29,6 @@ export default function ServiceWorkerRegistrar() {
           });
         });
 
-        console.log('[SW] Registered. Scope:', registration.scope);
       } catch (err) {
         console.error('[SW] Registration failed:', err);
       }

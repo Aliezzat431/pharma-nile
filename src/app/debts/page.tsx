@@ -132,7 +132,7 @@ export default function DebtsPage() {
             <span>{errorMessage}</span>
             <button 
               onClick={() => setErrorMessage(null)} 
-              className="ml-auto hover:bg-white/10 p-1 rounded-lg transition-colors"
+              className="ml-auto hover:bg-[var(--glass-surface-heavy)] p-1 rounded-lg transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -143,7 +143,7 @@ export default function DebtsPage() {
       <header data-gsap="fade-up" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 font-cairo">
-            نظام <span className="text-[#00CED1]">الديون</span>
+            نظام <span className="text-[var(--nile-teal)]">الديون</span>
           </h1>
           <p className="text-gray-400 mt-2 text-lg font-cairo">
             إدارة ديون العملاء والتحصيل المالي بسلاسة
@@ -155,7 +155,7 @@ export default function DebtsPage() {
             setErrorMessage(null);
             setIsAddModalOpen(true);
           }}
-          className="bg-[#00CED1] hover:bg-[#00CED1]/90 text-black px-6 py-3 rounded-xl flex items-center gap-2 font-bold font-cairo transition-all shadow-lg"
+          className="bg-[var(--nile-teal)] hover:bg-[var(--nile-teal)]/90 text-black px-6 py-3 rounded-xl flex items-center gap-2 font-bold font-cairo transition-all shadow-lg"
         >
           <Plus className="w-5 h-5" />
           إضافة عميل مدين
@@ -167,20 +167,20 @@ export default function DebtsPage() {
         <div className="glass-panel p-6 rounded-2xl">
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-400 font-cairo text-sm">إجمالي الديون المستحقة</span>
-            <DollarSign className="text-[#00CED1] w-5 h-5" />
+            <DollarSign className="text-[var(--nile-teal)] w-5 h-5" />
           </div>
-          <p className="text-3xl font-bold text-[#00CED1]">{totalOutstanding.toLocaleString()} ج.م</p>
+          <p className="text-3xl font-bold text-[var(--nile-teal)]">{totalOutstanding.toLocaleString()} ج.م</p>
         </div>
 
         <div className="glass-panel p-6 rounded-2xl">
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-400 font-cairo text-sm">عدد المدينين الحاليين</span>
-            <Users className="text-[#D4AF37] w-5 h-5" />
+            <Users className="text-[var(--royal-gold)] w-5 h-5" />
           </div>
           <p className="text-3xl font-bold text-white">{debtors.length}</p>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl bg-[#00CED1]/5 border border-[#00CED1]/10">
+        <div className="glass-panel p-6 rounded-2xl bg-[var(--nile-teal)]/5 border border-[var(--nile-teal)]/10">
           <p className="text-sm text-gray-400 leading-relaxed font-cairo">
             يساعدك نظام الديون على تتبع المبالغ غير المحصلة وتسهيل التحصيل
           </p>
@@ -207,7 +207,7 @@ export default function DebtsPage() {
       {}
       {loading ? (
         <div className="flex justify-center items-center py-20">
-          <Loader2 className="w-12 h-12 text-[#00CED1] animate-spin" />
+          <Loader2 className="w-12 h-12 text-[var(--nile-teal)] animate-spin" />
         </div>
       ) : (
         <>
@@ -218,24 +218,24 @@ export default function DebtsPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: Math.min(i * 0.03, 0.25) }}
-              className="glass-panel p-6 rounded-2xl border border-white/5 hover:border-[#00CED1]/30 transition-all group relative"
+              className="glass-panel p-6 rounded-2xl border border-[var(--glass-border)] hover:border-[var(--nile-teal)]/30 transition-all group relative"
             >
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h3 className="text-xl font-bold font-cairo">{debtor.name}</h3>
                   <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
-                    <Phone className="w-4 h-4 text-[#00CED1]/70" />
+                    <Phone className="w-4 h-4 text-[var(--nile-teal)]/70" />
                     <span>{debtor.phone || 'بدون هاتف'}</span>
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                  <CreditCard className="w-5 h-5 text-[#D4AF37]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--glass-surface)] flex items-center justify-center border border-[var(--glass-border)]">
+                  <CreditCard className="w-5 h-5 text-[var(--royal-gold)]" />
                 </div>
               </div>
 
               <div className="mb-6">
                 <p className="text-xs text-gray-500 font-cairo mb-1">الدين المستحق</p>
-                <p className={`text-4xl font-bold ${Number(debtor.total_debt) > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                <p className={`text-4xl font-bold ${Number(debtor.total_debt) > 0 ? 'text-red-400' : 'text-[var(--text-inactive)]'}`}>
                   {Number(debtor.total_debt || 0).toLocaleString()} <span className="text-sm font-normal text-gray-500">ج.م</span>
                 </p>
               </div>
@@ -247,14 +247,14 @@ export default function DebtsPage() {
                     setSelectedDebtor(debtor);
                     setIsPaymentModalOpen(true);
                   }}
-                  className="py-3 rounded-xl bg-[#00CED1] text-black font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                  className="py-3 rounded-xl bg-[var(--nile-teal)] text-black font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <ArrowUpRight className="w-4 h-4" />
                   تسديد
                 </button>
                 <button 
                   onClick={() => handleViewHistory(debtor)}
-                  className="py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                  className="py-3 rounded-xl bg-[var(--glass-surface)] border border-[var(--glass-border)] hover:bg-[var(--glass-surface-heavy)] transition-all flex items-center justify-center gap-2"
                 >
                   <History className="w-4 h-4" />
                   السجل

@@ -37,7 +37,7 @@ export function CompanyModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-lg glass-panel p-8 shadow-2xl border border-white/10 bg-[#050505]/90 text-right z-10"
+            className="relative w-full max-w-lg glass-panel p-8 shadow-2xl border border-[var(--glass-border)] bg-[#050505]/90 text-right z-10"
             dir="rtl"
           >
             <div className="flex items-center justify-between mb-8">
@@ -47,7 +47,7 @@ export function CompanyModal({
               <button 
                 disabled={submitting}
                 onClick={onClose} 
-                className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-white disabled:opacity-30 flex-shrink-0"
+                className="p-2 hover:bg-[var(--glass-surface)] rounded-full transition-colors text-gray-400 hover:text-white disabled:opacity-30 flex-shrink-0"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -60,7 +60,7 @@ export function CompanyModal({
                   required
                   disabled={submitting}
                   type="text" 
-                  className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 font-cairo text-white text-right disabled:opacity-50"
+                  className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] focus:border-[var(--nile-teal)]/50 outline-none rounded-xl p-3 font-cairo text-white text-right disabled:opacity-50"
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
                 />
@@ -72,7 +72,7 @@ export function CompanyModal({
                   <input 
                     disabled={submitting}
                     type="text" 
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 font-cairo text-white text-right disabled:opacity-50"
+                    className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] focus:border-[var(--nile-teal)]/50 outline-none rounded-xl p-3 font-cairo text-white text-right disabled:opacity-50"
                     value={formData.contact_person}
                     onChange={e => setFormData({...formData, contact_person: e.target.value})}
                   />
@@ -82,7 +82,7 @@ export function CompanyModal({
                   <input 
                     disabled={submitting}
                     type="text" 
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 text-white text-left font-sans disabled:opacity-50"
+                    className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] focus:border-[var(--nile-teal)]/50 outline-none rounded-xl p-3 text-white text-left font-sans disabled:opacity-50"
                     value={formData.phone}
                     onChange={e => setFormData({...formData, phone: e.target.value})}
                   />
@@ -94,7 +94,7 @@ export function CompanyModal({
                 <input 
                   disabled={submitting}
                   type="email" 
-                  className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 text-white text-left font-sans disabled:opacity-50"
+                  className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] focus:border-[var(--nile-teal)]/50 outline-none rounded-xl p-3 text-white text-left font-sans disabled:opacity-50"
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
                 />
@@ -105,7 +105,7 @@ export function CompanyModal({
                 <input 
                   disabled={submitting}
                   type="text" 
-                  className="w-full bg-white/5 border border-white/10 focus:border-[#00CED1]/50 outline-none rounded-xl p-3 font-cairo text-white text-right disabled:opacity-50"
+                  className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] focus:border-[var(--nile-teal)]/50 outline-none rounded-xl p-3 font-cairo text-white text-right disabled:opacity-50"
                   value={formData.address}
                   onChange={e => setFormData({...formData, address: e.target.value})}
                 />
@@ -114,7 +114,7 @@ export function CompanyModal({
               <button 
                 type="submit" 
                 disabled={submitting}
-                className="w-full bg-[#00CED1] text-black py-4 font-bold text-lg mt-4 font-cairo rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-[var(--nile-teal)] text-black py-4 font-bold text-lg mt-4 font-cairo rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {submitting ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

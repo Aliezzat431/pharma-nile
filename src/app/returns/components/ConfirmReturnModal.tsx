@@ -37,7 +37,7 @@ export function ConfirmReturnModal({ order, onClose, onConfirm }: ConfirmReturnM
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className="glass-card w-full max-w-md overflow-hidden relative border border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.15)]"
           >
-            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-red-500/5">
+            <div className="p-6 border-b border-[var(--glass-border)] flex justify-between items-center bg-red-500/5">
               <h2 className="text-xl font-bold font-cairo text-red-400 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5" /> تأكيد الارتجاع
               </h2>
@@ -51,7 +51,7 @@ export function ConfirmReturnModal({ order, onClose, onConfirm }: ConfirmReturnM
             <div className="p-6">
               <p className="text-foreground font-cairo leading-relaxed text-lg text-center">
                 هل أنت متأكد من ارتجاع الفاتورة 
-                <span className="font-bold text-[#D4AF37] mx-2">#{order.id.slice(0, 8)}</span>؟
+                <span className="font-bold text-[var(--royal-gold)] mx-2">#{order.id.slice(0, 8)}</span>؟
               </p>
               <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm font-cairo text-center flex flex-col items-center gap-2">
                 <RotateCcw className="w-6 h-6 opacity-80" />
@@ -59,10 +59,10 @@ export function ConfirmReturnModal({ order, onClose, onConfirm }: ConfirmReturnM
               </div>
             </div>
             
-            <div className="p-4 border-t border-white/10 flex gap-3 bg-[#050505]/50">
+            <div className="p-4 border-t border-[var(--glass-border)] flex gap-3 bg-[#050505]/50">
                <button 
                  onClick={onClose}
-                 className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10"
+                 className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-[var(--glass-surface)] transition-colors border border-[var(--glass-border)]"
                >
                  إلغاء
                </button>

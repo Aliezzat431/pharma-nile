@@ -30,9 +30,9 @@ export function BatchDistributionModal({
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="glass-card w-full max-w-lg overflow-hidden relative border border-[#00CED1]/30"
+          className="glass-card w-full max-w-lg overflow-hidden relative border border-[var(--nile-teal)]/30"
         >
-          <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+          <div className="p-6 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--glass-surface)]">
             <div>
               <h2 className="text-xl font-bold font-cairo text-white">توزيع التشغيلات</h2>
               <p className="text-sm font-cairo text-gray-400 mt-1">{item.name} - الكمية المطلوبة: {item.quantity}</p>
@@ -51,7 +51,7 @@ export function BatchDistributionModal({
                 const assignedVal = existingDist ? existingDist.quantity : 0;
 
                 return (
-                  <div key={b.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
+                  <div key={b.id} className="flex items-center justify-between p-4 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl">
                     <div>
                       <p className="text-gray-300 font-cairo font-bold">انتهاء: {new Date(b.expiry_date).toLocaleDateString('ar-EG')}</p>
                       <p className="text-sm text-gray-500 font-cairo mt-1">الكمية المتاحة: {b.quantity} | السعر: {b.sale_price} ج.م</p>
@@ -73,7 +73,7 @@ export function BatchDistributionModal({
                           setBatchDistributions(otherDists);
                         }
                       }}
-                      className="w-24 bg-[#050505]/50 border border-white/20 rounded-lg px-3 py-2 text-center text-white outline-none focus:border-[#00CED1] font-cairo font-bold"
+                      className="w-24 bg-[#050505]/50 border border-white/20 rounded-lg px-3 py-2 text-center text-white outline-none focus:border-[var(--nile-teal)] font-cairo font-bold"
                     />
                   </div>
                 );
@@ -94,10 +94,10 @@ export function BatchDistributionModal({
             })()}
 
           </div>
-          <div className="p-4 border-t border-white/10 flex gap-3 bg-[#050505]/50">
+          <div className="p-4 border-t border-[var(--glass-border)] flex gap-3 bg-[#050505]/50">
             <button
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10"
+              className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-[var(--glass-surface)] transition-colors border border-[var(--glass-border)]"
             >
               إلغاء
             </button>
@@ -111,7 +111,7 @@ export function BatchDistributionModal({
                 dispatch(updateBatchDistribution({ id: item.id, distributions: batchDistributions }));
                 onClose();
               }}
-              className="flex-1 py-3 rounded-xl font-cairo text-white bg-[#00CED1]/20 border border-[#00CED1]/50 hover:bg-[#00CED1]/40 transition-colors font-bold"
+              className="flex-1 py-3 rounded-xl font-cairo text-white bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/50 hover:bg-[var(--nile-teal)]/40 transition-colors font-bold"
             >
               حفظ التوزيع
             </button>

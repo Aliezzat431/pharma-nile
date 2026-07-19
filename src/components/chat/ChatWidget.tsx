@@ -54,7 +54,7 @@ export default function ChatWidget() {
             style={{ height: '450px' }}
           >
             {}
-            <div className="bg-[#00CED1]/20 p-4 border-b border-white/10 flex items-center justify-between backdrop-blur-md">
+            <div className="bg-[var(--nile-teal)]/20 p-4 border-b border-[var(--glass-border)] flex items-center justify-between backdrop-blur-md">
               <div className="flex items-center gap-2">
                  <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
                  <h3 className="font-bold text-white">دردشة الفريق</h3>
@@ -82,8 +82,8 @@ export default function ChatWidget() {
                         <span className="text-[10px] text-gray-400 mb-1 px-1">{msg.sender} • {msg.timestamp}</span>
                         <div className={`px-4 py-2 rounded-2xl ${
                           isMe 
-                            ? 'bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-white rounded-bl-none' 
-                            : 'bg-white/10 text-white border border-white/5 rounded-br-none'
+                            ? 'bg-gradient-to-r from-[var(--nile-teal)] to-[#009b9e] text-white rounded-bl-none' 
+                            : 'bg-[var(--glass-surface-heavy)] text-white border border-[var(--glass-border)] rounded-br-none'
                         }`}>
                            <p className="text-sm">{msg.text}</p>
                         </div>
@@ -95,11 +95,11 @@ export default function ChatWidget() {
             </div>
 
             { }
-            <form onSubmit={sendMessage} className="p-3 bg-[#050505]/50 border-t border-white/10 flex gap-2">
+            <form onSubmit={sendMessage} className="p-3 bg-[#050505]/50 border-t border-[var(--glass-border)] flex gap-2">
                <input 
                  type="text" 
                  placeholder="اكتب رسالتك هنا..." 
-                 className="flex-1 bg-transparent border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-[#00CED1] text-sm text-right"
+                 className="flex-1 bg-transparent border border-[var(--glass-border)] rounded-xl px-4 py-2 text-white outline-none focus:border-[var(--nile-teal)] text-sm text-right"
                  value={input}
                  onChange={(e) => setInput(e.target.value)}
                  autoFocus={isOpen}
@@ -107,7 +107,7 @@ export default function ChatWidget() {
                <button 
                  type="submit"
                  disabled={!input.trim()}
-                 className="w-10 h-10 rounded-xl bg-[#D4AF37]/20 flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                 className="w-10 h-10 rounded-xl bg-[var(--royal-gold)]/20 flex items-center justify-center text-[var(--royal-gold)] hover:bg-[var(--royal-gold)] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                >
                  <Send className="w-4 h-4 mr-0.5 rotate-180" />
                </button>
@@ -122,7 +122,7 @@ export default function ChatWidget() {
         className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all ${
           isOpen 
             ? 'glass-card text-gray-400' 
-            : 'bg-gradient-to-r from-[#00CED1] to-[#009b9e] text-white hover:shadow-[0_0_20px_rgba(0,206,209,0.5)]'
+            : 'bg-gradient-to-r from-[var(--nile-teal)] to-[#009b9e] text-white hover:shadow-[0_0_20px_rgba(0,206,209,0.5)]'
         }`}
       >
         {isOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}

@@ -57,7 +57,7 @@ export default function LoginPage() {
             type="email"
             {...register("email")}
             className={cn(
-              "w-full rounded-xl bg-white/5 px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-nile-teal",
+              "w-full rounded-xl bg-[var(--glass-surface)] px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-nile-teal",
               "placeholder:text-foreground/40",
               errors.email && "focus:ring-red-500 border border-red-500"
             )}
@@ -74,7 +74,7 @@ export default function LoginPage() {
               type={showPassword ? 'text' : 'password'}
               {...register("password")}
               className={cn(
-                "w-full rounded-xl bg-white/5 px-4 py-2 pr-4 pl-10 text-foreground focus:outline-none focus:ring-2 focus:ring-nile-teal",
+                "w-full rounded-xl bg-[var(--glass-surface)] px-4 py-2 pr-4 pl-10 text-foreground focus:outline-none focus:ring-2 focus:ring-nile-teal",
                 "placeholder:text-foreground/40",
                 errors.password && "focus:ring-red-500 border border-red-500"
               )}

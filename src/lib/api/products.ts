@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { handleDBError } from '../utils/db-error-handler';
 import {
   saveProductsToCache,
   searchLocalCache,
@@ -36,7 +37,6 @@ export interface Batch {
 
 export async function searchProducts(query: string, pharmacyId: string) {
   if (typeof window !== 'undefined' && !window.navigator.onLine) {
-    console.log('[Offline Cache] Searching catalog offline...');
     return searchLocalCache(query, pharmacyId);
   }
 
@@ -66,7 +66,7 @@ export async function searchProducts(query: string, pharmacyId: string) {
     const { data: products, error } = await dbQuery.limit(20);
 
     if (error) {
-      throw error;
+      handleDBError(error);
     }
 
     
@@ -116,7 +116,6 @@ export async function getProducts(pharmacyId: string) {
 
 export async function getProductByBarcode(barcode: string, pharmacyId: string) {
   if (typeof window !== 'undefined' && !window.navigator.onLine) {
-    console.log('[Offline Cache] Looking up barcode offline...');
     return getLocalProductByBarcode(barcode, pharmacyId);
   }
 
@@ -225,7 +224,6 @@ export async function syncProductCatalogToCache(pharmacyId: string): Promise<voi
       });
 
       await saveProductsToCache(pharmacyId, mapped as any);
-      console.log(`[Cache Sync] Cached ${mapped.length} catalog products locally.`);
     }
   } catch (err) {
     console.error('[Cache Sync] Sync failed:', err);
@@ -264,7 +262,7 @@ export async function updateBatch(batchId: string, updates: Partial<Batch>) {
     .select()
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) handleDBError(error);
   if (!data) throw new Error('لم يتم تحديث التشغيلة.');
 
   return data;
@@ -287,7 +285,7 @@ export async function createBatch(batch: Partial<Batch>) {
     .select()
     .maybeSingle(); 
 
-  if (error) throw error;
+  if (error) handleDBError(error);
   if (!data) throw new Error('فشل إنشاء التشغيلة — تحقق من صلاحيات قاعدة البيانات.');
   return data;
 }
@@ -312,7 +310,7 @@ export async function deleteProduct(productId: string) {
     .eq('id', productId)
     .eq('pharmacy_id', pharmacyId);
 
-  if (error) throw error;
+  if (error) handleDBError(error);
 }
 
 export async function deleteBatch(batchId: string) {
@@ -335,5 +333,5 @@ export async function deleteBatch(batchId: string) {
     .eq('id', batchId)
     .eq('pharmacy_id', pharmacyId);
 
-  if (error) throw error;
+  if (error) handleDBError(error);
 }

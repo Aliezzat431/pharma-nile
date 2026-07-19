@@ -25,7 +25,6 @@ export async function POST(req: Request) {
     const cachedResult = await getCache<{ choices: any[] }>(cacheKey);
     
     if (cachedResult) {
-      console.log(`[Cache Hit] Product analysis for "${productName}" retrieved from Redis.`);
       return NextResponse.json(cachedResult);
     }
 

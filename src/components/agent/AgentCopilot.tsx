@@ -125,7 +125,7 @@ export default function AgentCopilot() {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           onClick={() => dispatch(toggleChat())}
-          className="fixed bottom-6 left-6 w-16 h-16 rounded-full bg-[#00CED1] hover:bg-[#00CED1]/80 text-black shadow-[0_0_20px_rgba(0,206,209,0.4)] flex items-center justify-center z-50 transition-colors"
+          className="fixed bottom-6 left-6 w-16 h-16 rounded-full bg-[var(--nile-teal)] hover:bg-[var(--nile-teal)]/80 text-black shadow-[0_0_20px_rgba(0,206,209,0.4)] flex items-center justify-center z-50 transition-colors"
         >
           <Bot className="w-8 h-8" />
         </motion.button>
@@ -138,17 +138,17 @@ export default function AgentCopilot() {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            className="fixed bottom-6 left-6 w-[400px] h-[600px] glass-panel border border-[#00CED1]/30 shadow-2xl flex flex-col overflow-hidden z-50"
+            className="fixed bottom-6 left-6 w-[400px] h-[600px] glass-panel border border-[var(--nile-teal)]/30 shadow-2xl flex flex-col overflow-hidden z-50"
           >
             {}
-            <div className="h-16 bg-[#00CED1]/10 border-b border-white/10 flex items-center justify-between px-4">
+            <div className="h-16 bg-[var(--nile-teal)]/10 border-b border-[var(--glass-border)] flex items-center justify-between px-4">
               <div className="flex items-center gap-3">
-                <div className="bg-[#00CED1] p-2 rounded-lg">
+                <div className="bg-[var(--nile-teal)] p-2 rounded-lg">
                   <Bot className="w-6 h-6 text-black" />
                 </div>
                 <div>
                   <h3 className="font-cairo font-bold text-white">المساعد الذكي (Copilot)</h3>
-                  <p className="text-xs text-[#00CED1] font-cairo">متصل بالذكاء الاصطناعي</p>
+                  <p className="text-xs text-[var(--nile-teal)] font-cairo">متصل بالذكاء الاصطناعي</p>
                 </div>
               </div>
               <button 
@@ -169,10 +169,10 @@ export default function AgentCopilot() {
                   <div 
                     className={`max-w-[80%] p-3 rounded-2xl font-cairo text-sm leading-relaxed ${
                       msg.role === 'user' 
-                        ? 'bg-[#00CED1] text-black rounded-bl-none' 
+                        ? 'bg-[var(--nile-teal)] text-black rounded-bl-none' 
                         : msg.role === 'system'
                         ? 'bg-red-500/20 text-red-200 border border-red-500/30 w-full text-center'
-                        : 'bg-white/10 text-white rounded-br-none border border-white/5'
+                        : 'bg-[var(--glass-surface-heavy)] text-white rounded-br-none border border-[var(--glass-border)]'
                     }`}
                   >
                     {msg.content}
@@ -205,7 +205,7 @@ export default function AgentCopilot() {
                     <button 
                       onClick={handleReject}
                       disabled={isLoading}
-                      className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg font-bold text-sm transition-colors"
+                      className="flex-1 bg-[var(--glass-surface-heavy)] hover:bg-white/20 text-white py-2 rounded-lg font-bold text-sm transition-colors"
                     >
                       إلغاء
                     </button>
@@ -215,8 +215,8 @@ export default function AgentCopilot() {
 
               {isLoading && !agentPendingApproval && (
                 <div className="flex justify-start">
-                  <div className="bg-white/5 p-3 rounded-2xl rounded-br-none border border-white/5">
-                    <Loader2 className="w-5 h-5 text-[#00CED1] animate-spin" />
+                  <div className="bg-[var(--glass-surface)] p-3 rounded-2xl rounded-br-none border border-[var(--glass-border)]">
+                    <Loader2 className="w-5 h-5 text-[var(--nile-teal)] animate-spin" />
                   </div>
                 </div>
               )}
@@ -224,7 +224,7 @@ export default function AgentCopilot() {
             </div>
 
             {}
-            <div className="p-4 border-t border-white/10 bg-black/40">
+            <div className="p-4 border-t border-[var(--glass-border)] bg-black/40">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -232,13 +232,13 @@ export default function AgentCopilot() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="اسأل المساعد عن أي شيء..."
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-cairo focus:outline-none focus:border-[#00CED1]/50 text-sm"
+                  className="flex-1 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-3 text-white font-cairo focus:outline-none focus:border-[var(--nile-teal)]/50 text-sm"
                   disabled={isLoading || !!agentPendingApproval}
                 />
                 <button
                   onClick={handleSend}
                   disabled={isLoading || !input.trim() || !!agentPendingApproval}
-                  className="w-12 flex items-center justify-center bg-[#00CED1] text-black rounded-xl hover:bg-[#00CED1]/80 disabled:opacity-50 transition-colors"
+                  className="w-12 flex items-center justify-center bg-[var(--nile-teal)] text-black rounded-xl hover:bg-[var(--nile-teal)]/80 disabled:opacity-50 transition-colors"
                 >
                   <Send className="w-5 h-5 rtl:hidden" />
                   <Send className="w-5 h-5 hidden rtl:block rotate-180" />

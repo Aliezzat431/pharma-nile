@@ -238,7 +238,6 @@ export async function syncOfflineReturns(
   const queued = await getQueuedReturns();
   if (queued.length === 0) return 0;
 
-  console.log(`[Offline Sync] Syncing ${queued.length} offline refunds...`);
   let successCount = 0;
 
   for (const ret of queued) {
@@ -262,7 +261,6 @@ export async function syncOfflineTransactions(
   const queued = await getQueuedOrders();
   if (queued.length === 0) return 0;
 
-  console.log(`[Offline Sync] Starting sync for ${queued.length} local offline transactions...`);
   let successCount = 0;
 
   for (const order of queued) {
@@ -284,7 +282,6 @@ export async function syncOfflineTransactions(
       
       await dequeueOrder(order.id);
       successCount++;
-      console.log(`[Offline Sync] Sync success for transaction: ${order.id}`);
     } catch (err) {
       console.error(`[Offline Sync] Failed to sync transaction ${order.id}:`, err);
       

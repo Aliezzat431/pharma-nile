@@ -34,9 +34,9 @@ export function PillsConfirmModal({
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="glass-card w-full max-w-md overflow-hidden relative border border-[#00CED1]/30"
+          className="glass-card w-full max-w-md overflow-hidden relative border border-[var(--nile-teal)]/30"
         >
-          <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+          <div className="p-6 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--glass-surface)]">
             <h2 className="text-xl font-bold font-cairo text-white">تأكيد كمية الوحدة</h2>
             <button
               onClick={onClose}
@@ -60,29 +60,29 @@ export function PillsConfirmModal({
                 type="number"
                 value={pillsInput}
                 onChange={(e) => setPillsInput(e.target.value)}
-                className="w-full bg-[#050505]/50 border border-white/20 rounded-xl px-4 py-3 text-2xl text-center text-[#00CED1] font-bold outline-none focus:border-[#00CED1] transition-colors"
+                className="w-full bg-[#050505]/50 border border-white/20 rounded-xl px-4 py-3 text-2xl text-center text-[var(--nile-teal)] font-bold outline-none focus:border-[var(--nile-teal)] transition-colors"
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && onConfirm()}
               />
             </div>
 
             {type === 'CHECKOUT' && items.length > 1 && (
-              <div className="text-xs text-gray-500 font-cairo text-center mt-4 bg-white/5 py-1 px-3 rounded-full inline-block mx-auto">
+              <div className="text-xs text-gray-500 font-cairo text-center mt-4 bg-[var(--glass-surface)] py-1 px-3 rounded-full inline-block mx-auto">
                 منتج {currentIndex + 1} من {items.length}
               </div>
             )}
           </div>
 
-          <div className="p-4 border-t border-white/10 flex gap-3 bg-[#050505]/50">
+          <div className="p-4 border-t border-[var(--glass-border)] flex gap-3 bg-[#050505]/50">
             <button
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-white/5 transition-colors border border-white/10"
+              className="flex-1 py-3 rounded-xl font-cairo text-gray-400 hover:bg-[var(--glass-surface)] transition-colors border border-[var(--glass-border)]"
             >
               إلغاء
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 py-3 rounded-xl font-cairo text-white bg-[#00CED1]/20 border border-[#00CED1]/50 hover:bg-[#00CED1]/40 transition-colors font-bold"
+              className="flex-1 py-3 rounded-xl font-cairo text-white bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/50 hover:bg-[var(--nile-teal)]/40 transition-colors font-bold"
             >
               تأكيد
             </button>
