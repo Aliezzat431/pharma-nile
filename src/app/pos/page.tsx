@@ -1105,9 +1105,9 @@ export default function POSTerminal() {
         </div>
       </div>
 
-      {}
-      <div className="w-full lg:w-[450px] flex flex-col gap-6 h-[50vh] lg:h-auto lg:flex-none">
-        <div className="glass-panel flex-1 p-0 overflow-hidden flex flex-col relative">
+      {/* ═══ CART SIDEBAR ─ Fixed height so checkout button never sinks ═══ */}
+      <div className="w-full lg:w-[420px] flex-none flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
+        <div className="glass-panel flex-1 p-0 overflow-hidden flex flex-col relative min-h-0">
           <div className="p-6 border-b border-[var(--glass-border)] flex justify-between items-center">
             <h2 className="text-xl font-bold font-cairo">طلب البيع الحالي</h2>
             {cart.length > 0 && (
@@ -1213,7 +1213,8 @@ export default function POSTerminal() {
             )}
           </div>
 
-          <div className="p-6 bg-[#050505]/80 border-t border-[var(--glass-border)] backdrop-blur-md">
+          {/* ── Bottom Summary & Checkout ─ locked at bottom, never scrolls away */}
+          <div className="shrink-0 p-5 bg-[var(--glass-surface-heavy)] border-t border-[var(--glass-border)] backdrop-blur-md">
             <div className="mb-6 space-y-3">
               <label className="text-xs text-gray-500 font-cairo block mr-1">طريقة الدفع</label>
               <div className="grid grid-cols-3 gap-2">
@@ -1227,7 +1228,7 @@ export default function POSTerminal() {
                 >دين</button>
                 <button
                   onClick={() => setPaymentMethod('sadqah')}
-                  className={`py-2 rounded-lg text-xs font-cairo border transition-all ${paymentMethod === 'sadqah' ? 'bg-[#FF69B4]/20 border-[#FF69B4] text-[#FF69B4]' : 'border-[var(--glass-border)] bg-[var(--glass-surface)] text-gray-400'}`}
+                  className={`py-2 rounded-lg text-xs font-cairo border transition-all ${paymentMethod === 'sadqah' ? 'bg-[var(--nile-teal)]/10 border-[var(--nile-teal)]/60 text-[var(--nile-teal)]' : 'border-[var(--glass-border)] bg-[var(--glass-surface)] text-[var(--text-muted)]'}`}
                 >صدقة</button>
               </div>
             </div>
@@ -1311,9 +1312,9 @@ export default function POSTerminal() {
               )}
             </AnimatePresence>
 
-            <div className="flex justify-between items-center mb-6 font-cairo">
-              <span className="text-gray-400 text-lg">الإجمالي النهائي</span>
-              <span className={`text-4xl font-bold ${paymentMethod === 'sadqah' ? 'text-[#FF69B4]' : 'text-[var(--royal-gold)]'}`}>
+            <div className="flex justify-between items-center mb-5 font-cairo">
+              <span className="text-[var(--text-muted)] text-base">الإجمالي النهائي</span>
+              <span className="text-3xl font-bold text-[var(--royal-gold)]">
                 {total.toFixed(2)} ج.م
               </span>
             </div>
