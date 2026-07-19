@@ -14,8 +14,8 @@
 
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.85);
-  --text-muted: rgba(255, 255, 255, 0.60);
-  --text-inactive: rgba(255, 255, 255, 0.35);
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --text-inactive: rgba(255, 255, 255, 0.45); /* Enhanced contrast from 0.35 */
 
   --nile-teal: #06B6D4;
   --royal-gold: #2563EB;
@@ -24,21 +24,21 @@
   --royal-gold-glow: rgba(37, 99, 235, 0.15);
 
   --glass-rgb: 13, 20, 38;
-  --shadow-color: rgba(0, 0, 0, 0.35);
+  --shadow-color: rgba(0, 0, 0, 0.45);
 
   --foreground: var(--text-primary);
-  --panel-bg: rgba(var(--glass-rgb), 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-surface: rgba(var(--glass-rgb), 0.06);
-  --glass-surface-heavy: rgba(var(--glass-rgb), 0.12);
-  --sidebar-text-inactive: var(--text-inactive);
+  --panel-bg: rgba(var(--glass-rgb), 0.45); /* Enhanced opacity to solidy layers */
+  --glass-border: rgba(255, 255, 255, 0.12); /* Hardened boundary border */
+  --glass-surface: rgba(15, 23, 42, 0.55); /* Rescued from extreme transparency */
+  --glass-surface-heavy: rgba(9, 13, 22, 0.95); /* Fixed theme dropdown bleeding */
+  --sidebar-text-inactive: #94A3B8; /* Elevated to crisp slate-400 equivalent for readability */
 
   /* Semantic surfaces */
-  --surface-elevated: rgba(255, 255, 255, 0.03);
-  --surface-overlay: rgba(0, 0, 0, 0.75);
-  --input-bg: rgba(var(--glass-rgb), 0.06);
-  --input-border: rgba(var(--glass-rgb), 0.15);
-  --divider: rgba(255, 255, 255, 0.05);
+  --surface-elevated: rgba(255, 255, 255, 0.05);
+  --surface-overlay: rgba(5, 8, 15, 0.85);
+  --input-bg: rgba(var(--glass-rgb), 0.25);
+  --input-border: rgba(255, 255, 255, 0.12);
+  --divider: rgba(255, 255, 255, 0.08);
 
   /* Semantic status colors */
   --status-success: #10b981;
@@ -47,57 +47,52 @@
   --status-info: var(--nile-teal);
 
   /* Scrollbar */
-  --scrollbar-thumb: rgba(255, 255, 255, 0.08);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
   --scrollbar-hover: var(--nile-teal);
 }
-
 
 /* ══════════════════════════════════════════
    LIGHT MODE (PRISTINE MEDICAL GLASS)
 ══════════════════════════════════════════ */
 [data-theme="light"] {
-  --background: #F8FAFC; /* خلفية هادئة ومريحة للعين */
+  --background: #F1F5F9; /* Slate 100 - Strong contrast layout base foundation */
 
-  /* تعزيز درجات النصوص لضمان القراءة ومقاومة الانعكاس */
   --text-primary: #0F172A;   /* Slate 900 */
   --text-secondary: #334155; /* Slate 700 */
-  --text-muted: #475569;     /* Slate 600 - أغمق لضمان وضوحه داخل الكوبيلوت */
+  --text-muted: #475569;     /* Slate 600 */
   --text-inactive: #64748B;  /* Slate 500 */
 
-  --nile-teal: #0891B2;  /* Teal 600 لتباين فائق */
+  --nile-teal: #0891B2;  /* Teal 600 */
   --royal-gold: #1D4ED8; /* Blue 700 */
 
-  --nile-teal-glow: rgba(8, 145, 178, 0.06);
-  --royal-gold-glow: rgba(29, 79, 216, 0.06);
+  --nile-teal-glow: rgba(8, 145, 178, 0.08);
+  --royal-gold-glow: rgba(29, 79, 216, 0.08);
 
   --glass-rgb: 255, 255, 255;
-  --shadow-color: rgba(15, 23, 42, 0.06); /* شادو ناعم جداً طبي وبدون سواد مزعج */
+  --shadow-color: rgba(15, 23, 42, 0.08); 
 
   --foreground: var(--text-primary);
-  --panel-bg: rgba(255, 255, 255, 0.45);
+  --panel-bg: rgba(255, 255, 255, 0.85); /* Solidified background wrapper */
   
-  /* تقليل الأوباستي للسماح بتأثير الزجاج الحقيقي مع الحفاظ على التباين */
-  --glass-border: rgba(15, 23, 42, 0.08); 
-  --glass-surface: rgba(255, 255, 255, 0.65);
-  --glass-surface-heavy: rgba(255, 255, 255, 0.85);
-  --sidebar-text-inactive: var(--text-inactive);
+  --glass-border: rgba(15, 23, 42, 0.12); /* Clean dimensional boundary borders */
+  --glass-surface: #FFFFFF; /* Forced layout foreground cards to absolute white for multi-layered depth */
+  --glass-surface-heavy: rgba(255, 255, 255, 0.98); /* Complete drop-shadow isolation for theme menus */
+  --sidebar-text-inactive: #475569; /* Deep charcoal slate-600 to rescue sidebar text contrast */
 
-  --surface-elevated: rgba(255, 255, 255, 0.9);
-  --surface-overlay: rgba(15, 23, 42, 0.3);
-  --input-bg: rgba(255, 255, 255, 0.8);
-  --input-border: rgba(15, 23, 42, 0.1);
-  --divider: #E2E8F0; /* Slate 200 */
+  --surface-elevated: rgba(255, 255, 255, 0.95);
+  --surface-overlay: rgba(15, 23, 42, 0.4);
+  --input-bg: #FFFFFF;
+  --input-border: rgba(15, 23, 42, 0.15);
+  --divider: #CBD5E1; /* Slate 300 */
 
-  /* ألوان الستيتس الرسمية المعتمدة للـ Accessibility */
   --status-success: #046C4E; 
   --status-error: #C81E1E;   
   --status-warning: #9F580A; 
   --status-info: var(--nile-teal);
 
-  --scrollbar-thumb: rgba(15, 23, 42, 0.1);
+  --scrollbar-thumb: rgba(15, 23, 42, 0.15);
   --scrollbar-hover: var(--nile-teal);
 }
-
 
 /* ══════════════════════════════════════════
    🌑 MIDNIGHT
@@ -108,7 +103,7 @@
   --text-primary: #f0f7ff;
   --text-secondary: #c9dff5;
   --text-muted: #8ba9c9;
-  --text-inactive: #55718f;
+  --text-inactive: #6E8EAF; /* Rescued from low contrast #55718f */
 
   --nile-teal: #3b82f6;
   --royal-gold: #8b5cf6;
@@ -116,36 +111,144 @@
   --nile-teal-glow: rgba(59, 130, 246, 0.15);
   --royal-gold-glow: rgba(139, 92, 246, 0.15);
 
-  --glass-rgb: 96, 165, 250;
-  --shadow-color: rgba(0, 0, 0, 0.5);
+  --glass-rgb: 15, 23, 42;
+  --shadow-color: rgba(0, 0, 0, 0.6);
 
   --foreground: var(--text-primary);
-  --panel-bg: rgba(var(--glass-rgb), 0.03);
-  --glass-border: rgba(var(--glass-rgb), 0.15);
-  --glass-surface: rgba(var(--glass-rgb), 0.06);
-  --glass-surface-heavy: rgba(var(--glass-rgb), 0.12);
+  --panel-bg: rgba(var(--glass-rgb), 0.65);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-surface: rgba(2, 4, 10, 0.75);
+  --glass-surface-heavy: rgba(2, 4, 10, 0.97);
   --sidebar-text-inactive: var(--text-inactive);
 
-  --surface-elevated: rgba(255, 255, 255, 0.02);
-  --surface-overlay: rgba(0, 0, 0, 0.80);
-  --input-bg: rgba(var(--glass-rgb), 0.06);
-  --input-border: rgba(var(--glass-rgb), 0.15);
-  --divider: rgba(255, 255, 255, 0.05);
+  --surface-elevated: rgba(255, 255, 255, 0.04);
+  --surface-overlay: rgba(0, 0, 0, 0.90);
+  --input-bg: rgba(var(--glass-rgb), 0.2);
+  --input-border: rgba(255, 255, 255, 0.12);
+  --divider: rgba(255, 255, 255, 0.08);
 
-  --scrollbar-thumb: rgba(255, 255, 255, 0.08);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
   --scrollbar-hover: var(--nile-teal);
 }
 
+/* ══════════════════════════════════════════
+   🌊 DEEP OCEAN RESCUE MATRIX
+══════════════════════════════════════════ */
+[data-theme="ocean"] { 
+  --background: #001219; 
+  --text-primary: #e0fbfc; 
+  --text-secondary: #98c1d9; 
+  --text-muted: #6485AD; /* Rescued from #3d5a80 for high visibility */
+  --text-inactive: #4B617C; /* Rescued from #293241 */
+  --nile-teal: #00b4d8; 
+  --royal-gold: #ee6c4d; 
+  --nile-teal-glow: rgba(0, 180, 216, 0.15); 
+  --royal-gold-glow: rgba(238, 108, 77, 0.15); 
+  --glass-rgb: 0, 18, 25; 
+  --shadow-color: rgba(0, 0, 0, 0.55);
+  --foreground: var(--text-primary); 
+  --panel-bg: rgba(var(--glass-rgb), 0.75); 
+  --glass-border: rgba(34, 211, 238, 0.18); 
+  --glass-surface: rgba(0, 10, 15, 0.75); 
+  --glass-surface-heavy: rgba(0, 5, 8, 0.98); /* Heavy isolation layer for popovers */
+  --sidebar-text-inactive: var(--text-muted); /* Overrode to text-muted for crisp visibility */
+  --surface-elevated: rgba(255, 255, 255, 0.04); 
+  --surface-overlay: rgba(0, 5, 8, 0.90); 
+  --input-bg: rgba(var(--glass-rgb), 0.3); 
+  --input-border: rgba(34, 211, 238, 0.15); 
+  --divider: rgba(255, 255, 255, 0.08); 
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12); 
+  --scrollbar-hover: var(--nile-teal); 
+}
 
-/* باقي المتغيرات والأنماط (Ocean, Forest, Coffee, Amethyst, Sunset, Cyberpunk, Dracula, Snowy) تظل كما هي تماماً بدون تعديل */
-[data-theme="ocean"] { --background: #001219; --text-primary: #e0fbfc; --text-secondary: #98c1d9; --text-muted: #3d5a80; --text-inactive: #293241; --nile-teal: #00b4d8; --royal-gold: #ee6c4d; --nile-teal-glow: rgba(0, 180, 216, 0.15); --royal-gold-glow: rgba(238, 108, 77, 0.15); --glass-rgb: 34, 211, 238; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.03); --glass-border: rgba(var(--glass-rgb), 0.15); --glass-surface: rgba(var(--glass-rgb), 0.06); --glass-surface-heavy: rgba(var(--glass-rgb), 0.12); --sidebar-text-inactive: var(--text-inactive); --surface-elevated: rgba(255, 255, 255, 0.02); --surface-overlay: rgba(0, 0, 0, 0.80); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
-[data-theme="forest"] { --background: #0b1c14; --text-primary: #f0fff4; --text-secondary: #a7f3d0; --text-muted: #6ee7b7; --text-inactive: #34d399; --nile-teal: #10b981; --royal-gold: #fbbf24; --nile-teal-glow: rgba(16, 185, 129, 0.15); --royal-gold-glow: rgba(251, 191, 36, 0.15); --glass-rgb: 16, 185, 129; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.03); --glass-border: rgba(var(--glass-rgb), 0.15); --glass-surface: rgba(var(--glass-rgb), 0.06); --glass-surface-heavy: rgba(var(--glass-rgb), 0.12); --sidebar-text-inactive: var(--text-inactive); --surface-elevated: rgba(255, 255, 255, 0.02); --surface-overlay: rgba(0, 0, 0, 0.80); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
-[data-theme="coffee"] { --background: #1c1512; --text-primary: #fffcf2; --text-secondary: #ccc5b9; --text-muted: #6c584c; --text-inactive: #403d39; --nile-teal: #eb5e28; --royal-gold: #c6ac8f; --nile-teal-glow: rgba(235, 94, 40, 0.12); --royal-gold-glow: rgba(198, 172, 143, 0.12); --glass-rgb: 212, 163, 115; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.03); --glass-border: rgba(var(--glass-rgb), 0.15); --glass-surface: rgba(var(--glass-rgb), 0.06); --glass-surface-heavy: rgba(var(--glass-rgb), 0.12); --sidebar-text-inactive: var(--text-inactive); --surface-elevated: rgba(255, 255, 255, 0.02); --surface-overlay: rgba(0, 0, 0, 0.80); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
-[data-theme="amethyst"] { --background: #0a0514; --text-primary: #faf5ff; --text-secondary: #e9d5ff; --text-muted: #c084fc; --text-inactive: #9333ea; --nile-teal: #d8b4fe; --royal-gold: #f0abfc; --nile-teal-glow: rgba(216, 180, 254, 0.15); --royal-gold-glow: rgba(240, 171, 252, 0.15); --glass-rgb: 167, 139, 250; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.03); --glass-border: rgba(var(--glass-rgb), 0.15); --glass-surface: rgba(var(--glass-rgb), 0.06); --glass-surface-heavy: rgba(var(--glass-rgb), 0.12); --sidebar-text-inactive: var(--text-inactive); --surface-elevated: rgba(255, 255, 255, 0.02); --surface-overlay: rgba(0, 0, 0, 0.80); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
-[data-theme="sunset"] { --background: #1a0b08; --text-primary: #fff7ed; --text-secondary: #ffedd5; --text-muted: #fdba74; --text-inactive: #f97316; --nile-teal: #f43f5e; --royal-gold: #f59e0b; --nile-teal-glow: rgba(244, 63, 94, 0.15); --royal-gold-glow: rgba(245, 158, 11, 0.15); --glass-rgb: 251, 146, 60; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.03); --glass-border: rgba(var(--glass-rgb), 0.15); --glass-surface: rgba(var(--glass-rgb), 0.06); --glass-surface-heavy: rgba(var(--glass-rgb), 0.12); --sidebar-text-inactive: var(--text-inactive); --surface-elevated: rgba(255, 255, 255, 0.02); --surface-overlay: rgba(0, 0, 0, 0.80); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
-[data-theme="cyberpunk"] { --background: #050511; --text-primary: #ffffff; --text-secondary: #e2e8f0; --text-muted: #94a3b8; --text-inactive: #475569; --nile-teal: #00f3ff; --royal-gold: #ff003c; --nile-teal-glow: rgba(0, 243, 255, 0.2); --royal-gold-glow: rgba(255, 0, 60, 0.2); --glass-rgb: 0, 243, 255; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.03); --glass-border: rgba(var(--glass-rgb), 0.15); --glass-surface: rgba(var(--glass-rgb), 0.06); --glass-surface-heavy: rgba(var(--glass-rgb), 0.12); --sidebar-text-inactive: var(--text-inactive); --surface-elevated: rgba(255, 255, 255, 0.02); --surface-overlay: rgba(0, 0, 0, 0.80); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
-[data-theme="dracula"] { --background: #1e1f29; --text-primary: #f8f8f2; --text-secondary: #e2e2dc; --text-muted: #bd93f9; --text-inactive: #6272a4; --nile-teal: #8be9fd; --royal-gold: #ff79c6; --nile-teal-glow: rgba(139, 233, 253, 0.15); --royal-gold-glow: rgba(255, 121, 198, 0.15); --glass-rgb: 189, 147, 249; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.03); --glass-border: rgba(var(--glass-rgb), 0.15); --glass-surface: rgba(var(--glass-rgb), 0.06); --glass-surface-heavy: rgba(var(--glass-rgb), 0.12); --sidebar-text-inactive: var(--text-inactive); --surface-elevated: rgba(255, 255, 255, 0.02); --surface-overlay: rgba(0, 0, 0, 0.80); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
-[data-theme="snowy"] { --background: #f1f5f9; --text-primary: #0f172a; --text-secondary: #334155; --text-muted: #64748b; --text-inactive: #94a3b8; --nile-teal: #0284c7; --royal-gold: #059669; --nile-teal-glow: rgba(2, 132, 199, 0.08); --royal-gold-glow: rgba(5, 150, 105, 0.08); --glass-rgb: 15, 23, 42; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.03); --glass-border: rgba(var(--glass-rgb), 0.12); --glass-surface: rgba(var(--glass-rgb), 0.04); --glass-surface-heavy: rgba(var(--glass-rgb), 0.08); --sidebar-text-inactive: var(--text-inactive); --surface-elevated: rgba(0, 0, 0, 0.02); --surface-overlay: rgba(0, 0, 0, 0.50); --input-bg: rgba(var(--glass-rgb), 0.04); --input-border: rgba(var(--glass-rgb), 0.12); --divider: rgba(0, 0, 0, 0.06); --status-success: #059669; --status-error: #dc2626; --status-warning: #d97706; --status-info: var(--nile-teal); --scrollbar-thumb: rgba(0, 0, 0, 0.08); --scrollbar-hover: var(--nile-teal); }
+/* ══════════════════════════════════════════
+   🌲 DEEP FOREST & OTHER VEHICLES
+══════════════════════════════════════════ */
+[data-theme="forest"] { 
+  --background: #0b1c14; 
+  --text-primary: #f0fff4; 
+  --text-secondary: #a7f3d0; 
+  --text-muted: #84E1BC; /* Upgraded readability */
+  --text-inactive: #52B788; /* Upgraded readability */
+  --nile-teal: #10b981; 
+  --royal-gold: #fbbf24; 
+  --nile-teal-glow: rgba(16, 185, 129, 0.15); 
+  --royal-gold-glow: rgba(251, 191, 36, 0.15); 
+  --glass-rgb: 11, 28, 20; 
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --foreground: var(--text-primary); 
+  --panel-bg: rgba(var(--glass-rgb), 0.75); 
+  --glass-border: rgba(16, 185, 129, 0.18); 
+  --glass-surface: rgba(6, 15, 11, 0.75); 
+  --glass-surface-heavy: rgba(4, 10, 7, 0.98);
+  --sidebar-text-inactive: var(--text-muted); 
+  --surface-elevated: rgba(255, 255, 255, 0.04); 
+  --surface-overlay: rgba(0, 0, 0, 0.85); 
+  --input-bg: rgba(var(--glass-rgb), 0.2); 
+  --input-border: rgba(16, 185, 129, 0.15); 
+  --divider: rgba(255, 255, 255, 0.08); 
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12); 
+  --scrollbar-hover: var(--nile-teal); 
+}
+
+[data-theme="coffee"] { 
+  --background: #1c1512; 
+  --text-primary: #fffcf2; 
+  --text-secondary: #ccc5b9; 
+  --text-muted: #9C8473; /* Increased contrast */
+  --text-inactive: #7A6657; /* Increased contrast */
+  --nile-teal: #eb5e28; 
+  --royal-gold: #c6ac8f; 
+  --nile-teal-glow: rgba(235, 94, 40, 0.12); 
+  --royal-gold-glow: rgba(198, 172, 143, 0.12); 
+  --glass-rgb: 28, 21, 18; 
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --foreground: var(--text-primary); 
+  --panel-bg: rgba(var(--glass-rgb), 0.75); 
+  --glass-border: rgba(212, 163, 115, 0.18); 
+  --glass-surface: rgba(20, 15, 12, 0.8); 
+  --glass-surface-heavy: rgba(12, 9, 7, 0.98);
+  --sidebar-text-inactive: var(--text-muted); 
+  --surface-elevated: rgba(255, 255, 255, 0.04); 
+  --surface-overlay: rgba(0, 0, 0, 0.85); 
+  --input-bg: rgba(var(--glass-rgb), 0.2); 
+  --input-border: rgba(212, 163, 115, 0.15); 
+  --divider: rgba(255, 255, 255, 0.08); 
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12); 
+  --scrollbar-hover: var(--nile-teal); 
+}
+
+[data-theme="amethyst"] { 
+  --background: #0a0514; 
+  --text-primary: #faf5ff; 
+  --text-secondary: #e9d5ff; 
+  --text-muted: #D1A3FF; /* Elevated brightness */
+  --text-inactive: #A866EE; /* Elevated brightness */
+  --nile-teal: #d8b4fe; 
+  --royal-gold: #f0abfc; 
+  --nile-teal-glow: rgba(216, 180, 254, 0.15); 
+  --royal-gold-glow: rgba(240, 171, 252, 0.15); 
+  --glass-rgb: 10, 5, 20; 
+  --shadow-color: rgba(0, 0, 0, 0.6);
+  --foreground: var(--text-primary); 
+  --panel-bg: rgba(var(--glass-rgb), 0.75); 
+  --glass-border: rgba(167, 139, 250, 0.18); 
+  --glass-surface: rgba(7, 3, 15, 0.8); 
+  --glass-surface-heavy: rgba(4, 2, 8, 0.98);
+  --sidebar-text-inactive: var(--text-muted); 
+  --surface-elevated: rgba(255, 255, 255, 0.04); 
+  --surface-overlay: rgba(0, 0, 0, 0.90); 
+  --input-bg: rgba(var(--glass-rgb), 0.2); 
+  --input-border: rgba(167, 139, 250, 0.15); 
+  --divider: rgba(255, 255, 255, 0.08); 
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12); 
+  --scrollbar-hover: var(--nile-teal); 
+}
+
+[data-theme="sunset"] { --background: #1a0b08; --text-primary: #fff7ed; --text-secondary: #ffedd5; --text-muted: #fdba74; --text-inactive: #f97316; --nile-teal: #f43f5e; --royal-gold: #f59e0b; --nile-teal-glow: rgba(244, 63, 94, 0.15); --royal-gold-glow: rgba(245, 158, 11, 0.15); --glass-rgb: 26, 11, 8; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.75); --glass-border: rgba(251, 146, 60, 0.18); --glass-surface: rgba(18, 7, 5, 0.8); --glass-surface-heavy: rgba(10, 4, 3, 0.98); --sidebar-text-inactive: var(--text-muted); --surface-elevated: rgba(255, 255, 255, 0.04); --surface-overlay: rgba(0, 0, 0, 0.85); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
+[data-theme="cyberpunk"] { --background: #050511; --text-primary: #ffffff; --text-secondary: #e2e8f0; --text-muted: #94a3b8; --text-inactive: #64748B; --nile-teal: #00f3ff; --royal-gold: #ff003c; --nile-teal-glow: rgba(0, 243, 255, 0.2); --royal-gold-glow: rgba(255, 0, 60, 0.2); --glass-rgb: 5, 5, 17; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.75); --glass-border: rgba(0, 243, 255, 0.2); --glass-surface: rgba(2, 2, 8, 0.85); --glass-surface-heavy: rgba(0, 0, 4, 0.99); --sidebar-text-inactive: var(--text-muted); --surface-elevated: rgba(255, 255, 255, 0.04); --surface-overlay: rgba(0, 0, 0, 0.90); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
+[data-theme="dracula"] { --background: #1e1f29; --text-primary: #f8f8f2; --text-secondary: #e2e2dc; --text-muted: #bd93f9; --text-inactive: #7E91C7; --nile-teal: #8be9fd; --royal-gold: #ff79c6; --nile-teal-glow: rgba(139, 233, 253, 0.15); --royal-gold-glow: rgba(255, 121, 198, 0.15); --glass-rgb: 30, 31, 41; --foreground: var(--text-primary); --panel-bg: rgba(var(--glass-rgb), 0.75); --glass-border: rgba(189, 147, 249, 0.18); --glass-surface: rgba(20, 21, 28, 0.85); --glass-surface-heavy: rgba(12, 13, 17, 0.98); --sidebar-text-inactive: var(--text-muted); --surface-elevated: rgba(255, 255, 255, 0.04); --surface-overlay: rgba(0, 0, 0, 0.85); --input-bg: rgba(var(--glass-rgb), 0.06); --input-border: rgba(var(--glass-rgb), 0.15); --divider: rgba(255, 255, 255, 0.05); --scrollbar-thumb: rgba(255, 255, 255, 0.08); --scrollbar-hover: var(--nile-teal); }
+[data-theme="snowy"] { --background: #e2e8f0; --text-primary: #0f172a; --text-secondary: #334155; --text-muted: #475569; --text-inactive: #64748B; --nile-teal: #0284c7; --royal-gold: #059669; --nile-teal-glow: rgba(2, 132, 199, 0.08); --royal-gold-glow: rgba(5, 150, 105, 0.08); --glass-rgb: 255, 255, 255; --foreground: var(--text-primary); --panel-bg: rgba(255, 255, 255, 0.85); --glass-border: rgba(15, 23, 42, 0.15); --glass-surface: #FFFFFF; --glass-surface-heavy: rgba(255, 255, 255, 0.98); --sidebar-text-inactive: var(--text-secondary); --surface-elevated: rgba(0, 0, 0, 0.02); --surface-overlay: rgba(0, 0, 0, 0.40); --input-bg: #FFFFFF; --input-border: rgba(15, 23, 42, 0.15); --divider: rgba(0, 0, 0, 0.1); --status-success: #059669; --status-error: #dc2626; --status-warning: #d97706; --status-info: var(--nile-teal); --scrollbar-thumb: rgba(0, 0, 0, 0.12); --scrollbar-hover: var(--nile-teal); }
 
 /* ═══════════════════════════════════════════
    GLOBAL BASE STYLES
@@ -182,11 +285,16 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 10px 30px -5px var(--shadow-color);
+  box-shadow: 0 10px 25px -5px var(--shadow-color); /* Sharpened shadows */
   border-radius: 1.25rem;
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+              border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.3s ease;
+}
+
+[data-theme="light"] .glass-card {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03); /* Dynamic multi-layered crisp shadow for Light Mode */
 }
 
 .glass-card:hover {
@@ -196,13 +304,23 @@ body {
     inset 0 0 20px var(--nile-teal-glow);
 }
 
+[data-theme="light"] .glass-card:hover {
+  box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.08);
+}
+
+/* ⚠️ FIXED: The dynamic theme select popover now isolates perfectly */
 .glass-card-heavy {
-  background: var(--glass-surface-heavy);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 12px 40px 0 var(--shadow-color);
+  background: var(--glass-surface-heavy) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
+  z-index: 9999 !important; /* Forces dropdown depth isolation */
   border-radius: 1.5rem;
+}
+
+[data-theme="light"] .glass-card-heavy {
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12) !important;
 }
 
 .glass-panel {
@@ -235,6 +353,7 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 
+/* Optimization of background blueprints */
 body::before {
   content: "";
   position: fixed;
@@ -247,6 +366,10 @@ body::before {
   pointer-events: none;
   z-index: -5;
   transition: background-image 0.5s ease;
+  opacity: 0.03; /* Sub-visual subtle texture for dark themes */
+}
+[data-theme="light"] body::before {
+  opacity: 0.015; /* Absolute micro watermark for light layouts to avoid clutter */
 }
 
 button, a, input, select, textarea {
