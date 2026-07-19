@@ -67,23 +67,23 @@ const arabicToId: Record<string, string> = {
 
 
 const getAvailableUnits = (type: string): string[] => {
-  
+
   let found = treatmentTypes.find(t => t.id === type);
-  
-  
+
+
   if (!found) {
     const englishId = arabicToId[type];
     if (englishId) {
       found = treatmentTypes.find(t => t.id === englishId);
     }
   }
-  
-  
+
+
   if (found && found.hasConversion && found.units) {
     return found.units;
   }
-  
-  
+
+
   return ['علبة'];
 };
 
@@ -146,10 +146,10 @@ export default function POSTerminal() {
   const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(new Set());
   const [showRecommendations, setShowRecommendations] = useState(false);
 
-  
+
   const [showDebug, setShowDebug] = useState(false);
 
-  
+
   const availableTypes = useMemo(() => {
     const types = new Set<string>();
     searchResults.forEach(product => {
@@ -158,13 +158,13 @@ export default function POSTerminal() {
     return Array.from(types).sort();
   }, [searchResults]);
 
-  
+
   const filteredResults = useMemo(() => {
     if (!selectedType) return searchResults;
     return searchResults.filter(product => product.type === selectedType);
   }, [searchResults, selectedType]);
 
-  
+
   useEffect(() => {
     if (showDebug) {
       console.table(cart.map(item => ({
@@ -180,7 +180,7 @@ export default function POSTerminal() {
     }
   }, [cart, total, showDebug]);
 
-  
+
   useEffect(() => {
     if (showDebug && searchResults.length > 0) {
     }
@@ -264,7 +264,7 @@ export default function POSTerminal() {
     return () => window.removeEventListener('message', handleRemoteCommand);
   }, [searchResults, cart]);
 
-  
+
   useEffect(() => {
     const fetchResults = async () => {
       if (!pharmacyId) return;
@@ -448,7 +448,7 @@ export default function POSTerminal() {
     }
   }, [pharmacyId]);
 
-  
+
   const addProductToCart = (product: Product, clearSearch = true) => {
     if (product.current_price === undefined || product.current_price === 0) {
       showToast({
@@ -530,7 +530,7 @@ export default function POSTerminal() {
     }
 
     setIsProcessing(true);
-    const idempotencyKey = crypto.randomUUID(); 
+    const idempotencyKey = crypto.randomUUID();
 
     // 1. Floating-Point Precision Enforced
     const safeTotal = Number(Number(totalToProcess).toFixed(2));
@@ -550,8 +550,8 @@ export default function POSTerminal() {
       // 2. Exact Stock Invariants 
       const stockAvailable = item.activeBatches?.reduce((sum: number, b: any) => sum + Number(b.quantity), 0) || 0;
       if (item.quantity > stockAvailable) {
-        showToast({ 
-          variant: 'error', 
+        showToast({
+          variant: 'error',
           message: `خطأ نقص مخزون: الرصيد المسجل للمنتج ${item.name} هو (${stockAvailable}) فقط. العملية مرفوضة لتجنب إفساد المخزون.`,
           duration: 6000
         });
@@ -730,7 +730,7 @@ export default function POSTerminal() {
   return (
     <div className="w-full h-full flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500 relative">
 
-      {}
+      { }
       <div className="fixed top-4 right-4 z-50">
         <button
           onClick={() => setShowDebug(!showDebug)}
@@ -741,7 +741,7 @@ export default function POSTerminal() {
         </button>
       </div>
 
-      {}
+      { }
       <AnimatePresence>
         {showDebug && (
           <motion.div
@@ -824,13 +824,12 @@ export default function POSTerminal() {
             />
           </form>
 
-          {}
+          { }
           <div className="relative">
             <button
               onClick={() => setShowTypeFilter(!showTypeFilter)}
-              className={`glass-panel px-4 py-2 flex items-center justify-center gap-2 transition-all font-cairo h-full min-h-[52px] ${
-                selectedType ? 'text-[var(--royal-gold)] border-[var(--royal-gold)]/30 bg-[var(--royal-gold)]/10' : 'text-[var(--text-muted)]'
-              }`}
+              className={`glass-panel px-4 py-2 flex items-center justify-center gap-2 transition-all font-cairo h-full min-h-[52px] ${selectedType ? 'text-[var(--royal-gold)] border-[var(--royal-gold)]/30 bg-[var(--royal-gold)]/10' : 'text-[var(--text-muted)]'
+                }`}
             >
               <Filter className="w-4 h-4" />
               <span className="text-sm whitespace-nowrap">
@@ -853,9 +852,8 @@ export default function POSTerminal() {
                         setSelectedType('');
                         setShowTypeFilter(false);
                       }}
-                      className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
-                        !selectedType ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)]' : 'text-gray-400 hover:bg-[var(--glass-surface)] hover:text-white'
-                      }`}
+                      className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${!selectedType ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)]' : 'text-gray-400 hover:bg-[var(--glass-surface)] hover:text-white'
+                        }`}
                     >
                       <X className="w-4 h-4" />
                       جميع الأنواع
@@ -875,9 +873,8 @@ export default function POSTerminal() {
                             setSelectedType(type);
                             setShowTypeFilter(false);
                           }}
-                          className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${
-                            selectedType === type ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)]' : 'text-gray-400 hover:bg-[var(--glass-surface)] hover:text-white'
-                          }`}
+                          className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-cairo transition-all flex items-center gap-3 ${selectedType === type ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)]' : 'text-gray-400 hover:bg-[var(--glass-surface)] hover:text-white'
+                            }`}
                         >
                           <Tag className="w-4 h-4" />
                           {displayName}
@@ -891,7 +888,7 @@ export default function POSTerminal() {
           </div>
         </div>
 
-        {}
+        { }
         <LiveScanner onScan={handleCameraScan} />
 
         {/* ═══ PRODUCT BROWSER TABLE ═══════════════════════════════════════ */}
@@ -1020,13 +1017,11 @@ export default function POSTerminal() {
                           <tr
                             key={product.id}
                             onClick={() => !outOfStock && addProductToCart(product, false)}
-                            className={`border-b border-[var(--divider)] transition-all group ${
-                              outOfStock
+                            className={`border-b border-[var(--divider)] transition-all group ${outOfStock
                                 ? 'opacity-40 cursor-not-allowed'
                                 : 'cursor-pointer hover:bg-[var(--nile-teal)]/8 hover:border-[var(--nile-teal)]/20'
-                            } ${
-                              inCart ? 'bg-[var(--nile-teal)]/5 border-r-2 border-r-[var(--nile-teal)]' : ''
-                            } ${idx % 2 === 0 ? 'bg-[var(--glass-surface)]/30' : ''}`}
+                              } ${inCart ? 'bg-[var(--nile-teal)]/5 border-r-2 border-r-[var(--nile-teal)]' : ''
+                              } ${idx % 2 === 0 ? 'bg-[var(--glass-surface)]/30' : ''}`}
                           >
                             <td className="px-4 py-3">
                               <div className="font-bold font-cairo text-[var(--text-primary)] group-hover:text-[var(--nile-teal)] transition-colors leading-tight">
@@ -1042,9 +1037,8 @@ export default function POSTerminal() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-center">
-                              <span className={`text-xs font-bold font-cairo ${
-                                outOfStock ? 'text-red-500' : isLowStock ? 'text-yellow-500' : 'text-green-500'
-                              }`}>
+                              <span className={`text-xs font-bold font-cairo ${outOfStock ? 'text-red-500' : isLowStock ? 'text-yellow-500' : 'text-green-500'
+                                }`}>
                                 {product.total_quantity ?? 0}
                               </span>
                             </td>
@@ -1057,13 +1051,12 @@ export default function POSTerminal() {
                               <button
                                 disabled={outOfStock}
                                 onClick={(e) => { e.stopPropagation(); if (!outOfStock) addProductToCart(product, false); }}
-                                className={`p-2 rounded-lg transition-all ${
-                                  outOfStock
+                                className={`p-2 rounded-lg transition-all ${outOfStock
                                     ? 'opacity-30 cursor-not-allowed text-[var(--text-muted)]'
                                     : inCart
-                                    ? 'bg-[var(--nile-teal)] text-black shadow-[0_0_12px_var(--nile-teal-glow)]'
-                                    : 'bg-[var(--glass-surface)] hover:bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] group-hover:scale-110'
-                                }`}
+                                      ? 'bg-[var(--nile-teal)] text-black shadow-[0_0_12px_var(--nile-teal-glow)]'
+                                      : 'bg-[var(--glass-surface)] hover:bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] group-hover:scale-110'
+                                  }`}
                                 title={outOfStock ? 'نفذ المخزون' : 'إضافة للسلة'}
                               >
                                 <ShoppingCart className="w-4 h-4" />
@@ -1171,18 +1164,18 @@ export default function POSTerminal() {
                 animate={{ opacity: 1, backdropFilter: 'blur(16px)' }}
                 className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-50 rounded-3xl"
               >
-                <motion.div 
+                <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 200, damping: 20 }}
                   className="w-32 h-32 rounded-full bg-gradient-to-tr from-[var(--nile-teal)] to-[var(--royal-gold)] flex items-center justify-center mb-6 shadow-[0_0_50px_var(--nile-teal-glow)] relative"
                 >
-                  <motion.div 
+                  <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ repeat: Infinity, duration: 2 }}
                     className="absolute inset-0 rounded-full bg-white/20 blur-xl"
                   />
-                  <motion.div 
+                  <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.3, type: "spring" }}
@@ -1193,7 +1186,7 @@ export default function POSTerminal() {
                     </svg>
                   </motion.div>
                 </motion.div>
-                <motion.h2 
+                <motion.h2
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
@@ -1201,7 +1194,7 @@ export default function POSTerminal() {
                 >
                   تم الدفع بنجاح
                 </motion.h2>
-                <motion.p 
+                <motion.p
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -1332,22 +1325,22 @@ export default function POSTerminal() {
               `}
             >
               {cart.length > 0 && !isProcessing && (
-                <motion.div 
+                <motion.div
                   initial={{ x: '-200%' }}
-                  animate={{ x: '300%' }} 
+                  animate={{ x: '300%' }}
                   transition={{ repeat: Infinity, duration: 2.5, ease: "linear" }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[20deg] w-1/3" 
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[20deg] w-1/3"
                 />
               )}
               {isProcessing ? <Loader2 className="w-7 h-7 text-white animate-spin relative z-10" /> : <CreditCard className="w-7 h-7 relative z-10" />}
               <span className="tracking-wide relative z-10">
-              {isProcessing 
-                ? 'جاري المعالجة...' 
-                : !isOnline 
-                  ? 'تسجيل فاتورة (أوفلاين)' 
-                  : paymentMethod === 'sadqah' 
-                    ? 'إتمام الصدقة' 
-                    : 'إتمام الدفع الآن'}
+                {isProcessing
+                  ? 'جاري المعالجة...'
+                  : !isOnline
+                    ? 'تسجيل فاتورة (أوفلاين)'
+                    : paymentMethod === 'sadqah'
+                      ? 'إتمام الصدقة'
+                      : 'إتمام الدفع الآن'}
               </span>
               {!isProcessing && cart.length > 0 && (
                 <motion.div className="mr-auto relative z-10" animate={{ x: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
@@ -1359,7 +1352,7 @@ export default function POSTerminal() {
         </div>
       </div>
 
-      <BatchDistributionModal 
+      <BatchDistributionModal
         isOpen={batchModal.isOpen}
         item={batchModal.item}
         onClose={() => setBatchModal({ isOpen: false, item: null })}
@@ -1367,7 +1360,7 @@ export default function POSTerminal() {
         setBatchDistributions={setBatchDistributions}
       />
 
-      <PillsConfirmModal 
+      <PillsConfirmModal
         isOpen={pillsModal.isOpen}
         type={pillsModal.type}
         items={pillsModal.items}
