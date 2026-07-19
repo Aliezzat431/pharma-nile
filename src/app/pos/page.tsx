@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addToCart, removeFromCart, clearCart, updateUnit, updateQuantity, updateBatchDistribution } from '@/store/slices/posSlice';
 import { Package } from 'lucide-react';
-import { searchProducts, getProductByBarcode, syncProductCatalogToCache, Product } from '@/lib/api/products';
+import { searchProducts, getProductByBarcode, syncProductCatalogToCache, browseProducts, Product } from '@/lib/api/products';
 import { processCheckout } from '@/lib/api/orders';
 import { treatmentTypes } from "@/lib/unitOptions";
 import { analyzeProduct } from '@/lib/api/ai';
@@ -105,6 +105,15 @@ export default function POSTerminal() {
 
   const [selectedType, setSelectedType] = useState<string>('');
   const [showTypeFilter, setShowTypeFilter] = useState(false);
+
+  // ── Product Browser Table State ──────────────────────────────
+  const [browseData, setBrowseData] = useState<Product[]>([]);
+  const [browsePage, setBrowsePage] = useState(1);
+  const [browseTotal, setBrowseTotal] = useState(0);
+  const [isBrowseLoading, setIsBrowseLoading] = useState(false);
+  const [browseType, setBrowseType] = useState<string>('');
+  const [showOutOfStock, setShowOutOfStock] = useState(false);
+  const BROWSE_PAGE_SIZE = 30;
 
   const [agentWindows, setAgentWindows] = useState<{ id: string; url: string; title: string; x?: number; y?: number }[]>([]);
   const [activeReceipt, setActiveReceipt] = useState<{
@@ -300,6 +309,27 @@ export default function POSTerminal() {
     const timeoutId = setTimeout(fetchResults, 300);
     return () => clearTimeout(timeoutId);
   }, [searchInput, pharmacyId]);
+
+  // ── Browse Table Loader ──────────────────────────────────────
+  useEffect(() => {
+    if (!pharmacyId) return;
+    // Only browse when user is NOT actively searching
+    if (searchInput.length >= 2) return;
+    let cancelled = false;
+    setIsBrowseLoading(true);
+    browseProducts(pharmacyId, {
+      page: browsePage,
+      pageSize: BROWSE_PAGE_SIZE,
+      type: browseType || undefined,
+      inStockOnly: !showOutOfStock,
+    }).then(({ data, count }) => {
+      if (!cancelled) {
+        setBrowseData(data as Product[]);
+        setBrowseTotal(count);
+      }
+    }).finally(() => { if (!cancelled) setIsBrowseLoading(false); });
+    return () => { cancelled = true; };
+  }, [pharmacyId, browsePage, browseType, showOutOfStock, searchInput]);
 
   const handleBarcodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -863,100 +893,214 @@ export default function POSTerminal() {
         {}
         <LiveScanner onScan={handleCameraScan} />
 
-        {}
-        <div className="flex-1 glass-card p-6 overflow-y-auto relative">
-          <div className="flex justify-between items-center mb-4 border-b border-[var(--glass-border)] pb-2">
-            <h2 className="text-lg font-medium text-gray-400 font-cairo">
-              {searchInput.length >= 2 ? 'نتائج البحث' : 'قائمة المنتجات'}
+        {/* ═══ PRODUCT BROWSER TABLE ═══════════════════════════════════════ */}
+        <div className="flex-1 glass-card overflow-hidden flex flex-col">
+          {/* Table Header & Controls */}
+          <div className="p-4 border-b border-[var(--glass-border)] flex flex-wrap items-center gap-3">
+            <h2 className="text-base font-bold font-cairo text-[var(--text-primary)] flex-shrink-0">
+              {searchInput.length >= 2 ? `نتائج البحث (${filteredResults.length})` : `كتالوج المنتجات (${browseTotal})`}
             </h2>
-            {searchInput.length >= 2 && filteredResults.length > 0 && (
-              <span className="text-xs text-gray-500 font-cairo">
-                {filteredResults.length} منتج
-                {selectedType && ` • ${getTypeDisplayName(selectedType)}`}
-              </span>
-            )}
+
+            <div className="flex items-center gap-2 mr-auto flex-wrap">
+              {/* Type filter for browse mode */}
+              {searchInput.length < 2 && (
+                <select
+                  value={browseType}
+                  onChange={(e) => { setBrowseType(e.target.value); setBrowsePage(1); }}
+                  className="text-xs font-cairo bg-[var(--input-bg)] border border-[var(--glass-border)] text-[var(--text-primary)] rounded-lg px-3 py-2 outline-none focus:border-[var(--nile-teal)]"
+                >
+                  <option value="">جميع الأنواع</option>
+                  {treatmentTypes.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              )}
+              <label className="flex items-center gap-1.5 text-xs font-cairo text-[var(--text-muted)] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showOutOfStock}
+                  onChange={(e) => { setShowOutOfStock(e.target.checked); setBrowsePage(1); }}
+                  className="rounded accent-[var(--nile-teal)]"
+                />
+                عرض المنتهي مخزونه
+              </label>
+            </div>
           </div>
 
-          {searchInput.length >= 2 && filteredResults.length === 0 && !isSearching && (
-            <div className="flex flex-col items-center justify-center p-10 text-gray-500 gap-3">
-              <AlertCircle className="w-10 h-10 text-yellow-500/50" />
-              <p className="font-cairo">
-                {selectedType 
-                  ? `لا توجد نتائج من نوع "${getTypeDisplayName(selectedType)}" لـ "${searchInput}"`
-                  : `لا توجد نتائج لـ "${searchInput}"`
-                }
-              </p>
-              
-              <button
-                onClick={handleAskAI}
-                disabled={isAiLoading}
-                className="mt-4 px-6 py-2 rounded-xl bg-gradient-to-r from-[var(--royal-gold)] to-[#f2cd56] text-black font-bold font-cairo flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50 shadow-lg"
-              >
-                {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
-                {isAiLoading ? 'جاري استشارة د. محسن...' : 'اسأل د. محسن عن هذا المنتج'}
-              </button>
-
-              {aiSuggestions.length > 0 && (
-                <div className="w-full max-w-md mt-6 space-y-3">
-                  <h3 className="text-[var(--royal-gold)] font-bold font-cairo text-center mb-2 flex items-center justify-center gap-2">
-                    <Bot className="w-4 h-4" /> اقتراحات د. محسن
-                  </h3>
-                  {aiSuggestions.map((choice, idx) => (
-                    <div key={idx} className="bg-[var(--glass-surface)] border border-[var(--royal-gold)]/30 rounded-xl p-4 text-right">
-                      <h4 className="text-white font-bold font-cairo">{choice.name}</h4>
-                      <p className="text-xs text-gray-400 font-cairo mt-1">{choice.company} • {getTypeDisplayName(choice.type)}</p>
-                      <p className="text-xs text-gray-500 font-cairo mt-1">تحويل الوحدة: {choice.unit_conversion}</p>
-                      
-                      <div className="mt-3 flex gap-2">
-                        <input
-                          type="number"
-                          placeholder="السعر"
-                          defaultValue={0}
-                          id={`ai-price-${idx}`}
-                          className="flex-1 bg-black/40 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-white outline-none font-cairo focus:border-[var(--nile-teal)]/50"
-                        />
-                        <button
-                          onClick={() => {
-                            const priceInput = document.getElementById(`ai-price-${idx}`) as HTMLInputElement;
-                            const price = Number(priceInput.value);
-                            if (!price || price <= 0) {
-                              alert("يرجى إدخال سعر صحيح للمنتج.");
-                              return;
-                            }
-                            handleAddAiSuggestion(choice, price);
-                          }}
-                          className="px-4 py-2 rounded-lg bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] border border-[var(--nile-teal)]/50 hover:bg-[var(--nile-teal)]/30 transition-colors font-cairo text-sm font-bold flex items-center gap-2 whitespace-nowrap"
-                        >
-                          <ShoppingCart className="w-4 h-4" />
-                          إضافة
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+          {/* Search results: show as cards */}
+          {searchInput.length >= 2 && (
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+              {isSearching && (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-[var(--nile-teal)]" />
                 </div>
               )}
+              {!isSearching && filteredResults.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-10 text-[var(--text-muted)] gap-3">
+                  <AlertCircle className="w-10 h-10 text-yellow-500/50" />
+                  <p className="font-cairo">لا توجد نتائج لـ "{searchInput}"</p>
+                  <button
+                    onClick={handleAskAI}
+                    disabled={isAiLoading}
+                    className="mt-2 px-6 py-2 rounded-xl bg-gradient-to-r from-[var(--royal-gold)] to-[#f2cd56] text-black font-bold font-cairo flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50 shadow-lg"
+                  >
+                    {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
+                    {isAiLoading ? 'جاري استشارة د. محسن...' : 'اسأل د. محسن'}
+                  </button>
+                  {aiSuggestions.length > 0 && (
+                    <div className="w-full max-w-md mt-4 space-y-3">
+                      {aiSuggestions.map((choice, idx) => (
+                        <div key={idx} className="bg-[var(--glass-surface)] border border-[var(--royal-gold)]/30 rounded-xl p-4 text-right">
+                          <h4 className="text-[var(--text-primary)] font-bold font-cairo">{choice.name}</h4>
+                          <p className="text-xs text-[var(--text-muted)] font-cairo mt-1">{choice.company} • {getTypeDisplayName(choice.type)}</p>
+                          <div className="mt-3 flex gap-2">
+                            <input type="number" placeholder="السعر" defaultValue={0} id={`ai-price-${idx}`}
+                              className="flex-1 bg-[var(--input-bg)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none font-cairo"
+                            />
+                            <button
+                              onClick={() => {
+                                const el = document.getElementById(`ai-price-${idx}`) as HTMLInputElement;
+                                const price = Number(el.value);
+                                if (!price || price <= 0) { alert('يرجى إدخال سعر صحيح.'); return; }
+                                handleAddAiSuggestion(choice, price);
+                              }}
+                              className="px-4 py-2 rounded-lg bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] border border-[var(--nile-teal)]/50 hover:bg-[var(--nile-teal)]/30 font-cairo text-sm font-bold flex items-center gap-2"
+                            >
+                              <ShoppingCart className="w-4 h-4" /> إضافة
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {filteredResults.map((product) => (
+                <POSProductCard
+                  key={product.id}
+                  product={{ ...product, typeDisplayName: getTypeDisplayName(product.type) } as any}
+                  isExpanded={expandedProductIds.has(product.id)}
+                  onAddToCart={addProductToCart}
+                  onToggleBatches={toggleProductBatches}
+                />
+              ))}
             </div>
           )}
 
-          <div className="flex flex-col gap-4">
-            {filteredResults.map((product) => (
-              <POSProductCard
-                key={product.id}
-                product={{
-                  ...product,
-                  typeDisplayName: getTypeDisplayName(product.type)
-                } as any}
-                isExpanded={expandedProductIds.has(product.id)}
-                onAddToCart={addProductToCart}
-                onToggleBatches={toggleProductBatches}
-              />
-            ))}
-          </div>
-
+          {/* Browse mode: permanent paginated table */}
           {searchInput.length < 2 && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-              <p className="text-gray-400 text-lg font-cairo">ابدأ البحث لعرض المنتجات من قاعدة البيانات...</p>
-            </div>
+            <>
+              <div className="flex-1 overflow-y-auto">
+                {isBrowseLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="w-8 h-8 animate-spin text-[var(--nile-teal)]" />
+                  </div>
+                ) : browseData.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-[var(--text-muted)] gap-2">
+                    <Package className="w-12 h-12 opacity-30" />
+                    <p className="font-cairo">لا توجد منتجات</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-sm text-right" dir="rtl">
+                    <thead className="sticky top-0 z-10">
+                      <tr className="bg-[var(--glass-surface-heavy)] text-[var(--text-muted)] text-xs font-bold font-cairo uppercase">
+                        <th className="px-4 py-3 text-right">المنتج</th>
+                        <th className="px-4 py-3 text-center">النوع</th>
+                        <th className="px-4 py-3 text-center">المخزون</th>
+                        <th className="px-4 py-3 text-center">السعر</th>
+                        <th className="px-4 py-3 text-center">إضافة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {browseData.map((product, idx) => {
+                        const inCart = cart.some((c: any) => c.id === product.id);
+                        const isLowStock = (product.total_quantity ?? 0) > 0 && (product.total_quantity ?? 0) <= 5;
+                        const outOfStock = (product.total_quantity ?? 0) === 0;
+                        return (
+                          <tr
+                            key={product.id}
+                            onClick={() => !outOfStock && addProductToCart(product, false)}
+                            className={`border-b border-[var(--divider)] transition-all group ${
+                              outOfStock
+                                ? 'opacity-40 cursor-not-allowed'
+                                : 'cursor-pointer hover:bg-[var(--nile-teal)]/8 hover:border-[var(--nile-teal)]/20'
+                            } ${
+                              inCart ? 'bg-[var(--nile-teal)]/5 border-r-2 border-r-[var(--nile-teal)]' : ''
+                            } ${idx % 2 === 0 ? 'bg-[var(--glass-surface)]/30' : ''}`}
+                          >
+                            <td className="px-4 py-3">
+                              <div className="font-bold font-cairo text-[var(--text-primary)] group-hover:text-[var(--nile-teal)] transition-colors leading-tight">
+                                {product.name}
+                              </div>
+                              {product.company && (
+                                <div className="text-[10px] text-[var(--text-muted)] mt-0.5 font-cairo">{product.company}</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className="text-xs font-cairo px-2 py-0.5 rounded-full bg-[var(--glass-surface)] text-[var(--text-secondary)] whitespace-nowrap">
+                                {getTypeDisplayName(product.type)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`text-xs font-bold font-cairo ${
+                                outOfStock ? 'text-red-500' : isLowStock ? 'text-yellow-500' : 'text-green-500'
+                              }`}>
+                                {product.total_quantity ?? 0}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className="text-[var(--royal-gold)] font-bold font-cairo text-sm">
+                                {product.current_price ? `${product.current_price} ج.م` : '—'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                disabled={outOfStock}
+                                onClick={(e) => { e.stopPropagation(); if (!outOfStock) addProductToCart(product, false); }}
+                                className={`p-2 rounded-lg transition-all ${
+                                  outOfStock
+                                    ? 'opacity-30 cursor-not-allowed text-[var(--text-muted)]'
+                                    : inCart
+                                    ? 'bg-[var(--nile-teal)] text-black shadow-[0_0_12px_var(--nile-teal-glow)]'
+                                    : 'bg-[var(--glass-surface)] hover:bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] group-hover:scale-110'
+                                }`}
+                                title={outOfStock ? 'نفذ المخزون' : 'إضافة للسلة'}
+                              >
+                                <ShoppingCart className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Pagination */}
+              {browseTotal > BROWSE_PAGE_SIZE && (
+                <div className="p-3 border-t border-[var(--glass-border)] flex items-center justify-between gap-2 bg-[var(--glass-surface)]/40">
+                  <button
+                    disabled={browsePage <= 1}
+                    onClick={() => setBrowsePage(p => Math.max(1, p - 1))}
+                    className="px-4 py-1.5 text-xs font-cairo rounded-lg bg-[var(--glass-surface)] text-[var(--text-primary)] disabled:opacity-30 hover:bg-[var(--nile-teal)]/20 hover:text-[var(--nile-teal)] transition-all"
+                  >
+                    السابق
+                  </button>
+                  <span className="text-xs text-[var(--text-muted)] font-cairo">
+                    صفحة {browsePage} من {Math.ceil(browseTotal / BROWSE_PAGE_SIZE)}
+                    <span className="text-[var(--text-inactive)] mr-2">({browseTotal} منتج)</span>
+                  </span>
+                  <button
+                    disabled={browsePage >= Math.ceil(browseTotal / BROWSE_PAGE_SIZE)}
+                    onClick={() => setBrowsePage(p => p + 1)}
+                    className="px-4 py-1.5 text-xs font-cairo rounded-lg bg-[var(--glass-surface)] text-[var(--text-primary)] disabled:opacity-30 hover:bg-[var(--nile-teal)]/20 hover:text-[var(--nile-teal)] transition-all"
+                  >
+                    التالي
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

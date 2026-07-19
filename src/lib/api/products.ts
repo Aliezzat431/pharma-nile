@@ -114,6 +114,63 @@ export async function getProducts(pharmacyId: string) {
   return products || [];
 }
 
+/** Paginated product browser for the POS table — includes batch data */
+export async function browseProducts(
+  pharmacyId: string,
+  options: {
+    page?: number;
+    pageSize?: number;
+    type?: string;
+    search?: string;
+    inStockOnly?: boolean;
+  } = {}
+) {
+  if (!pharmacyId) return { data: [], count: 0 };
+
+  const { page = 1, pageSize = 30, type, search, inStockOnly = true } = options;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('products')
+    .select(
+      `*, batches(*), pharmacy:pharmacies(name)`,
+      { count: 'exact' }
+    )
+    .eq('pharmacy_id', pharmacyId)
+    .eq('batches.pharmacy_id', pharmacyId)
+    .range(from, to)
+    .order('name', { ascending: true });
+
+  if (type) query = query.eq('type', type);
+  if (search && search.trim().length > 0) {
+    query = query.ilike('name', `%${search.trim()}%`);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    console.error('browseProducts error:', error);
+    return { data: [], count: 0 };
+  }
+
+  const mapped = (data || []).map((p: any) => {
+    const activeBatches = (p.batches || [])
+      .filter((b: Batch) => b.quantity > 0)
+      .sort((a: Batch, b: Batch) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
+
+    const current_price = activeBatches.length > 0 ? activeBatches[0].sale_price : 0;
+    const total_quantity = activeBatches.reduce((acc: number, b: Batch) => acc + b.quantity, 0);
+
+    return { ...p, current_price, total_quantity, activeBatches, pharmacy_name: p.pharmacy?.name || '' };
+  });
+
+  const filtered = inStockOnly ? mapped.filter((p: any) => p.total_quantity > 0) : mapped;
+
+  return { data: filtered, count: count ?? 0 };
+}
+
+
 export async function getProductByBarcode(barcode: string, pharmacyId: string) {
   if (typeof window !== 'undefined' && !window.navigator.onLine) {
     return getLocalProductByBarcode(barcode, pharmacyId);
