@@ -197,6 +197,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
             </div>
+          ) : monthSummary ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { label: 'إجمالي المبيعات', value: monthSummary.total_revenue, color: 'var(--nile-teal)' },
@@ -214,6 +215,7 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+          ) : null}
         </motion.div>
       )}
 
