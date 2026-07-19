@@ -30,6 +30,7 @@ import { POSRecommendations } from './components/POSRecommendations';
 import { VirtualReceipt } from './components/VirtualReceipt';
 import { queueOfflineOrder, syncOfflineTransactions } from '@/lib/supabase/offline-orders';
 import { showToast } from '@/components/ui/SyncToastProvider';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 
 const LiveScanner = dynamic(() => import('@/components/shared/CameraScanner'), { ssr: false });
@@ -902,18 +903,17 @@ export default function POSTerminal() {
             </h2>
 
             <div className="flex items-center gap-2 mr-auto flex-wrap">
-              {/* Type filter for browse mode */}
+              {/* Type filter for browse mode — Custom Glassmorphism Dropdown */}
               {searchInput.length < 2 && (
-                <select
+                <CustomSelect
                   value={browseType}
-                  onChange={(e) => { setBrowseType(e.target.value); setBrowsePage(1); }}
-                  className="text-xs font-cairo bg-[var(--input-bg)] border border-[var(--glass-border)] text-[var(--text-primary)] rounded-lg px-3 py-2 outline-none focus:border-[var(--nile-teal)]"
-                >
-                  <option value="">جميع الأنواع</option>
-                  {treatmentTypes.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
+                  onChange={(v) => { setBrowseType(v); setBrowsePage(1); }}
+                  placeholder="جميع الأنواع"
+                  options={[
+                    { value: '', label: 'جميع الأنواع' },
+                    ...treatmentTypes.map(t => ({ value: t.id, label: t.name }))
+                  ]}
+                />
               )}
               <label className="flex items-center gap-1.5 text-xs font-cairo text-[var(--text-muted)] cursor-pointer select-none">
                 <input
