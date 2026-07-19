@@ -3,7 +3,7 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
-import { closeIframe, toggleMinimizeIframe, focusIframe } from '@/store/slices/agentSlice';
+import { closeIframe, toggleMinimizeIframe, focusIframe, updateScrapedContext, addProgressLog } from '@/store/slices/agentSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Maximize2 } from 'lucide-react';
 
@@ -83,6 +83,43 @@ export default function WorkspaceManager() {
                     src={`${iframe.url}${iframe.url.includes('?') ? '&' : '?'}copilot=true`}
                     className="w-full h-full border-none"
                     title={iframe.title}
+                    onLoad={async (e) => {
+                      try {
+                        dispatch(addProgressLog(`جاري التركيز وقراءة صفحة: ${iframe.title}`));
+                        const iframeDoc = (e.target as HTMLIFrameElement).contentDocument;
+                        if (iframeDoc) {
+                          // Allow some time for frontend frameworks (Next.js) to render dynamic content
+                          setTimeout(() => {
+                            const tables = Array.from(iframeDoc.querySelectorAll('table'));
+                            let scrapedTables = tables.map((t, idx) => {
+                              const headers = Array.from(t.querySelectorAll('th')).map(th => th.innerText || '').join(' | ');
+                              const rows = Array.from(t.querySelectorAll('tbody tr')).map(tr => 
+                                Array.from(tr.querySelectorAll('td')).map(td => td.innerText || '').join(' | ')
+                              ).join('\\n');
+                              return `جدول ${idx + 1}\\nالأعمدة: ${headers}\\nالبيانات: \\n${rows}`;
+                            }).join('\\n\\n');
+
+                            const mainBody = iframeDoc.querySelector('main') || iframeDoc.body;
+                            const fullText = mainBody.innerText || '';
+
+                            const combinedData = `
+--- بيانات شاشة ${iframe.title} (${iframe.url}) ---
+
+[النصوص والحقائق الموجودة بالشاشة]:
+${fullText.substring(0, 1000)}
+
+[بيانات الجداول]:
+${scrapedTables.substring(0, 2000)}
+                            `.trim();
+
+                            dispatch(updateScrapedContext({ url: iframe.url, data: combinedData }));
+                            dispatch(addProgressLog(`تم بنجاح قراءة محتويات: ${iframe.title}`));
+                          }, 1500); // delay to catch network renders
+                        }
+                      } catch (err) {
+                        console.warn("Could not read iframe context", err);
+                      }
+                    }}
                   />
                   {}
                 </div>

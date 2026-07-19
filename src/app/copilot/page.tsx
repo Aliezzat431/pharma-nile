@@ -340,14 +340,6 @@ export default function CopilotPage() {
       setMessages(prev => [...prev, assistantMsg]);
       saveMessage(assistantMsg);
 
-      if (data.actions?.length > 0) {
-        data.actions.forEach((act: any) => {
-          if (act.type && act.title) {
-            addTab(act.type, act.title);
-          }
-        });
-      }
-
       if (data.commands?.length > 0) {
         sendCommandToIframes(data.commands);
       }

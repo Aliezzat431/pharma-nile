@@ -17,7 +17,7 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { message, context } = await req.json();
+    const { message, context, chatHistory } = await req.json();
     const pharmacyId = context?.pharmacyId;
 
     if (!pharmacyId) {
@@ -41,14 +41,28 @@ export async function POST(req: Request) {
       await setCache(salesCacheKey, totalSales, 30); // cache for 30s
     }
 
-    const systemPrompt = `أنت "الدكتور محسن"، مساعد الصيدلية الذكي.
-    رد بالعامية المصرية بأسلوب مهني وخفيف.
-    بيانات اليوم: المبيعات ${totalSales} ج.م.
-    استخدم [ACTION:INVENTORY] إذا سأل عن مخزون، و [ACTION:POS] للصرف.`;
+    const systemPrompt = `أنت "الدكتور محسن"، مساعد الصيدلية الذكي في نظام PharmaNile.
+    رد دائماً بالعامية المصرية بأسلوب مهني، خفيف الظل، وجدع.
+    بيانات اليوم: إجمالي المبيعات ${totalSales} ج.م.
+
+    هدفك مساعدة الصيدلي في أداء مهامه بسرعة عبر فتح الشاشات المناسبة له.
+    إذا طلب المستخدم أداء أي من المهام التالية، قم بالرد بشكل مناسب واستخدم الكود البرمجي الخاص بالشاشة في نهاية رسالتك لكي يقوم النظام بفتحها:
+    - لفتح نقطة البيع أو الكاشير أو الصرف: استخدم [ACTION:POS]
+    - لعمل جرد المخزون، أو عرض الأصناف الناقصة، أو الأدوية التي قاربت على الانتهاء: استخدم [ACTION:INVENTORY]
+    - لفتح المبيعات، ومخططات وتحليلات المبيعات: استخدم [ACTION:SALES_CHART]
+    - لفتح حسابات العملاء، أو العملاء المتأخرين، أو الديون: استخدم [ACTION:CUSTOMERS]
+    - لفتح التقارير المالية والماليات: استخدم [ACTION:FINANCIALS]
+
+    يمكنك استخدام أكثر من أمر إذا دعت الحاجة.
+    تذكر أن تطمئن الطبيب أنك ستقوم باللازم.`;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
+        ...(chatHistory || []).map((msg: any) => ({
+          role: msg.role === 'assistant' ? 'assistant' : 'user',
+          content: msg.content
+        })),
         { role: "user", content: message }
       ],
       model: GROQ_MODEL, 
@@ -57,16 +71,27 @@ export async function POST(req: Request) {
 
     let aiResponse = chatCompletion.choices[0]?.message?.content || "";
     
-    
-    const actions: any[] = [];
-    const actionRegex = /\[ACTION:(\w+)\]/g;
+    // Parse actions dynamically based on known tabs
+    const actions: { type: string; title: string }[] = [];
+    const actionRegex = /\[ACTION:([A-Z_]+)\]/g;
     let match;
     while ((match = actionRegex.exec(aiResponse)) !== null) {
-      actions.push({ type: match[1].toLowerCase(), title: 'فتح الشاشة' });
+      const actionType = match[1].toLowerCase();
+      let title = "فتح الشاشة";
+      if (actionType === "pos") title = "نقطة البيع";
+      if (actionType === "inventory") title = "المخزون والجرد";
+      if (actionType === "sales_chart") title = "تحليلات المبيعات";
+      if (actionType === "customers") title = "إدارة العملاء";
+      if (actionType === "financials") title = "التقارير المالية";
+      
+      // Prevent duplicates
+      if (!actions.some(a => a.type === actionType)) {
+        actions.push({ type: actionType, title });
+      }
     }
 
-    
-    const cleanContent = aiResponse.replace(/\[ACTION:.*?\]/g, "").trim();
+    // Clean actions from response text so they aren't visible
+    const cleanContent = aiResponse.replace(/\[ACTION:[A-Z_]+\]/g, "").trim();
 
     return NextResponse.json({
       content: cleanContent,

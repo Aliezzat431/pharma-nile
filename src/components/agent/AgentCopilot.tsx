@@ -15,7 +15,7 @@ interface Message {
 
 export default function AgentCopilot() {
   const dispatch = useDispatch();
-  const { isChatOpen, agentPendingApproval } = useSelector((state: RootState) => state.agent);
+  const { isChatOpen, agentPendingApproval, scrapedContext, progressLogs } = useSelector((state: RootState) => state.agent);
   
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: 'أهلاً بك! أنا المساعد الذكي لنظام فارما نايل. كيف يمكنني مساعدتك اليوم؟' }
@@ -43,7 +43,8 @@ export default function AgentCopilot() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: userMessage,
-          history: messages.slice(-5) 
+          history: messages.slice(-5),
+          scrapedContext: scrapedContext
         })
       });
 
@@ -223,6 +224,24 @@ export default function AgentCopilot() {
               <div ref={messagesEndRef} />
             </div>
 
+            {progressLogs.length > 0 && isLoading && !agentPendingApproval && (
+              <div className="px-4 pb-2">
+                <div className="bg-black/30 rounded-xl p-3 border border-[var(--glass-border)]">
+                  {progressLogs.map((log, idx) => (
+                    <motion.div 
+                      key={idx}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="text-xs text-[var(--nile-teal)] flex items-center gap-2 mb-1 last:mb-0"
+                    >
+                      <Loader2 className="w-3 h-3 animate-spin inline-block" />
+                      {log}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             {}
             <div className="p-4 border-t border-[var(--glass-border)] bg-black/40">
               <div className="flex gap-2">

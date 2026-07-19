@@ -16,9 +16,10 @@ interface AgentState {
   isChatOpen: boolean;
   agentPendingApproval: {
     message: string;
-    payload: any;
     actionType: string;
   } | null;
+  scrapedContext: Record<string, string>;
+  progressLogs: string[];
 }
 
 const initialState: AgentState = {
@@ -26,6 +27,8 @@ const initialState: AgentState = {
   activeIframeId: null,
   isChatOpen: false,
   agentPendingApproval: null,
+  scrapedContext: {},
+  progressLogs: [],
 };
 
 const agentSlice = createSlice({
@@ -73,6 +76,15 @@ const agentSlice = createSlice({
       state.iframes = [];
       state.activeIframeId = null;
     },
+    updateScrapedContext: (state, action: PayloadAction<{ url: string; data: string }>) => {
+      state.scrapedContext[action.payload.url] = action.payload.data;
+    },
+    addProgressLog: (state, action: PayloadAction<string>) => {
+      state.progressLogs.push(action.payload);
+    },
+    clearProgressLogs: (state) => {
+      state.progressLogs = [];
+    }
   },
 });
 
@@ -84,6 +96,9 @@ export const {
   toggleChat,
   setPendingApproval,
   clearAllIframes,
+  updateScrapedContext,
+  addProgressLog,
+  clearProgressLogs,
 } = agentSlice.actions;
 
 export default agentSlice.reducer;
