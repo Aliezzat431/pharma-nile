@@ -7,6 +7,7 @@ const PUBLIC_PATHS = new Set([
   '/auth/select-branch',
   '/auth/chain-login',
   '/welcome',
+  '/googlee6bd0df41b2ec05e.html',
 ]);
 
 const ADMIN_ONLY_API = [
