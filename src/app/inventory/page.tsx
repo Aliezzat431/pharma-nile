@@ -21,11 +21,14 @@ import {
   Calendar,
   FileUp,
   Filter,
-  XCircle
+  XCircle,
+  Download,
+  Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import * as XLSX from 'xlsx';
 import { usePageGSAP, useGSAPList } from '@/hooks/usePageGSAP';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/ui/Pagination';
@@ -455,6 +458,7 @@ export default function InventoryDashboard() {
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState<string>('');
   const [showTypeFilter, setShowTypeFilter] = useState(false);
+  const [filterStockStatus, setFilterStockStatus] = useState<string>(''); // '', 'low-stock', 'out-of-stock', 'near-expiry'
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -541,6 +545,17 @@ export default function InventoryDashboard() {
     const query = search.toLowerCase().trim();
     return items.filter((item) => {
       if (selectedType && item.type !== selectedType) return false;
+      
+      if (filterStockStatus === 'out-of-stock' && item.total_quantity > 0) return false;
+      if (filterStockStatus === 'low-stock' && (item.total_quantity === 0 || item.total_quantity >= 10)) return false;
+      if (filterStockStatus === 'near-expiry') {
+        const hasNearExpiry = item.batches.some(b => {
+          const daysToExpiry = (new Date(b.expiry_date).getTime() - new Date().getTime()) / (1000 * 3600 * 24);
+          return daysToExpiry > 0 && daysToExpiry <= 90;
+        });
+        if (!hasNearExpiry) return false;
+      }
+
       if (!query) return true;
       return (
         item.name.toLowerCase().includes(query) ||
@@ -548,7 +563,7 @@ export default function InventoryDashboard() {
         item.batches.some((b) => b.barcode && b.barcode.toLowerCase().includes(query))
       );
     });
-  }, [items, search, selectedType]);
+  }, [items, search, selectedType, filterStockStatus]);
 
   
   const { paginatedData, currentPage, totalPages, totalItems, setPage } = usePagination(
@@ -603,6 +618,28 @@ export default function InventoryDashboard() {
     }
   };
 
+  const exportToExcel = () => {
+    if (items.length === 0) return;
+    const exportData = items.map(p => {
+      const activeBatch = p.batches.find(b => b.quantity > 0) || p.batches[0];
+      return {
+        'اسم الصنف': p.name,
+        'الباركود': activeBatch?.barcode || '-',
+        'النوع': getTypeDisplayName(p.type),
+        'الكمية الإجمالية': p.total_quantity,
+        'سعر الشراء': activeBatch?.purchase_price || 0,
+        'سعر البيع': activeBatch?.sale_price || 0,
+        'الشركة': p.company,
+        'تاريخ الانتهاء (لأقرب تشغيلة)': activeBatch ? new Date(activeBatch.expiry_date).toLocaleDateString('ar-EG') : '-'
+      };
+    });
+    
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+    XLSX.writeFile(workbook, `Inventory_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   const handleCameraScan = (barcode: string) => setSearch(barcode);
 
   
@@ -644,6 +681,18 @@ export default function InventoryDashboard() {
           </motion.p>
         </div>
         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <button
+            onClick={exportToExcel}
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-white font-bold transition-all border border-[var(--glass-border)] font-cairo hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] group"
+          >
+            <Download className="w-5 h-5 text-green-400 group-hover:-translate-y-1 transition-transform" /> تصدير
+          </button>
+          <Link
+            href="/inventory/jard"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-white font-bold transition-all border border-[var(--glass-border)] font-cairo hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] group"
+          >
+            <Database className="w-5 h-5 text-[var(--nile-teal)] group-hover:-translate-y-1 transition-transform" /> جرد
+          </Link>
           <Link
             href="/inventory/import"
             className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-white font-bold transition-all border border-[var(--glass-border)] font-cairo hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] group"
@@ -702,18 +751,40 @@ export default function InventoryDashboard() {
 
       {}
       <div data-gsap="fade-up" className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 glass-panel p-2 flex items-center gap-3">
-          <Search className="w-5 h-5 text-gray-400 mr-3" />
-          <input
-            type="text"
-            placeholder="بحث بالاسم، الشركة أو الباركود..."
-            className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-gray-500 py-2 font-cairo"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="flex-1 glass-panel p-2 flex flex-col gap-3">
+          <div className="flex items-center w-full">
+            <Search className="w-5 h-5 text-gray-400 mr-3" />
+            <input
+              type="text"
+              placeholder="بحث بالاسم، الشركة أو الباركود..."
+              className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-gray-500 py-2 font-cairo"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--glass-border)]">
+            <button
+              onClick={() => setFilterStockStatus(filterStockStatus === 'low-stock' ? '' : 'low-stock')}
+              className={`px-3 py-1 rounded-full text-xs font-bold font-cairo transition-all border ${filterStockStatus === 'low-stock' ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' : 'bg-transparent text-gray-400 border-[var(--glass-border)] hover:bg-white/5'}`}
+            >
+              نواقص
+            </button>
+            <button
+              onClick={() => setFilterStockStatus(filterStockStatus === 'out-of-stock' ? '' : 'out-of-stock')}
+              className={`px-3 py-1 rounded-full text-xs font-bold font-cairo transition-all border ${filterStockStatus === 'out-of-stock' ? 'bg-red-500/20 text-red-400 border-red-500/50' : 'bg-transparent text-gray-400 border-[var(--glass-border)] hover:bg-white/5'}`}
+            >
+              نفذت الكمية
+            </button>
+            <button
+              onClick={() => setFilterStockStatus(filterStockStatus === 'near-expiry' ? '' : 'near-expiry')}
+              className={`px-3 py-1 rounded-full text-xs font-bold font-cairo transition-all border ${filterStockStatus === 'near-expiry' ? 'bg-[var(--royal-gold)]/20 text-[var(--royal-gold)] border-[var(--royal-gold)]/50' : 'bg-transparent text-gray-400 border-[var(--glass-border)] hover:bg-white/5'}`}
+            >
+              صلاحيات قريبة
+            </button>
+          </div>
         </div>
 
-        {}
+        {/* Type Filter */}
         <div className="relative">
           <button
             onClick={() => setShowTypeFilter(!showTypeFilter)}

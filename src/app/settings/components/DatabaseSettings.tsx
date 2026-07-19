@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Zap, Database, Ghost, Shield, Moon, CloudMoon, Loader2,
   Download, Upload, RefreshCw, CheckCircle2, AlertTriangle,
-  Trash2, HardDrive, Activity, BarChart2, X,
+  Trash2, HardDrive, Activity, BarChart2, X, PackageSearch
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { db } from '@/lib/dexie';
 
 
 type ToastType = 'success' | 'error' | 'info';
@@ -56,6 +58,7 @@ export function DatabaseSettings() {
   const [isImporting, setIsImporting] = useState(false);
   const [cleaningType, setCleaningType] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
+  const router = useRouter();
 
   const token = session?.access_token;
   const pharmacyId = user?.user_metadata?.pharmacy_id;
@@ -465,6 +468,69 @@ export function DatabaseSettings() {
               >
                 {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {isImporting ? 'جارِ الاستيراد...' : 'استيراد البيانات (Import)'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Offline Jard Management */}
+        <div className="glass-panel p-8 relative overflow-hidden mt-6">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--royal-gold)]/5 rounded-full blur-3xl -z-10 pointer-events-none" />
+          <h2 className="text-xl font-bold mb-2 font-cairo flex items-center gap-2">
+            <PackageSearch className="w-5 h-5 text-[var(--royal-gold)]" /> إدارة الجرد المقطعي (Offline Stock-Taking)
+          </h2>
+          <p className="text-sm text-gray-400 font-cairo border-b border-[var(--glass-border)] pb-6 mb-6">
+            مساعد الجرد الذكي يتيح لك رفع قوائم الأصناف والقيام بالجرد دون الحاجة لاتصال مستمر بالإنترنت باستخدام قاعدة بيانات محلية (Dexie.js).
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-5 p-6 rounded-2xl border border-[var(--royal-gold)]/15 bg-[var(--royal-gold)]/5 hover:bg-[var(--royal-gold)]/10 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="p-3 rounded-xl bg-[var(--royal-gold)]/15">
+                  <PackageSearch className="w-6 h-6 text-[var(--royal-gold)]" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold font-cairo">فتح مساعد الجرد الذكي</h3>
+                  <p className="text-xs text-gray-400 font-cairo mt-1 leading-relaxed">
+                    ابدأ في جرد مخزونك عبر رفع ملف Excel أو CSV، وسيقوم النظام بتخزين تقدمك محلياً لحين الانتهاء.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => router.push('/inventory/jard')}
+                className="py-3 rounded-xl bg-[var(--royal-gold)]/20 text-[var(--royal-gold)] hover:bg-[var(--royal-gold)] hover:text-black font-cairo text-sm font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                شاشة الجرد (Wizard)
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-5 p-6 rounded-2xl border border-red-500/15 bg-red-500/5 hover:bg-red-500/10 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="p-3 rounded-xl bg-red-500/15">
+                  <Trash2 className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold font-cairo">مسح الجلسة المؤقتة</h3>
+                  <p className="text-xs text-gray-400 font-cairo mt-1 leading-relaxed">
+                    إذا واجهت أي مشكلة أو أردت إلغاء جرد قيد التقدم، يمكنك تفريغ التخزين المحلي كلياً وبدء جلسة جديدة.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  if (confirm('هل أنت متأكد من رغبتك في حذف مسودة الجرد المحلي الحالية بالكامل؟')) {
+                    try {
+                      await db.draft_inventory.clear();
+                      await db.inventory_sessions.clear();
+                      showToast('تم مسح المسودة المؤقتة بنجاح', 'success');
+                    } catch (e) {
+                      showToast('فشل مسح مسودة الجرد', 'error');
+                    }
+                  }
+                }}
+                className="py-3 mt-auto rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-cairo text-sm font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                مسح التخزين المخبئي (Cache)
               </button>
             </div>
           </div>

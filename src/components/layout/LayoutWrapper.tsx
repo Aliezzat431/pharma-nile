@@ -7,11 +7,12 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import { useAuth } from '@/hooks/useAuth';
 import { useDispatch } from 'react-redux';
 import { openIframe } from '@/store/slices/agentSlice';
-import { Maximize2, Search, AlertCircle, Loader2, WifiOff } from 'lucide-react';
+import { Maximize2, Search, AlertCircle, Loader2, WifiOff, Database } from 'lucide-react';
 import CommandPalette from '@/components/layout/CommandPalette';
 import { syncOfflineReturns } from '@/lib/supabase/offline-orders';
 import { processReturn } from '@/lib/api/orders';
 import { showToast } from '@/components/ui/SyncToastProvider';
+import { db } from '@/lib/dexie';
 import DeveloperWidget from './DeveloperWidget';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
@@ -26,6 +27,25 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isCmdOpen, setIsCmdOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [jardSession, setJardSession] = useState<{items: number} | null>(null);
+
+  useEffect(() => {
+    const checkJardSession = async () => {
+      try {
+        const pendingItems = await db.draft_inventory.where('status').equals('pending').toArray();
+        if (pendingItems.length > 0) {
+          setJardSession({ items: pendingItems.length });
+        } else {
+          setJardSession(null);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    if (typeof window !== 'undefined') {
+      checkJardSession();
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -210,6 +230,18 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex h-screen w-full relative flex-col">
+      {jardSession && (
+        <div className="bg-gradient-to-r from-[var(--nile-teal)]/20 to-[var(--nile-teal)]/40 text-[var(--nile-teal)] text-sm py-2 px-4 text-center font-bold font-cairo flex items-center justify-center gap-2 border-b border-[var(--nile-teal)]/20 z-50">
+          <Database className="w-4 h-4" />
+          <span>يوجد جرد غير مكتمل متبقي به ({jardSession.items}) صنف، هل تود الاستكمال؟</span>
+          <button 
+             onClick={() => router.push('/inventory/jard')}
+             className="mr-4 px-3 py-1 bg-[var(--nile-teal)] text-black rounded-lg text-xs"
+          >
+             استكمال
+          </button>
+        </div>
+      )}
       {!isOnline && (
         <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-[11px] py-1.5 px-4 text-center font-semibold font-cairo flex items-center justify-center gap-2 border-b border-amber-500/25 animate-in slide-in-from-top duration-300 z-50">
           <WifiOff className="w-3.5 h-3.5 animate-pulse" />
