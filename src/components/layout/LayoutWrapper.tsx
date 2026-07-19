@@ -119,9 +119,88 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     };
     window.addEventListener('keydown', handleKeyDown);
 
+    const handleIframeMessage = (event: MessageEvent) => {
+      if (event.data?.source === 'copilot') {
+        const { command, data } = event.data;
+        if (command === 'REQUEST_DATA' || command === 'READ_PAGE') {
+          const text = document.querySelector('main')?.innerText || document.body.innerText;
+          if (event.source) {
+            event.source.postMessage({
+              source: 'page',
+              type: 'PAGE_DATA',
+              payload: text
+            }, { targetOrigin: event.origin });
+          }
+        } else if (command === 'GLOW_CLICK') {
+          // targeted laser glow on the operator interaction UI
+          const els = Array.from(document.querySelectorAll('button, a, input, select, [role="button"], tr'));
+          const target = els.find(el => {
+            const text = (el.textContent || '').trim();
+            const placeholder = (el as HTMLInputElement).placeholder || '';
+            const ariaLabel = el.getAttribute('aria-label') || '';
+            return text.includes(data?.label) || placeholder.includes(data?.label) || ariaLabel.includes(data?.label);
+          }) as HTMLElement;
+          
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Temporary High-Visibility Interactive Glow Halo
+            const originalTransition = target.style.transition;
+            const originalBoxShadow = target.style.boxShadow;
+            const originalOutline = target.style.outline;
+            const originalTransform = target.style.transform;
+            const originalZIndex = target.style.zIndex;
+            const originalPosition = target.style.position;
+            
+            target.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            target.style.boxShadow = '0 0 50px var(--nile-teal), inset 0 0 20px rgba(0, 206, 209, 0.5)';
+            target.style.outline = '3px solid var(--nile-teal)';
+            target.style.transform = 'scale(1.03)';
+            target.style.zIndex = '99999';
+            target.style.position = 'relative';
+
+            // Create Laser Pointer Dot
+            const laser = document.createElement('div');
+            laser.style.cssText = `
+              position: absolute;
+              top: 50%; left: 50%;
+              transform: translate(-50%, -50%);
+              width: 12px; height: 12px;
+              background-color: #fff;
+              border-radius: 50%;
+              box-shadow: 0 0 20px 10px var(--nile-teal);
+              opacity: 0;
+              transition: opacity 0.2s ease-in-out;
+              pointer-events: none;
+              z-index: 100000;
+            `;
+            target.appendChild(laser);
+
+            setTimeout(() => laser.style.opacity = '1', 50);
+
+            setTimeout(() => {
+              target.click();
+              laser.style.opacity = '0';
+              setTimeout(() => {
+                target.style.transition = originalTransition;
+                target.style.boxShadow = originalBoxShadow;
+                target.style.outline = originalOutline;
+                target.style.transform = originalTransform;
+                target.style.zIndex = originalZIndex;
+                target.style.position = originalPosition;
+                if(target.contains(laser)) target.removeChild(laser);
+              }, 400);
+            }, 800);
+          }
+        }
+      }
+    };
+    window.addEventListener('message', handleIframeMessage);
+
     return () => {
       window.removeEventListener('sidebar-toggle', handleLayout);
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('message', handleIframeMessage);
     };
   }, [router]);
 

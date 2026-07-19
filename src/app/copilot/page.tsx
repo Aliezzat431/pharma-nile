@@ -473,17 +473,54 @@ export default function CopilotPage() {
                     
                     {}
                     {msg.actions && msg.actions.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {msg.actions.map((action, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => addTab(action.type, action.title)}
-                            className="px-3 py-1.5 bg-[var(--nile-teal)]/10 hover:bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/30 rounded-lg text-[var(--nile-teal)] text-xs font-cairo transition-all flex items-center gap-1.5"
-                          >
-                            <Zap className="w-3 h-3" />
-                            {action.title}
-                          </button>
-                        ))}
+                      <div className="mt-4 p-4 bg-[var(--glass-surface)] border border-[var(--nile-teal)]/30 rounded-2xl shadow-lg relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-[var(--nile-teal)]/10 to-transparent pointer-events-none" />
+                        <div className="flex items-center gap-2 mb-3 relative z-10">
+                          <AlertCircle className="w-4 h-4 text-[var(--nile-teal)] animate-pulse" />
+                          <h4 className="text-sm font-bold font-cairo text-white">إذن مطلوب لتنفيذ عملية (Multi-iFrame Orchestrator):</h4>
+                        </div>
+                        <p className="text-xs text-gray-300 font-cairo mb-4 relative z-10">
+                          يستأذنك محسن في المضي قدماً وتنفيذ المهام التلقائية التالية. هل تصرح له بذلك؟
+                        </p>
+                        <div className="flex flex-col gap-2 relative z-10">
+                          {msg.actions.map((action, idx) => {
+                            const isApproved = msg.content.includes(`[APPROVED_${action.type}]`);
+                            const isDenied = msg.content.includes(`[DENIED_${action.type}]`);
+                            
+                            return (
+                              <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-black/40 rounded-xl border border-[var(--glass-border)]">
+                                <span className="text-xs font-bold font-cairo text-gray-200">
+                                  {action.title} ({action.type})
+                                </span>
+                                <div className="flex gap-2">
+                                  {!isApproved && !isDenied && (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          addTab(action.type, action.title);
+                                          handleSend(`تم تصريح الإجراء: ${action.title}`);
+                                        }}
+                                        className="px-4 py-1.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)]/40 text-[var(--nile-teal)] rounded-lg text-xs font-cairo transition-all flex items-center gap-1.5 font-bold border border-[var(--nile-teal)]/30 w-full justify-center md:w-auto"
+                                      >
+                                        <Check className="w-3.5 h-3.5" /> السماح والتنفيذ
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          handleSend(`تم رفض الإجراء: ${action.title}`);
+                                        }}
+                                        className="px-4 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-xs font-cairo transition-all flex items-center gap-1.5 font-bold border border-red-500/20 w-full justify-center md:w-auto"
+                                      >
+                                        <X className="w-3.5 h-3.5" /> رفض
+                                      </button>
+                                    </>
+                                  )}
+                                  {isApproved && <span className="text-xs text-green-400 font-bold flex items-center gap-1"><Check className="w-3 h-3"/> مُصرح</span>}
+                                  {isDenied && <span className="text-xs text-red-400 font-bold flex items-center gap-1"><X className="w-3 h-3"/> مرفوض</span>}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
