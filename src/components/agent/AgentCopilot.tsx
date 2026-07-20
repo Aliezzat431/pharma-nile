@@ -5,8 +5,7 @@ import { useDispatch, useSelector, useStore } from 'react-redux';
 import { RootState } from '@/store';
 import { toggleChat, openIframe, setPendingApproval } from '@/store/slices/agentSlice';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, Loader2, AlertTriangle, Undo2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { Bot, X, Send, Loader2, AlertTriangle } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -38,7 +37,6 @@ export default function AgentCopilot() {
     setIsLoading(true);
 
     try {
-
       const response = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,10 +52,12 @@ export default function AgentCopilot() {
       if (data.reply) {
         let cleanReply = data.reply;
         
-        // Scan for stray ACTION tokens (e.g., ACTION:INVENTORY or [ACTION:INVENTORY])
-        const actionMatch = cleanReply.match(/\[?ACTION:([A-Z_]+)\]?/);
+        // 1. Catch ANY aggressive dynamic variation of the action text (e.g. ACTION:INVENTORY or [ACTION:POS])
+        const actionMatch = cleanReply.match(/ACTION:\s*([A-Z_]+)/i);
+        
         if (actionMatch) {
           const rawAction = actionMatch[1].toUpperCase();
+          console.log("🎯 Intercepted UI Action:", rawAction);
           
           let url = '/';
           let title = 'شاشة';
@@ -80,7 +80,8 @@ export default function AgentCopilot() {
               title = 'العملاء';
               break;
             case 'SALES_CHART':
-              url = '/orders'; // Using /orders for sales analysis
+            case 'ORDERS':
+              url = '/orders'; 
               title = 'المبيعات';
               break;
             default:
@@ -88,22 +89,22 @@ export default function AgentCopilot() {
               title = rawAction;
           }
 
-          // Clean up the visible text to prevent hallucinated code words from rendering
-          cleanReply = cleanReply.replace(/\[?ACTION:[A-Z_]+\]?/g, '').trim();
+          // 2. Aggressively strip out any variation of the action token globally from the chat bubble
+          cleanReply = cleanReply.replace(/\[?ACTION:\s*[a-zA-Z_]+\]?/gi, '').trim();
 
-          // UI Guard: Do not dispatch another screen render loop if the data for this screen is already populated in our local state!
+          // 3. UI Guard: Check if we already have the fresh scraped dynamic DOM data
           const activeContexts = store.getState().agent.scrapedContext;
           const isAlreadyScraped = activeContexts && Object.keys(activeContexts).some(key => key.includes(url));
 
           if (!isAlreadyScraped) {
-            // Dispatch directly to the WorkspaceManager layout seamlessly
-            dispatch(openIframe({
-              id: `iframe-action-${Date.now()}`,
-              url,
-              title
+            // Force Multi-iFrame Orchestrator Permission Card instead of silent auto-spawning
+            dispatch(setPendingApproval({
+              message: `المخزون والجرد (${title})`,
+              actionType: 'OPEN_IFRAME',
+              payload: { id: `iframe-action-${Date.now()}`, url, title }
             }));
           } else {
-            console.log(`Intercepted duplicate [ACTION] request for ${url} - Data is already scraped and active.`);
+            console.log(`⚡ Data already active for ${url}. Bypassing permission block.`);
           }
         }
 
@@ -141,7 +142,6 @@ export default function AgentCopilot() {
         }));
         break;
       case 'EXECUTE_SUCCESS':
-
         break;
     }
   };
@@ -153,15 +153,19 @@ export default function AgentCopilot() {
     setMessages(prev => [...prev, { role: 'user', content: '[تمت الموافقة على طلب التنفيذ]' }]);
     
     try {
-
-      const response = await fetch('/api/agent/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(agentPendingApproval)
-      });
-      
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply || 'تم تنفيذ المهمة بنجاح.' }]);
+      // Direct Interception: Execute the iframe opening immediately within the Workspace layout!
+      if (agentPendingApproval.actionType === 'OPEN_IFRAME' && agentPendingApproval.payload) {
+        dispatch(openIframe(agentPendingApproval.payload));
+      } else {
+        const response = await fetch('/api/agent/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(agentPendingApproval)
+        });
+        
+        const data = await response.json();
+        setMessages(prev => [...prev, { role: 'assistant', content: data.reply || 'تم تنفيذ المهمة بنجاح.' }]);
+      }
       
     } catch (error) {
       setMessages(prev => [...prev, { role: 'system', content: 'فشل تنفيذ المهمة.' }]);
@@ -178,7 +182,6 @@ export default function AgentCopilot() {
 
   return (
     <>
-      {}
       {!isChatOpen && (
         <motion.button
           initial={{ scale: 0 }}
@@ -190,7 +193,6 @@ export default function AgentCopilot() {
         </motion.button>
       )}
 
-      {}
       <AnimatePresence>
         {isChatOpen && (
           <motion.div
@@ -199,7 +201,7 @@ export default function AgentCopilot() {
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             className="fixed bottom-6 left-6 w-[400px] h-[600px] glass-panel border border-[var(--nile-teal)]/30 shadow-2xl flex flex-col overflow-hidden z-50"
           >
-            {}
+            {/* Header */}
             <div className="h-16 bg-[var(--nile-teal)]/10 border-b border-[var(--glass-border)] flex items-center justify-between px-4">
               <div className="flex items-center gap-3">
                 <div className="bg-[var(--nile-teal)] p-2 rounded-lg">
@@ -218,7 +220,7 @@ export default function AgentCopilot() {
               </button>
             </div>
 
-            {}
+            {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((msg, i) => (
                 <div 
@@ -239,34 +241,37 @@ export default function AgentCopilot() {
                 </div>
               ))}
               
-              {}
+              {/* Orchestrator Permission Guard Card */}
               {agentPendingApproval && (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-orange-500/10 border border-orange-500/50 rounded-xl p-4 font-cairo"
+                  className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 font-cairo shadow-[0_0_15px_rgba(249,115,22,0.1)]"
                 >
-                  <div className="flex items-center gap-2 text-orange-400 mb-2">
-                    <AlertTriangle className="w-5 h-5" />
-                    <h4 className="font-bold">مطلوب تأكيد أمني</h4>
+                  <div className="text-white text-xs mb-3 border-b border-white/10 pb-2">
+                    إذن مطلوب لتنفيذ عملية (Multi-iFrame Orchestrator):
                   </div>
-                  <p className="text-white text-sm mb-4 leading-relaxed">
-                    {agentPendingApproval.message}
+                  <p className="text-gray-300 text-xs mb-4 leading-relaxed">
+                    يستأذنك محسن في المضي قدماً وتنفيذ المهام التلقائية التالية. هل تصرح له بذلك؟
                   </p>
+                  <div className="text-[var(--nile-teal)] text-sm font-bold mb-4 flex items-center gap-2 bg-black/30 p-2 rounded border border-white/5">
+                    <AlertTriangle className="w-4 h-4 text-orange-400" />
+                    {agentPendingApproval.message}
+                  </div>
                   <div className="flex gap-2">
                     <button 
                       onClick={handleApprove}
                       disabled={isLoading}
-                      className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-bold text-sm transition-colors"
+                      className="flex-1 bg-[var(--nile-teal)] hover:bg-[var(--nile-teal)]/80 text-black py-2 rounded-lg font-bold text-xs transition-colors"
                     >
-                      موافق
+                      السماح والتنفيذ
                     </button>
                     <button 
                       onClick={handleReject}
                       disabled={isLoading}
-                      className="flex-1 bg-[var(--glass-surface-heavy)] hover:bg-white/20 text-white py-2 rounded-lg font-bold text-sm transition-colors"
+                      className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-200 py-2 rounded-lg font-bold text-xs border border-red-500/30 transition-colors"
                     >
-                      إلغاء
+                      رفض
                     </button>
                   </div>
                 </motion.div>
@@ -282,6 +287,7 @@ export default function AgentCopilot() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Traversal Tracking Logs Progress */}
             {progressLogs.length > 0 && isLoading && !agentPendingApproval && (
               <div className="px-4 pb-2">
                 <div className="bg-black/30 rounded-xl p-3 border border-[var(--glass-border)]">
@@ -300,7 +306,7 @@ export default function AgentCopilot() {
               </div>
             )}
             
-            {}
+            {/* Input Footer */}
             <div className="p-4 border-t border-[var(--glass-border)] bg-black/40">
               <div className="flex gap-2">
                 <input
@@ -308,7 +314,7 @@ export default function AgentCopilot() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="اسأل المساعد عن أي شيء..."
+                  placeholder="اسأل محسن عن أي حاجة..."
                   className="flex-1 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-3 text-white font-cairo focus:outline-none focus:border-[var(--nile-teal)]/50 text-sm"
                   disabled={isLoading || !!agentPendingApproval}
                 />
@@ -317,7 +323,6 @@ export default function AgentCopilot() {
                   disabled={isLoading || !input.trim() || !!agentPendingApproval}
                   className="w-12 flex items-center justify-center bg-[var(--nile-teal)] text-black rounded-xl hover:bg-[var(--nile-teal)]/80 disabled:opacity-50 transition-colors"
                 >
-                  <Send className="w-5 h-5 rtl:hidden" />
                   <Send className="w-5 h-5 hidden rtl:block rotate-180" />
                 </button>
               </div>
@@ -328,4 +333,3 @@ export default function AgentCopilot() {
     </>
   );
 }
-
