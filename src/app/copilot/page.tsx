@@ -103,6 +103,7 @@ export default function CopilotPage() {
   ]);
   const [activeTabId, setActiveTabId] = useState('welcome');
   const [isListening, setIsListening] = useState(false);
+  const [actionLog, setActionLog] = useState<string>('');
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -273,6 +274,7 @@ export default function CopilotPage() {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
+    setActionLog('جاري التفكير...');
     saveMessage(userMsg);
 
     const stepHistory: any[] = [];
@@ -295,6 +297,10 @@ export default function CopilotPage() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         const { thought, action } = data;
+
+        if (thought) {
+          setActionLog(thought);
+        }
 
         if (action.type === 'ANSWER') {
           const assistantMsg: Message = { 
@@ -363,6 +369,17 @@ export default function CopilotPage() {
         }
 
         stepHistory.push({ action, result });
+
+        if (step === 14) {
+          const fallbackMsg: Message = { 
+            id: generateId(), 
+            role: 'assistant', 
+            content: 'طحن البيانات استغرق وقتاً طويلاً. يرجى محاولة أن تكون أكثر تحديداً أو جرب مرة أخرى.', 
+            timestamp: new Date() 
+          };
+          setMessages(prev => [...prev, fallbackMsg]);
+          saveMessage(fallbackMsg);
+        }
       }
 
     } catch (err) {
@@ -576,8 +593,8 @@ export default function CopilotPage() {
                   exit={{ opacity: 0 }}
                   className="flex justify-end"
                 >
-                  <div className="bg-gradient-to-br from-[var(--nile-teal)]/12 to-[var(--nile-teal)]/5 p-3.5 rounded-2xl rounded-bl-sm flex items-center gap-3 border border-[var(--nile-teal)]/20 mr-6">
-                    <div className="flex gap-1">
+                  <div className="bg-gradient-to-br from-[var(--nile-teal)]/12 to-[var(--nile-teal)]/5 p-3.5 rounded-2xl rounded-bl-sm flex items-center gap-3 border border-[var(--nile-teal)]/20 mr-6 max-w-[85%]">
+                    <div className="flex gap-1 shrink-0">
                       {[0, 150, 300].map(delay => (
                         <div
                           key={delay}
@@ -586,7 +603,7 @@ export default function CopilotPage() {
                         />
                       ))}
                     </div>
-                    <span className="text-xs text-gray-400 font-cairo">محسن بيفكر...</span>
+                    <span className="text-xs text-[var(--nile-teal)] font-cairo leading-relaxed">{actionLog || 'محسن بيفكر...'}</span>
                   </div>
                 </motion.div>
               )}
