@@ -88,15 +88,23 @@ export default function AgentCopilot() {
               title = rawAction;
           }
 
-          // Dispatch directly to the WorkspaceManager layout seamlessly
-          dispatch(openIframe({
-            id: `iframe-action-${Date.now()}`,
-            url,
-            title
-          }));
-
           // Clean up the visible text to prevent hallucinated code words from rendering
           cleanReply = cleanReply.replace(/\[?ACTION:[A-Z_]+\]?/g, '').trim();
+
+          // UI Guard: Do not dispatch another screen render loop if the data for this screen is already populated in our local state!
+          const activeContexts = store.getState().agent.scrapedContext;
+          const isAlreadyScraped = activeContexts && Object.keys(activeContexts).some(key => key.includes(url));
+
+          if (!isAlreadyScraped) {
+            // Dispatch directly to the WorkspaceManager layout seamlessly
+            dispatch(openIframe({
+              id: `iframe-action-${Date.now()}`,
+              url,
+              title
+            }));
+          } else {
+            console.log(`Intercepted duplicate [ACTION] request for ${url} - Data is already scraped and active.`);
+          }
         }
 
         if (cleanReply) {
