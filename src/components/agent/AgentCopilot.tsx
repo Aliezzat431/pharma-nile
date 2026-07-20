@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useDispatch, useSelector, useStore } from 'react-redux';
-import { RootState } from '@/store';
-import { toggleChat, openIframe, setPendingApproval } from '@/store/slices/agentSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { store, RootState } from '@/store';
+import { toggleChat, openIframe, setPendingApproval, addProgressLog, clearProgressLogs } from '@/store/slices/agentSlice';
+import { fillField, clickButton, typeIntoSearch } from '@/lib/agent/domExtractor';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, X, Send, Loader2, AlertTriangle } from 'lucide-react';
 
@@ -14,8 +15,7 @@ interface Message {
 
 export default function AgentCopilot() {
   const dispatch = useDispatch();
-  const store = useStore<RootState>();
-  const { isChatOpen, agentPendingApproval, progressLogs } = useSelector((state: RootState) => state.agent);
+  const { isChatOpen, agentPendingApproval, progressLogs, scrapedContext } = useSelector((state: RootState) => state.agent);
   
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: 'أهلاً بك! أنا المساعد الذكي لنظام فارما نايل. كيف يمكنني مساعدتك اليوم؟' }
@@ -28,151 +28,114 @@ export default function AgentCopilot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, agentPendingApproval]);
 
+  // Autonomous Orchestration Loop
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage = input.trim();
+    const goal = input.trim();
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setMessages(prev => [...prev, { role: 'user', content: goal }]);
     setIsLoading(true);
+    dispatch(clearProgressLogs());
 
+    const stepHistory: any[] = [];
+    
     try {
-      const response = await fetch('/api/agent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: userMessage,
-          history: messages.slice(-5),
-          scrapedContext: store.getState().agent.scrapedContext
-        })
-      });
+      for (let step = 0; step < 15; step++) {
+        // Always grab freshest context mid-loop
+        const currentContext = store.getState().agent.scrapedContext;
+        const pageSnapshots = Object.entries(currentContext).map(([url, content]) => ({
+          url,
+          title: url,
+          compressedContent: content
+        }));
 
-      const data = await response.json();
-      
-      if (data.reply) {
-        let cleanReply = data.reply;
-        
-        // 1. Catch ANY aggressive dynamic variation of the action text (e.g. ACTION:INVENTORY or [ACTION:POS])
-        const actionMatch = cleanReply.match(/ACTION:\s*([A-Z_]+)/i);
-        
-        if (actionMatch) {
-          const rawAction = actionMatch[1].toUpperCase();
-          console.log("🎯 Intercepted UI Action:", rawAction);
-          
-          let url = '/';
-          let title = 'شاشة';
+        const response = await fetch('/api/agent/orchestrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            goal,
+            stepHistory,
+            pageSnapshots
+          })
+        });
 
-          switch (rawAction) {
-            case 'INVENTORY':
-              url = '/inventory';
-              title = 'المخزون والجرد';
-              break;
-            case 'POS':
-              url = '/pos';
-              title = 'نقطة البيع';
-              break;
-            case 'FINANCIALS':
-              url = '/financials';
-              title = 'الماليات والتقارير';
-              break;
-            case 'CUSTOMERS':
-              url = '/customers';
-              title = 'العملاء';
-              break;
-            case 'SALES_CHART':
-            case 'ORDERS':
-              url = '/orders'; 
-              title = 'المبيعات';
-              break;
-            default:
-              url = `/${rawAction.toLowerCase()}`;
-              title = rawAction;
-          }
+        const data = await response.json();
+        const { thought, action } = data;
 
-          // 2. Aggressively strip out any variation of the action token globally from the chat bubble
-          cleanReply = cleanReply.replace(/\[?ACTION:\s*[a-zA-Z_]+\]?/gi, '').trim();
+        if (thought) {
+          dispatch(addProgressLog(thought));
+        }
 
-          // 3. UI Guard: Check if we already have the fresh scraped dynamic DOM data
-          const activeContexts = store.getState().agent.scrapedContext;
-          const isAlreadyScraped = activeContexts && Object.keys(activeContexts).some(key => key.includes(url));
+        if (action.type === 'ANSWER') {
+          setMessages(prev => [...prev, { role: 'assistant', content: action.answer || 'مهمة مكتملة.' }]);
+          break;
+        }
 
-          if (!isAlreadyScraped) {
-            // Force Multi-iFrame Orchestrator Permission Card instead of silent auto-spawning
-            dispatch(setPendingApproval({
-              message: `المخزون والجرد (${title})`,
-              actionType: 'OPEN_IFRAME',
-              payload: { id: `iframe-action-${Date.now()}`, url, title }
+        if (action.type === 'ASK_USER') {
+          setMessages(prev => [...prev, { role: 'assistant', content: action.question || 'هل يمكنك التوضيح أكثر؟' }]);
+          break;
+        }
+
+        let result = "لم يتم التنفيذ.";
+
+        switch (action.type) {
+          case 'OPEN_PAGE':
+            dispatch(openIframe({
+              id: `iframe-${Date.now()}`,
+              url: action.url,
+              title: action.title || 'شاشة مهام'
             }));
-          } else {
-            console.log(`⚡ Data already active for ${url}. Bypassing permission block.`);
-          }
+            result = "تم فتح الشاشة، ننتظر تحميلها وقراءتها...";
+            // wait a generous amount of time for iframe to load and WorkspaceManager to scrape it
+            await new Promise(r => setTimeout(r, 2500));
+            break;
+
+          case 'SCRAPE':
+            result = "تم تحديث البيانات (محفظة السكريبت).";
+            await new Promise(r => setTimeout(r, 500));
+            break;
+
+          case 'FILL_FIELD':
+          case 'CLICK_BUTTON':
+          case 'TYPE_SEARCH':
+            let found = false;
+            document.querySelectorAll('iframe').forEach(iframe => {
+              try {
+                const doc = iframe.contentDocument;
+                if (!doc) return;
+                
+                if (action.type === 'FILL_FIELD' && action.selector && action.value) {
+                  if (fillField(doc, action.selector, action.value)) found = true;
+                } else if (action.type === 'CLICK_BUTTON' && action.buttonText) {
+                  if (clickButton(doc, action.buttonText)) found = true;
+                } else if (action.type === 'TYPE_SEARCH' && action.selector && action.value) {
+                  if (typeIntoSearch(doc, action.selector, action.value)) found = true;
+                }
+              } catch (e) { }
+            });
+            
+            result = found ? "تمت العملية بنجاح في الصفحة المفتوحة." : "فشلت العملية، لم يتم العثور على العنصر المستهدف.";
+            await new Promise(r => setTimeout(r, 1000));
+            break;
+            
+          default:
+            result = "إجراء غير معروف.";
         }
 
-        if (cleanReply) {
-          setMessages(prev => [...prev, { role: 'assistant', content: cleanReply }]);
-        }
-      }
-
-      if (data.action) {
-        handleAgentAction(data.action);
+        stepHistory.push({ action, result });
       }
       
     } catch (error) {
-      console.error("Agent interaction failed", error);
+      console.error("Agent loop failed", error);
       setMessages(prev => [...prev, { role: 'system', content: 'حدث خطأ في الاتصال بالمساعد الذكي.' }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAgentAction = (action: any) => {
-    switch (action.type) {
-      case 'OPEN_IFRAME':
-        dispatch(openIframe({
-          id: `iframe-${Date.now()}`,
-          url: action.url,
-          title: action.title || 'نافذة مهام'
-        }));
-        break;
-      case 'ASK_PERMISSION':
-        dispatch(setPendingApproval({
-          message: action.message,
-          payload: action.payload,
-          actionType: action.actionType
-        }));
-        break;
-      case 'EXECUTE_SUCCESS':
-        break;
-    }
-  };
-
-  const handleApprove = async () => {
-    if (!agentPendingApproval) return;
-    
-    setIsLoading(true);
-    setMessages(prev => [...prev, { role: 'user', content: '[تمت الموافقة على طلب التنفيذ]' }]);
-    
-    try {
-      // Direct Interception: Execute the iframe opening immediately within the Workspace layout!
-      if (agentPendingApproval.actionType === 'OPEN_IFRAME' && (agentPendingApproval as any).payload) {
-        dispatch(openIframe((agentPendingApproval as any).payload));
-      } else {
-        const response = await fetch('/api/agent/execute', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(agentPendingApproval)
-        });
-        
-        const data = await response.json();
-        setMessages(prev => [...prev, { role: 'assistant', content: data.reply || 'تم تنفيذ المهمة بنجاح.' }]);
-      }
-      
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'system', content: 'فشل تنفيذ المهمة.' }]);
-    } finally {
-      dispatch(setPendingApproval(null));
-      setIsLoading(false);
-    }
+  const handleApprove = () => {
+    dispatch(setPendingApproval(null));
   };
 
   const handleReject = () => {
@@ -323,7 +286,7 @@ export default function AgentCopilot() {
                   disabled={isLoading || !input.trim() || !!agentPendingApproval}
                   className="w-12 flex items-center justify-center bg-[var(--nile-teal)] text-black rounded-xl hover:bg-[var(--nile-teal)]/80 disabled:opacity-50 transition-colors"
                 >
-                  <Send className="w-5 h-5 hidden rtl:block rotate-180" />
+                  <Send className="w-5 h-5 rotate-180" />
                 </button>
               </div>
             </div>

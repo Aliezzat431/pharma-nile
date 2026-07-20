@@ -4,6 +4,7 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { closeIframe, toggleMinimizeIframe, focusIframe, updateScrapedContext, addProgressLog } from '@/store/slices/agentSlice';
+import { extractPageSnapshot, snapshotToPromptString } from '@/lib/agent/domExtractor';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Maximize2 } from 'lucide-react';
 
@@ -90,30 +91,14 @@ export default function WorkspaceManager() {
                         if (iframeDoc) {
                           // Allow some time for frontend frameworks (Next.js) to render dynamic content
                           setTimeout(() => {
-                            const tables = Array.from(iframeDoc.querySelectorAll('table'));
-                            let scrapedTables = tables.map((t, idx) => {
-                              const headers = Array.from(t.querySelectorAll('th')).map(th => th.innerText || '').join(' | ');
-                              const rows = Array.from(t.querySelectorAll('tbody tr')).map(tr => 
-                                Array.from(tr.querySelectorAll('td')).map(td => td.innerText || '').join(' | ')
-                              ).join('\\n');
-                              return `جدول ${idx + 1}\\nالأعمدة: ${headers}\\nالبيانات: \\n${rows}`;
-                            }).join('\\n\\n');
-
-                            const mainBody = iframeDoc.querySelector('main') || iframeDoc.body;
-                            const fullText = mainBody.innerText || '';
-
-                            const combinedData = `
---- بيانات شاشة ${iframe.title} (${iframe.url}) ---
-
-[النصوص والحقائق الموجودة بالشاشة]:
-${fullText.substring(0, 1000)}
-
-[بيانات الجداول]:
-${scrapedTables.substring(0, 2000)}
-                            `.trim();
-
-                            dispatch(updateScrapedContext({ url: iframe.url, data: combinedData }));
-                            dispatch(addProgressLog(`تم بنجاح قراءة محتويات: ${iframe.title}`));
+                            try {
+                              const snapshot = extractPageSnapshot(iframeDoc, iframe.url);
+                              const combinedData = snapshotToPromptString(snapshot);
+                              dispatch(updateScrapedContext({ url: iframe.url, data: combinedData }));
+                              dispatch(addProgressLog(`تم بنجاح قراءة محتويات: ${iframe.title}`));
+                            } catch (extractionErr) {
+                              console.warn("Error extracting DOM:", extractionErr);
+                            }
                           }, 1500); // delay to catch network renders
                         }
                       } catch (err) {

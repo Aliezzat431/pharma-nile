@@ -15,7 +15,8 @@ import {
   History,
   AlertTriangle,
   Sun,
-  Moon
+  Moon,
+  Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -30,6 +31,7 @@ const menuItems = [
   { icon: History, label: 'الروشتات السابقة', href: '/history' },
   { icon: Users, label: 'طاقم العمل', href: '/staff' },
   { icon: BarChart3, label: 'التقارير المالية', href: '/reports' },
+  { icon: Bot, label: 'المساعد محسن', href: '/copilot' },
   { icon: Settings, label: 'الإعدادات', href: '/settings' },
 ];
 

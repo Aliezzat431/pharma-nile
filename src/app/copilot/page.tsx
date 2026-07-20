@@ -2,35 +2,37 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Send, Sparkles, Loader2, X, Mic, MicOff, Download, 
+import {
+  Send, Sparkles, Loader2, X, Mic, MicOff, Download,
   Trash2, Copy, Check, Lightbulb, Zap, AlertCircle,
-  Package, Users, ShieldCheck, ShoppingCart, TrendingUp
+  Package, Users, ShieldCheck, ShoppingCart, TrendingUp,
+  ChevronRight, Bot, RefreshCw, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
 
+/* ─────────────────── TYPES ─────────────────── */
 type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
   actions?: TabAction[];
+  actionsHandled?: boolean;
   copied?: boolean;
+};
+
+type TabAction = {
+  type: string;
+  title: string;
 };
 
 type TabItem = {
   id: string;
   type: string;
   title: string;
-  icon?: string;
   createdAt: Date;
-};
-
-type TabAction = {
-  type: string;
-  title: string;
 };
 
 type QuickAction = {
@@ -40,101 +42,98 @@ type QuickAction = {
   color: string;
 };
 
+/* ─────────────────── CONSTANTS ─────────────────── */
+const TAB_META: Record<string, { url: string; icon: React.ReactNode; color: string }> = {
+  pos: { url: '/pos', icon: <ShoppingCart className="w-3.5 h-3.5" />, color: '#00CED1' },
+  inventory: { url: '/inventory', icon: <Package className="w-3.5 h-3.5" />, color: '#FF69B4' },
+  sales_chart: { url: '/orders', icon: <TrendingUp className="w-3.5 h-3.5" />, color: '#FFD700' },
+  customers: { url: '/customers', icon: <Users className="w-3.5 h-3.5" />, color: '#9370DB' },
+  financials: { url: '/financials', icon: <ShieldCheck className="w-3.5 h-3.5" />, color: '#32CD32' },
+};
+
 const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: <Package className="w-4 h-4" />,
     label: 'جرد المخزون',
-    prompt: 'اعمل جرد للمخزون وعرض الأصناف الناقصة',
-    color: 'var(--nile-teal)'
+    prompt: 'اعمل جرد للمخزون وعرض الأصناف اللي قربت تنتهي',
+    color: 'var(--nile-teal)',
   },
   {
     icon: <TrendingUp className="w-4 h-4" />,
     label: 'تقرير المبيعات',
-    prompt: 'اعرض لي تقرير مبيعات اليوم مع المقارنة بالأمس',
-    color: '#FF69B4'
+    prompt: 'اعرض لي تقرير مبيعات اليوم',
+    color: '#FF69B4',
   },
   {
     icon: <Users className="w-4 h-4" />,
     label: 'العملاء المتأخرون',
     prompt: 'اعرض العملاء اللي عليهم متأخرات',
-    color: 'var(--royal-gold)'
+    color: 'var(--royal-gold)',
   },
   {
     icon: <AlertCircle className="w-4 h-4" />,
-    label: 'الأدوية قاربت على الانتهاء',
+    label: 'قارب الانتهاء',
     prompt: 'اعرض الأدوية اللي هتنتهي صلاحيتها خلال 3 شهور',
-    color: '#FF6347'
-  }
+    color: '#FF6347',
+  },
 ];
 
 const WELCOME_MESSAGE: Message = {
   id: 'welcome',
   role: 'assistant',
-  content: 'أهلاً بك يا دكتور! 👋\n\nأنا **محسن**، مساعدك الذكي في الصيدلية. أقدر أساعدك في:\n\n- 📦 **جرد المخزون** واكتشاف النواقص\n- 📊 **تحليل المبيعات** والتقارير\n- 👥 **إدارة العملاء** والمتأخرات\n- 💊 **متابعة الأدوية** وصلاحيتها\n- 💰 **الحسابات المالية** والفواتير\n\nاسألني عن أي حاجة أو جرب الاقتراحات بالأسفل 👇',
+  content:
+    'أهلاً بك يا دكتور! 👋\n\nأنا **محسن**، مساعدك الذكي في الصيدلية. أقدر أساعدك في:\n\n- 📦 **جرد المخزون** واكتشاف النواقص\n- 📊 **تحليل المبيعات** والتقارير\n- 👥 **إدارة العملاء** والمتأخرات\n- 💊 **متابعة الأدوية** وصلاحيتها\n- 💰 **الحسابات المالية** والفواتير\n\nاسألني عن أي حاجة أو جرب الاقتراحات بالأسفل 👇',
   timestamp: new Date(),
-  actions: []
+  actions: [],
+  actionsHandled: true,
 };
 
+/* ─────────────────── COMPONENT ─────────────────── */
 export default function CopilotPage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [tabs, setTabs] = useState<TabItem[]>([
-    { id: 'welcome', type: 'welcome', title: 'البداية', createdAt: new Date() }
+    { id: 'welcome', type: 'welcome', title: 'الرئيسية', createdAt: new Date() },
   ]);
   const [activeTabId, setActiveTabId] = useState('welcome');
   const [isListening, setIsListening] = useState(false);
-  const [chatHistory, setChatHistory] = useState<string[]>([]);
-  
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
 
+  /* ─── scroll ─── */
   const scrollToBottom = useCallback(() => {
-    setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 100);
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 80);
   }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading, scrollToBottom]);
 
-  
+  /* ─── init ─── */
   useEffect(() => {
     loadChatHistory();
     initSpeechRecognition();
-    
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-    };
+    return () => recognitionRef.current?.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* ─── speech ─── */
   const initSpeechRecognition = () => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'ar-EG';
-      
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(transcript);
-        setIsListening(false);
-      };
-      
-      recognitionRef.current.onerror = () => {
-        setIsListening(false);
-      };
-      
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
+    if (typeof window === 'undefined' || !('webkitSpeechRecognition' in window)) return;
+    const SR = (window as any).webkitSpeechRecognition;
+    const r = new SR();
+    r.continuous = false;
+    r.interimResults = false;
+    r.lang = 'ar-EG';
+    r.onresult = (e: any) => { setInput(e.results[0][0].transcript); setIsListening(false); };
+    r.onerror = () => setIsListening(false);
+    r.onend = () => setIsListening(false);
+    recognitionRef.current = r;
   };
 
   const toggleListening = () => {
@@ -142,191 +141,157 @@ export default function CopilotPage() {
       alert('المتصفح لا يدعم التعرف على الصوت. جرب Chrome.');
       return;
     }
-
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      recognitionRef.current.start();
-      setIsListening(true);
-    }
+    if (isListening) { recognitionRef.current.stop(); setIsListening(false); }
+    else { recognitionRef.current.start(); setIsListening(true); }
   };
 
+  /* ─── helpers ─── */
+  const generateId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  /* ─── history ─── */
   const loadChatHistory = async () => {
     if (!user) return;
-    
+    setHistoryLoading(true);
     try {
       const { data, error } = await supabase
         .from('copilot_chats')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(20);
-      
+        .limit(30);
+
       if (!error && data && data.length > 0) {
-        const loadedMessages = data.map(msg => ({
-          id: msg.id,
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-          timestamp: new Date(msg.created_at),
-          actions: msg.actions || []
+        const loaded: Message[] = data.reverse().map(r => ({
+          id: r.id,
+          role: r.role as 'user' | 'assistant',
+          content: r.content,
+          timestamp: new Date(r.created_at),
+          actions: r.actions ?? [],
+          actionsHandled: true, // historical actions are all already handled
         }));
-        
-        setMessages([WELCOME_MESSAGE, ...loadedMessages.reverse()]);
+        setMessages([WELCOME_MESSAGE, ...loaded]);
       }
     } catch (err) {
       console.error('Error loading chat history:', err);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
-  const saveMessage = async (message: Message) => {
+  const saveMessage = async (msg: Message) => {
     if (!user) return;
-    
     try {
       await supabase.from('copilot_chats').insert({
-        id: message.id,
+        id: msg.id,
         user_id: user.id,
-        role: message.role,
-        content: message.content,
-        actions: message.actions || [],
-        created_at: message.timestamp
+        role: msg.role,
+        content: msg.content,
+        actions: msg.actions ?? [],
+        created_at: msg.timestamp,
       });
-    } catch (err) {
-      console.error('Error saving message:', err);
-    }
+    } catch { /* non-critical */ }
   };
 
-  const generateId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-  const addTab = (type: string, title: string) => {
+  /* ─── tabs ─── */
+  const openTab = (type: string, title: string) => {
     const existing = tabs.find(t => t.type === type);
-    if (existing) {
-      setActiveTabId(existing.id);
-      return;
-    }
-    
+    if (existing) { setActiveTabId(existing.id); return; }
     const id = `tab_${type}_${Date.now()}`;
-    const newTab: TabItem = { id, type, title, createdAt: new Date() };
-    
-    setTabs(prev => [...prev, newTab]);
+    setTabs(prev => [...prev, { id, type, title, createdAt: new Date() }]);
     setActiveTabId(id);
   };
 
   const closeTab = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (tabs.length === 1) return;
-    
     setTabs(prev => {
-      const newTabs = prev.filter(t => t.id !== id);
+      const next = prev.filter(t => t.id !== id);
       if (activeTabId === id) {
-        const closedIndex = prev.findIndex(t => t.id === id);
-        const nextActiveIndex = closedIndex > 0 ? closedIndex - 1 : 0;
-        setActiveTabId(newTabs[nextActiveIndex].id);
+        const idx = prev.findIndex(t => t.id === id);
+        setActiveTabId(next[Math.max(0, idx - 1)].id);
       }
-      return newTabs;
+      return next;
     });
   };
 
+  /* ─── copy ─── */
   const copyToClipboard = async (text: string, msgId: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setMessages(prev => prev.map(m => 
-        m.id === msgId ? { ...m, copied: true } : m
-      ));
-      setTimeout(() => {
-        setMessages(prev => prev.map(m => 
-          m.id === msgId ? { ...m, copied: false } : m
-        ));
-      }, 2000);
-    } catch (err) {
-      console.error('Copy failed:', err);
-    }
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, copied: true } : m));
+      setTimeout(() => setMessages(prev => prev.map(m => m.id === msgId ? { ...m, copied: false } : m)), 2000);
+    } catch { /* ignore */ }
   };
 
+  /* ─── export ─── */
   const exportChat = () => {
-    const chatText = messages
+    const text = messages
       .filter(m => m.id !== 'welcome')
       .map(m => `[${m.role === 'user' ? 'أنت' : 'محسن'}] ${m.content}`)
       .join('\n\n');
-    
-    const blob = new Blob([chatText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `copilot-chat-${new Date().toISOString().split('T')[0]}.txt`;
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+    a.download = `copilot-${new Date().toISOString().split('T')[0]}.txt`;
     a.click();
-    URL.revokeObjectURL(url);
   };
 
+  /* ─── clear ─── */
   const clearChat = async () => {
     if (!confirm('هل أنت متأكد من مسح المحادثة؟')) return;
-    
     setMessages([WELCOME_MESSAGE]);
-    
     if (user) {
-      try {
-        await supabase
-          .from('copilot_chats')
-          .delete()
-          .eq('user_id', user.id);
-      } catch (err) {
-        console.error('Error clearing chat:', err);
-      }
+      await supabase.from('copilot_chats').delete().eq('user_id', user.id);
     }
   };
 
-  const sendCommandToIframes = (commands: any[]) => {
-    setTimeout(() => {
-      const iframes = document.querySelectorAll('iframe');
-      iframes.forEach(iframe => {
-        commands.forEach((cmd: any) => {
-          iframe.contentWindow?.postMessage({
-            source: 'copilot',
-            command: cmd.type,
-            data: cmd.payload,
-            timestamp: Date.now()
-          }, window.location.origin);
-        });
-      });
-    }, 800);
+  /* ─── APPROVE ACTION (no LLM call) ─── */
+  const handleApproveAction = (msgId: string, action: TabAction) => {
+    // 1. Open / switch to the tab immediately
+    openTab(action.type, action.title);
+
+    // 2. Mark the message's actions as handled to hide the approval card
+    setMessages(prev =>
+      prev.map(m => m.id === msgId ? { ...m, actionsHandled: true } : m)
+    );
   };
 
+  const handleDenyActions = (msgId: string) => {
+    setMessages(prev =>
+      prev.map(m => m.id === msgId ? { ...m, actionsHandled: true } : m)
+    );
+  };
+
+  /* ─── SEND ─── */
   const handleSend = async (customMessage?: string) => {
-    const messageText = customMessage || input.trim();
-    if (!messageText || loading) return;
+    const text = (customMessage ?? input).trim();
+    if (!text || loading) return;
 
-    const userMsg: Message = {
-      id: generateId(),
-      role: 'user',
-      content: messageText,
-      timestamp: new Date()
-    };
-
+    const userMsg: Message = { id: generateId(), role: 'user', content: text, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
     saveMessage(userMsg);
 
     try {
-      const response = await fetch('/api/copilot', {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+
+      const res = await fetch('/api/copilot', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: messageText, 
-          chatHistory: messages.slice(-10),
+        headers,
+        body: JSON.stringify({
+          message: text,
+          chatHistory: messages.slice(-14),
           context: {
             userId: user?.id,
-            pharmacyId: user?.user_metadata?.pharmacy_id,
-            timestamp: new Date().toISOString()
-          }
-        })
+            pharmacyId: user?.user_metadata?.pharmacy_id ?? null,
+            timestamp: new Date().toISOString(),
+          },
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
       if (data.error) throw new Error(data.error);
 
       const assistantMsg: Message = {
@@ -334,410 +299,452 @@ export default function CopilotPage() {
         role: 'assistant',
         content: data.content,
         timestamp: new Date(),
-        actions: data.actions || []
+        actions: data.actions ?? [],
+        // Don't mark handled yet — user needs to approve / deny
+        actionsHandled: !data.actions?.length,
       };
 
       setMessages(prev => [...prev, assistantMsg]);
       saveMessage(assistantMsg);
-
-      if (data.commands?.length > 0) {
-        sendCommandToIframes(data.commands);
-      }
-
     } catch (err) {
-      console.error("Copilot error:", err);
-      
-      const errorMsg: Message = {
-        id: generateId(),
-        role: 'assistant',
-        content: '⚠️ عذراً يا دكتور، حدث خطأ في الاتصال. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMsg]);
+      console.error('Copilot error:', err);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: generateId(),
+          role: 'assistant',
+          content: '⚠️ عذراً، حدث خطأ في الاتصال. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.',
+          timestamp: new Date(),
+          actionsHandled: true,
+        },
+      ]);
     } finally {
       setLoading(false);
-      inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
-  const handleQuickAction = (action: QuickAction) => {
-    handleSend(action.prompt);
+  /* ─── TAB URL RESOLVER ─── */
+  const getTabUrl = (type: string) => {
+    return TAB_META[type]?.url ?? `/${type}`;
   };
 
+  /* ─────────────────── RENDER ─────────────────── */
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-6 w-full max-w-7xl mx-auto p-4" dir="rtl">
-      
-      {}
-      <div className="w-full lg:w-[480px] flex flex-col h-full gap-4 order-last lg:order-first">
-        <div className="flex-1 glass-panel flex flex-col overflow-hidden relative border border-[var(--glass-border)] bg-background/50 backdrop-blur-xl">
-          
-          {}
-          <div className="p-4 border-b border-[var(--glass-border)] bg-gradient-to-l from-[var(--nile-teal)]/5 to-transparent flex items-center justify-between">
-             <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/60 flex items-center justify-center shadow-lg">
-                    <Sparkles className="w-5 h-5 text-black" />
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
+    <div className="h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-4 w-full max-w-[1400px] mx-auto p-4" dir="rtl">
+
+      {/* ══════════════ CHAT PANEL ══════════════ */}
+      <div className="w-full lg:w-[420px] flex flex-col h-full gap-0 order-last lg:order-first shrink-0">
+        <div className="flex-1 glass-panel flex flex-col overflow-hidden border border-[var(--glass-border)] bg-background/60 backdrop-blur-2xl rounded-2xl">
+
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-[var(--glass-border)] bg-gradient-to-l from-[var(--nile-teal)]/8 to-transparent flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/50 flex items-center justify-center shadow-lg shadow-[var(--nile-teal)]/20">
+                  <Sparkles className="w-5 h-5 text-black" />
                 </div>
-                <div>
-                  <h2 className="font-bold font-cairo text-white text-base">المساعد محسن</h2>
-                  <p className="text-[10px] text-gray-400 font-sans">AI Assistant • v2.0</p>
-                </div>
-             </div>
-             
-             <div className="flex items-center gap-1">
-               <button 
-                 onClick={exportChat}
-                 className="p-2 hover:bg-[var(--glass-surface)] rounded-lg text-gray-400 hover:text-white transition-all"
-                 title="تصدير المحادثة"
-               >
-                 <Download className="w-4 h-4" />
-               </button>
-               <button 
-                 onClick={clearChat}
-                 className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-all"
-                 title="مسح المحادثة"
-               >
-                 <Trash2 className="w-4 h-4" />
-               </button>
-             </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background animate-pulse" />
+              </div>
+              <div>
+                <h2 className="font-bold font-cairo text-white text-sm leading-tight">المساعد محسن</h2>
+                <p className="text-[10px] text-[var(--nile-teal)] font-sans tracking-wide">AI Copilot • متصل</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              {historyLoading && <Loader2 className="w-3.5 h-3.5 text-gray-500 animate-spin" />}
+              <button
+                onClick={loadChatHistory}
+                className="p-1.5 hover:bg-[var(--glass-surface)] rounded-lg text-gray-500 hover:text-white transition-all"
+                title="تحديث السجل"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={exportChat}
+                className="p-1.5 hover:bg-[var(--glass-surface)] rounded-lg text-gray-500 hover:text-white transition-all"
+                title="تصدير المحادثة"
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={clearChat}
+                className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-500 hover:text-red-400 transition-all"
+                title="مسح المحادثة"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
-          {}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-            <AnimatePresence>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+            <AnimatePresence initial={false}>
               {messages.map((msg) => (
-                <motion.div 
+                <motion.div
                   key={msg.id}
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 14, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.25 }}
                   className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'} group`}
                 >
-                  <div className={`relative max-w-[85%] ${msg.role === 'user' ? '' : ''}`}>
-                    <div className={`p-4 rounded-2xl font-cairo text-sm leading-relaxed shadow-lg text-right ${
-                      msg.role === 'user' 
-                        ? 'bg-gradient-to-br from-white/10 to-white/5 text-white border border-[var(--glass-border)] rounded-br-sm' 
-                        : 'bg-gradient-to-br from-[var(--nile-teal)]/10 to-[var(--nile-teal)]/5 text-gray-100 border border-[var(--nile-teal)]/20 rounded-bl-sm'
-                    }`}>
+                  <div className="relative max-w-[88%]">
+                    {/* Avatar for assistant */}
+                    {msg.role === 'assistant' && (
+                      <div className="absolute -left-1 bottom-2 translate-x-full w-5 h-5 rounded-full bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/40 flex items-center justify-center ml-2">
+                        <Bot className="w-3 h-3 text-[var(--nile-teal)]" />
+                      </div>
+                    )}
+
+                    <div
+                      className={`p-3.5 rounded-2xl font-cairo text-sm leading-relaxed shadow-md ${
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-br from-white/12 to-white/6 text-white border border-white/10 rounded-br-sm'
+                          : 'bg-gradient-to-br from-[var(--nile-teal)]/12 to-[var(--nile-teal)]/5 text-gray-100 border border-[var(--nile-teal)]/20 rounded-bl-sm mr-6'
+                      }`}
+                    >
                       {msg.role === 'assistant' ? (
-                        <div className="prose prose-invert prose-sm max-w-none">
+                        <div className="prose prose-invert prose-sm max-w-none text-right">
                           <ReactMarkdown
                             components={{
                               p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                              strong: ({ children }) => <strong className="text-[var(--nile-teal)] font-bold">{children}</strong>,
-                              ul: ({ children }) => <ul className="list-disc list-inside space-y-1 my-2">{children}</ul>,
+                              strong: ({ children }) => (
+                                <strong className="text-[var(--nile-teal)] font-bold">{children}</strong>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="list-disc list-inside space-y-1 my-2">{children}</ul>
+                              ),
                               li: ({ children }) => <li className="text-gray-200">{children}</li>,
                               code: ({ children }) => (
                                 <code className="bg-black/30 px-1.5 py-0.5 rounded text-[var(--nile-teal)] text-xs font-mono">
                                   {children}
                                 </code>
-                              )
+                              ),
                             }}
                           >
                             {msg.content}
                           </ReactMarkdown>
                         </div>
                       ) : (
-                        msg.content
+                        <span className="text-right block">{msg.content}</span>
                       )}
                     </div>
-                    
-                    {}
+
+                    {/* Copy button */}
                     {msg.role === 'assistant' && (
-                      <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => copyToClipboard(msg.content, msg.id)}
-                          className="p-1.5 hover:bg-[var(--glass-surface)] rounded-lg text-gray-500 hover:text-white transition-all"
-                          title="نسخ"
+                      <button
+                        onClick={() => copyToClipboard(msg.content, msg.id)}
+                        className="absolute -bottom-5 left-6 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-white"
+                        title="نسخ"
+                      >
+                        {msg.copied ? (
+                          <Check className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </button>
+                    )}
+
+                    {/* Timestamp */}
+                    <p className={`text-[10px] text-gray-600 mt-1 ${msg.role === 'user' ? 'text-left' : 'text-right mr-6'}`}>
+                      {msg.timestamp.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+
+                    {/* ── Action Approval Card ── */}
+                    {msg.role === 'assistant' &&
+                      msg.actions &&
+                      msg.actions.length > 0 &&
+                      !msg.actionsHandled && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-3 p-4 bg-[var(--glass-surface)] border border-[var(--nile-teal)]/25 rounded-2xl shadow-lg relative overflow-hidden"
                         >
-                          {msg.copied ? (
-                            <Check className="w-3.5 h-3.5 text-green-500" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </div>
-                    )}
-                    
-                    {}
-                    {msg.actions && msg.actions.length > 0 && (
-                      <div className="mt-4 p-4 bg-[var(--glass-surface)] border border-[var(--nile-teal)]/30 rounded-2xl shadow-lg relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-r from-[var(--nile-teal)]/10 to-transparent pointer-events-none" />
-                        <div className="flex items-center gap-2 mb-3 relative z-10">
-                          <AlertCircle className="w-4 h-4 text-[var(--nile-teal)] animate-pulse" />
-                          <h4 className="text-sm font-bold font-cairo text-white">إذن مطلوب لتنفيذ عملية (Multi-iFrame Orchestrator):</h4>
-                        </div>
-                        <p className="text-xs text-gray-300 font-cairo mb-4 relative z-10">
-                          يستأذنك محسن في المضي قدماً وتنفيذ المهام التلقائية التالية. هل تصرح له بذلك؟
-                        </p>
-                        <div className="flex flex-col gap-2 relative z-10">
-                          {msg.actions.map((action, idx) => {
-                            const isApproved = msg.content.includes(`[APPROVED_${action.type}]`);
-                            const isDenied = msg.content.includes(`[DENIED_${action.type}]`);
-                            
-                            return (
-                              <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-black/40 rounded-xl border border-[var(--glass-border)]">
-                                <span className="text-xs font-bold font-cairo text-gray-200">
-                                  {action.title} ({action.type})
-                                </span>
-                                <div className="flex gap-2">
-                                  {!isApproved && !isDenied && (
-                                    <>
-                                      <button
-                                        onClick={() => {
-                                          addTab(action.type, action.title);
-                                          handleSend(`تم تصريح الإجراء: ${action.title}`);
-                                        }}
-                                        className="px-4 py-1.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)]/40 text-[var(--nile-teal)] rounded-lg text-xs font-cairo transition-all flex items-center gap-1.5 font-bold border border-[var(--nile-teal)]/30 w-full justify-center md:w-auto"
-                                      >
-                                        <Check className="w-3.5 h-3.5" /> السماح والتنفيذ
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          handleSend(`تم رفض الإجراء: ${action.title}`);
-                                        }}
-                                        className="px-4 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-xs font-cairo transition-all flex items-center gap-1.5 font-bold border border-red-500/20 w-full justify-center md:w-auto"
-                                      >
-                                        <X className="w-3.5 h-3.5" /> رفض
-                                      </button>
-                                    </>
-                                  )}
-                                  {isApproved && <span className="text-xs text-green-400 font-bold flex items-center gap-1"><Check className="w-3 h-3"/> مُصرح</span>}
-                                  {isDenied && <span className="text-xs text-red-400 font-bold flex items-center gap-1"><X className="w-3 h-3"/> مرفوض</span>}
+                          <div className="absolute inset-0 bg-gradient-to-r from-[var(--nile-teal)]/6 to-transparent pointer-events-none" />
+
+                          <div className="flex items-center gap-2 mb-2 relative z-10">
+                            <AlertCircle className="w-3.5 h-3.5 text-[var(--nile-teal)] animate-pulse shrink-0" />
+                            <h4 className="text-xs font-bold font-cairo text-white">
+                              إذن مطلوب لفتح:
+                            </h4>
+                          </div>
+
+                          <div className="flex flex-col gap-2 relative z-10">
+                            {msg.actions.map((action, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between gap-2 p-2.5 bg-black/30 rounded-xl border border-[var(--glass-border)]"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div style={{ color: TAB_META[action.type]?.color ?? 'var(--nile-teal)' }}>
+                                    {TAB_META[action.type]?.icon ?? <Sparkles className="w-3.5 h-3.5" />}
+                                  </div>
+                                  <span className="text-xs font-bold font-cairo text-gray-200">
+                                    {action.title}
+                                  </span>
                                 </div>
+                                <button
+                                  onClick={() => handleApproveAction(msg.id, action)}
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-[var(--nile-teal)]/20 hover:bg-[var(--nile-teal)]/40 text-[var(--nile-teal)] rounded-lg text-xs font-cairo font-bold border border-[var(--nile-teal)]/30 transition-all whitespace-nowrap"
+                                >
+                                  <Check className="w-3 h-3" /> فتح
+                                </button>
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
+                            ))}
+
+                            <button
+                              onClick={() => handleDenyActions(msg.id)}
+                              className="w-full mt-1 py-1.5 text-xs text-gray-500 hover:text-red-400 font-cairo transition-colors"
+                            >
+                              تجاهل
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
-            
-            {loading && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex justify-end"
-              >
-                <div className="bg-gradient-to-br from-[var(--nile-teal)]/10 to-[var(--nile-teal)]/5 p-4 rounded-2xl flex items-center gap-3 border border-[var(--nile-teal)]/20">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-[var(--nile-teal)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-[var(--nile-teal)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-[var(--nile-teal)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+
+            {/* Loading bubble */}
+            <AnimatePresence>
+              {loading && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex justify-end"
+                >
+                  <div className="bg-gradient-to-br from-[var(--nile-teal)]/12 to-[var(--nile-teal)]/5 p-3.5 rounded-2xl rounded-bl-sm flex items-center gap-3 border border-[var(--nile-teal)]/20 mr-6">
+                    <div className="flex gap-1">
+                      {[0, 150, 300].map(delay => (
+                        <div
+                          key={delay}
+                          className="w-1.5 h-1.5 bg-[var(--nile-teal)] rounded-full animate-bounce"
+                          style={{ animationDelay: `${delay}ms` }}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-gray-400 font-cairo">محسن بيفكر...</span>
                   </div>
-                  <span className="text-xs text-gray-400 font-cairo">محسن يفكر...</span>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div ref={chatEndRef} />
           </div>
 
-          {}
-          {messages.length <= 1 && (
-            <div className="p-4 border-t border-[var(--glass-border)] bg-white/[0.02]">
-              <div className="flex items-center gap-2 mb-3">
-                <Lightbulb className="w-4 h-4 text-[var(--royal-gold)]" />
-                <span className="text-xs text-gray-400 font-cairo">اقتراحات سريعة</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {QUICK_ACTIONS.map((action, idx) => (
-                  <motion.button
-                    key={idx}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    onClick={() => handleQuickAction(action)}
-                    className="p-3 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] hover:border-white/20 rounded-xl transition-all text-right group"
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <div style={{ color: action.color }}>{action.icon}</div>
-                      <span className="text-xs font-bold text-white font-cairo">{action.label}</span>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Quick actions (shown only at start) */}
+          <AnimatePresence>
+            {messages.length <= 1 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="px-4 pb-3 border-t border-[var(--glass-border)] bg-white/[0.02] pt-3"
+              >
+                <div className="flex items-center gap-2 mb-2.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-[var(--royal-gold)]" />
+                  <span className="text-xs text-gray-400 font-cairo">اقتراحات سريعة</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {QUICK_ACTIONS.map((action, idx) => (
+                    <motion.button
+                      key={idx}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.08 }}
+                      onClick={() => handleSend(action.prompt)}
+                      disabled={loading}
+                      className="p-2.5 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] border border-[var(--glass-border)] hover:border-white/15 rounded-xl transition-all text-right group disabled:opacity-50"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div style={{ color: action.color }} className="shrink-0">{action.icon}</div>
+                        <span className="text-xs font-bold text-white font-cairo leading-tight">{action.label}</span>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {}
-          <div className="p-4 bg-background/50 border-t border-[var(--glass-border)]">
+          {/* Input */}
+          <div className="p-3 bg-background/40 border-t border-[var(--glass-border)]">
             <div className="relative flex items-center gap-2">
               <button
                 onClick={toggleListening}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                  isListening 
-                    ? 'bg-red-500 text-white animate-pulse' 
+                className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all ${
+                  isListening
+                    ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
                     : 'bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 hover:text-white'
                 }`}
                 title={isListening ? 'إيقاف الاستماع' : 'إدخال صوتي'}
               >
                 {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </button>
-              
-              <input 
+
+              <input
                 ref={inputRef}
-                type="text" 
+                type="text"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
                 }}
-                placeholder={isListening ? 'جاري الاستماع...' : 'اسأل محسن عن أي حاجة...'} 
-                disabled={isListening}
-                className="flex-1 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:border-[var(--nile-teal)]/50 outline-none transition-all font-cairo text-right disabled:opacity-50"
+                placeholder={isListening ? 'جاري الاستماع...' : 'اسأل محسن عن أي حاجة...'}
+                disabled={loading || isListening}
+                className="flex-1 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-[var(--nile-teal)]/50 focus:ring-1 focus:ring-[var(--nile-teal)]/20 outline-none transition-all font-cairo text-right disabled:opacity-50"
               />
-              
-              <button 
+
+              <button
                 onClick={() => handleSend()}
                 disabled={loading || !input.trim()}
-                className="absolute left-2 w-9 h-9 rounded-lg bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/80 text-black flex items-center justify-center hover:shadow-lg hover:shadow-[var(--nile-teal)]/20 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/80 text-black flex items-center justify-center hover:shadow-lg hover:shadow-[var(--nile-teal)]/25 transition-all disabled:opacity-30 disabled:pointer-events-none"
               >
-                <Send className="w-4 h-4 transform rotate-180" />
+                <Send className="w-4 h-4 rotate-180" />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {}
-      <div className="flex-1 flex flex-col glass-panel overflow-hidden border border-[var(--glass-border)] bg-background/50 backdrop-blur-xl h-full">
-        
-        {}
-        <div className="flex items-center gap-1 p-2 bg-[var(--glass-surface)] border-b border-[var(--glass-border)] overflow-x-auto scrollbar-thin scrollbar-thumb-white/10">
-           <AnimatePresence>
-             {tabs.map((tab) => {
-               const isActive = activeTabId === tab.id;
-               return (
-                 <motion.button
-                   key={tab.id}
-                   layout
-                   initial={{ opacity: 0, scale: 0.9 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   exit={{ opacity: 0, scale: 0.9 }}
-                   onClick={() => setActiveTabId(tab.id)}
-                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-cairo whitespace-nowrap group relative border ${
-                     isActive 
-                       ? 'text-[var(--nile-teal)] bg-[var(--nile-teal)]/10 border-[var(--nile-teal)]/30 font-bold shadow-lg shadow-[var(--nile-teal)]/5' 
-                       : 'text-gray-500 border-transparent hover:bg-[var(--glass-surface)] hover:text-gray-300'
-                   }`}
-                 >
-                   <span className="text-sm">{tab.title}</span>
-                   {tabs.length > 1 && (
-                     <X 
-                      onClick={(e) => closeTab(tab.id, e)}
-                      className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 hover:text-red-400 transition-all" 
-                     />
-                   )}
-                   {isActive && (
-                     <motion.div 
-                       layoutId="activeTabIndicator" 
-                       className="absolute bottom-[-9px] left-2 right-2 h-[2px] bg-gradient-to-r from-transparent via-[var(--nile-teal)] to-transparent" 
-                     />
-                   )}
-                 </motion.button>
-               );
-             })}
-           </AnimatePresence>
+      {/* ══════════════ WORKSPACE PANEL ══════════════ */}
+      <div className="flex-1 flex flex-col glass-panel overflow-hidden border border-[var(--glass-border)] bg-background/60 backdrop-blur-2xl h-full rounded-2xl min-w-0">
+
+        {/* Tab bar */}
+        <div className="flex items-center gap-1 px-3 py-2 bg-[var(--glass-surface)] border-b border-[var(--glass-border)] overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 shrink-0">
+          <AnimatePresence>
+            {tabs.map(tab => {
+              const isActive = activeTabId === tab.id;
+              const meta = TAB_META[tab.type];
+              return (
+                <motion.button
+                  key={tab.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  onClick={() => setActiveTabId(tab.id)}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all font-cairo whitespace-nowrap group relative border text-sm ${
+                    isActive
+                      ? 'text-[var(--nile-teal)] bg-[var(--nile-teal)]/10 border-[var(--nile-teal)]/30 font-bold'
+                      : 'text-gray-500 border-transparent hover:bg-[var(--glass-surface-heavy)] hover:text-gray-300'
+                  }`}
+                >
+                  {meta && (
+                    <span style={{ color: isActive ? meta.color : undefined }}>{meta.icon}</span>
+                  )}
+                  {tab.type === 'welcome' && <MessageSquare className="w-3.5 h-3.5" />}
+                  <span>{tab.title}</span>
+                  {tabs.length > 1 && (
+                    <X
+                      onClick={e => closeTab(tab.id, e)}
+                      className="w-3 h-3 opacity-30 group-hover:opacity-80 hover:text-red-400 transition-all ml-0.5"
+                    />
+                  )}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTabLine"
+                      className="absolute bottom-[-9px] left-2 right-2 h-[2px] bg-gradient-to-r from-transparent via-[var(--nile-teal)] to-transparent"
+                    />
+                  )}
+                </motion.button>
+              );
+            })}
+          </AnimatePresence>
         </div>
 
-        {}
-        <div className="flex-1 relative w-full h-full overflow-hidden">
+        {/* Tab content */}
+        <div className="flex-1 relative w-full overflow-hidden">
           <AnimatePresence mode="wait">
-            {tabs.map((tab) => {
+            {tabs.map(tab => {
               if (tab.id !== activeTabId) return null;
-
               return (
-                <motion.div 
+                <motion.div
                   key={tab.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.25 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
                   className="absolute inset-0 w-full h-full"
                 >
+                  {/* Welcome screen */}
                   {tab.type === 'welcome' && (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-8 text-center p-8">
-                       <motion.div
-                         initial={{ scale: 0, rotate: -180 }}
-                         animate={{ scale: 1, rotate: 0 }}
-                         transition={{ type: 'spring', duration: 0.8 }}
-                         className="relative"
-                       >
-                         <div className="w-32 h-32 rounded-[2rem] bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/40 flex items-center justify-center shadow-[0_0_50px_rgba(0,206,209,0.3)]">
-                            <Sparkles className="w-16 h-16 text-black" />
-                         </div>
-                         <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#FF69B4] rounded-full flex items-center justify-center animate-bounce">
-                           <Zap className="w-4 h-4 text-white" />
-                         </div>
-                       </motion.div>
-                       
-                       <div className="space-y-3 max-w-lg">
-                          <h2 className="text-4xl font-bold font-cairo text-white">محسن في خدمتك</h2>
-                          <p className="text-gray-400 font-cairo text-base leading-relaxed">
-                            مساعدك الذكي لإدارة الصيدلية بكفاءة. اسألني عن أي حاجة وأنا هنفذها لك فوراً!
-                          </p>
-                       </div>
-                       
-                       <div className="grid grid-cols-2 gap-3 w-full max-w-md mt-4">
-                         {[
-                           { icon: <Package className="w-5 h-5" />, label: 'المخزون', color: 'var(--nile-teal)' },
-                           { icon: <Users className="w-5 h-5" />, label: 'العملاء', color: '#FF69B4' },
-                           { icon: <TrendingUp className="w-5 h-5" />, label: 'المبيعات', color: 'var(--royal-gold)' },
-                           { icon: <ShieldCheck className="w-5 h-5" />, label: 'التقارير', color: '#9370DB' }
-                         ].map((item, idx) => (
-                           <motion.div
-                             key={idx}
-                             initial={{ opacity: 0, y: 20 }}
-                             animate={{ opacity: 1, y: 0 }}
-                             transition={{ delay: idx * 0.1 }}
-                             className="p-4 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl hover:bg-[var(--glass-surface-heavy)] transition-all cursor-pointer"
-                           >
-                             <div style={{ color: item.color }}>{item.icon}</div>
-                             <p className="text-white text-sm font-cairo mt-2">{item.label}</p>
-                           </motion.div>
-                         ))}
-                       </div>
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-6 text-center p-8">
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: 'spring', duration: 0.8 }}
+                        className="relative"
+                      >
+                        <div className="w-28 h-28 rounded-[1.75rem] bg-gradient-to-br from-[var(--nile-teal)] to-[var(--nile-teal)]/30 flex items-center justify-center shadow-[0_0_60px_rgba(0,206,209,0.25)]">
+                          <Sparkles className="w-14 h-14 text-black" />
+                        </div>
+                        <div className="absolute -top-2 -right-2 w-7 h-7 bg-[#FF69B4] rounded-full flex items-center justify-center animate-bounce shadow-lg">
+                          <Zap className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      </motion.div>
+
+                      <div className="space-y-2 max-w-md">
+                        <h2 className="text-3xl font-bold font-cairo text-white">محسن في خدمتك</h2>
+                        <p className="text-gray-400 font-cairo text-sm leading-relaxed">
+                          مساعدك الذكي لإدارة الصيدلية. اسألني وأنا هفتحلك الشاشة المناسبة فوراً!
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+                        {Object.entries(TAB_META).map(([type, meta]) => {
+                          const labels: Record<string, string> = {
+                            pos: 'نقطة البيع',
+                            inventory: 'المخزون',
+                            sales_chart: 'المبيعات',
+                            customers: 'العملاء',
+                            financials: 'التقارير',
+                          };
+                          return (
+                            <motion.button
+                              key={type}
+                              initial={{ opacity: 0, y: 16 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: Object.keys(TAB_META).indexOf(type) * 0.08 }}
+                              onClick={() => openTab(type, labels[type])}
+                              className="p-4 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl hover:bg-[var(--glass-surface-heavy)] hover:border-white/15 transition-all cursor-pointer group text-right"
+                            >
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <div style={{ color: meta.color }} className="group-hover:scale-110 transition-transform">
+                                  {meta.icon}
+                                </div>
+                                <ChevronRight className="w-3 h-3 text-gray-600 group-hover:text-gray-400 mr-auto" />
+                              </div>
+                              <p className="text-white text-xs font-cairo font-bold">{labels[type]}</p>
+                            </motion.button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 
-                  {(tab.type === 'pos' || tab.type === 'inventory' || tab.type === 'customers' || tab.type === 'financials') && (
-                    <iframe 
-                      src={`/${tab.type}?minimal=true&from=copilot`} 
+                  {/* Iframe tabs */}
+                  {['pos', 'inventory', 'customers', 'financials'].includes(tab.type) && (
+                    <iframe
+                      src={`${getTabUrl(tab.type)}?minimal=true&from=copilot`}
                       className="w-full h-full border-none bg-transparent"
                       title={tab.title}
                       sandbox="allow-scripts allow-same-origin allow-forms"
                     />
                   )}
 
+                  {/* Sales chart tab */}
                   {tab.type === 'sales_chart' && (
-                    <div className="p-8 w-full h-full flex flex-col text-right">
-                       <h3 className="text-xl font-bold font-cairo text-white mb-6">التحليلات والمخططات</h3>
-                       <div className="glass-panel p-8 flex-1 flex items-end justify-between gap-3 border border-[var(--glass-border)] bg-white/[0.02]">
-                         {[35, 80, 50, 95, 65, 75, 45].map((h, i) => (
-                           <motion.div 
-                             key={i} 
-                             initial={{ height: 0 }}
-                             animate={{ height: `${h}%` }}
-                             transition={{ delay: i * 0.1, duration: 0.5 }}
-                             className="flex-1 bg-gradient-to-t from-[var(--nile-teal)]/20 to-[var(--nile-teal)]/5 border border-[var(--nile-teal)]/30 rounded-xl hover:from-[var(--nile-teal)]/30 hover:to-[var(--nile-teal)]/10 transition-all cursor-pointer group relative" 
-                           >
-                             <div className="absolute top-[-35px] left-1/2 -translate-x-1/2 bg-background border border-[var(--glass-border)] text-[var(--nile-teal)] font-sans px-2 py-0.5 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
-                               1,{h}50 ج.م
-                             </div>
-                           </motion.div>
-                         ))}
-                       </div>
-                    </div>
+                    <iframe
+                      src="/orders?from=copilot"
+                      className="w-full h-full border-none bg-transparent"
+                      title={tab.title}
+                      sandbox="allow-scripts allow-same-origin allow-forms"
+                    />
                   )}
                 </motion.div>
               );
