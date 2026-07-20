@@ -338,8 +338,23 @@ export default function CopilotPage() {
             break;
 
           case 'SCRAPE':
-            result = "تم استخلاص وتحديث محتوى الشاشات بنجاح.";
-            await new Promise(r => setTimeout(r, 500));
+            let scrapedCount = 0;
+            document.querySelectorAll('iframe').forEach(iframe => {
+              try {
+                const doc = iframe.contentDocument;
+                if (!doc) return;
+                const url = new URL(iframe.src, window.location.origin);
+                const iframeUrl = url.pathname + url.search;
+                const snapshot = extractPageSnapshot(doc, iframeUrl);
+                const combinedData = snapshotToPromptString(snapshot);
+                store.dispatch(updateScrapedContext({ url: iframeUrl, data: combinedData }));
+                scrapedCount++;
+              } catch (e) {
+                console.warn('Scrape error:', e);
+              }
+            });
+            result = `تم بنجاح قراءة محتوى (${scrapedCount}) شاشات.`;
+            await new Promise(r => setTimeout(r, 600));
             break;
 
           case 'FILL_FIELD':

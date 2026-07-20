@@ -3,8 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { store, RootState } from '@/store';
-import { toggleChat, openIframe, setPendingApproval, addProgressLog, clearProgressLogs } from '@/store/slices/agentSlice';
-import { fillField, clickButton, typeIntoSearch } from '@/lib/agent/domExtractor';
+import { toggleChat, openIframe, setPendingApproval, addProgressLog, clearProgressLogs, updateScrapedContext } from '@/store/slices/agentSlice';
+import { fillField, clickButton, typeIntoSearch, extractPageSnapshot, snapshotToPromptString } from '@/lib/agent/domExtractor';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, X, Send, Loader2, AlertTriangle } from 'lucide-react';
 
@@ -92,7 +92,22 @@ export default function AgentCopilot() {
             break;
 
           case 'SCRAPE':
-            result = "تم تحديث البيانات (محفظة السكريبت).";
+            let scrapedCount = 0;
+            document.querySelectorAll('iframe').forEach(iframe => {
+              try {
+                const doc = iframe.contentDocument;
+                if (!doc) return;
+                const url = new URL(iframe.src, window.location.origin);
+                const iframeUrl = url.pathname + url.search;
+                const snapshot = extractPageSnapshot(doc, iframeUrl);
+                const combinedData = snapshotToPromptString(snapshot);
+                store.dispatch(updateScrapedContext({ url: iframeUrl, data: combinedData }));
+                scrapedCount++;
+              } catch (e) {
+                console.warn('Scrape err', e);
+              }
+            });
+            result = `تم تحديث البيانات (محفظة السكريبت) وتمت قراءة (${scrapedCount}) شاشات.`;
             await new Promise(r => setTimeout(r, 500));
             break;
 
