@@ -154,8 +154,8 @@ export default function AgentCopilot() {
     
     try {
       // Direct Interception: Execute the iframe opening immediately within the Workspace layout!
-      if (agentPendingApproval.actionType === 'OPEN_IFRAME' && agentPendingApproval.payload) {
-        dispatch(openIframe(agentPendingApproval.payload));
+      if (agentPendingApproval.actionType === 'OPEN_IFRAME' && (agentPendingApproval as any).payload) {
+        dispatch(openIframe((agentPendingApproval as any).payload));
       } else {
         const response = await fetch('/api/agent/execute', {
           method: 'POST',
