@@ -11,6 +11,9 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
+import { store } from '@/store';
+import { updateScrapedContext } from '@/store/slices/agentSlice';
+import { extractPageSnapshot, snapshotToPromptString, fillField, clickButton, typeIntoSearch } from '@/lib/agent/domExtractor';
 
 /* ─────────────────── TYPES ─────────────────── */
 type Message = {
@@ -261,59 +264,115 @@ export default function CopilotPage() {
     );
   };
 
-  /* ─── SEND ─── */
+  /* ─── SEND (Autonomous Loop) ─── */
   const handleSend = async (customMessage?: string) => {
-    const text = (customMessage ?? input).trim();
-    if (!text || loading) return;
+    const goal = (customMessage ?? input).trim();
+    if (!goal || loading) return;
 
-    const userMsg: Message = { id: generateId(), role: 'user', content: text, timestamp: new Date() };
+    const userMsg: Message = { id: generateId(), role: 'user', content: goal, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
     saveMessage(userMsg);
 
+    const stepHistory: any[] = [];
+
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+      for (let step = 0; step < 15; step++) {
+        const currentContext = store.getState().agent.scrapedContext;
+        const pageSnapshots = Object.entries(currentContext).map(([url, content]) => ({
+          url,
+          title: url,
+          compressedContent: content
+        }));
 
-      const res = await fetch('/api/copilot', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          message: text,
-          chatHistory: messages.slice(-14),
-          context: {
-            userId: user?.id,
-            pharmacyId: user?.user_metadata?.pharmacy_id ?? null,
-            timestamp: new Date().toISOString(),
-          },
-        }),
-      });
+        const response = await fetch('/api/agent/orchestrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal, stepHistory, pageSnapshots })
+        });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const { thought, action } = data;
 
-      const assistantMsg: Message = {
-        id: generateId(),
-        role: 'assistant',
-        content: data.content,
-        timestamp: new Date(),
-        actions: data.actions ?? [],
-        // Don't mark handled yet — user needs to approve / deny
-        actionsHandled: !data.actions?.length,
-      };
+        if (action.type === 'ANSWER') {
+          const assistantMsg: Message = { 
+            id: generateId(), 
+            role: 'assistant', 
+            content: action.answer || 'اكتملت المهمة.', 
+            timestamp: new Date() 
+          };
+          setMessages(prev => [...prev, assistantMsg]);
+          saveMessage(assistantMsg);
+          break;
+        }
 
-      setMessages(prev => [...prev, assistantMsg]);
-      saveMessage(assistantMsg);
+        if (action.type === 'ASK_USER') {
+          const assistantMsg: Message = { 
+            id: generateId(), 
+            role: 'assistant', 
+            content: action.question || 'ممكن توضح أكتر؟', 
+            timestamp: new Date() 
+          };
+          setMessages(prev => [...prev, assistantMsg]);
+          saveMessage(assistantMsg);
+          break;
+        }
+
+        let result = "لم يتم التنفيذ.";
+
+        switch (action.type) {
+          case 'OPEN_PAGE':
+            const targetUrl = action.url || '/pos';
+            const mappedType = targetUrl.replace(/^\//, '') || 'inventory'; 
+            openTab(mappedType, action.title || 'شاشة مهام');
+            result = "تم فتح الشاشة، ننتظر تحميل البيانات...";
+            await new Promise(r => setTimeout(r, 2500));
+            break;
+
+          case 'SCRAPE':
+            result = "تم استخلاص وتحديث محتوى الشاشات بنجاح.";
+            await new Promise(r => setTimeout(r, 500));
+            break;
+
+          case 'FILL_FIELD':
+          case 'CLICK_BUTTON':
+          case 'TYPE_SEARCH':
+            let found = false;
+            document.querySelectorAll('iframe').forEach(iframe => {
+              try {
+                const doc = iframe.contentDocument;
+                if (!doc) return;
+                
+                if (action.type === 'FILL_FIELD' && action.selector && action.value) {
+                  if (fillField(doc, action.selector, action.value)) found = true;
+                } else if (action.type === 'CLICK_BUTTON' && action.buttonText) {
+                  if (clickButton(doc, action.buttonText)) found = true;
+                } else if (action.type === 'TYPE_SEARCH' && action.selector && action.value) {
+                  if (typeIntoSearch(doc, action.selector, action.value)) found = true;
+                }
+              } catch (e) { }
+            });
+            result = found ? "تمت العملية بنجاح في الصفحة المفتوحة." : "فشلت العملية، لم يتم العثور على العنصر المستهدف.";
+            await new Promise(r => setTimeout(r, 1000));
+            break;
+            
+          default:
+            result = "إجراء غير معروف.";
+        }
+
+        stepHistory.push({ action, result });
+      }
+
     } catch (err) {
-      console.error('Copilot error:', err);
+      console.error('Copilot Error:', err);
       setMessages(prev => [
         ...prev,
         {
           id: generateId(),
           role: 'assistant',
-          content: '⚠️ عذراً، حدث خطأ في الاتصال. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.',
+          content: '⚠️ عذراً، حدث خطأ في محرك المساعد الذكي المستقل. حاول مرة أخرى.',
           timestamp: new Date(),
           actionsHandled: true,
         },
@@ -734,6 +793,21 @@ export default function CopilotPage() {
                       className="w-full h-full border-none bg-transparent"
                       title={tab.title}
                       sandbox="allow-scripts allow-same-origin allow-forms"
+                      onLoad={(e) => {
+                        const iframeUrl = getTabUrl(tab.type);
+                        try {
+                          const doc = (e.target as HTMLIFrameElement).contentDocument;
+                          if (doc) {
+                            setTimeout(() => {
+                              try {
+                                const snapshot = extractPageSnapshot(doc, iframeUrl);
+                                const combinedData = snapshotToPromptString(snapshot);
+                                store.dispatch(updateScrapedContext({ url: iframeUrl, data: combinedData }));
+                              } catch (err) { }
+                            }, 1500);
+                          }
+                        } catch(e) {}
+                      }}
                     />
                   )}
 
@@ -744,6 +818,21 @@ export default function CopilotPage() {
                       className="w-full h-full border-none bg-transparent"
                       title={tab.title}
                       sandbox="allow-scripts allow-same-origin allow-forms"
+                      onLoad={(e) => {
+                        const iframeUrl = '/orders';
+                        try {
+                          const doc = (e.target as HTMLIFrameElement).contentDocument;
+                          if (doc) {
+                            setTimeout(() => {
+                              try {
+                                const snapshot = extractPageSnapshot(doc, iframeUrl);
+                                const combinedData = snapshotToPromptString(snapshot);
+                                store.dispatch(updateScrapedContext({ url: iframeUrl, data: combinedData }));
+                              } catch (err) { }
+                            }, 1500);
+                          }
+                        } catch(e) {}
+                      }}
                     />
                   )}
                 </motion.div>
