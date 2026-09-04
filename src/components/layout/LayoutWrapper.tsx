@@ -248,8 +248,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
  }
 
  // ─── Pharmacy context guard ──────────────────────────────────────────────────
- // chain_admin and developer can have NULL pharmacy_id
- if (!pharmacyId && userRole !== 'chain_admin' && userRole !== 'developer') {
+ // chain_admin, admin, and developer can have NULL pharmacy_id
+ if (!pharmacyId && userRole !== 'chain_admin' && userRole !== 'developer' && userRole !== 'admin') {
  return (
  <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--background)] gap-4 text-center px-4" dir="rtl">
  <AlertCircle className="w-16 h-16 text-red-500" />
