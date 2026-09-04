@@ -182,13 +182,29 @@ export async function POST(request: NextRequest) {
  .eq('id', targetChainId);
  }
 
- 
- await adminSupabase.from('user_pharmacy_access').insert({
- user_id: newUserId,
- pharmacy_id: targetPharmacyId,
- role: userRole,
- is_primary: true
- });
+  
+  // Explicitly upsert into user_profiles as a safety guarantee.
+  // The DB trigger (handle_new_user_registration) should do this automatically,
+  // but it can fail silently if the pharmacy doesn't exist at trigger-fire time.
+  const { error: profileError } = await adminSupabase.from('user_profiles').upsert({
+    id: newUserId,
+    pharmacy_id: targetPharmacyId,
+    chain_id: targetChainId,
+    full_name: full_name.trim(),
+    role: userRole,
+  }, { onConflict: 'id' });
+
+  if (profileError) {
+    console.error('[Registration] user_profiles upsert failed:', profileError.message);
+    // Non-fatal: log it but don't block — the trigger may have already created it
+  }
+
+  await adminSupabase.from('user_pharmacy_access').upsert({
+    user_id: newUserId,
+    pharmacy_id: targetPharmacyId,
+    role: userRole,
+    is_primary: true
+  }, { onConflict: 'user_id,pharmacy_id' });
 
  return NextResponse.json({
  success: true,
