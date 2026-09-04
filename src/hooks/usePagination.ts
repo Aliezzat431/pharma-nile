@@ -3,31 +3,31 @@
 import { useState, useMemo, useEffect } from 'react';
 
 export interface UsePaginationOptions {
-  pageSize?: number;
+ pageSize?: number;
 }
 
 export function usePagination<T>(data: T[], options: UsePaginationOptions = {}) {
-  const { pageSize = 15 } = options;
-  const [currentPage, setCurrentPage] = useState(1);
+ const { pageSize = 15 } = options;
+ const [currentPage, setCurrentPage] = useState(1);
 
-  
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [data.length]);
+ 
+ useEffect(() => {
+ setCurrentPage(1);
+ }, [data.length]);
 
-  const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
+ const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
 
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return data.slice(start, start + pageSize);
-  }, [data, currentPage, pageSize]);
+ const paginatedData = useMemo(() => {
+ const start = (currentPage - 1) * pageSize;
+ return data.slice(start, start + pageSize);
+ }, [data, currentPage, pageSize]);
 
-  return {
-    paginatedData,
-    currentPage,
-    totalPages,
-    totalItems: data.length,
-    pageSize,
-    setPage: setCurrentPage,
-  };
+ return {
+ paginatedData,
+ currentPage,
+ totalPages,
+ totalItems: data.length,
+ pageSize,
+ setPage: setCurrentPage,
+ };
 }

@@ -3,32 +3,32 @@ import { treatmentTypes } from '@/lib/unitOptions';
 import Groq from 'groq-sdk';
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+ apiKey: process.env.GROQ_API_KEY,
 });
 
 const GROQ_MODEL = "llama3-70b-8192";
 
 export async function POST(req: Request) {
-  try {
-    const { productName } = await req.json();
+ try {
+ const { productName } = await req.json();
 
-    if (!productName || typeof productName !== 'string') {
-      return NextResponse.json(
-        { error: 'Product name is required' },
-        { status: 400 }
-      );  
-    }
+ if (!productName || typeof productName !== 'string') {
+ return NextResponse.json(
+ { error: 'Product name is required' },
+ { status: 400 }
+ ); 
+ }
 
-    if (!process.env.GROQ_API_KEY) {
-      return NextResponse.json(
-        { error: 'GROQ_API_KEY is not configured in .env' },
-        { status: 500 }
-      );
-    }
+ if (!process.env.GROQ_API_KEY) {
+ return NextResponse.json(
+ { error: 'GROQ_API_KEY is not configured in .env' },
+ { status: 500 }
+ );
+ }
 
-    const availableTypes = treatmentTypes.map((t) => t.name).join(', ');
+ const availableTypes = treatmentTypes.map((t) => t.name).join(', ');
 
-    const systemPrompt = `You are a pharmaceutical expert assistant in Egypt, embedded in the PharmaNile ERP system ("Dr. Mohsen").
+ const systemPrompt = `You are a pharmaceutical expert assistant in Egypt, embedded in the PharmaNile ERP system ("Dr. Mohsen").
 Your job is to analyze an entered product name and output a clean, well-structured JSON object containing up to 3 likely exact matches or variations available in the Egyptian market.
 
 Available exact types for the "type" field: [${availableTypes}]
@@ -42,68 +42,68 @@ Rules:
 
 The required JSON schema layout:
 {
-  "choices": [
-    {
-      "name": "Standardized medicine name",
-      "company": "Manufacturer company name",
-      "type": "Matched type from the allowed list",
-      "unit_conversion": 1
-    }
-  ]
+ "choices": [
+ {
+ "name": "Standardized medicine name",
+ "company": "Manufacturer company name",
+ "type": "Matched type from the allowed list",
+ "unit_conversion": 1
+ }
+ ]
 }`;
 
-    const userMessage = `Analyze the product name: "${productName}"`;
+ const userMessage = `Analyze the product name: "${productName}"`;
 
-    const chatCompletion = await groq.chat.completions.create({
-      model: GROQ_MODEL,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-      ],
-      temperature: 0.1, 
-      response_format: { type: "json_object" } 
-    });
+ const chatCompletion = await groq.chat.completions.create({
+ model: GROQ_MODEL,
+ messages: [
+ { role: 'system', content: systemPrompt },
+ { role: 'user', content: userMessage }
+ ],
+ temperature: 0.1, 
+ response_format: { type: "json_object" } 
+ });
 
-    const rawText = chatCompletion.choices[0]?.message?.content?.trim() ?? '';
+ const rawText = chatCompletion.choices[0]?.message?.content?.trim() ?? '';
 
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error('No JSON found in Groq response:', rawText);
-      return NextResponse.json(
-        { error: 'No valid JSON returned from AI' },
-        { status: 500 }
-      );
-    }
+ const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+ if (!jsonMatch) {
+ console.error('No JSON found in Groq response:', rawText);
+ return NextResponse.json(
+ { error: 'No valid JSON returned from AI' },
+ { status: 500 }
+ );
+ }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+ const parsed = JSON.parse(jsonMatch[0]);
 
-    if (!parsed.choices || !Array.isArray(parsed.choices)) {
-      return NextResponse.json({
-        choices: [
-          {
-            name: parsed.name || productName,
-            company: parsed.company || '',
-            type: parsed.type || '',
-            unit_conversion: Number(parsed.unit_conversion) || 1,
-          }
-        ]
-      });
-    }
+ if (!parsed.choices || !Array.isArray(parsed.choices)) {
+ return NextResponse.json({
+ choices: [
+ {
+ name: parsed.name || productName,
+ company: parsed.company || '',
+ type: parsed.type || '',
+ unit_conversion: Number(parsed.unit_conversion) || 1,
+ }
+ ]
+ });
+ }
 
-    const normalizedChoices = parsed.choices.map((choice: any) => ({
-      name: choice.name || productName,
-      company: choice.company || '',
-      type: choice.type || '',
-      unit_conversion: Number(choice.unit_conversion) || 1,
-    }));
+ const normalizedChoices = parsed.choices.map((choice: any) => ({
+ name: choice.name || productName,
+ company: choice.company || '',
+ type: choice.type || '',
+ unit_conversion: Number(choice.unit_conversion) || 1,
+ }));
 
-    return NextResponse.json({ choices: normalizedChoices });
+ return NextResponse.json({ choices: normalizedChoices });
 
-  } catch (error: any) {
-    console.error('Groq Auto-fill Error:', error);
-    return NextResponse.json(
-      { error: error?.message || 'Failed to generate medicine information' },
-      { status: 500 }
-    );
-  }
+ } catch (error: any) {
+ console.error('Groq Auto-fill Error:', error);
+ return NextResponse.json(
+ { error: error?.message || 'Failed to generate medicine information' },
+ { status: 500 }
+ );
+ }
 }

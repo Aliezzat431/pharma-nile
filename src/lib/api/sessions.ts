@@ -1,69 +1,70 @@
 import { supabase } from '../supabase';
 
 export interface Session {
-  id: string;
-  user_id: string;
-  username: string;
-  shift_type: string;
-  start_time: string;
-  end_time?: string;
-  status: 'active' | 'closed';
+ id: string;
+ user_id: string;
+ username: string;
+ shift_type: string;
+ start_time: string;
+ end_time?: string;
+ status: 'active' | 'closed';
 }
 
 export async function getCurrentActiveSession(userId: string): Promise<Session | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  const pharmacyId = user?.user_metadata?.pharmacy_id;
-  if (!pharmacyId) return null;
+ const { data: { user } } = await supabase.auth.getUser();
+ const pharmacyId = user?.user_metadata?.pharmacy_id;
+ if (!pharmacyId) return null;
 
-  const { data, error } = await supabase
-    .from('sessions')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('pharmacy_id', pharmacyId)
-    .eq('status', 'active')
-    .maybeSingle();
+ const { data, error } = await supabase
+ .from('sessions')
+ .select('*')
+ .eq('user_id', userId)
+ .eq('pharmacy_id', pharmacyId)
+ .eq('status', 'active')
+ .maybeSingle();
 
-  if (error) return null;
-  return data;
+ if (error) return null;
+ return data;
 }
 
 export async function startShift(userId: string, username: string, shiftType: string) {
-  const { data: { user } } = await supabase.auth.getUser();
-  const pharmacyId = user?.user_metadata?.pharmacy_id;
-  if (!pharmacyId) throw new Error("Unauthorized Tenant");
+ const { data: { user } } = await supabase.auth.getUser();
+ const pharmacyId = user?.user_metadata?.pharmacy_id;
+ if (!pharmacyId) throw new Error("Unauthorized Tenant");
 
-  const { data, error } = await supabase
-    .from('sessions')
-    .insert([{
-      user_id: userId,
-      username,
-      shift_type: shiftType,
-      status: 'active',
-      start_time: new Date().toISOString(),
-      pharmacy_id: pharmacyId
-    }])
-    .select()
-    .single();
+ const { data, error } = await supabase
+ .from('sessions')
+ .insert([{
+ user_id: userId,
+ username,
+ shift_type: shiftType,
+ status: 'active',
+ start_time: new Date().toISOString(),
+ pharmacy_id: pharmacyId
+ }])
+ .select()
+ .maybeSingle();
 
-  if (error) throw error;
-  return data;
+ if (error) throw error;
+ if (!data) throw new Error("فشل بدء الجلسة (No data returned)");
+ return data;
 }
 
 export async function endShift(sessionId: string) {
-  const { data: { user } } = await supabase.auth.getUser();
-  const pharmacyId = user?.user_metadata?.pharmacy_id;
-  if (!pharmacyId) throw new Error("Unauthorized Tenant");
+ const { data: { user } } = await supabase.auth.getUser();
+ const pharmacyId = user?.user_metadata?.pharmacy_id;
+ if (!pharmacyId) throw new Error("Unauthorized Tenant");
 
-  const { error } = await supabase
-    .from('sessions')
-    .update({
-      status: 'closed',
-      end_time: new Date().toISOString()
-    })
-    .eq('id', sessionId)
-    .eq('pharmacy_id', pharmacyId);
+ const { error } = await supabase
+ .from('sessions')
+ .update({
+ status: 'closed',
+ end_time: new Date().toISOString()
+ })
+ .eq('id', sessionId)
+ .eq('pharmacy_id', pharmacyId);
 
-  if (error) throw error;
-  return true;
+ if (error) throw error;
+ return true;
 }
 

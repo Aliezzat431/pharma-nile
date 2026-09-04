@@ -441,13 +441,36 @@ DECLARE v_order_id uuid; v_item jsonb; v_dist jsonb; v_batch RECORD; v_deduction
 BEGIN
   SELECT COALESCE(inventory_method, 'FEFO') INTO v_method FROM pharmacy_settings WHERE pharmacy_id = p_pharmacy_id;
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_cart) LOOP
+    IF (v_item->>'quantity')::int <= 0 THEN
+      RAISE EXCEPTION 'Security error: Item quantity must be greater than zero for %', v_item->>'name';
+    END IF;
+
     IF jsonb_array_length(COALESCE(v_item->'batch_distributions', '[]'::jsonb)) > 0 THEN
-      FOR v_dist IN SELECT * FROM jsonb_array_elements(v_item->'batch_distributions') LOOP v_cost_total := v_cost_total + (v_dist->>'purchase_price')::numeric * (v_dist->>'quantity')::int; v_revenue_total := v_revenue_total + (v_dist->>'price')::numeric * (v_dist->>'quantity')::int; END LOOP;
+      FOR v_dist IN SELECT * FROM jsonb_array_elements(v_item->'batch_distributions') LOOP 
+        IF (v_dist->>'quantity')::int <= 0 THEN
+          RAISE EXCEPTION 'Security error: Distribution quantity must be greater than zero.';
+        END IF;
+        IF (v_dist->>'price')::numeric < 0 THEN
+          RAISE EXCEPTION 'Security error: Negative prices are forbidden.';
+        END IF;
+        
+        v_cost_total := v_cost_total + (v_dist->>'purchase_price')::numeric * (v_dist->>'quantity')::int; 
+        v_revenue_total := v_revenue_total + (v_dist->>'price')::numeric * (v_dist->>'quantity')::int; 
+      END LOOP;
     ELSE
-      v_cost_total := v_cost_total + COALESCE((v_item->>'cost_price')::numeric, 0) * (v_item->>'quantity')::int; v_revenue_total := v_revenue_total + (v_item->>'price')::numeric * (v_item->>'quantity')::int;
+      IF (v_item->>'price')::numeric < 0 THEN
+        RAISE EXCEPTION 'Security error: Negative prices are forbidden for %', v_item->>'name';
+      END IF;
+      
+      v_cost_total := v_cost_total + COALESCE((v_item->>'cost_price')::numeric, 0) * (v_item->>'quantity')::int; 
+      v_revenue_total := v_revenue_total + (v_item->>'price')::numeric * (v_item->>'quantity')::int;
     END IF;
   END LOOP;
-  v_final_total := CASE WHEN v_revenue_total > 0 THEN v_revenue_total ELSE p_total END; v_profit_total := v_final_total - v_cost_total;
+  v_final_total := CASE WHEN v_revenue_total > 0 THEN v_revenue_total ELSE p_total END; 
+  IF v_final_total < 0 THEN 
+    RAISE EXCEPTION 'Security error: Total checkout value cannot be negative.'; 
+  END IF;
+  v_profit_total := v_final_total - v_cost_total;
   INSERT INTO orders (pharmacy_id, total, cost_total, profit_total, customer_id, payment_method, status) VALUES (p_pharmacy_id, v_final_total, v_cost_total, v_profit_total, p_customer_id, p_payment_method, 'completed') RETURNING id INTO v_order_id;
   IF p_payment_method = 'debt' AND p_customer_id IS NOT NULL THEN UPDATE customers SET total_debt = total_debt + v_final_total WHERE id = p_customer_id AND pharmacy_id = p_pharmacy_id; END IF;
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_cart) LOOP v_remaining := (v_item->>'quantity')::int;

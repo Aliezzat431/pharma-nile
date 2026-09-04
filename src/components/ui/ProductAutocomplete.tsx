@@ -6,248 +6,248 @@ import { supabase } from '@/lib/supabase';
 import { Search, Star, BadgePlus, Loader2 } from 'lucide-react';
 
 interface ProductSuggestion {
-  id: string;
-  name: string;
-  type?: string;
-  company?: string;
+ id: string;
+ name: string;
+ type?: string;
+ company?: string;
 }
 
 interface ProductAutocompleteProps {
-  value: string;
-  onChange: (value: string) => void;
-  onSelect: (product: ProductSuggestion | null) => void;
-  pharmacyId: string | undefined;
-  disabled?: boolean;
-  placeholder?: string;
-  className?: string;
+ value: string;
+ onChange: (value: string) => void;
+ onSelect: (product: ProductSuggestion | null) => void;
+ pharmacyId: string | undefined;
+ disabled?: boolean;
+ placeholder?: string;
+ className?: string;
 }
 
 export default function ProductAutocomplete({
-  value,
-  onChange,
-  onSelect,
-  pharmacyId,
-  disabled = false,
-  placeholder = 'اسم الدواء أو المستلزم...',
-  className = '',
+ value,
+ onChange,
+ onSelect,
+ pharmacyId,
+ disabled = false,
+ placeholder = 'اسم الدواء أو المستلزم...',
+ className = '',
 }: ProductAutocompleteProps) {
-  const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [activeIdx, setActiveIdx] = useState(-1);
+ const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
+ const [open, setOpen] = useState(false);
+ const [loading, setLoading] = useState(false);
+ const [activeIdx, setActiveIdx] = useState(-1);
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const dropdownRef = useRef<HTMLDivElement>(null);
+ const inputRef = useRef<HTMLInputElement>(null);
+ const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  
-  useEffect(() => {
-    if (!dropdownRef.current) return;
-    if (open && suggestions.length > 0) {
-      gsap.fromTo(
-        dropdownRef.current,
-        { opacity: 0, y: -8, scaleY: 0.92, transformOrigin: 'top center' },
-        { opacity: 1, y: 0, scaleY: 1, duration: 0.22, ease: 'power2.out' }
-      );
-    }
-  }, [open, suggestions.length]);
+ 
+ useEffect(() => {
+ if (!dropdownRef.current) return;
+ if (open && suggestions.length > 0) {
+ gsap.fromTo(
+ dropdownRef.current,
+ { opacity: 0, y: -8, scaleY: 0.92, transformOrigin: 'top center' },
+ { opacity: 1, y: 0, scaleY: 1, duration: 0.22, ease: 'power2.out' }
+ );
+ }
+ }, [open, suggestions.length]);
 
-  
-  const fetchSuggestions = useCallback(
-    async (query: string) => {
-      if (!pharmacyId || query.trim().length < 2) {
-        setSuggestions([]);
-        setOpen(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const { data } = await supabase
-          .from('products')
-          .select('id, name, type, company, pharmacy:pharmacies(name)')
-          .ilike('name', `%${query}%`)
-          .limit(10);
-        setSuggestions((data || []).map((p: any) => ({
-          ...p,
-          pharmacy_name: p.pharmacy?.name
-        })));
-        setOpen(true);
-        setActiveIdx(-1);
-      } catch {
-        setSuggestions([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [pharmacyId]
-  );
+ 
+ const fetchSuggestions = useCallback(
+ async (query: string) => {
+ if (!pharmacyId || query.trim().length < 2) {
+ setSuggestions([]);
+ setOpen(false);
+ return;
+ }
+ setLoading(true);
+ try {
+ const { data } = await supabase
+ .from('products')
+ .select('id, name, type, company, pharmacy:pharmacies(name)')
+ .ilike('name', `%${query}%`)
+ .limit(10);
+ setSuggestions((data || []).map((p: any) => ({
+ ...p,
+ pharmacy_name: p.pharmacy?.name
+ })));
+ setOpen(true);
+ setActiveIdx(-1);
+ } catch {
+ setSuggestions([]);
+ } finally {
+ setLoading(false);
+ }
+ },
+ [pharmacyId]
+ );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value;
-    onChange(v);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(v), 200);
-  };
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ const v = e.target.value;
+ onChange(v);
+ if (debounceRef.current) clearTimeout(debounceRef.current);
+ debounceRef.current = setTimeout(() => fetchSuggestions(v), 200);
+ };
 
-  
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!open || suggestions.length === 0) return;
+ 
+ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+ if (!open || suggestions.length === 0) return;
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveIdx((i) => Math.min(i + 1, suggestions.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveIdx((i) => Math.max(i - 1, -1));
-    } else if (e.key === 'Enter' && activeIdx >= 0) {
-      e.preventDefault();
-      pick(suggestions[activeIdx]);
-    } else if (e.key === 'Escape') {
-      setOpen(false);
-    }
-  };
+ if (e.key === 'ArrowDown') {
+ e.preventDefault();
+ setActiveIdx((i) => Math.min(i + 1, suggestions.length - 1));
+ } else if (e.key === 'ArrowUp') {
+ e.preventDefault();
+ setActiveIdx((i) => Math.max(i - 1, -1));
+ } else if (e.key === 'Enter' && activeIdx >= 0) {
+ e.preventDefault();
+ pick(suggestions[activeIdx]);
+ } else if (e.key === 'Escape') {
+ setOpen(false);
+ }
+ };
 
-  const pick = (product: ProductSuggestion) => {
-    onChange(product.name);
-    onSelect(product);
-    setOpen(false);
-    setSuggestions([]);
-  };
+ const pick = (product: ProductSuggestion) => {
+ onChange(product.name);
+ onSelect(product);
+ setOpen(false);
+ setSuggestions([]);
+ };
 
-  
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+ 
+ useEffect(() => {
+ const handler = (e: MouseEvent) => {
+ if (
+ inputRef.current &&
+ !inputRef.current.contains(e.target as Node) &&
+ dropdownRef.current &&
+ !dropdownRef.current.contains(e.target as Node)
+ ) {
+ setOpen(false);
+ }
+ };
+ document.addEventListener('mousedown', handler);
+ return () => document.removeEventListener('mousedown', handler);
+ }, []);
 
-  const isNew = !suggestions.find(
-    (s) => s.name.toLowerCase() === value.toLowerCase()
-  );
-  const showNewBadge = value.trim().length >= 2 && !loading;
+ const isNew = !suggestions.find(
+ (s) => s.name.toLowerCase() === value.toLowerCase()
+ );
+ const showNewBadge = value.trim().length >= 2 && !loading;
 
-  return (
-    <div className={`relative ${className}`}>
-      {}
-      <div className="relative">
-        <input
-          ref={inputRef}
-          value={value}
-          disabled={disabled}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onFocus={() => value.trim().length >= 2 && suggestions.length > 0 && setOpen(true)}
-          placeholder={placeholder}
-          autoComplete="off"
-          className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--nile-teal)]/50 font-cairo pr-8 transition-all"
-        />
-        {loading ? (
-          <Loader2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-inactive)] animate-spin" />
-        ) : (
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-inactive)]" />
-        )}
-      </div>
+ return (
+ <div className={`relative ${className}`}>
+ {}
+ <div className="relative">
+ <input
+ ref={inputRef}
+ value={value}
+ disabled={disabled}
+ onChange={handleChange}
+ onKeyDown={handleKeyDown}
+ onFocus={() => value.trim().length >= 2 && suggestions.length > 0 && setOpen(true)}
+ placeholder={placeholder}
+ autoComplete="off"
+ className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--nile-teal)]/50 font-cairo pr-8 transition-all"
+ />
+ {loading ? (
+ <Loader2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-inactive)] animate-spin" />
+ ) : (
+ <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-inactive)]" />
+ )}
+ </div>
 
-      {}
-      {showNewBadge && value.trim().length >= 2 && (
-        <div className="absolute -top-1.5 right-2 z-10">
-          {isNew ? (
-            <span 
-              className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full font-cairo shadow-sm"
-              style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: 'var(--status-success)', border: '1px solid rgba(16, 185, 129, 0.2)' }}
-            >
-              <BadgePlus className="w-2.5 h-2.5" /> جديد
-            </span>
-          ) : (
-             <span 
-              className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full font-cairo shadow-sm"
-              style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}
-             >
-              <Star className="w-2.5 h-2.5" /> موجود
-            </span>
-          )}
-        </div>
-      )}
+ {}
+ {showNewBadge && value.trim().length >= 2 && (
+ <div className="absolute -top-1.5 right-2 z-10">
+ {isNew ? (
+ <span 
+ className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full font-cairo shadow-sm"
+ style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: 'var(--status-success)', border: '1px solid rgba(16, 185, 129, 0.2)' }}
+ >
+ <BadgePlus className="w-2.5 h-2.5" /> جديد
+ </span>
+ ) : (
+ <span 
+ className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full font-cairo shadow-sm"
+ style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+ >
+ <Star className="w-2.5 h-2.5" /> موجود
+ </span>
+ )}
+ </div>
+ )}
 
-      {}
-      {open && suggestions.length > 0 && (
-        <div
-          ref={dropdownRef}
-          className="absolute z-50 top-full mt-1.5 right-0 left-0 bg-[var(--background)] border border-[var(--glass-border)] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden backdrop-blur-xl"
-        >
-          {}
-          <div className="px-3 py-1.5 border-b border-[var(--glass-border)] flex items-center gap-2">
-            <Search className="w-3 h-3 text-[var(--nile-teal)]" />
-            <span className="text-[10px] text-[var(--text-muted)] font-cairo">
-              {suggestions.length} نتيجة مطابقة في شبكة الصيدليات
-            </span>
-          </div>
+ {}
+ {open && suggestions.length > 0 && (
+ <div
+ ref={dropdownRef}
+ className="absolute z-50 top-full mt-1.5 right-0 left-0 bg-[var(--background)] border border-[var(--glass-border)] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden backdrop-blur-xl"
+ >
+ {}
+ <div className="px-3 py-1.5 border-b border-[var(--glass-border)] flex items-center gap-2">
+ <Search className="w-3 h-3 text-[var(--nile-teal)]" />
+ <span className="text-[10px] text-[var(--text-muted)] font-cairo">
+ {suggestions.length} نتيجة مطابقة في شبكة الصيدليات
+ </span>
+ </div>
 
-          {suggestions.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); pick(s); }}
-              onMouseEnter={() => setActiveIdx(i)}
-              className={`w-full text-right flex items-center gap-3 px-3 py-2.5 transition-colors ${
-                activeIdx === i
-                  ? 'bg-[var(--nile-teal-glow)] text-[var(--text-primary)]'
-                  : 'hover:bg-[var(--glass-surface)] text-[var(--text-secondary)]'
-              }`}
-            >
-              <div 
-                className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-              >
-                <Star className="w-3.5 h-3.5" style={{ color: '#60a5fa' }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold font-cairo truncate text-[var(--foreground)]">{s.name}</p>
-                <p className="text-[10px] text-[var(--text-muted)] truncate font-cairo">
-                  {[s.type, s.company, (s as any).pharmacy_name].filter(Boolean).join(' • ')}
-                </p>
-              </div>
-              {activeIdx === i && (
-                <span className="text-[9px] text-[var(--nile-teal)] font-bold flex-shrink-0 font-cairo">
-                  Enter ↵
-                </span>
-              )}
-            </button>
-          ))}
+ {suggestions.map((s, i) => (
+ <button
+ key={s.id}
+ type="button"
+ onMouseDown={(e) => { e.preventDefault(); pick(s); }}
+ onMouseEnter={() => setActiveIdx(i)}
+ className={`w-full text-right flex items-center gap-3 px-3 py-2.5 transition-colors ${
+ activeIdx === i
+ ? 'bg-[var(--nile-teal-glow)] text-[var(--text-primary)]'
+ : 'hover:bg-[var(--glass-surface)] text-[var(--text-secondary)]'
+ }`}
+ >
+ <div 
+ className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+ style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
+ >
+ <Star className="w-3.5 h-3.5" style={{ color: '#60a5fa' }} />
+ </div>
+ <div className="flex-1 min-w-0">
+ <p className="text-sm font-bold font-cairo truncate text-[var(--foreground)]">{s.name}</p>
+ <p className="text-[10px] text-[var(--text-muted)] truncate font-cairo">
+ {[s.type, s.company, (s as any).pharmacy_name].filter(Boolean).join(' • ')}
+ </p>
+ </div>
+ {activeIdx === i && (
+ <span className="text-[9px] text-[var(--nile-teal)] font-bold flex-shrink-0 font-cairo">
+ Enter ↵
+ </span>
+ )}
+ </button>
+ ))}
 
-          {}
-          {isNew && (
-            <button
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); onSelect(null); setOpen(false); }}
-              className="w-full text-right flex items-center gap-3 px-3 py-2.5 border-t border-[var(--glass-border)] transition-colors"
-              style={{ backgroundColor: 'rgba(16, 185, 129, 0.05)' }}
-            >
-              <div 
-                className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}
-              >
-                <BadgePlus className="w-3.5 h-3.5" style={{ color: 'var(--status-success)' }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold font-cairo truncate" style={{ color: 'var(--status-success)' }}>
-                  إضافة "{value}" كمنتج جديد
-                </p>
-                <p className="text-[10px] text-[var(--text-muted)] font-cairo">سيتم إنشاؤه عند الحفظ</p>
-              </div>
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+ {}
+ {isNew && (
+ <button
+ type="button"
+ onMouseDown={(e) => { e.preventDefault(); onSelect(null); setOpen(false); }}
+ className="w-full text-right flex items-center gap-3 px-3 py-2.5 border-t border-[var(--glass-border)] transition-colors"
+ style={{ backgroundColor: 'rgba(16, 185, 129, 0.05)' }}
+ >
+ <div 
+ className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+ style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}
+ >
+ <BadgePlus className="w-3.5 h-3.5" style={{ color: 'var(--status-success)' }} />
+ </div>
+ <div className="flex-1 min-w-0">
+ <p className="text-sm font-bold font-cairo truncate" style={{ color: 'var(--status-success)' }}>
+ إضافة "{value}" كمنتج جديد
+ </p>
+ <p className="text-[10px] text-[var(--text-muted)] font-cairo">سيتم إنشاؤه عند الحفظ</p>
+ </div>
+ </button>
+ )}
+ </div>
+ )}
+ </div>
+ );
 }

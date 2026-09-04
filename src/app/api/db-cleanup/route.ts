@@ -2,123 +2,123 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
-  try {
-    const { type } = await req.json();
+ try {
+ const { type } = await req.json();
 
-    if (!type) {
-      return NextResponse.json({ success: false, error: 'Missing cleanup type' }, { status: 400 });
-    }
+ if (!type) {
+ return NextResponse.json({ success: false, error: 'Missing cleanup type' }, { status: 400 });
+ }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+ const supabase = createClient(
+ process.env.NEXT_PUBLIC_SUPABASE_URL!,
+ process.env.SUPABASE_SERVICE_ROLE_KEY!
+ );
 
-    const authHeader = req.headers.get('Authorization');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
-    
-    if (authError || !user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
-    }
+ const authHeader = req.headers.get('Authorization');
+ const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader?.replace('Bearer ', ''));
+ 
+ if (authError || !user) {
+ return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
+ }
 
-    
-    const { data: accessData } = await supabase
-      .from('user_pharmacy_access')
-      .select('pharmacy_id')
-      .eq('user_id', user.id)
-      .eq('is_primary', true)
-      .maybeSingle(); 
+ 
+ const { data: accessData } = await supabase
+ .from('user_pharmacy_access')
+ .select('pharmacy_id')
+ .eq('user_id', user.id)
+ .eq('is_primary', true)
+ .maybeSingle(); 
 
-    const pharmacyId = accessData?.pharmacy_id;
+ const pharmacyId = accessData?.pharmacy_id;
 
-    if (!pharmacyId) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: No primary pharmacy context found' }, { status: 401 });
-    }
+ if (!pharmacyId) {
+ return NextResponse.json({ success: false, error: 'Unauthorized: No primary pharmacy context found' }, { status: 401 });
+ }
 
-    let deletedCount = 0;
+ let deletedCount = 0;
 
-    if (type === 'audit') {
-      
-      const auditThreshold = new Date();
-      auditThreshold.setDate(auditThreshold.getDate() - 60);
-      
-      
-      const { count } = await supabase
-        .from('audit_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('pharmacy_id', pharmacyId)
-        .lt('created_at', auditThreshold.toISOString());
+ if (type === 'audit') {
+ 
+ const auditThreshold = new Date();
+ auditThreshold.setDate(auditThreshold.getDate() - 60);
+ 
+ 
+ const { count } = await supabase
+ .from('audit_logs')
+ .select('*', { count: 'exact', head: true })
+ .eq('pharmacy_id', pharmacyId)
+ .lt('created_at', auditThreshold.toISOString());
 
-      if (count && count > 0) {
-          const { error } = await supabase
-            .from('audit_logs')
-            .delete()
-            .eq('pharmacy_id', pharmacyId)
-            .lt('created_at', auditThreshold.toISOString());
-          
-          if (error) throw error;
-          deletedCount = count;
-      }
+ if (count && count > 0) {
+ const { error } = await supabase
+ .from('audit_logs')
+ .delete()
+ .eq('pharmacy_id', pharmacyId)
+ .lt('created_at', auditThreshold.toISOString());
+ 
+ if (error) throw error;
+ deletedCount = count;
+ }
 
-    } else if (type === 'orders') {
-      
-      const { count } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('pharmacy_id', pharmacyId)
-        .eq('status', 'cancelled');
+ } else if (type === 'orders') {
+ 
+ const { count } = await supabase
+ .from('orders')
+ .select('*', { count: 'exact', head: true })
+ .eq('pharmacy_id', pharmacyId)
+ .eq('status', 'cancelled');
 
-      if (count && count > 0) {
-          const { error } = await supabase
-            .from('orders')
-            .delete()
-            .eq('pharmacy_id', pharmacyId)
-            .eq('status', 'cancelled');
-          
-          if (error) throw error;
-          deletedCount = count;
-      }
+ if (count && count > 0) {
+ const { error } = await supabase
+ .from('orders')
+ .delete()
+ .eq('pharmacy_id', pharmacyId)
+ .eq('status', 'cancelled');
+ 
+ if (error) throw error;
+ deletedCount = count;
+ }
 
-    } else if (type === 'sessions') {
-      
-      const sessionThreshold = new Date();
-      sessionThreshold.setFullYear(sessionThreshold.getFullYear() - 1);
-      
-      
-      const { count } = await supabase
-        .from('sessions')
-        .select('*', { count: 'exact', head: true })
-        .eq('pharmacy_id', pharmacyId)
-        .not('logout_time', 'is', null) 
-        .lt('logout_time', sessionThreshold.toISOString());
+ } else if (type === 'sessions') {
+ 
+ const sessionThreshold = new Date();
+ sessionThreshold.setFullYear(sessionThreshold.getFullYear() - 1);
+ 
+ 
+ const { count } = await supabase
+ .from('sessions')
+ .select('*', { count: 'exact', head: true })
+ .eq('pharmacy_id', pharmacyId)
+ .not('logout_time', 'is', null) 
+ .lt('logout_time', sessionThreshold.toISOString());
 
-      if (count && count > 0) {
-          const { error } = await supabase
-            .from('sessions')
-            .delete()
-            .eq('pharmacy_id', pharmacyId)
-            .not('logout_time', 'is', null)
-            .lt('logout_time', sessionThreshold.toISOString());
-          
-          if (error) throw error;
-          deletedCount = count;
-      }
+ if (count && count > 0) {
+ const { error } = await supabase
+ .from('sessions')
+ .delete()
+ .eq('pharmacy_id', pharmacyId)
+ .not('logout_time', 'is', null)
+ .lt('logout_time', sessionThreshold.toISOString());
+ 
+ if (error) throw error;
+ deletedCount = count;
+ }
 
-    } else {
-      return NextResponse.json({ success: false, error: 'نوع التنظيف غير مدعوم بالنظام' }, { status: 400 });
-    }
+ } else {
+ return NextResponse.json({ success: false, error: 'نوع التنظيف غير مدعوم بالنظام' }, { status: 400 });
+ }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `تم تنظيف بيانات ${type} بنجاح.`,
-      count: deletedCount
-    });
+ return NextResponse.json({ 
+ success: true, 
+ message: `تم تنظيف بيانات ${type} بنجاح.`,
+ count: deletedCount
+ });
 
-  } catch (error: any) {
-    console.error('DB Cleanup Error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'حدث خطأ أثناء تنظيف قاعدة البيانات' }, 
-      { status: 500 }
-    );
-  }
+ } catch (error: any) {
+ console.error('DB Cleanup Error:', error);
+ return NextResponse.json(
+ { success: false, error: error.message || 'حدث خطأ أثناء تنظيف قاعدة البيانات' }, 
+ { status: 500 }
+ );
+ }
 }

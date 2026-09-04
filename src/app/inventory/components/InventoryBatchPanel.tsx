@@ -1,358 +1,395 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Check, X, Loader2, Save, Calendar, Hash } from 'lucide-react';
-import { updateBatch, createBatch } from '@/lib/api/products';
+import { Plus, Trash2, Barcode, Calendar, DollarSign, Edit2, Loader2, Save } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { deleteProduct, createBatch, deleteBatch, updateBatch } from '@/lib/api/products';
 
 interface Batch {
-  id: string;
-  barcode: string;
-  quantity: number;
-  purchase_price: number;
-  sale_price: number;
-  expiry_date: string;
+ id: string;
+ barcode: string;
+ quantity: number;
+ purchase_price: number;
+ sale_price: number;
+ expiry_date: string;
 }
 
 interface InventoryItem {
-  id: string;
-  name: string;
-  type: string;
-  company: string;
-  inventory_method: string;
-  total_quantity: number;
-  current_price: number;
-  batches: Batch[];
+ id: string;
+ name: string;
+ type: string;
+ company: string;
+ inventory_method: string;
+ total_quantity: number;
+ current_price: number;
+ batches: Batch[];
+ pharmacy_id?: string;
+ pharmacy_name?: string;
 }
 
-interface BatchFormInput {
-  barcode: string;
-  quantity: string;
-  purchase_price: string;
-  sale_price: string;
-  expiry_date: string;
-}
+export function InventoryBatchPanel({
+ item,
+ fetchInventory,
+ setInventoryError,
+ user,
+}: {
+ item: InventoryItem;
+ fetchInventory: () => void;
+ setInventoryError: (error: string | null) => void;
+ user: any;
+}) {
+ const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
+ const [showAddForm, setShowAddForm] = useState(false);
+ const [newBatch, setNewBatch] = useState({
+ barcode: '',
+ quantity: 1,
+ purchase_price: item.batches.length > 0 ? item.batches[0].purchase_price : 0,
+ sale_price: item.batches.length > 0 ? item.current_price || item.batches[0].sale_price : 0,
+ expiry_date: '',
+ });
 
-const initialFormState: BatchFormInput = {
-  barcode: '',
-  quantity: '0',
-  purchase_price: '0',
-  sale_price: '0',
-  expiry_date: ''
-};
+ const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
 
-interface InventoryBatchPanelProps {
-  item: InventoryItem;
-  fetchInventory: () => Promise<void>;
-  setInventoryError: (error: string | null) => void;
-}
+ const parseDate = (input: string) => {
+ if (!input) return '';
+ const parts = input.split(/[\/\-.]/).map(p => p.trim());
+ if (parts.length === 3) {
+ const d = parts[0].padStart(2, '0');
+ const m = parts[1].padStart(2, '0');
+ const y = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+ return `${y}-${m}-${d}`;
+ }
+ if (parts.length === 2) {
+ const m = parts[0].padStart(2, '0');
+ const y = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
+ return `${y}-${m}-15`;
+ }
+ return input;
+ };
 
-export function InventoryBatchPanel({ item, fetchInventory, setInventoryError }: InventoryBatchPanelProps) {
-  const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<BatchFormInput>(initialFormState);
-  const [isSaving, setIsSaving] = useState(false);
+ const handleAddBatch = async () => {
+ try {
+ if (!newBatch.quantity || !newBatch.expiry_date || !newBatch.purchase_price || !newBatch.sale_price) {
+ setInventoryError('الرجاء إكمال كافة البيانات المطلوبة للتشغيلة');
+ return;
+ }
 
-  const [addingBatch, setAddingBatch] = useState(false);
-  const [newBatchForm, setNewBatchForm] = useState<BatchFormInput>(initialFormState);
-  const [isAddingMode, setIsAddingMode] = useState(false);
+ await createBatch({
+ product_id: item.id,
+ ...newBatch,
+ expiry_date: parseDate(newBatch.expiry_date),
+ });
 
-  const parseDate = (input: string) => {
-    if (!input) return '';
-    const parts = input.split(/[\/\-.]/).map(p => p.trim());
-    if (parts.length === 3) {
-      const d = parts[0].padStart(2, '0');
-      const m = parts[1].padStart(2, '0');
-      const y = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
-      return `${y}-${m}-${d}`;
-    }
-    if (parts.length === 2) {
-      const m = parts[0].padStart(2, '0');
-      const y = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
-      return `${y}-${m}-15`;
-    }
-    return input;
-  };
+ setShowAddForm(false);
+ setNewBatch({
+ barcode: '',
+ quantity: 1,
+ purchase_price: newBatch.purchase_price,
+ sale_price: newBatch.sale_price,
+ expiry_date: '',
+ });
+ fetchInventory();
+ } catch (error: any) {
+ console.error('Error adding batch:', error);
+ setInventoryError(error.message || 'حدث خطأ أثناء إضافة التشغيلة');
+ }
+ };
 
-  const validateForm = (form: BatchFormInput, checkExpiry = false): boolean => {
-    const q = Number(form.quantity);
-    const p = Number(form.purchase_price);
-    const s = Number(form.sale_price);
+ const handleUpdateBatch = async () => {
+ if (!editingBatch) return;
+ try {
+ await updateBatch(editingBatch.id, {
+ barcode: editingBatch.barcode,
+ quantity: editingBatch.quantity,
+ purchase_price: editingBatch.purchase_price,
+ sale_price: editingBatch.sale_price,
+ expiry_date: parseDate(editingBatch.expiry_date)
+ });
+ setEditingBatch(null);
+ fetchInventory();
+ } catch (error: any) {
+ console.error('Error updating batch:', error);
+ setInventoryError(error.message || 'حدث خطأ أثناء تحديث التشغيلة');
+ }
+ };
 
-    if (!form.barcode.trim()) {
-      setInventoryError("خطأ: الباركود لا يمكن أن يكون فارغاً.");
-      return false;
-    }
-    if (isNaN(q) || q <= 0 || isNaN(p) || p <= 0 || isNaN(s) || s <= 0) {
-      setInventoryError("خطأ: الكمية والأسعار يجب أن تكون أرقاماً أكبر من صفر.");
-      return false;
-    }
-    if (checkExpiry && !form.expiry_date) {
-      setInventoryError("خطأ: يجب تحديد تاريخ انتهاء الصلاحية.");
-      return false;
-    }
-    return true;
-  };
+ const handleDeleteBatch = async (batchId: string) => {
+ if (!window.confirm('هل أنت متأكد من حذف هذه التشغيلة؟ سيتم مسح الكمية المرتبطة بها نهائياً.')) return;
+ try {
+ await deleteBatch(batchId);
+ fetchInventory();
+ } catch (error: any) {
+ console.error('Error deleting batch:', error);
+ setInventoryError(error.message || 'فشل حذف التشغيلة. قد تكون مرتبطة بعمليات بيع.');
+ }
+ };
 
-  const startEditing = (batch: Batch) => {
-    setEditingBatchId(batch.id);
-    setEditForm({
-      barcode: batch.barcode,
-      quantity: String(batch.quantity),
-      purchase_price: String(batch.purchase_price),
-      sale_price: String(batch.sale_price),
-      expiry_date: batch.expiry_date,
-    });
-  };
+ const handleDeleteProduct = async () => {
+ if (!window.confirm(`هل أنت متأكد من حذف المنتج "${item.name}" نهائياً من النظام؟`)) return;
+ try {
+ await deleteProduct(item.id);
+ fetchInventory();
+ } catch (error: any) {
+ console.error('Error deleting product:', error);
+ setInventoryError(error.message || 'فشل حذف المنتج. قد يكون هناك مبيعات مرتبطة به.');
+ }
+ };
 
-  const cancelEditing = () => {
-    setEditingBatchId(null);
-    setEditForm(initialFormState);
-  };
+ return (
+ <div className="p-6 bg-white/[0.02] border-t border-[var(--glass-border)]">
+ <div className="flex justify-between items-center mb-4">
+ <h4 className="text-sm font-bold text-gray-400 font-cairo">التشغيلات المتاحة</h4>
+ <div className="flex gap-2">
+ {item.pharmacy_id === user?.user_metadata?.pharmacy_id && (
+ <>
+ <button
+ onClick={() => setShowAddForm(!showAddForm)}
+ className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--nile-teal)]/10 hover:bg-[var(--nile-teal)]/20 text-[var(--nile-teal)] text-xs font-bold font-cairo transition-all"
+ >
+ <Plus className="w-3.5 h-3.5" /> إضافة تشغيلة
+ </button>
+ <button
+ onClick={handleDeleteProduct}
+ className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold font-cairo transition-all"
+ >
+ <Trash2 className="w-3.5 h-3.5" /> حذف المنتج نهائياً
+ </button>
+ </>
+ )}
+ </div>
+ </div>
 
-  const handleSaveBatch = async (batchId: string) => {
-    if (!validateForm(editForm)) return;
+ <AnimatePresence>
+ {showAddForm && (
+ <motion.div
+ initial={{ height: 0, opacity: 0 }}
+ animate={{ height: 'auto', opacity: 1 }}
+ exit={{ height: 0, opacity: 0 }}
+ className="mb-8 border border-[var(--nile-teal)]/20 bg-[var(--nile-teal)]/5 rounded-2xl p-6 overflow-hidden"
+ >
+ <h5 className="text-sm font-bold text-[var(--nile-teal)] mb-4 font-cairo">إضافة تشغيلة (Batch) جديدة</h5>
+ <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+ <div className="space-y-1.5">
+ <label className="text-[10px] text-gray-400 font-cairo px-1">الباركود</label>
+ <div className="relative">
+ <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+ <input
+ type="text"
+ value={newBatch.barcode}
+ onChange={(e) => setNewBatch({ ...newBatch, barcode: e.target.value })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
+ placeholder="باركود التشغيلة..."
+ />
+ </div>
+ </div>
 
-    setIsSaving(true);
-    try {
-      await updateBatch(batchId, {
-        quantity: Number(editForm.quantity),
-        purchase_price: Number(editForm.purchase_price),
-        sale_price: Number(editForm.sale_price),
-        barcode: editForm.barcode.trim(),
-        expiry_date: parseDate(editForm.expiry_date)
-      });
-      setEditingBatchId(null);
-      await fetchInventory();
-    } catch (error) {
-      setInventoryError("فشل تحديث بيانات التشغيلة.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+ <div className="space-y-1.5">
+ <label className="text-[10px] text-gray-400 font-cairo px-1">الكمية <span className="text-red-400">*</span></label>
+ <input
+ type="number"
+ min="1"
+ value={newBatch.quantity}
+ onChange={(e) => setNewBatch({ ...newBatch, quantity: Number(e.target.value) })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
+ />
+ </div>
 
-  const startAddingBatch = () => {
-    setIsAddingMode(true);
-    setNewBatchForm(initialFormState);
-  };
+ <div className="space-y-1.5">
+ <label className="text-[10px] text-gray-400 font-cairo px-1">تاريخ الانتهاء <span className="text-red-400">*</span></label>
+ <div className="relative">
+ <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+ <input
+ type="text"
+ value={newBatch.expiry_date}
+ onChange={(e) => setNewBatch({ ...newBatch, expiry_date: e.target.value })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
+ placeholder="DD/MM/YYYY أو MM/YYYY"
+ />
+ </div>
+ </div>
 
-  const handleCreateBatch = async () => {
-    if (!validateForm(newBatchForm, true)) return;
+ <div className="space-y-1.5">
+ <label className="text-[10px] text-gray-400 font-cairo px-1">سعر الشراء <span className="text-red-400">*</span></label>
+ <div className="relative">
+ <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+ <input
+ type="number"
+ step="0.01"
+ value={newBatch.purchase_price}
+ onChange={(e) => setNewBatch({ ...newBatch, purchase_price: Number(e.target.value) })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
+ />
+ </div>
+ </div>
 
-    setAddingBatch(true);
-    try {
-      await createBatch({
-        product_id: item.id,
-        barcode: newBatchForm.barcode.trim(),
-        quantity: Number(newBatchForm.quantity),
-        purchase_price: Number(newBatchForm.purchase_price),
-        sale_price: Number(newBatchForm.sale_price),
-        expiry_date: parseDate(newBatchForm.expiry_date),
-      });
-      setIsAddingMode(false);
-      await fetchInventory();
-    } catch (error) {
-      setInventoryError("فشل إضافة التشغيلة الجديدة.");
-    } finally {
-      setAddingBatch(false);
-    }
-  };
+ <div className="space-y-1.5">
+ <label className="text-[10px] text-gray-400 font-cairo px-1">سعر البيع <span className="text-red-400">*</span></label>
+ <div className="relative">
+ <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+ <input
+ type="number"
+ step="0.01"
+ value={newBatch.sale_price}
+ onChange={(e) => setNewBatch({ ...newBatch, sale_price: Number(e.target.value) })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl pl-10 pr-3 py-2 text-sm text-white focus:border-[var(--nile-teal)] outline-none transition-all"
+ />
+ </div>
+ </div>
+ </div>
+ <div className="mt-6 flex justify-end gap-3">
+ <button
+ onClick={() => setShowAddForm(false)}
+ className="px-4 py-2 rounded-xl bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 text-xs font-cairo transition-all"
+ >
+ إلغاء
+ </button>
+ <button
+ onClick={handleAddBatch}
+ className="px-6 py-2 rounded-xl bg-glass-surface from-[var(--nile-teal)] to-[#01AFB2] text-white text-xs font-bold font-cairo transition-all shadow-lg shadow-[var(--nile-teal)]/20 hover:scale-[1.02] active:scale-95"
+ >
+ حفظ التشغيلة
+ </button>
+ </div>
+ </motion.div>
+ )}
+ </AnimatePresence>
+ {item.batches.length === 0 ? (
+ <p className="text-gray-500 text-sm font-cairo">لا توجد تشغيلات مسجلة</p>
+ ) : (
+ <div className="space-y-4">
+ {item.batches.map((batch) => {
+ const isEditing = editingBatch?.id === batch.id;
+ const currentBatch = isEditing ? editingBatch : batch;
+ 
+ return (
+ <div
+ key={batch.id}
+ className={`p-5 rounded-2xl border transition-all ${
+ isEditing 
+ ? 'bg-[var(--nile-teal)]/5 border-[var(--nile-teal)]/30 shadow-lg shadow-[var(--nile-teal)]/5' 
+ : 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-white/20'
+ }`}
+ >
+ <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+ {/* Barcode */}
+ <div className="space-y-1.5">
+ <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">الباركود</p>
+ {isEditing ? (
+ <input
+ type="text"
+ value={currentBatch.barcode}
+ onChange={(e) => setEditingBatch({ ...currentBatch, barcode: e.target.value })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none"
+ />
+ ) : (
+ <p className="text-sm font-mono text-gray-300">{batch.barcode || '---'}</p>
+ )}
+ </div>
 
-  return (
-    <div className="p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {isAddingMode ? (
-          <div className="glass-card p-5 border-[var(--nile-teal)]/50 bg-[var(--nile-teal)]/5 relative shadow-[0_0_15px_rgba(0,206,209,0.1)]">
-            <h4 className="text-sm font-bold text-[var(--nile-teal)] mb-3 flex items-center gap-2 font-cairo">
-              <Plus className="w-4 h-4" /> إضافة تشغيلة جديدة
-            </h4>
-            <div className="space-y-3">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 block mb-1 font-cairo">الباركود</label>
-                  <input 
-                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                    value={newBatchForm.barcode}
-                    onChange={(e) => setNewBatchForm({...newBatchForm, barcode: e.target.value})}
-                  />
-                </div>
-                <div className="w-24">
-                  <label className="text-[10px] text-gray-400 block mb-1 font-cairo">الكمية</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                    value={newBatchForm.quantity}
-                    onChange={(e) => setNewBatchForm({...newBatchForm, quantity: e.target.value})}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 block mb-1 font-cairo">سعر الشراء</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                    value={newBatchForm.purchase_price}
-                    onChange={(e) => setNewBatchForm({...newBatchForm, purchase_price: e.target.value})}
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 block mb-1 font-cairo">سعر البيع</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                    value={newBatchForm.sale_price}
-                    onChange={(e) => setNewBatchForm({...newBatchForm, sale_price: e.target.value})}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-[10px] text-gray-400 block mb-1 font-cairo">تاريخ الانتهاء</label>
-                <input 
-                  type="text"
-                  className="w-full bg-black/40 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                  value={newBatchForm.expiry_date}
-                  onChange={(e) => setNewBatchForm({...newBatchForm, expiry_date: e.target.value})}
-                  placeholder="MM/YYYY أو DD/MM/YYYY"
-                />
-              </div>
-              <div className="flex gap-2 justify-end pt-2">
-                <button 
-                  onClick={() => setIsAddingMode(false)}
-                  className="px-3 py-1.5 rounded bg-[var(--glass-surface)] border border-[var(--glass-border)] text-white hover:bg-[var(--glass-surface-heavy)] font-cairo text-sm"
-                >
-                  إلغاء
-                </button>
-                <button 
-                  disabled={addingBatch}
-                  onClick={handleCreateBatch}
-                  className="px-3 py-1.5 rounded bg-gradient-to-r from-[var(--nile-teal)] to-[var(--nile-teal)]/80 text-black hover:opacity-90 font-bold font-cairo text-sm flex items-center gap-2 disabled:opacity-50"
-                >
-                  {addingBatch ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                  حفظ
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <button 
-            onClick={startAddingBatch}
-            className="glass-card p-5 border-dashed border-white/20 hover:border-[var(--nile-teal)]/50 hover:bg-[var(--nile-teal)]/5 transition-all text-[var(--nile-teal)] font-cairo flex flex-col items-center justify-center gap-3 min-h-[160px]"
-          >
-            <Plus className="w-8 h-8" />
-            <span className="font-bold">إضافة تشغيلة جديدة</span>
-          </button>
-        )}
-        {item.batches.map((batch) => (
-          <div key={batch.id} className="glass-card p-5 border-[var(--glass-border)] relative group hover:border-[var(--royal-gold)]/30 transition-all">
-            {editingBatchId === batch.id ? (
-              <div className="space-y-4">
-                <div className="flex justify-between gap-4">
-                  <div className="flex-1">
-                    <label className="text-[10px] text-gray-500 block mb-1 font-cairo">الباركود</label>
-                    <input 
-                      className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                      value={editForm.barcode}
-                      onChange={(e) => setEditForm({...editForm, barcode: e.target.value})}
-                    />
-                  </div>
-                  <div className="w-24">
-                    <label className="text-[10px] text-gray-500 block mb-1 font-cairo">الكمية</label>
-                    <input 
-                      type="number"
-                      className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                      value={editForm.quantity}
-                      onChange={(e) => setEditForm({...editForm, quantity: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <div className="flex-1">
-                    <label className="text-[10px] text-gray-500 block mb-1 font-cairo">سعر الشراء</label>
-                    <input 
-                      type="number"
-                      className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                      value={editForm.purchase_price}
-                      onChange={(e) => setEditForm({...editForm, purchase_price: e.target.value})}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-[10px] text-gray-500 block mb-1 font-cairo">سعر البيع</label>
-                    <input 
-                      type="number"
-                      className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                      value={editForm.sale_price}
-                      onChange={(e) => setEditForm({...editForm, sale_price: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <label className="text-[10px] text-gray-500 block mb-1 font-cairo">تاريخ الانتهاء</label>
-                  <input 
-                    type="text"
-                    className="w-full bg-black/20 border border-[var(--glass-border)] rounded px-2 py-1 text-sm outline-none focus:border-[var(--nile-teal)]"
-                    value={editForm.expiry_date}
-                    onChange={(e) => setEditForm({...editForm, expiry_date: e.target.value})}
-                    placeholder="MM/YYYY"
-                  />
-                </div>
-                <div className="flex gap-2 justify-end pt-2">
-                  <button 
-                    onClick={cancelEditing}
-                    className="p-1.5 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleSaveBatch(batch.id)}
-                    disabled={isSaving}
-                    className="p-1.5 rounded bg-green-500/10 text-green-400 hover:bg-green-500/20 disabled:opacity-50"
-                  >
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <button 
-                  onClick={() => startEditing(batch)}
-                  className="absolute top-4 left-4 p-2 rounded-lg bg-[var(--glass-surface)] text-gray-500 opacity-0 group-hover:opacity-100 transition-all hover:text-[var(--nile-teal)] hover:bg-[var(--nile-teal)]/10"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-2 text-xs text-gray-500 font-cairo">
-                    <Hash className="w-3 h-3" />
-                    {batch.barcode}
-                  </div>
-                  <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${new Date(batch.expiry_date) < new Date() ? 'bg-red-500/20 text-red-400' : 'bg-[var(--nile-teal)]/10 text-[var(--nile-teal)]'}`}>
-                    {new Date(batch.expiry_date) < new Date() ? 'منتهي' : 'صالح'}
-                  </div>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <div className="flex items-center gap-2 text-foreground font-bold mb-1">
-                      <span className="text-2xl font-cairo">{batch.quantity}</span>
-                      <span className="text-xs text-gray-500 font-cairo">علبة</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 font-cairo">
-                      <Calendar className="w-3 h-3" />
-                      <span>انتهاء:</span>
-                      <span dir="ltr">{new Date(batch.expiry_date).toLocaleDateString('ar-EG', { month: '2-digit', year: 'numeric' })}</span>
-                    </div>
-                  </div>
-                  <div className="text-left flex gap-6">
-                    <div className="flex flex-col gap-1">
-                      <p className="text-[10px] text-gray-500 font-cairo">سعر الشراء</p>
-                      <p className="font-bold text-gray-400 font-cairo text-sm" dir="ltr">{batch.purchase_price} ج.م</p>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <p className="text-[10px] text-gray-500 font-cairo">سعر البيع</p>
-                      <p className="font-bold text-[var(--royal-gold)] font-cairo text-sm" dir="ltr">{batch.sale_price} ج.م</p>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+ {/* Quantity */}
+ <div className="space-y-1.5">
+ <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">الكمية</p>
+ {isEditing ? (
+ <input
+ type="number"
+ value={currentBatch.quantity}
+ onChange={(e) => setEditingBatch({ ...currentBatch, quantity: Number(e.target.value) })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none"
+ />
+ ) : (
+ <p className={`text-sm font-bold ${batch.quantity < 10 ? 'text-orange-400' : 'text-[var(--nile-teal)]'}`}>
+ {batch.quantity}
+ </p>
+ )}
+ </div>
+
+ {/* Expiry */}
+ <div className="space-y-1.5">
+ <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">تاريخ الانتهاء</p>
+ {isEditing ? (
+ <input
+ type="date"
+ value={currentBatch.expiry_date}
+ onChange={(e) => setEditingBatch({ ...currentBatch, expiry_date: e.target.value })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none [color-scheme:dark]"
+ />
+ ) : (
+ <p className="text-sm text-gray-300">
+ {new Date(batch.expiry_date).toLocaleDateString('ar-EG')}
+ </p>
+ )}
+ </div>
+
+ {/* Purchase Price */}
+ <div className="space-y-1.5">
+ <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">سعر الشراء</p>
+ {isEditing ? (
+ <input
+ type="number"
+ step="0.01"
+ value={currentBatch.purchase_price}
+ onChange={(e) => setEditingBatch({ ...currentBatch, purchase_price: Number(e.target.value) })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none"
+ />
+ ) : (
+ <p className="text-sm text-gray-300">{batch.purchase_price} ج.م</p>
+ )}
+ </div>
+
+ {/* Sale Price */}
+ <div className="space-y-1.5">
+ <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider font-cairo">سعر البيع</p>
+ {isEditing ? (
+ <input
+ type="number"
+ step="0.01"
+ value={currentBatch.sale_price}
+ onChange={(e) => setEditingBatch({ ...currentBatch, sale_price: Number(e.target.value) })}
+ className="w-full bg-black/40 border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-white focus:border-[var(--nile-teal)] outline-none"
+ />
+ ) : (
+ <p className="text-sm text-[var(--royal-gold)] font-bold">{batch.sale_price} ج.م</p>
+ )}
+ </div>
+ </div>
+
+ <div className="mt-4 pt-4 border-t border-[var(--glass-border)] flex justify-end gap-3">
+ {isEditing ? (
+ <>
+ <button
+ onClick={handleUpdateBatch}
+ className="px-4 py-2 bg-glass-surface from-[var(--nile-teal)] to-[#01AFB2] text-white rounded-xl text-[10px] font-bold font-cairo transition-all hover:scale-105 active:scale-95"
+ >
+ حفظ التعديلات
+ </button>
+ <button
+ onClick={() => setEditingBatch(null)}
+ className="px-4 py-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 rounded-xl text-[10px] font-cairo transition-all"
+ >
+ إلغاء
+ </button>
+ </>
+ ) : (
+ <>
+ <button
+ onClick={() => setEditingBatch({...batch})}
+ className="px-4 py-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] text-gray-400 hover:text-white rounded-xl text-[10px] font-bold font-cairo transition-all"
+ >
+ تعديل
+ </button>
+ <button
+ onClick={() => handleDeleteBatch(batch.id)}
+ className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all"
+ title="حذف التشغيلة"
+ >
+ <Trash2 className="w-3.5 h-3.5" />
+ </button>
+ </>
+ )}
+ </div>
+ </div>
+ );
+ })}
+ </div>
+ )}
+ </div>
+ );
 }

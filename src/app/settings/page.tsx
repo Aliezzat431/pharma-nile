@@ -6,24 +6,24 @@ type Tab = 'general' | 'notifications' | 'appearance' | 'shortcuts' | 'database'
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { 
-  Settings as SettingsIcon, 
-  CreditCard, 
-  Bell, 
-  Shield, 
-  Smartphone, 
-  Palette, 
-  Moon, 
-  Sun, 
-  X, 
-  Trees, 
-  Ghost, 
-  CloudSnow, 
-  Waves, 
-  Coffee, 
-  Sparkles, 
-  Zap, 
-  CheckCircle2,
-  Users
+ Settings as SettingsIcon, 
+ CreditCard, 
+ Bell, 
+ Shield, 
+ Smartphone, 
+ Palette, 
+ Moon, 
+ Sun, 
+ X, 
+ Trees, 
+ Ghost, 
+ CloudSnow, 
+ Waves, 
+ Coffee, 
+ Sparkles, 
+ Zap, 
+ CheckCircle2,
+ Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -40,312 +40,312 @@ import { Sunset } from 'lucide-react';
 
 
 const ALL_THEMES = [
-  
-  { 
-    id: "dark", 
-    label: "الوضع الليلي", 
-    icon: Moon, 
-    desc: "الوضع الافتراضي المريح للعين", 
-    color: "bg-[#050505]",
-    category: "basic"
-  },
-  { 
-    id: "light", 
-    label: "الوضع النهاري", 
-    icon: Sun, 
-    desc: "وضوح عالي للإضاءة القوية", 
-    color: "bg-[#f8fafc]",
-    category: "basic"
-  },
+ 
+ { 
+ id: "dark", 
+ label: "الوضع الليلي", 
+ icon: Moon, 
+ desc: "الوضع الافتراضي المريح للعين", 
+ color: "bg-[#050505]",
+ category: "basic"
+ },
+ { 
+ id: "light", 
+ label: "الوضع النهاري", 
+ icon: Sun, 
+ desc: "وضوح عالي للإضاءة القوية", 
+ color: "bg-[#f8fafc]",
+ category: "basic"
+ },
 
-  
-  { 
-    id: "midnight", 
-    label: "منتصف الليل", 
-    icon: Star, 
-    desc: "أزرق عميق يجمع بين الهدوء والأناقة", 
-    color: "bg-[#020612]",
-    category: "calm"
-  },
-  { 
-    id: "forest", 
-    label: "الغابة العميقة", 
-    icon: Trees, 
-    desc: "أخضر طبيعي مريح جداً للعين", 
-    color: "bg-[#040d0a]",
-    category: "calm"
-  },
-  { 
-    id: "coffee", 
-    label: "وضع القهوة", 
-    icon: Coffee, 
-    desc: "ألوان ترابية دافئة للتركيز", 
-    color: "bg-[#140d0b]",
-    category: "calm"
-  },
-  { 
-    id: "dracula", 
-    label: "دراكولا", 
-    icon: Ghost, 
-    desc: "ناعم ومريح لساعات العمل الطويلة", 
-    color: "bg-[#1e1f29]",
-    category: "calm"
-  },
+ 
+ { 
+ id: "midnight", 
+ label: "منتصف الليل", 
+ icon: Star, 
+ desc: "أزرق عميق يجمع بين الهدوء والأناقة", 
+ color: "bg-[#020612]",
+ category: "calm"
+ },
+ { 
+ id: "forest", 
+ label: "الغابة العميقة", 
+ icon: Trees, 
+ desc: "أخضر طبيعي مريح جداً للعين", 
+ color: "bg-[#040d0a]",
+ category: "calm"
+ },
+ { 
+ id: "coffee", 
+ label: "وضع القهوة", 
+ icon: Coffee, 
+ desc: "ألوان ترابية دافئة للتركيز", 
+ color: "bg-[#140d0b]",
+ category: "calm"
+ },
+ { 
+ id: "dracula", 
+ label: "دراكولا", 
+ icon: Ghost, 
+ desc: "ناعم ومريح لساعات العمل الطويلة", 
+ color: "bg-[#1e1f29]",
+ category: "calm"
+ },
 
-  
-  { 
-    id: "ocean", 
-    label: "أعماق المحيط", 
-    icon: Waves, 
-    desc: "سيان مشرق وطاقة لا تنتهي", 
-    color: "bg-[#010b14]",
-    category: "vibrant"
-  },
-  { 
-    id: "amethyst", 
-    label: "الجمشت الملكي", 
-    icon: Sparkles, 
-    desc: "بنفسجي فاخر يعكس هوية بريميوم", 
-    color: "bg-[#0d0b1a]",
-    category: "vibrant"
-  },
-  { 
-    id: "sunset", 
-    label: "وقت الغروب", 
-    icon: Sunset, 
-    desc: "مزيج دافئ من البرتقالي والأحمر", 
-    color: "bg-[#140806]",
-    category: "vibrant"
-  },
-  { 
-    id: "cyberpunk", 
-    label: "سايبر بانك", 
-    icon: Zap, 
-    desc: "تباين عالي وألوان نيون مستقبلية", 
-    color: "bg-[#000000]",
-    category: "vibrant"
-  },
-  { 
-    id: "snowy", 
-    label: "وضوح الثلج", 
-    icon: CloudSnow, 
-    desc: "أبيض ناصع مع لمسات جليدية نقية", 
-    color: "bg-[#f8fafc]",
-    category: "vibrant"
-  },
+ 
+ { 
+ id: "ocean", 
+ label: "أعماق المحيط", 
+ icon: Waves, 
+ desc: "سيان مشرق وطاقة لا تنتهي", 
+ color: "bg-[#010b14]",
+ category: "vibrant"
+ },
+ { 
+ id: "amethyst", 
+ label: "الجمشت الملكي", 
+ icon: Sparkles, 
+ desc: "بنفسجي فاخر يعكس هوية بريميوم", 
+ color: "bg-[#0d0b1a]",
+ category: "vibrant"
+ },
+ { 
+ id: "sunset", 
+ label: "وقت الغروب", 
+ icon: Sunset, 
+ desc: "مزيج دافئ من البرتقالي والأحمر", 
+ color: "bg-[#140806]",
+ category: "vibrant"
+ },
+ { 
+ id: "cyberpunk", 
+ label: "سايبر بانك", 
+ icon: Zap, 
+ desc: "تباين عالي وألوان نيون مستقبلية", 
+ color: "bg-[#000000]",
+ category: "vibrant"
+ },
+ { 
+ id: "snowy", 
+ label: "وضوح الثلج", 
+ icon: CloudSnow, 
+ desc: "أبيض ناصع مع لمسات جليدية نقية", 
+ color: "bg-[#f8fafc]",
+ category: "vibrant"
+ },
 ];
 
 export default function Settings() {
-  const { user } = useAuth();
-  const userRole = user?.user_metadata?.role;
+ const { user } = useAuth();
+ const userRole = user?.user_metadata?.role;
 
-  const { preferences, updateMultiplePreferences, isLoaded, refresh } = usePreferences();
-  const [activeTab, setActiveTab] = useState<Tab>('general');
-  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+ const { preferences, updateMultiplePreferences, isLoaded, refresh } = usePreferences();
+ const [activeTab, setActiveTab] = useState<Tab>('general');
+ const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+ const { theme, setTheme } = useTheme();
 
-  useEffect(() => {
-    if (userRole === 'chain_admin') {
-      setActiveTab('chain');
-    }
-  }, [userRole]);
+ useEffect(() => {
+ if (userRole === 'chain_admin') {
+ setActiveTab('chain');
+ }
+ }, [userRole]);
 
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme);
-  };
+ const handleThemeChange = (newTheme: string) => {
+ setTheme(newTheme);
+ };
 
-  const tabs: { id: Tab; label: string; icon: any }[] = userRole === 'chain_admin' 
-    ? [ { id: 'chain', label: 'إدارة السلسلة والفروع', icon: Shield } ]
-    : userRole === 'developer'
-    ? [
-        { id: 'general', label: 'الإعدادات العامة', icon: Shield },
-        { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
-        { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
-        { id: 'database', label: 'إدارة البيانات والتنظيف', icon: Zap },
-        { id: 'chain', label: 'إدارة السلسلة والفروع', icon: Shield },
-        { id: 'about', label: 'عن المطورين', icon: Users },
-      ]
-    : [
-        { id: 'general', label: 'الإعدادات العامة', icon: Shield },
-        { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
-        { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
-        { id: 'database', label: 'إدارة البيانات والتنظيف', icon: Zap },
-        { id: 'about', label: 'عن المطورين', icon: Users },
-      ];
+ const tabs: { id: Tab; label: string; icon: any }[] = userRole === 'chain_admin' 
+ ? [ { id: 'chain', label: 'إدارة السلسلة والفروع', icon: Shield } ]
+ : userRole === 'developer'
+ ? [
+ { id: 'general', label: 'الإعدادات العامة', icon: Shield },
+ { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
+ { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
+ { id: 'database', label: 'إدارة البيانات والتنظيف', icon: Zap },
+ { id: 'chain', label: 'إدارة السلسلة والفروع', icon: Shield },
+ { id: 'about', label: 'عن المطورين', icon: Users },
+ ]
+ : [
+ { id: 'general', label: 'الإعدادات العامة', icon: Shield },
+ { id: 'appearance', label: 'المظهر والواجهة', icon: Smartphone },
+ { id: 'shortcuts', label: 'اختصارات التطبيق', icon: Palette },
+ { id: 'database', label: 'إدارة البيانات والتنظيف', icon: Zap },
+ { id: 'about', label: 'عن المطورين', icon: Users },
+ ];
 
-  return (
-    <div className="px-4 md:px-8 w-full max-w-6xl mx-auto space-y-8 pb-12">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <motion.h1
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-4xl font-black flex items-center gap-4 font-cairo tracking-tight"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-              className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--nile-teal)] to-purple-500 flex items-center justify-center shadow-[0_0_20px_var(--nile-teal-glow)] relative"
-            >
-              <div className="absolute inset-0 rounded-2xl bg-white/20 blur-md" />
-              <SettingsIcon className="text-black w-6 h-6 z-10" />
-            </motion.div>
-            <span className="nile-gradient-text">إعدادات النظام</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-[var(--text-secondary)] font-cairo text-sm font-bold uppercase tracking-widest"
-          >
-            System Configuration · Preferences
-          </motion.p>
-        </div>
+ return (
+ <div className="px-4 md:px-8 w-full max-w-6xl mx-auto space-y-8 pb-12">
+ <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+ <div className="space-y-1">
+ <motion.h1
+ initial={{ opacity: 0, x: -20 }}
+ animate={{ opacity: 1, x: 0 }}
+ className="text-4xl font-black flex items-center gap-4 font-cairo tracking-tight"
+ >
+ <motion.div
+ animate={{ rotate: 360 }}
+ transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+ className="w-12 h-12 rounded-2xl bg-glass-surface from-[var(--nile-teal)] flex items-center justify-center shadow-[0_0_20px_var(--nile-teal-glow)] relative"
+ >
+ <div className="absolute inset-0 rounded-2xl bg-white/20 blur-md" />
+ <SettingsIcon className="text-black w-6 h-6 z-10" />
+ </motion.div>
+ <span className="text-nile-teal font-medium">إعدادات النظام</span>
+ </motion.h1>
+ <motion.p
+ initial={{ opacity: 0, x: -20 }}
+ animate={{ opacity: 1, x: 0 }}
+ transition={{ delay: 0.1 }}
+ className="text-[var(--text-secondary)] font-cairo text-sm font-bold uppercase tracking-widest"
+ >
+ System Configuration · Preferences
+ </motion.p>
+ </div>
 
-        {userRole !== 'chain_admin' && (
-          <div className="flex items-center gap-3">
-            <button
-              onClick={async () => {
-                const btn = document.getElementById('save-settings-btn');
-                if (btn) {
-                  btn.innerHTML = '<svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري الحفظ...';
+ {userRole !== 'chain_admin' && (
+ <div className="flex items-center gap-3">
+ <button
+ onClick={async () => {
+ const btn = document.getElementById('save-settings-btn');
+ if (btn) {
+ btn.innerHTML = '<svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري الحفظ...';
 
-                  try {
-                    await refresh();
+ try {
+ await refresh();
 
-                    btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> تم الحفظ والتحقق';
-                    btn.classList.remove('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
-                    btn.classList.add('bg-green-500/20', 'text-green-400', 'border-green-500/30');
+ btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> تم الحفظ والتحقق';
+ btn.classList.remove('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
+ btn.classList.add('bg-green-500/20', 'text-green-400', 'border-green-500/30');
 
-                    setTimeout(() => {
-                      btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> حفظ كافة التغييرات';
-                      btn.classList.remove('bg-green-500/20', 'text-green-400', 'border-green-500/30');
-                      btn.classList.add('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
-                    }, 2000);
-                  } catch (err) {
-                    btn.innerHTML = 'خطأ في الحفظ';
-                  }
-                }
-              }}
-              id="save-settings-btn"
-              className="flex items-center gap-2 bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/30 hover:bg-[var(--nile-teal)]/30 px-6 py-3 rounded-xl text-[color:var(--nile-teal)] font-cairo font-bold transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_var(--nile-teal-glow)] hover:shadow-[0_0_30px_var(--nile-teal-glow)] group"
-            >
-              <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              حفظ كافة التغييرات
-            </button>
-          </div>
-        )}
-      </header>
+ setTimeout(() => {
+ btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> حفظ كافة التغييرات';
+ btn.classList.remove('bg-green-500/20', 'text-green-400', 'border-green-500/30');
+ btn.classList.add('bg-[var(--nile-teal)]/20', 'text-[color:var(--nile-teal)]', 'border-[var(--nile-teal)]/30');
+ }, 2000);
+ } catch (err) {
+ btn.innerHTML = 'خطأ في الحفظ';
+ }
+ }
+ }}
+ id="save-settings-btn"
+ className="flex items-center gap-2 bg-[var(--nile-teal)]/20 border border-[var(--nile-teal)]/30 hover:bg-[var(--nile-teal)]/30 px-6 py-3 rounded-xl text-[color:var(--nile-teal)] font-cairo font-bold transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_var(--nile-teal-glow)] hover:shadow-[0_0_30px_var(--nile-teal-glow)] group"
+ >
+ <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+ حفظ كافة التغييرات
+ </button>
+ </div>
+ )}
+ </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        {}
-        <div className="md:col-span-3 space-y-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`w-full text-right px-4 py-3.5 rounded-xl font-medium flex items-center gap-3 font-cairo transition-all duration-300 relative overflow-hidden group
-                ${activeTab === tab.id
-                  ? 'bg-[var(--glass-surface-heavy)] text-white border border-white/20 shadow-lg'
-                  : 'text-gray-400 hover:bg-[var(--glass-surface)] border border-transparent hover:text-gray-200'
-                }
-              `}
-            >
-              {activeTab === tab.id && (
-                <motion.div 
-                  layoutId="activeTabIndicator" 
-                  className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--nile-teal)] rounded-r" 
-                />
-              )}
-              <tab.icon className={`w-5 h-5 transition-colors ${activeTab === tab.id ? 'text-[var(--nile-teal)]' : 'group-hover:text-[var(--nile-teal)]/70'}`} />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+ <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+ {}
+ <div className="md:col-span-3 space-y-2">
+ {tabs.map((tab) => (
+ <button
+ key={tab.id}
+ onClick={() => setActiveTab(tab.id)}
+ className={`w-full text-right px-4 py-3.5 rounded-xl font-medium flex items-center gap-3 font-cairo transition-all duration-300 relative overflow-hidden group
+ ${activeTab === tab.id
+ ? 'bg-[var(--glass-surface-heavy)] text-white border border-white/20 shadow-lg'
+ : 'text-gray-400 hover:bg-[var(--glass-surface)] border border-transparent hover:text-gray-200'
+ }
+ `}
+ >
+ {activeTab === tab.id && (
+ <motion.div 
+ layoutId="activeTabIndicator" 
+ className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--nile-teal)] rounded-r" 
+ />
+ )}
+ <tab.icon className={`w-5 h-5 transition-colors ${activeTab === tab.id ? 'text-[var(--nile-teal)]' : 'group-hover:text-[var(--nile-teal)]/70'}`} />
+ {tab.label}
+ </button>
+ ))}
+ </div>
 
-        {}
-        <div className="md:col-span-9 relative min-h-[500px]">
-          <AnimatePresence mode="wait">
-            {activeTab === 'general' && <GeneralSettings key="general" />}
-            {activeTab === 'appearance' && (
-              <AppearanceSettings 
-                key="appearance" 
-                theme={theme} 
-                handleThemeChange={handleThemeChange} 
-                setIsThemeModalOpen={setIsThemeModalOpen} 
-              />
-            )}
-            {activeTab === 'shortcuts' && <ShortcutSettings key="shortcuts" />}
-            {activeTab === 'database' && <DatabaseSettings key="database" />}
-            {activeTab === 'about' && <AboutSettings key="about" />}
-            {activeTab === 'chain' && <ChainSettings key="chain" />}
-          </AnimatePresence>
-        </div>
-      </div>
+ {}
+ <div className="md:col-span-9 relative min-h-[500px]">
+ <AnimatePresence mode="wait">
+ {activeTab === 'general' && <GeneralSettings key="general" />}
+ {activeTab === 'appearance' && (
+ <AppearanceSettings 
+ key="appearance" 
+ theme={theme} 
+ handleThemeChange={handleThemeChange} 
+ setIsThemeModalOpen={setIsThemeModalOpen} 
+ />
+ )}
+ {activeTab === 'shortcuts' && <ShortcutSettings key="shortcuts" />}
+ {activeTab === 'database' && <DatabaseSettings key="database" />}
+ {activeTab === 'about' && <AboutSettings key="about" />}
+ {activeTab === 'chain' && <ChainSettings key="chain" />}
+ </AnimatePresence>
+ </div>
+ </div>
 
 
-      {}
-      <AnimatePresence>
-        {isThemeModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-              onClick={() => setIsThemeModalOpen(false)}
-            />
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-4xl bg-[#111] border border-[var(--glass-border)] rounded-2xl p-6 shadow-2xl overflow-hidden"
-            >
-              <div className="flex items-center justify-between mb-6 border-b border-[var(--glass-border)] pb-4">
-                <h2 className="text-2xl font-bold font-cairo flex items-center gap-3">
-                  <Palette className="w-6 h-6 text-[var(--nile-teal)]" />
-                  مكتبة الأنماط المتقدمة
-                </h2>
-                <button 
-                  onClick={() => setIsThemeModalOpen(false)} 
-                  className="text-gray-400 hover:text-white transition-colors bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] p-2 rounded-xl"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+ {}
+ <AnimatePresence>
+ {isThemeModalOpen && (
+ <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+ <motion.div
+ initial={{ opacity: 0 }}
+ animate={{ opacity: 1 }}
+ exit={{ opacity: 0 }}
+ className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+ onClick={() => setIsThemeModalOpen(false)}
+ />
+ 
+ <motion.div
+ initial={{ opacity: 0, scale: 0.95, y: 20 }}
+ animate={{ opacity: 1, scale: 1, y: 0 }}
+ exit={{ opacity: 0, scale: 0.95, y: 20 }}
+ className="relative w-full max-w-4xl bg-[#111] border border-[var(--glass-border)] rounded-2xl p-6 shadow-2xl overflow-hidden"
+ >
+ <div className="flex items-center justify-between mb-6 border-b border-[var(--glass-border)] pb-4">
+ <h2 className="text-2xl font-bold font-cairo flex items-center gap-3">
+ <Palette className="w-6 h-6 text-[var(--nile-teal)]" />
+ مكتبة الأنماط المتقدمة
+ </h2>
+ <button 
+ onClick={() => setIsThemeModalOpen(false)} 
+ className="text-gray-400 hover:text-white transition-colors bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] p-2 rounded-xl"
+ >
+ <X className="w-5 h-5" />
+ </button>
+ </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-2 pb-4">
-                {ALL_THEMES.map((themeItem) => (
-                  <button
-                    key={themeItem.id}
-                    onClick={() => handleThemeChange(themeItem.id)}
-                    className={`flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all group ${
-                      theme === themeItem.id
-                        ? 'border-[var(--nile-teal)] bg-[var(--nile-teal)]/10'
-                        : 'border-[var(--glass-border)] bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] hover:border-white/20'
-                    }`}
-                  >
-                    <div className={`w-full h-24 rounded-xl border flex flex-col gap-2 p-3 ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-gray-100 border-gray-300' : 'bg-[#050505] border-[var(--glass-border)]'}`}>
-                      <div className={`w-full h-3 rounded ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-[var(--surface-overlay)]' : 'bg-white/20'}`} />
-                      <div className={`w-2/3 h-3 rounded ${themeItem.color}`} />
-                      <div className={`w-1/2 h-2 rounded mt-auto ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-black/10' : 'bg-[var(--glass-surface-heavy)]'}`} />
-                    </div>
+ <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-2 pb-4">
+ {ALL_THEMES.map((themeItem) => (
+ <button
+ key={themeItem.id}
+ onClick={() => handleThemeChange(themeItem.id)}
+ className={`flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all group ${
+ theme === themeItem.id
+ ? 'border-[var(--nile-teal)] bg-[var(--nile-teal)]/10'
+ : 'border-[var(--glass-border)] bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-heavy)] hover:border-white/20'
+ }`}
+ >
+ <div className={`w-full h-24 rounded-xl border flex flex-col gap-2 p-3 ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-gray-100 border-gray-300' : 'bg-[#050505] border-[var(--glass-border)]'}`}>
+ <div className={`w-full h-3 rounded ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-[var(--surface-overlay)]' : 'bg-white/20'}`} />
+ <div className={`w-2/3 h-3 rounded ${themeItem.color}`} />
+ <div className={`w-1/2 h-2 rounded mt-auto ${themeItem.id.includes('light') || themeItem.id === 'snowy' ? 'bg-black/10' : 'bg-[var(--glass-surface-heavy)]'}`} />
+ </div>
 
-                    <div className="flex flex-col items-center gap-1 text-center">
-                      <div className={`flex items-center gap-2 font-bold font-cairo ${theme === themeItem.id ? 'text-[var(--text-primary)]' : 'text-gray-300 group-hover:text-white'}`}>
-                        <themeItem.icon className={`w-5 h-5 ${theme === themeItem.id ? 'text-[var(--nile-teal)]' : 'text-gray-400 group-hover:text-[var(--nile-teal)]'}`} />
-                        {themeItem.label}
-                      </div>
-                      <span className="text-xs text-gray-500 font-cairo">{themeItem.desc}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+ <div className="flex flex-col items-center gap-1 text-center">
+ <div className={`flex items-center gap-2 font-bold font-cairo ${theme === themeItem.id ? 'text-[var(--text-primary)]' : 'text-gray-300 group-hover:text-white'}`}>
+ <themeItem.icon className={`w-5 h-5 ${theme === themeItem.id ? 'text-[var(--nile-teal)]' : 'text-gray-400 group-hover:text-[var(--nile-teal)]'}`} />
+ {themeItem.label}
+ </div>
+ <span className="text-xs text-gray-500 font-cairo">{themeItem.desc}</span>
+ </div>
+ </button>
+ ))}
+ </div>
+ </motion.div>
+ </div>
+ )}
+ </AnimatePresence>
+ </div>
+ );
 }

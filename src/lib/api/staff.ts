@@ -1,47 +1,47 @@
 import { supabase } from '../supabase';
 
 export interface UserProfile {
-  id: string;
-  role: 'admin' | 'staff';
-  full_name?: string;
-  created_at: string;
-  salary?: number;
-  incentives?: number;
+ id: string;
+ role: 'admin' | 'staff';
+ full_name?: string;
+ created_at: string;
+ salary?: number;
+ incentives?: number;
 }
 
 export async function getAllStaff() {
-  const { data: { user } } = await supabase.auth.getUser();
-  const pharmacyId = user?.user_metadata?.pharmacy_id;
-  if (!pharmacyId) return [];
+ const { data: { user } } = await supabase.auth.getUser();
+ const pharmacyId = user?.user_metadata?.pharmacy_id;
+ if (!pharmacyId) return [];
 
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('pharmacy_id', pharmacyId) 
-    .order('created_at', { ascending: false });
+ const { data, error } = await supabase
+ .from('user_profiles')
+ .select('*')
+ .eq('pharmacy_id', pharmacyId) 
+ .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching staff:', error);
-    return [];
-  }
-  return data as UserProfile[];
+ if (error) {
+ console.error('Error fetching staff:', error);
+ return [];
+ }
+ return data as UserProfile[];
 }
 
 export async function updateStaffRole(userId: string, role: 'admin' | 'staff') {
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  const pharmacyId = user?.user_metadata?.pharmacy_id;
-  if (!pharmacyId) throw new Error('Unauthorized');
+ 
+ const { data: { user } } = await supabase.auth.getUser();
+ const pharmacyId = user?.user_metadata?.pharmacy_id;
+ if (!pharmacyId) throw new Error('Unauthorized');
 
-  const { error } = await supabase
-    .from('user_profiles')
-    .update({ role })
-    .eq('id', userId)
-    .eq('pharmacy_id', pharmacyId); 
+ const { error } = await supabase
+ .from('user_profiles')
+ .update({ role })
+ .eq('id', userId)
+ .eq('pharmacy_id', pharmacyId); 
 
-  if (error) {
-    console.error('Error updating staff role:', error);
-    throw error;
-  }
+ if (error) {
+ console.error('Error updating staff role:', error);
+ throw error;
+ }
 }
 

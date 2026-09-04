@@ -4,35 +4,35 @@ import Link from 'next/link';
 import { Calendar, Clock, ArrowLeft } from 'lucide-react';
 
 const posts: Record<string, {
-  title: string;
-  metaDescription: string;
-  date: string;
-  readTime: string;
-  category: string;
-  categoryColor: string;
-  content: string;
+ title: string;
+ metaDescription: string;
+ date: string;
+ readTime: string;
+ category: string;
+ categoryColor: string;
+ content: string;
 }> = {
-  'inventory-management': {
-    title: 'الدليل الشامل لإدارة مخزون الأدوية في الصيدليات المصرية',
-    metaDescription: 'كيف تنظم مخزون دوائك وتتفادى الخسائر من البضاعة المنتهية الصلاحية في صيدليات مصر.',
-    date: '2 يوليو 2026',
-    readTime: '7 دقائق',
-    category: 'إدارة المخزون',
-    categoryColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
-    content: `
+ 'inventory-management': {
+ title: 'الدليل الشامل لإدارة مخزون الأدوية في الصيدليات المصرية',
+ metaDescription: 'كيف تنظم مخزون دوائك وتتفادى الخسائر من البضاعة المنتهية الصلاحية في صيدليات مصر.',
+ date: '2 يوليو 2026',
+ readTime: '7 دقائق',
+ category: 'إدارة المخزون',
+ categoryColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+ content: `
 ## لماذا يُعدّ المخزون تحدياً حقيقياً في الصيدليات المصرية؟
 
 تُمثّل الأدوية المنتهية الصلاحية أو الناقصة عند الطلب خسائر مباشرة تقدّرها الدراسات بما بين 8-15% من إيرادات الصيدليات الصغيرة. الحل لا يكمن في المزيد من الجهد اليدوي، بل في تبني نظام ذكي يُديّر هذه المهمة نيابةً عنك.
 
 ## المشكلات الأكثر شيوعاً
 
-**1. الجرد اليدوي الخاطئ**  
+**1. الجرد اليدوي الخاطئ** 
 الاعتماد على الورق أو الذاكرة لمتابعة مستويات المخزون يؤدي إلى أخطاء في إعادة الطلب.
 
-**2. تراكم الدفعات المنتهية**  
+**2. تراكم الدفعات المنتهية** 
 غياب تتبع تواريخ الصلاحية لكل دفعة على حدة يجعل الاكتشاف متأخراً وبعد الخسارة.
 
-**3. النواقص المفاجئة**  
+**3. النواقص المفاجئة** 
 أدوية ذات طلب مرتفع تنتهي فجأة دون تنبيه مسبق يتسبب في خسارة المبيعات وثقة العملاء.
 
 ## خطوات فعّالة لإدارة ذكية للمخزون
@@ -52,16 +52,16 @@ const posts: Record<string, {
 ## الخلاصة
 
 إدارة المخزون الذكية ليست ترفاً — هي ضرورة تجارية. مع نظام مثل فارما نايل، تتحول هذه المهمة من عبء يومي إلى عملية تلقائية تحميك من الخسائر وتضمن دوام توفر الأدوية.
-    `,
-  },
-  'common-pharmacy-mistakes': {
-    title: 'أشهر أخطاء الصيادلة في إدارة المبيعات وكيف تتجنبها',
-    metaDescription: 'تحليل الأخطاء التشغيلية الأكثر شيوعاً في صيدليات مصر وكيف تتجنبها لرفع أرباحك.',
-    date: '28 يونيو 2026',
-    readTime: '5 دقائق',
-    category: 'نصائح للصيادلة',
-    categoryColor: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-    content: `
+ `,
+ },
+ 'common-pharmacy-mistakes': {
+ title: 'أشهر أخطاء الصيادلة في إدارة المبيعات وكيف تتجنبها',
+ metaDescription: 'تحليل الأخطاء التشغيلية الأكثر شيوعاً في صيدليات مصر وكيف تتجنبها لرفع أرباحك.',
+ date: '28 يونيو 2026',
+ readTime: '5 دقائق',
+ category: 'نصائح للصيادلة',
+ categoryColor: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+ content: `
 ## الخطأ الأول: إهمال متابعة ديون الآجل
 
 كثير من الصيادلة يبيعون بالآجل دون نظام متابعة رسمي. النتيجة: ديون منسية، عملاء يتمادون، وضياع سيولة نقدية ضرورية لإعادة الشراء.
@@ -89,16 +89,16 @@ const posts: Record<string, {
 ## الخلاصة
 
 أغلب الأخطاء في صيادلة مصر ليست بسبب قصور المعرفة، بل بسبب غياب الأدوات الصحيحة. فارما نايل صُمم خصيصاً لمعالجة هذه النقاط.
-    `,
-  },
-  'digital-transformation': {
-    title: 'التحول الرقمي في الصيدليات المصرية: من أين تبدأ؟',
-    metaDescription: 'خطوات عملية لتحويل صيدليتك إلى نظام رقمي سحابي متكامل — دليل للصيادلة المصريين.',
-    date: '20 يونيو 2026',
-    readTime: '8 دقائق',
-    category: 'التحول الرقمي',
-    categoryColor: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-    content: `
+ `,
+ },
+ 'digital-transformation': {
+ title: 'التحول الرقمي في الصيدليات المصرية: من أين تبدأ؟',
+ metaDescription: 'خطوات عملية لتحويل صيدليتك إلى نظام رقمي سحابي متكامل — دليل للصيادلة المصريين.',
+ date: '20 يونيو 2026',
+ readTime: '8 دقائق',
+ category: 'التحول الرقمي',
+ categoryColor: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+ content: `
 ## ما معنى التحول الرقمي للصيدلية؟
 
 التحول الرقمي لا يعني شراء أجهزة جديدة أو توظيف متخصصين في تقنية المعلومات. بمبساطة: هو الانتقال من تسجيل المبيعات يدوياً على ورق أو Excel إلى نظام سحابي متكامل يُدير كل شيء تلقائياً.
@@ -124,97 +124,97 @@ const posts: Record<string, {
 ## الخلاصة
 
 التحول الرقمي يبدأ بقرار صغير، لكن أثره يتراكم. فارما نايل تُقدم تجربة مجانية 14 يوماً لتساعدك على الخطوة الأولى.
-    `,
-  },
+ `,
+ },
 };
 
 type Params = { slug: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
-  const { slug } = await params;
-  const post = posts[slug];
-  if (!post) return { title: 'مقال غير موجود | فارما نايل' };
-  return {
-    title: `${post.title} | مدونة فارما نايل`,
-    description: post.metaDescription,
-  };
+ const { slug } = await params;
+ const post = posts[slug];
+ if (!post) return { title: 'مقال غير موجود | فارما نايل' };
+ return {
+ title: `${post.title} | مدونة فارما نايل`,
+ description: post.metaDescription,
+ };
 }
 
 export function generateStaticParams() {
-  return Object.keys(posts).map(slug => ({ slug }));
+ return Object.keys(posts).map(slug => ({ slug }));
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<Params> }) {
-  const { slug } = await params;
-  const post = posts[slug];
-  if (!post) notFound();
+ const { slug } = await params;
+ const post = posts[slug];
+ if (!post) notFound();
 
-  // Simple markdown-like renderer
-  const renderContent = (content: string) => {
-    return content
-      .trim()
-      .split('\n')
-      .map((line, idx) => {
-        if (line.startsWith('## ')) {
-          return <h2 key={idx} className="text-2xl font-black text-white mt-10 mb-4">{line.slice(3)}</h2>;
-        }
-        if (line.startsWith('### ')) {
-          return <h3 key={idx} className="text-lg font-black text-white mt-6 mb-2">{line.slice(4)}</h3>;
-        }
-        if (line.startsWith('**') && line.endsWith('**')) {
-          return <p key={idx} className="font-black text-gray-200 my-2">{line.slice(2, -2)}</p>;
-        }
-        if (line.startsWith('- ')) {
-          return <li key={idx} className="text-gray-400 font-semibold text-sm leading-relaxed list-disc list-inside">{line.slice(2)}</li>;
-        }
-        if (line.trim() === '') return <div key={idx} className="h-2" />;
-        return <p key={idx} className="text-gray-400 font-semibold text-sm sm:text-base leading-relaxed">{line}</p>;
-      });
-  };
+ // Simple markdown-like renderer
+ const renderContent = (content: string) => {
+ return content
+ .trim()
+ .split('\n')
+ .map((line, idx) => {
+ if (line.startsWith('## ')) {
+ return <h2 key={idx} className="text-2xl font-black text-white mt-10 mb-4">{line.slice(3)}</h2>;
+ }
+ if (line.startsWith('### ')) {
+ return <h3 key={idx} className="text-lg font-black text-white mt-6 mb-2">{line.slice(4)}</h3>;
+ }
+ if (line.startsWith('**') && line.endsWith('**')) {
+ return <p key={idx} className="font-black text-gray-200 my-2">{line.slice(2, -2)}</p>;
+ }
+ if (line.startsWith('- ')) {
+ return <li key={idx} className="text-gray-400 font-semibold text-sm leading-relaxed list-disc list-inside">{line.slice(2)}</li>;
+ }
+ if (line.trim() === '') return <div key={idx} className="h-2" />;
+ return <p key={idx} className="text-gray-400 font-semibold text-sm sm:text-base leading-relaxed">{line}</p>;
+ });
+ };
 
-  return (
-    <div className="min-h-screen bg-[#090d16] text-white font-cairo" dir="rtl">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-24 space-y-8">
+ return (
+ <div className="min-h-screen bg-[#090d16] text-white font-cairo" dir="rtl">
+ <div className="max-w-3xl mx-auto px-4 sm:px-6 py-24 space-y-8">
 
-        {/* Back */}
-        <Link href="/blog" className="inline-flex items-center gap-2 text-gray-400 hover:text-cyan-400 text-sm font-semibold transition-colors">
-          <ArrowLeft className="w-4 h-4 rotate-180" />
-          العودة للمدونة
-        </Link>
+ {/* Back */}
+ <Link href="/blog" className="inline-flex items-center gap-2 text-gray-400 hover:text-cyan-400 text-sm font-semibold transition-colors">
+ <ArrowLeft className="w-4 h-4 rotate-180" />
+ العودة للمدونة
+ </Link>
 
-        {/* Meta */}
-        <div className="space-y-4">
-          <span className={`inline-block px-3 py-1 text-[11px] font-black border rounded-xl ${post.categoryColor}`}>
-            {post.category}
-          </span>
-          <h1 className="text-3xl md:text-5xl font-black text-white leading-snug">{post.title}</h1>
-          <div className="flex items-center gap-5 text-gray-500 text-xs font-semibold">
-            <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{post.date}</span>
-            <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{post.readTime} قراءة</span>
-          </div>
-        </div>
+ {/* Meta */}
+ <div className="space-y-4">
+ <span className={`inline-block px-3 py-1 text-[11px] font-black border rounded-xl ${post.categoryColor}`}>
+ {post.category}
+ </span>
+ <h1 className="text-3xl md:text-5xl font-black text-white leading-snug">{post.title}</h1>
+ <div className="flex items-center gap-5 text-gray-500 text-xs font-semibold">
+ <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{post.date}</span>
+ <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{post.readTime} قراءة</span>
+ </div>
+ </div>
 
-        <hr className="border-[var(--glass-border)]" />
+ <hr className="border-[var(--glass-border)]" />
 
-        {/* Content */}
-        <article className="space-y-2">
-          {renderContent(post.content)}
-        </article>
+ {/* Content */}
+ <article className="space-y-2">
+ {renderContent(post.content)}
+ </article>
 
-        <hr className="border-[var(--glass-border)]" />
+ <hr className="border-[var(--glass-border)]" />
 
-        {/* CTA */}
-        <div className="text-center space-y-4 pt-4">
-          <p className="text-gray-400 text-sm font-semibold">هل أنت مستعد لتطبيق هذا في صيدليتك؟</p>
-          <Link
-            href="/welcome"
-            className="inline-flex items-center gap-2.5 px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold text-sm rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.97] transition-all"
-          >
-            ابدأ تجربة فارما نايل مجاناً
-          </Link>
-        </div>
+ {/* CTA */}
+ <div className="text-center space-y-4 pt-4">
+ <p className="text-gray-400 text-sm font-semibold">هل أنت مستعد لتطبيق هذا في صيدليتك؟</p>
+ <Link
+ href="/welcome"
+ className="inline-flex items-center gap-2.5 px-8 py-4 bg-glass-surface text-white font-extrabold text-sm rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.97] transition-all"
+ >
+ ابدأ تجربة فارما نايل مجاناً
+ </Link>
+ </div>
 
-      </div>
-    </div>
-  );
+ </div>
+ </div>
+ );
 }

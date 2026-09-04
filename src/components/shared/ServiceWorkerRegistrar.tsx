@@ -4,42 +4,42 @@ import { useEffect } from 'react';
 
 
 export default function ServiceWorkerRegistrar() {
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+ useEffect(() => {
+ if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
-    const register = async () => {
-      try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/',
-          updateViaCache: 'none',
-        });
+ const register = async () => {
+ try {
+ const registration = await navigator.serviceWorker.register('/sw.js', {
+ scope: '/',
+ updateViaCache: 'none',
+ });
 
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (!newWorker) return;
+ registration.addEventListener('updatefound', () => {
+ const newWorker = registration.installing;
+ if (!newWorker) return;
 
-          newWorker.addEventListener('statechange', () => {
-            if (
-              newWorker.state === 'installed' &&
-              navigator.serviceWorker.controller
-            ) {
-              
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
-        });
+ newWorker.addEventListener('statechange', () => {
+ if (
+ newWorker.state === 'installed' &&
+ navigator.serviceWorker.controller
+ ) {
+ 
+ newWorker.postMessage({ type: 'SKIP_WAITING' });
+ }
+ });
+ });
 
-      } catch (err) {
-        console.error('[SW] Registration failed:', err);
-      }
-    };
+ } catch (err) {
+ console.error('[SW] Registration failed:', err);
+ }
+ };
 
-    if (document.readyState === 'complete') {
-      register();
-    } else {
-      window.addEventListener('load', register, { once: true });
-    }
-  }, []);
+ if (document.readyState === 'complete') {
+ register();
+ } else {
+ window.addEventListener('load', register, { once: true });
+ }
+ }, []);
 
-  return null;
+ return null;
 }

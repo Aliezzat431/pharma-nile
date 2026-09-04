@@ -5,12 +5,12 @@ import authReducer from './slices/authSlice';
 import agentReducer from './slices/agentSlice';
 
 export const store = configureStore({
-  reducer: {
-    pos: posReducer,
-    inventory: inventoryReducer,
-    auth: authReducer,
-    agent: agentReducer,
-  },
+ reducer: {
+ pos: posReducer,
+ inventory: inventoryReducer,
+ auth: authReducer,
+ agent: agentReducer,
+ },
 });
 
 export type RootState = ReturnType<typeof store.getState>;
